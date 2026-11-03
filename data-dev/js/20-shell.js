@@ -772,10 +772,10 @@ const ROUTE_LEAF_PARENT = {
     divSomfyRooms: 'divSomfySettings',
     divSomfyMotors: 'divSomfySettings',
     divSomfyGroups: 'divSomfySettings',
-    divRepeater: 'divSomfySettings',
-    divListener: 'divSomfySettings',
     divSomfySchedules: 'divSomfySettings',
     divTransceiverSettings: 'divRadioSettings',
+    divListener: 'divRadioSettings',
+    divRepeater: 'divRadioSettings',
     divFrameLog: 'divRadioSettings',
 };
 const ROUTE_SLUGS = {
@@ -868,6 +868,11 @@ function _setBreadcrumbLink(el, targetGrpid) {
         el.removeAttribute('tabindex');
     }
 }
+function setSidebarIdentity(hostname, version) {
+    const host = get('spanSidebarHost'), ver = get('spanSidebarVersion');
+    if (host && hostname) host.textContent = hostname;
+    if (ver && version) ver.textContent = /^v/i.test(version) ? version : 'v' + version;
+}
 function _updateBreadcrumb(topId, leafId, detailLabel = null) {
     const bc = get('divSectionBreadcrumb');
     if (!bc) return;
@@ -883,7 +888,7 @@ function _updateBreadcrumb(topId, leafId, detailLabel = null) {
         _setBreadcrumbLink(activeEl, null);
         return;
     }
-    const topLabel = document.querySelector(`.nav-item[data-grpid="${topId}"] span`)?.textContent.trim() || '';
+    const topLabel = document.querySelector(`.nav-section[data-section="${topId}"] .nav-section-label`)?.textContent.trim() || '';
     const leafLabel = document.querySelector(`.subtab-container > span[data-grpid="${leafId}"]`)?.textContent.trim() || '';
     parentEl.textContent = topLabel;
     // Feuille identique à la section (ex: Radio > Radio) : laisser vide masque le séparateur et
@@ -1000,8 +1005,8 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
         // data-grpid de .submenu), mais elle doit quand même recevoir .active comme les
         // autres -- sinon aucune entrée de la sidebar n'apparaît sélectionnée sur le dashboard.
         document.querySelectorAll('.nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === 'divHomePnl'));
-        document.querySelectorAll('.nav-group .submenu').forEach(s => { s.style.display = 'none'; });
         document.querySelectorAll('.sub-nav-item[data-grpid]').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.nav-section[data-section]').forEach(s => s.classList.remove('active'));
 
         currentLeafId = 'divHomePnl';
         _updateBreadcrumb('divHomePnl', null);
@@ -1034,9 +1039,7 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
 
         // Sections de premier niveau : sidebar (.nav-item + son .submenu) et onglets (.tab-container).
         document.querySelectorAll('.nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === topId));
-        document.querySelectorAll('.nav-group .submenu').forEach(s => {
-            s.style.display = (s.previousElementSibling?.getAttribute('data-grpid') === topId) ? 'flex' : 'none';
-        });
+        document.querySelectorAll('.nav-section[data-section]').forEach(s => s.classList.toggle('active', s.getAttribute('data-section') === topId));
         document.querySelectorAll('.tab-container > span[data-grpid]').forEach(t => {
             const id = t.getAttribute('data-grpid');
             t.classList.toggle('selected', id === topId);

@@ -225,6 +225,7 @@ class Security {
                     // l'assistant (cf. Wifi.networkConfirmationOverlay()).
                     window.__onboardingDone = !!ctx.onboardingDone;
                     window.__currentHostname = ctx.hostname || '';
+                    setSidebarIdentity(ctx.hostname, ctx.version);
                     // Disponible dès ce tout premier appel (avant l'ouverture du Wizard) pour que
                     // le panneau Réseau connaisse le profil matériel sans dépendre d'un fetch séparé
                     // vers /modulesettings une fois le Wizard déjà affiché.

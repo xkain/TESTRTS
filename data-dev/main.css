@@ -22,7 +22,7 @@ body.mode-hotspot .hotspot-hidden {
 .container {
     background: #626262;
     margin-top: 100px;
-    margin-left: clamp(250px, 20%, 400px);
+    margin-left: var(--sidebar-width);
     width: auto;
     min-height: calc(100vh - 100px);
     background: var(--color-bg-page);
@@ -66,8 +66,8 @@ body.onboarding-active #langPromptToast {
 .top-bar {
     position: fixed;
     top: 0;
-    left: clamp(250px, 20%, 400px);
-    width: calc(100% - clamp(250px, 20%, 400px));
+    left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
     height: 100px;
     background: var(--color-bg-page);
     color: var(--color-text-main);
@@ -81,13 +81,6 @@ body.onboarding-active #langPromptToast {
 .site-title {
     font-weight: bold;
     font-size: 1.5rem;
-}
-.top-bar-right {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    filter: blur(8px);
-    transition: filter 0.5s ease;
 }
 .status-item {
     display: flex;
@@ -520,13 +513,12 @@ body.onboarding-active #langPromptToast {
     flex-direction: column;
     height: 100vh;
     background: color-mix(in srgb, var(--color-accent) 2%, #121316);
-    border-right: 1px solid #333;
-    width: 20%;
-    min-width: 250px;
-    max-width: 400px;
+    border-right: 1px solid #262a31;
+    width: var(--sidebar-width);
     position: fixed;
     top: 0;
     left: 0;
+    color: #fff;
     filter: blur(8px);
     transition: filter 0.5s ease;
 }
@@ -535,117 +527,199 @@ body.onboarding-active #langPromptToast {
     align-items: center;
     gap: 12px;
     height: 100px;
+    flex-shrink: 0;
     background: color-mix(in srgb, var(--color-accent) 5%, #121316) !important;
-    padding: 0 25px;
+    padding: 0 18px;
     box-sizing: border-box;
-    justify-content: center;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid #22262d;
 }
-.sidebar-brand svg {
+.sidebar-logo {
     display: block;
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
     color: #ffffff;
 }
-.sidebar-brand .site-title {
-    font-weight: bold;
-    font-size: 1.3rem;
+.sidebar-identity {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+.sidebar-host {
+    font-weight: 700;
+    font-size: 1rem;
     color: #ffffff;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
+}
+.sidebar-version {
+    font-size: 0.78rem;
+    color: #a3a8b2;
+}
+.sidebar-version:empty {
+    display: none;
+}
+.sidebar-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    padding: 10px 12px;
+    border-bottom: 1px solid #22262d;
+    font-size: 0.8rem;
+    color: #c9ccd3;
+}
+.sidebar-status .radio-activity-dot.radio-activity-radar {
+    width: 28px;
+    height: 28px;
+}
+.sidebar-status .radio-activity-radar-icon {
+    width: 18px;
+    height: 18px;
+    color: #8b919c;
+}
+.sidebar-status .status-item {
+    padding: 0;
+    border: none;
+    height: auto;
+}
+.sidebar-status .status-options {
+    margin-left: 0;
+}
+.sidebar-status .opt-badge {
+    display: none;
+}
+.sidebar-status .opt-badge.active {
+    display: inline-block;
+    color: #e4e7ec;
+    background: #1c2026;
+    border-color: #2c313a;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+}
+.sidebar-status .uptime-tooltip-container {
+    margin-left: auto;
+}
+.sidebar-status .uptime-chip {
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: var(--radius-md);
+    background: #1c2026;
+}
+.sidebar-status .uptime-chip .uniblocSvg-F {
+    display: none;
+}
+.sidebar-status .uptime-chip .uptime-display {
+    font-size: 0.75rem;
+    color: #e4e7ec;
+    font-variant-numeric: tabular-nums;
+}
+.sidebar-status .uptime-arrow-icon {
+    width: 12px;
+    height: 12px;
+    color: #8b919c;
 }
 .sidebar-nav {
     flex-grow: 1;
-    gap: 10px;
+    min-height: 0;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    padding: 20px 10px;
+    padding: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: #333943 transparent;
 }
-.nav-item {
+.nav-item,
+.sub-nav-item {
     display: flex;
     align-items: center;
-    padding: 12px 15px;
+    gap: 11px;
+    min-height: 34px;
+    padding: 0 10px;
+    border-radius: var(--radius-btn);
     text-decoration: none;
-    font-size: 19px;
-    color: white;
-    border-radius:var(--radius-btn);
-    transition: background 0.2s;
+    font-size: 0.9rem;
+    color: #c9ccd3;
     cursor: pointer;
-    justify-content: flex-start;
+    transition: background 0.2s, color 0.2s;
 }
-.nav-item span {
-    margin-right: 0;
-    text-align: left;
+.nav-item:hover,
+.sub-nav-item:hover {
+    background: #1e2228;
+    color: #ffffff;
 }
-.nav-item:hover {
-    background: #333;
-    color: white;
-}
-.nav-item.active {
+.nav-item.active,
+.sub-nav-item.active {
     background: var(--color-accent-dark);
-    color: white;
+    color: #ffffff;
+    font-weight: 600;
 }
 .nav-icon {
-    width: 25px;
-    height: 25px;
-    margin-right: 12px;
+    width: 18px;
+    height: 18px;
     fill: currentColor;
     flex-shrink: 0;
 }
-.arrow-icon {
-    width: 12px;
-    height: 12px;
-    transition: transform 0.3s;
-    fill: currentColor;
-    flex-shrink: 0;
-    margin-left: auto;
+.nav-item span,
+.sub-nav-item span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
-.submenu {
-    display: none;
-    flex-direction: column;
-    padding-left: 45px;
-    margin-bottom: 10px;
-}
-.nav-group.open .submenu {
+.nav-section {
     display: flex;
+    flex-direction: column;
 }
-.nav-group.open .arrow-icon {
-    transform: rotate(180deg);
+.nav-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 10px 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8b919c;
 }
-.sub-nav-item {
-    padding: 8px 0;
-    font-size: 0.9rem;
-    color: var(--color-text-secondary);
-    text-decoration: none;
-    transition: color 0.2s;
-    cursor: pointer;
+.nav-section.active .nav-section-title {
+    color: #c9ccd3;
 }
-.sub-nav-item:hover {
-    color: var(--color-accent);
+.nav-badge {
+    margin-left: auto;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
 }
-.sub-nav-item.active {
-    color: var(--color-accent-light);
+.nav-badge-warning {
+    color: #f6c26b;
+    border: 1px solid #8a6420;
+}
+body.fw-update .sub-nav-item[data-grpid="divFirmware"]::after {
+    content: "";
+    flex: none;
+    width: 8px;
+    height: 8px;
+    margin-left: auto;
+    border-radius: var(--radius-full);
+    background: var(--color-danger);
 }
 .sidebar-footer {
-    margin-top: auto;
-    padding: 10px;
+    flex-shrink: 0;
+    padding: 10px 12px 14px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    align-items: stretch;
+    gap: 8px;
+    border-top: 1px solid #22262d;
 }
-.sidebar-footer button { font-size: 0.85em; }
-#barsideRadioDisable {
-    background: #010101;
-    color: white;
-    padding: 4px 10px;
-    border-radius: var(--radius-sm);
-    font-size: 0.42em;
-    font-weight: 600;
-    margin-left: 10px;
-    white-space: nowrap;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
+.sidebar-footer button { font-size: 0.85em; justify-content: center; }
 .tab-container { display: none; }
 /*SubTab*/
 .subtab-container {
@@ -3930,11 +4004,6 @@ div.frame-pulses {
         grid-row: 2;
     }
 }
-@media screen and (max-width: 850px) {
-    .status-item {
-        display: none;
-    }
-}
 @media (max-width: 767px) {
     .button-container-footerHtml {
         position: fixed;
@@ -3964,16 +4033,8 @@ div.frame-pulses {
     .subtab-container {
         display: none !important;
     }
-    /* (.top-bar est déjà position:fixed en base -- ça établit un bloc de positionnement valide
-       pour .top-bar-right en absolute, pas besoin de le redéclarer ici.) */
     .top-bar {
         justify-content: flex-start;
-    }
-    .top-bar-right {
-        position: absolute;
-        right: 30px;
-        top: 50%;
-        transform: translateY(-50%);
     }
     .section-breadcrumb {
         display: flex;
@@ -4222,8 +4283,7 @@ div.frame-pulses {
     #divSystemOptions,
     #divSomfyRooms,
     #divSomfyMotors,
-    #divSomfyGroups,
-    #divRepeater {
+    #divSomfyGroups {
         padding-bottom: 95px;
     }
     #divGetStarted,
@@ -4766,7 +4826,7 @@ div.frame-pulses {
 :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog) { padding-bottom: 70px; }
 body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog) > .button-container-footerHtml { display: none; }
 @media (min-width: 768px) {
-    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog) > .button-container-footerHtml { left: clamp(250px, 20%, 400px); }
+    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog) > .button-container-footerHtml { left: var(--sidebar-width); }
 }
 @media (max-width: 767px) {
     :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
