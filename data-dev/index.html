@@ -495,20 +495,6 @@
                                             </div>
                                         </button>
                                     </div>
-                                    <div class="uniRow feedback-card">
-                                        <button onclick="general.DashboardPrefsOverlay()" class="buttonUpdate unibuttonPad" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-tabHome"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="TAB_DASHBOARD"></div>
-                                                    <div class="uniStatus" tr="GENERAL_DASHBOARD_PREFS_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                            </div>
-                                        </button>
-                                    </div>
                                 </div>
                                 <div class="unibloc-container gen-sec">
                                     <h3 class="unibloc-title tile-title"><span tr="GENERAL_TITLE_SECURITY"></span></h3>
@@ -2873,11 +2859,12 @@
                             </button>
                         </span>
                     </div>
-                    <button type="button" class="dash-edit-btn" onclick="somfy.startDashEdit();"><svg><use href="#svg-edit"></use></svg><span tr="BT_EDIT"></span></button>
+                    <button type="button" class="dash-edit-btn" onclick="somfy.startDashEdit();"><svg><use href="#svg-edit"></use></svg><span tr="BT_CUSTOMIZE"></span></button>
                 </div>
                 <div class="dash-edit-bar">
                     <svg class="dash-edit-bar-icon"><use href="#svg-drag"></use></svg>
                     <span class="dash-edit-hint" tr="DASH_EDIT_HINT"></span>
+                    <button type="button" class="dash-edit-prefs" onclick="general.DashboardPrefsOverlay();"><svg><use href="#svg-tabSettings"></use></svg><span tr="CARD_DISPLAY"></span></button>
                     <button type="button" class="dash-edit-cancel" onclick="somfy.endDashEdit(false);"><span tr="BT_CANCEL"></span></button>
                     <button type="button" class="dash-edit-done" onclick="somfy.endDashEdit(true);"><span tr="BT_DONE"></span></button>
                 </div>
