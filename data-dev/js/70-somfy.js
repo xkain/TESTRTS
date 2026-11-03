@@ -1462,7 +1462,7 @@ class Somfy {
             roomLabel.textContent = r ? `${r.name} :` : '';
         }
         const topbar = document.querySelector('.dash-topbar');
-        if (topbar) topbar.classList.toggle('is-empty', _rooms.length <= 1 && positioned === 0 && moving === 0);
+        if (topbar) topbar.classList.toggle('is-empty', _rooms.length <= 1 && positioned === 0 && moving === 0 && (this.shades || []).length + (this.groups || []).length < 2);
         document.querySelectorAll('#divShadeControls .dash-room-title').forEach(t => {
             const rid = parseInt(t.dataset.roomid, 10);
             let o = 0, n = 0;
@@ -1620,133 +1620,250 @@ class Somfy {
         // mesurables (scrollToMovingCard lit des getBoundingClientRect).
         if (fromUser) this.scrollToMovingCard(tab === 'devices' ? 'shade' : 'group');
     }
-    setListDraggable(list, cl, cb) {
-        let el = null, gh = null, ch = false, sA = null;
-        let r = null, sY = 0, cY = 0, its = [];
-
-        const stop = () => { if(sA) cancelAnimationFrame(sA); sA = null; };
-        const scroll = (y) => {
-            stop();
-            let sp = 0;
-            if (y < 100) sp = -14;
-            else if (y > window.innerHeight - 100) sp = 14;
-
-            if (sp && gh) {
-                window.scrollBy(0, sp);
-                cY += sp;
-                gh.style.transform = "translateY(" + (cY - sY) + "px)";
-                sA = requestAnimationFrame(() => scroll(y));
-                sort();
-            }
+    startDashEdit() {
+        if (this.dashEditing) return;
+        const pnl = get('divHomePnl');
+        if (!pnl) return;
+        if (typeof security !== 'undefined' && !security.authenticated && security.type !== 0) {
+            get('divContainer').addEventListener('afterlogin', () => {
+                if (security.authenticated) this.startDashEdit();
+            }, { once: true });
+            security.authUser();
+            return;
+        }
+        this.dashEditing = true;
+        this._dashPending = {};
+        this._dashSnapshot = this._dashOrder();
+        pnl.classList.add('dash-editing');
+        pnl.querySelectorAll('.somfyShadeCtl, .somfyGroupCtl').forEach(c => c.style.setProperty('--wig-delay', `-${(Math.random() * 0.3).toFixed(2)}s`));
+        this._bindDashSort(pnl);
+        this.syncHiddenCards();
+    }
+    endDashEdit(save) {
+        if (!this.dashEditing) return;
+        if (this._dashDrag) this._dashDrop(this._dashDrag, true);
+        const order = this._dashOrder();
+        const before = this._dashSnapshot;
+        const pending = this._dashPending || {};
+        this.dashEditing = false;
+        this._dashPending = null;
+        get('divHomePnl')?.classList.remove('dash-editing');
+        const rooms = pending.rooms || _rooms.slice(1);
+        const shades = pending.shades || this.shades || [];
+        const groups = pending.groups || this.groups || [];
+        const same = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
+        const sorted = (list, key) => list.slice().sort((a, b) => a.sortOrder - b.sortOrder).map(x => x[key]);
+        const jobs = [];
+        if (save) {
+            if (!same(order.rooms, before.rooms)) jobs.push(['/roomSortOrder', this._mergeOrder(sorted(rooms, 'roomId'), order.rooms), rooms, 'roomId']);
+            if (!same(order.shades, before.shades)) jobs.push(['/shadeSortOrder', this._mergeOrder(sorted(shades, 'shadeId'), order.shades), shades, 'shadeId']);
+            if (!same(order.groups, before.groups)) jobs.push(['/groupSortOrder', this._mergeOrder(sorted(groups, 'groupId'), order.groups), groups, 'groupId']);
+        }
+        const roomsTouched = !!pending.rooms || jobs.some(j => j[0] === '/roomSortOrder');
+        const render = () => {
+            const active = parseInt(document.querySelector('.room-pill.active')?.getAttribute('data-roomid') || '0', 10);
+            if (roomsTouched) this.setRoomsList(rooms);
+            this.setShadesList(shades);
+            this.setGroupsList(groups);
+            if (active && _rooms.some(r => r.roomId === active)) this.selectRoom(active);
         };
-        const sort = () => {
-            if (!el || !gh) return;
-            let mid = gh.getBoundingClientRect().top + (r.height / 2);
-            let idx = its.indexOf(el);
-
-            its.forEach((it, i) => {
-                if (it === el) return;
-                let iM = it.getBoundingClientRect().top + (r.height / 2);
-                let o = 0;
-                if (mid < iM && its.indexOf(el) > i) {
-                    o = r.height + 10;
-                    if(i < idx) idx = i;
-                } else if (mid > iM && its.indexOf(el) < i) {
-                    o = -(r.height + 10);
-                    if(i >= idx) idx = i + 1;
-                }
-                it.style.transform = o ? "translateY(" + o + "px)" : "";
+        const run = (i) => {
+            if (i >= jobs.length) return render();
+            const [url, ids, list, key] = jobs[i];
+            putJSONSync(url, ids, (err) => {
+                if (err) { ui.serviceError(err); return render(); }
+                ids.forEach((id, n) => { const it = list.find(x => x[key] === id); if (it) it.sortOrder = n; });
+                run(i + 1);
             });
-            el.dataset.idx = idx;
         };
-        const end = () => {
-            stop();
-            if (gh) { gh.remove(); gh = null; }
-            if (el) {
-                el.classList.remove('drag-orig');
-                let n = parseInt(el.dataset.idx, 10), o = its.indexOf(el);
-                if (!isNaN(n) && n !== o) {
-                    list.insertBefore(el, its[n] || null);
-                    ch = true;
-                }
-            }
-            its.forEach(it => it.style.transform = "");
-            if (ch && typeof cb === 'function') cb(list);
-            el = null; ch = false; its = [];
-            list.classList.remove('dragging-active');
-            // Retire les écouteurs globaux posés par start() pour CETTE session de drag -- ne
-            // touche à rien qui appartienne à un autre appel de setListDraggable() (voir le
-            // commentaire de start() : chaque liste room/shade/group a désormais sa propre paire
-            // move/end, plus de variables globales window._drag* partagées entre elles).
-            window.removeEventListener('touchmove', move);
-            window.removeEventListener('touchend', end);
-            window.removeEventListener('mousemove', move);
-            window.removeEventListener('mouseup', end);
+        run(0);
+    }
+    toggleCardHidden(kind, id) {
+        this.setCardUIPrefs(kind, id, { hidden: !this.cardUIPrefs(kind, id).hidden });
+    }
+    _dashOrder() {
+        const ids = (sel, attr) => [...document.querySelectorAll(sel)].map(el => parseInt(el.getAttribute(attr), 10));
+        return {
+            shades: ids('#divShadeControls .somfyShadeCtl', 'data-shadeid'),
+            groups: ids('#divGroupControls .somfyGroupCtl', 'data-groupid'),
+            rooms: ids('#divShadeControls .dash-room-title', 'data-roomid').filter(id => id !== 0)
         };
-        const move = (e) => {
-            if (!gh) return;
-            if (e.cancelable) e.preventDefault();
-            let t = e.touches ? e.touches[0] : e;
-            cY = t.clientY;
-            gh.style.transform = "translateY(" + (cY - sY) + "px)";
-            scroll(cY);
-            sort();
-        };
-        const start = (e, it) => {
-            if (e.type === 'mousedown') e.preventDefault();
-            el = it;
-            r = el.getBoundingClientRect();
-            its = Array.prototype.slice.call(list.querySelectorAll(cl));
-            let t = e.touches ? e.touches[0] : e;
-            sY = cY = t.clientY;
-
-            gh = el.cloneNode(true);
-            gh.className = 'drag-ghost';
-
-            const style = window.getComputedStyle(el);
-            Object.assign(gh.style, {
-                width: r.width + 'px',
-                height: r.height + 'px',
-                top: r.top + 'px',
-                left: r.left + 'px',
-            });
-            document.body.appendChild(gh);
-            el.classList.add('drag-orig');
-            // Coupe le scroll interne de la liste (overflow-y:auto, cf. .edit-motorlist/.edit-
-            // roomlist/.edit-grouplist dans main.css) pendant la session de drag : sort() décale
-            // les cartes voisines via transform (translateY), qui peut gonfler transitoirement le
-            // débordement scrollable perçu par le moteur de rendu -- observé sur Vivaldi (barre de
-            // défilement qui clignote brièvement pendant le drag, absent sur Chrome/Firefox). Le
-            // scroll de la liste elle-même n'est de toute façon jamais utilisé pendant un drag :
-            // scroll() plus haut ne défile QUE la page (window.scrollBy), jamais ce conteneur.
-            list.classList.add('dragging-active');
-            if (navigator.vibrate) navigator.vibrate(30);
-
-            // Écouteurs globaux posés ICI (par session de drag), pas au setup de la liste --
-            // setListDraggable() est appelé une fois par liste (rooms/shades/groups), et à chaque
-            // rafraîchissement de chacune (setRoomsList/setShadesList/setGroupsList rappellent
-            // toutes systématiquement setListDraggable() en fin de rendu). L'ancienne implémentation
-            // gardait move/end dans UNE SEULE paire de handlers globaux (window._dragMoveHandler
-            // etc.), partagée par les 3 listes : le dernier appel à setListDraggable() "gagnait"
-            // toujours ces handlers globaux, et les 2 autres listes perdaient alors tout mousemove/
-            // mouseup fonctionnel -- leur start() créait bien un ghost (mousedown/touchstart restent
-            // attachés séparément par liste, ligne plus bas), mais plus rien ne le faisait suivre la
-            // souris ni ne le nettoyait au relâchement : ghost bloqué indéfiniment à l'écran. Chaque
-            // session de drag pose maintenant SA PROPRE paire (ajoutée ici, retirée dans end()), sans
-            // dépendre d'un état partagé entre les 3 listes.
-            window.addEventListener('touchmove', move, {passive:false});
-            window.addEventListener('touchend', end);
-            window.addEventListener('mousemove', move);
-            window.addEventListener('mouseup', end);
-        };
-
-        list.querySelectorAll(cl).forEach(it => {
-            let h = it.querySelector('.drag-handle');
-            if (h) {
-                h.addEventListener('touchstart', (e) => start(e, it), {passive:true});
-                h.addEventListener('mousedown', (e) => start(e, it));
-            }
+    }
+    _mergeOrder(full, visible) {
+        const vis = visible.filter(id => full.includes(id));
+        const set = new Set(vis);
+        let k = 0;
+        return full.map(id => set.has(id) ? vis[k++] : id);
+    }
+    _bindDashSort(pnl) {
+        if (this._dashSortBound) return;
+        this._dashSortBound = true;
+        pnl.addEventListener('pointerdown', (e) => this._dashPointerDown(e));
+        pnl.addEventListener('touchmove', (e) => { if (this._dashDrag?.live && e.cancelable) e.preventDefault(); }, { passive: false });
+        pnl.addEventListener('contextmenu', (e) => { if (this.dashEditing) e.preventDefault(); });
+        document.addEventListener('keydown', (e) => {
+            if (!this.dashEditing || e.key !== 'Escape') return;
+            if (this._dashDrag) this._dashDrop(this._dashDrag, true);
+            else this.endDashEdit(false);
         });
+    }
+    _dashPointerDown(e) {
+        if (!this.dashEditing || this._dashDrag || (e.pointerType === 'mouse' && e.button !== 0)) return;
+        if (e.target.closest('.dash-edit-eye')) return;
+        const title = e.target.closest('#divShadeControls .dash-room-title');
+        const el = title || e.target.closest('.somfyShadeCtl, .somfyGroupCtl');
+        if (!el || (title && parseInt(title.dataset.roomid, 10) === 0)) return;
+        if (e.pointerType === 'mouse') e.preventDefault();
+        const r = el.getBoundingClientRect();
+        const st = { el, room: !!title, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, gx: e.clientX - r.left, gy: e.clientY - r.top, pid: e.pointerId, live: false, lock: 0 };
+        this._dashDrag = st;
+        const off = () => {
+            clearTimeout(st.timer);
+            window.removeEventListener('pointermove', move);
+            window.removeEventListener('pointerup', up);
+            window.removeEventListener('pointercancel', cancel);
+        };
+        const move = (ev) => {
+            if (ev.pointerId !== st.pid) return;
+            st.x = ev.clientX; st.y = ev.clientY;
+            const dist = Math.hypot(st.x - st.x0, st.y - st.y0);
+            if (!st.live) {
+                if (e.pointerType === 'mouse' && dist > 4) this._dashLift(st);
+                else if (e.pointerType !== 'mouse' && dist > 8) { off(); this._dashDrag = null; }
+                return;
+            }
+            this._dashMove(st);
+        };
+        const up = (ev) => {
+            if (ev.pointerId !== st.pid) return;
+            off();
+            if (st.live) this._dashDrop(st, false);
+            else this._dashDrag = null;
+        };
+        const cancel = (ev) => {
+            if (ev.pointerId !== st.pid) return;
+            off();
+            if (st.live) this._dashDrop(st, false);
+            else this._dashDrag = null;
+        };
+        st.off = off;
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', up);
+        window.addEventListener('pointercancel', cancel);
+        if (e.pointerType !== 'mouse') st.timer = setTimeout(() => { if (this._dashDrag === st && !st.live) this._dashLift(st); }, 250);
+    }
+    _dashLift(st) {
+        const el = st.el;
+        st.box = st.room ? get('divShadeControls') : el.parentElement;
+        if (st.room) st.box.classList.add('dash-rooms-collapsed');
+        const r = el.getBoundingClientRect();
+        const slot = document.createElement('div');
+        slot.className = 'dash-drop-slot' + (st.room ? ' is-room' : '');
+        slot.style.height = r.height + 'px';
+        el.before(slot);
+        const left = st.x - Math.min(st.gx, r.width - 12), top = st.y - Math.min(st.gy, r.height - 12);
+        Object.assign(el.style, { position: 'fixed', left: left + 'px', top: top + 'px', width: r.width + 'px', height: r.height + 'px', margin: '0' });
+        const r2 = el.getBoundingClientRect();
+        el.style.left = (2 * left - r2.left) + 'px';
+        el.style.top = (2 * top - r2.top) + 'px';
+        el.classList.add('dash-lifted');
+        st.slot = slot;
+        st.lx = st.x; st.ly = st.y;
+        st.live = true;
+        st.scroller = this._dashScroller(st.box);
+        if (navigator.vibrate) navigator.vibrate(30);
+        const loop = () => {
+            if (!st.live) return;
+            const b = st.scroller === window ? { top: 0, bottom: window.innerHeight } : st.scroller.getBoundingClientRect();
+            const edge = 70;
+            let v = 0;
+            if (st.y < b.top + edge) v = -Math.ceil((b.top + edge - st.y) / 5);
+            else if (st.y > b.bottom - edge) v = Math.ceil((st.y - b.bottom + edge) / 5);
+            if (v) { st.scroller.scrollBy(0, v); this._dashHit(st); }
+            st.raf = requestAnimationFrame(loop);
+        };
+        st.raf = requestAnimationFrame(loop);
+    }
+    _dashScroller(node) {
+        for (let n = node; n && n !== document.body; n = n.parentElement) {
+            const oy = getComputedStyle(n).overflowY;
+            if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight) return n;
+        }
+        return window;
+    }
+    _dashCandidates(st) {
+        const el = st.el;
+        let list;
+        if (st.room) list = [...st.box.querySelectorAll('.dash-room-title')].filter(t => t.dataset.roomid !== '0');
+        else if (el.classList.contains('somfyShadeCtl')) list = [...st.box.querySelectorAll('.somfyShadeCtl')].filter(c => c.dataset.roomid === el.dataset.roomid);
+        else list = [...st.box.querySelectorAll('.somfyGroupCtl')];
+        return list.filter(c => c !== el && c.offsetParent !== null);
+    }
+    _dashMove(st) {
+        st.el.style.transform = `translate(${st.x - st.lx}px, ${st.y - st.ly}px)`;
+        this._dashHit(st);
+    }
+    _dashHit(st) {
+        if (Date.now() < st.lock) return;
+        const items = this._dashCandidates(st);
+        if (!items.length) return;
+        const inside = (r) => st.x >= r.left && st.x <= r.right && st.y >= r.top && st.y <= r.bottom;
+        let target = items.find(c => inside(c.getBoundingClientRect()));
+        let after = false;
+        if (!target) {
+            const last = items[items.length - 1], lr = last.getBoundingClientRect();
+            if (st.y > lr.bottom || (st.y >= lr.top && st.x > lr.right)) { target = last; after = true; }
+        }
+        if (!target) return;
+        const slot = st.slot;
+        const slotFirst = !!(slot.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING);
+        if (after && !slotFirst) return;
+        this._dashFlip(items, () => {
+            if (after || slotFirst) target.after(slot);
+            else target.before(slot);
+        });
+        st.lock = Date.now() + 160;
+    }
+    _dashFlip(items, fn) {
+        const first = new Map(items.map(it => [it, it.getBoundingClientRect()]));
+        fn();
+        items.forEach(it => {
+            const a = first.get(it), b = it.getBoundingClientRect();
+            const dx = a.left - b.left, dy = a.top - b.top;
+            if (dx || dy) it.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 180, easing: 'ease-out' });
+        });
+    }
+    _dashDrop(st, cancel) {
+        st.off?.();
+        st.live = false;
+        cancelAnimationFrame(st.raf);
+        this._dashDrag = null;
+        const el = st.el;
+        if (!st.slot) return;
+        const a = el.getBoundingClientRect();
+        Object.assign(el.style, { position: '', left: '', top: '', width: '', height: '', margin: '', transform: '' });
+        el.classList.remove('dash-lifted');
+        if (cancel) st.slot.remove();
+        else st.slot.replaceWith(el);
+        if (st.room) {
+            const box = st.box;
+            const titles = [...box.querySelectorAll('.dash-room-title')];
+            const cards = [...box.querySelectorAll('.somfyShadeCtl')];
+            titles.forEach(t => {
+                box.appendChild(t);
+                cards.filter(c => c.dataset.roomid === t.dataset.roomid).forEach(c => box.appendChild(c));
+            });
+            box.classList.remove('dash-rooms-collapsed');
+            const pills = get('divRoomSelector');
+            if (pills) {
+                const ids = this._mergeOrder([...pills.querySelectorAll('.room-pill')].map(p => p.dataset.roomid).filter(id => id !== '0'), titles.map(t => t.dataset.roomid).filter(id => id !== '0'));
+                ids.forEach(id => { const p = pills.querySelector(`.room-pill[data-roomid="${id}"]`); if (p) pills.appendChild(p); });
+            }
+            return;
+        }
+        const b = el.getBoundingClientRect();
+        const dx = a.left - b.left, dy = a.top - b.top;
+        if (dx || dy) el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 200, easing: 'ease-out' });
     }
     // Liaison d'un répéteur sur la trame reçue pendant son écran d'attente. Celle d'une télécommande
     // à un équipement passe par shadeSetup.onFrame (tâche « Lier Télécommande »).
@@ -3679,9 +3796,63 @@ class Somfy {
                 : shades.filter(s => s.roomId === roomId).length + groups.filter(g => g.roomId === roomId).length;
             countEl.innerText = count;
         });
+        document.querySelectorAll('#divRoomList .cfg-tile').forEach(tile => {
+            const roomId = parseInt(tile.dataset.roomid, 10);
+            const set = (kind, n) => { const b = tile.querySelector(`.cfg-tile-stat[data-kind="${kind}"] b`); if (b) b.textContent = n; };
+            set('shade', shades.filter(s => s.roomId === roomId).length);
+            set('group', groups.filter(g => g.roomId === roomId).length);
+        });
+    }
+    cfgTileMenu(editJs, deleteJs) {
+        return `<div class="cfg-tile-menu overlayHeader-dropdown-container" onclick="event.stopPropagation();">
+        <button type="button" class="cfg-tile-more" title="${tr('OPTION')}" onclick="somfy.toggleTileMenu(this);"><svg><use href="#svg-menuVertical"></use></svg></button>
+        <div class="overlayHeader-dropdown-menu">
+        <div class="dropdown-item" onclick="this.parentElement.classList.remove('show'); ${editJs};"><svg><use href="#svg-edit"></use></svg>${tr('BT_EDIT')}</div>
+        <div class="dropdown-item is-danger" onclick="this.parentElement.classList.remove('show'); ${deleteJs};"><svg><use href="#svg-trash"></use></svg>${tr('BT_DELETE')}</div>
+        </div>
+        </div>`;
+    }
+    shadeTileHtml(shade) {
+        const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { indic: 'svg-indicRoller' };
+        const typeKey = document.querySelector(`#selShadeType option[value="${shade.shadeType}"]`)?.getAttribute('tr');
+        return `<div class="cfg-tile" data-roomid="${shade.roomId}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-shadetype="${shade.shadeType}" onclick="somfy.openEditShade(${shade.shadeId});">
+        <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#${st.indic}"></use></svg></span>${this.cfgTileMenu(`somfy.openEditShade(${shade.shadeId})`, `somfy.deleteShade(${shade.shadeId})`)}</div>
+        <div class="cfg-tile-name"><span class="name-text">${escHtml(shade.name)}</span>${typeKey ? `<span class="cfg-tile-sub">${tr(typeKey)}</span>` : ''}</div>
+        <div class="cfg-tile-foot"><span class="cfg-tile-id">${tr('ID')}${shade.remoteAddress}</span>${typeof shadeSetup !== 'undefined' ? shadeSetup.badgeHtml(shade) : ''}</div>
+        </div>`;
+    }
+    groupTileHtml(group) {
+        const members = group.linkedShades || [];
+        const icons = members.slice(0, 3).map(m => {
+            const sh = (this.shades || []).find(x => x.shadeId === m.shadeId);
+            const st = this.shadeTypes.find(x => x.type === (sh ? sh.shadeType : m.shadeType)) || { indic: 'svg-indicRoller' };
+            return `<span><svg><use href="#${st.indic}"></use></svg></span>`;
+        }).join('') + (members.length > 3 ? `<span class="cfg-tile-more-n">+${members.length - 3}</span>` : '');
+        return `<div class="cfg-tile" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});">
+        <div class="cfg-tile-top">${members.length ? `<span class="cfg-tile-stack">${icons}</span>` : `<span class="cfg-tile-icon"><svg><use href="#svg-group"></use></svg></span>`}${this.cfgTileMenu(`somfy.openEditGroup(${group.groupId})`, `somfy.deleteGroup(${group.groupId})`)}</div>
+        <div class="cfg-tile-name"><span class="name-text">${escHtml(group.name)}</span><span class="cfg-tile-sub">${tr('GROUP_LINKED_COUNT').replace('{n}', members.length)}</span></div>
+        <div class="cfg-tile-foot"><span class="cfg-tile-id">${tr('ID')}${group.remoteAddress}</span></div>
+        </div>`;
+    }
+    toggleTileMenu(btn) {
+        const menu = btn.nextElementSibling;
+        document.querySelectorAll('.overlayHeader-dropdown-menu.show').forEach(m => { if (m !== menu) m.classList.remove('show'); });
+        menu.classList.toggle('show');
+    }
+    cfgTilesByRoom(items, html) {
+        const byRoom = new Map();
+        items.forEach(it => { if (!byRoom.has(it.roomId)) byRoom.set(it.roomId, []); byRoom.get(it.roomId).push(html(it)); });
+        const order = _rooms.map(r => r.roomId).filter(id => byRoom.has(id));
+        byRoom.forEach((v, id) => { if (!order.includes(id)) order.push(id); });
+        const titled = _rooms.length > 1;
+        return order.map(id => {
+            const room = _rooms.find(r => r.roomId === id) || { name: tr('HOME') };
+            return (titled ? `<div class="cfg-tiles-title">${escHtml(room.name)}<span>${byRoom.get(id).length}</span></div>` : '') + byRoom.get(id).join('');
+        }).join('');
     }
 
     setRoomsList(rooms) {
+        if (this.dashEditing) { this._dashPending.rooms = rooms; return; }
         let divCfg = '';
         const homeName = tr('HOME');
         const slider = get('divRoomSelector');
@@ -3693,15 +3864,10 @@ class Somfy {
         rooms.forEach(room => {
             divPills += `<div class="room-pill animScale" data-roomid="${room.roomId}" onclick="somfy.selectRoom(${room.roomId})"><span>${escHtml(room.name)}</span><span class="room-count">0</span></div>`;
 
-            // Même design que les cartes équipement/groupe (setShadesList/setGroupsList) : carte entière
-            // cliquable, crayon retiré, poignée/poubelle isolent leur clic (event.stopPropagation()).
-            // Différences propres à la pièce : pas d'idRemoteAddress (une pièce n'a pas d'ID radio)
-            // et icône fixe svg-emptyRoom (pas de mapping par type).
-            divCfg += `<div class="somfyRoom room-draggable" data-roomid="${room.roomId}" onclick="somfy.openEditRoom(${room.roomId});">
-            <div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div>
-            <div class="shade-icon-wrapper"><svg><use href="#svg-emptyRoom"></use></svg></div>
-            <div class="room-name"><span class="name-text">${escHtml(room.name)}</span></div>
-            <div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteRoom(${room.roomId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div>
+            divCfg += `<div class="cfg-tile" data-roomid="${room.roomId}" onclick="somfy.openEditRoom(${room.roomId});">
+            <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#svg-emptyRoom"></use></svg></span>${this.cfgTileMenu(`somfy.openEditRoom(${room.roomId})`, `somfy.deleteRoom(${room.roomId})`)}</div>
+            <div class="cfg-tile-name"><span class="name-text">${escHtml(room.name)}</span></div>
+            <div class="cfg-tile-foot"><span class="cfg-tile-stat" data-kind="shade"><b>0</b> ${tr('SUBTAB_DEVICES')}</span><span class="cfg-tile-stat" data-kind="group"><b>0</b> ${tr('SUBTAB_GROUPS')}</span></div>
             </div>`;
 
             divOpts += `<option value="${room.roomId}">${escHtml(room.name)}</option>`;
@@ -3720,15 +3886,6 @@ class Somfy {
 
         this.checkEmptyState();
         this.updateRoomCounts();
-        this.setListDraggable(get('divRoomList'), '.room-draggable', (list) => {
-            let order = Array.from(list.querySelectorAll('.room-draggable')).map(item =>
-            parseInt(item.getAttribute('data-roomid'), 10)
-            );
-            putJSONSync('/roomSortOrder', order, (err) => {
-                if (err) ui.serviceError(err);
-                else this.updateRoomsList();
-            });
-        });
 
         this.initHorizontalScroll(slider);
     }
@@ -4074,8 +4231,8 @@ class Somfy {
     // =========================================================================
 
     setShadesList(shades) {
+        if (this.dashEditing) { this._dashPending.shades = shades; return; }
         this.shades = shades;
-        let divCfg = '';
         let divCtl = '';
         shades.sort((a, b) => { return a.sortOrder - b.sortOrder });
         logger.debug('Shade list updated,', shades.length, 'shades');
@@ -4138,10 +4295,6 @@ class Somfy {
             const carouselPages = [buttonsPage, positionPage, tiltPage].filter(p => p !== '');
             const totalPages = carouselPages.length;
 
-            // Carte cliquable (comme .schedule-card) : le crayon d'édition a disparu, tout le corps
-            // de la carte ouvre l'édition -- seules la poignée de drag et la poubelle isolent leur
-            // clic (event.stopPropagation()) pour ne pas déclencher l'ouverture par accident.
-            divCfg += `<div class="somfyShade shade-draggable" draggable="true" data-roomid="${shade.roomId}" data-mypos="${shade.myPos}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-tilt="${shade.tiltType}" data-shadetype="${shade.shadeType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}" onclick="somfy.openEditShade(${shade.shadeId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#${st.indic}"></use></svg></div><div class="shade-name"><div class="name-text">${escHtml(shade.name)}</div><div class="cfg-room">${escHtml(room.name)}</div></div>${typeof shadeSetup !== 'undefined' ? shadeSetup.badgeHtml(shade) : ''}<div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="shade-address">${shade.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteShade(${shade.shadeId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
 
             const pagesSeg = totalPages > 1 ? `<div class="card-page-seg page-dots" id="carouselDots_${shade.shadeId}">${[['OPT_PAGE_BUTTONS', '<i class="seg-glyph seg-btns"><b></b><b></b><b></b></i>'], ['IS_POSITION', '<i class="seg-glyph seg-bar"><b></b></i>'], ['OPT_PAGE_TILT', '<i class="seg-glyph seg-tilt"></i>']].slice(0, totalPages).map(([k, g], p) => `<button type="button" class="dot${p === 0 ? ' active' : ''}" title="${tr(k)}" onclick="somfy.shadeCarouselGoTo(${shade.shadeId}, ${p});">${g}</button>`).join('')}</div>` : '';
             const iconPos = shade.flipPosition ? 100 - shade.position : shade.position;
@@ -4160,6 +4313,7 @@ class Somfy {
             <div class="indicator indicator-sun"><svg><use href="#indic-sun"></use></svg></div>
             </div>
             <button type="button" class="card-expand" title="${tr('CARD_DETAILS')}" onclick="somfy.openCardSheet('shade', ${shade.shadeId});"><svg><use href="#svg-add"></use></svg></button>
+            <button type="button" class="dash-edit-eye" title="${tr('CARD_OPT_HIDE')}" onclick="somfy.toggleCardHidden('shade', ${shade.shadeId});"><svg class="eye-on"><use href="#svg-eyeOn"></use></svg><svg class="eye-off"><use href="#svg-eyeOff"></use></svg></button>
             </div>
             <div class="shadectl-controls-wrapper">
             ${pagesSeg}
@@ -4182,12 +4336,12 @@ class Somfy {
         roomOrder.forEach(id => {
             if (withTitles) {
                 const room = _rooms.find(r => r.roomId === id) || { name: tr('HOME') };
-                divCtl += `<div class="dash-room-title" data-roomid="${id}" style="${roomId === 0 || roomId === id ? '' : 'display:none'}"><span>${escHtml(room.name)}</span><span class="dash-room-count"></span></div>`;
+                divCtl += `<div class="dash-room-title" data-roomid="${id}" style="${roomId === 0 || roomId === id ? '' : 'display:none'}"><span class="dash-room-grip"><svg><use href="#svg-drag"></use></svg></span><span>${escHtml(room.name)}</span><span class="dash-room-count"></span></div>`;
             }
             divCtl += byRoom.get(id).join('');
         });
         this.syncVRLayout();
-        get('divShadeList').innerHTML = divCfg;
+        get('divShadeList').innerHTML = this.cfgTilesByRoom(shades, shade => this.shadeTileHtml(shade));
         let shadeControls = get('divShadeControls');
         shadeControls.innerHTML = divCtl;
         this.checkEmptyState();
@@ -4201,18 +4355,6 @@ class Somfy {
         }
         this.syncHiddenCards();
         this.updateRoomCounts();
-        this.setListDraggable(get('divShadeList'), '.shade-draggable', (list) => {
-            let items = list.querySelectorAll('.shade-draggable');
-            let order = [];
-            for (let i = 0; i < items.length; i++) {
-                order.push(parseInt(items[i].getAttribute('data-shadeid'), 10));
-            }
-            putJSONSync('/shadeSortOrder', order, (err) => {
-                if (err) return;
-                order.forEach((id, i) => { const sh = (this.shades || []).find(x => x.shadeId === id); if (sh) sh.sortOrder = i; });
-                this.setShadesList(this.shades);
-            });
-        });
         this._syncScheduleIndicators();
     }
     // Appui long sur les boutons de commande : maintenir 2s sur up/down déclenche
@@ -5694,8 +5836,8 @@ class Somfy {
     // =========================================================================
 
     setGroupsList(groups) {
+        if (this.dashEditing) { this._dashPending.groups = groups; return; }
         this.groups = groups;
-        let divCfg = '';
         let divCtl = '';
         let roomId = document.querySelector('.room-pill.active') ? parseInt(document.querySelector('.room-pill.active').getAttribute('data-roomid'), 10) : 0;
 
@@ -5710,13 +5852,6 @@ class Somfy {
                 let isSunActive = (group.flags & 0x01) ? 'true' : 'false';
                 let equipmentText = tr('GROUP_LINKED_COUNT').replace('{n}', memberCount);
 
-                // --- Section Configuration ---
-                // Même design que la carte équipement (setShadesList) : carte entière cliquable, crayon
-                // retiré, poignée/poubelle isolent leur clic (event.stopPropagation()). Seule
-                // différence : un unique svg-group fixe dans .shade-icon-wrapper (pas de mapping
-                // par type, les groupes n'en ont pas).
-                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#svg-group"></use></svg></div><div class="group-name"><div class="name-text">${escHtml(group.name)}</div><div class="cfg-room">${escHtml(room.name)}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
-
                 divCtl += `<div class="somfyGroupCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-groupid="${group.groupId}" data-roomid="${group.roomId}" data-remoteaddress="${group.remoteAddress}">
                 <div class="dash-card-content">
                 <div class="dash-card-header">
@@ -5726,6 +5861,7 @@ class Somfy {
                 <span class="groupctl-shades"><span class="groupctl-open">${equipmentText}</span></span>
                 </div>
                 <button type="button" class="card-expand" title="${tr('CARD_DETAILS')}" onclick="somfy.openCardSheet('group', ${group.groupId});"><svg><use href="#svg-add"></use></svg></button>
+                <button type="button" class="dash-edit-eye" title="${tr('CARD_OPT_HIDE')}" onclick="somfy.toggleCardHidden('group', ${group.groupId});"><svg class="eye-on"><use href="#svg-eyeOn"></use></svg><svg class="eye-off"><use href="#svg-eyeOff"></use></svg></button>
                 </div>
                 <div class="groupctl-buttons">
                 <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="up" data-groupid="${group.groupId}" title="${tr("BT_OPEN")}"><svg><use href="#svg-up"></use></svg></div>
@@ -5738,7 +5874,7 @@ class Somfy {
             }
         }
         this.syncVRLayout();
-        get('divGroupList').innerHTML = divCfg;
+        get('divGroupList').innerHTML = this.cfgTilesByRoom(groups || [], group => this.groupTileHtml(group));
         let groupControls = get('divGroupControls');
         groupControls.innerHTML = divCtl;
         this.checkEmptyState();
@@ -5761,21 +5897,6 @@ class Somfy {
         this.syncHiddenCards();
         this.updateRoomCounts();
         this.syncGroupMovement();
-        this.setListDraggable(get('divGroupList'), '.group-draggable', (list) => {
-            let items = list.querySelectorAll('.group-draggable');
-            let order = [];
-            for (let i = 0; i < items.length; i++) {
-                order.push(parseInt(items[i].getAttribute('data-groupid'), 10));
-            }
-            putJSONSync('/groupSortOrder', order, (err) => {
-                for (let i = order.length - 1; i >= 0; i--) {
-                    let el = groupControls.querySelector(`.somfyGroupCtl[data-groupid="${order[i]}"`);
-                    if (el) {
-                        groupControls.prepend(el);
-                    }
-                }
-            });
-        });
         this._syncScheduleIndicators();
     }
     setLinkedShadesList(group) {

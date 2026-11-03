@@ -958,6 +958,7 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
     const leafId = _resolveDefaultChild(grpid);
     const topId = (leafId === 'divHomePnl') ? 'divHomePnl' : (ROUTE_LEAF_PARENT[leafId] || leafId);
     const isDashboard = (topId === 'divHomePnl');
+    if (!isDashboard && typeof somfy !== 'undefined' && somfy.dashEditing) somfy.endDashEdit(true);
     let activeEditor = null;
 
     // Garde d'authentification, appliquée avant toute bascule DOM : un lien profond (#schedules)
