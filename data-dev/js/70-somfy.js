@@ -1703,6 +1703,7 @@ class Somfy {
         pnl.addEventListener('contextmenu', (e) => { if (this.dashEditing) e.preventDefault(); });
         document.addEventListener('keydown', (e) => {
             if (!this.dashEditing || e.key !== 'Escape') return;
+            if (document.querySelector('.modal-overlay')) return;
             if (this._dashDrag) this._dashDrop(this._dashDrag, true);
             else this.endDashEdit(false);
         });
