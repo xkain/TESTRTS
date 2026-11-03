@@ -868,11 +868,6 @@ function _setBreadcrumbLink(el, targetGrpid) {
         el.removeAttribute('tabindex');
     }
 }
-function setSidebarIdentity(hostname, version) {
-    const host = get('spanSidebarHost'), ver = get('spanSidebarVersion');
-    if (host && hostname) host.textContent = hostname;
-    if (ver && version) ver.textContent = /^v/i.test(version) ? version : 'v' + version;
-}
 function _updateBreadcrumb(topId, leafId, detailLabel = null) {
     const bc = get('divSectionBreadcrumb');
     if (!bc) return;

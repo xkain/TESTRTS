@@ -399,10 +399,9 @@ class Somfy {
                 }
         
                 const isRadioInit = somfy.transceiver?.config?.radioInit;
-                const sideNote = get('barsideRadioDisable');
                 if (radioTab) {
                     radioTab.classList.toggle('radio-error', !isRadioInit);
-                    if (sideNote) sideNote.style.display = isRadioInit ? 'none' : 'inline';
+                    setSidebarRadioState(!!isRadioInit);
                     if (row) row.classList.toggle('radioOn', !!isRadioInit);
                 }
                 this.renderRadioFleet();
@@ -540,12 +539,11 @@ class Somfy {
 
                     const init = res.config.radioInit,
                     tab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]'),
-                            sn = get('barsideRadioDisable'),
                             cb = get('cbEnableRadio');
 
                             if (tab) {
                                 tab.classList.toggle('radio-error', !init);
-                                if (sn) sn.style.display = init ? 'none' : 'inline';
+                                setSidebarRadioState(!!init);
                                 get('divRadioEnableColor').classList.toggle('radioOn', !!init);
                             }
                             this.updateWelcomeSteps();

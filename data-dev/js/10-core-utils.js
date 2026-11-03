@@ -540,6 +540,25 @@ function displayUptime(totalSeconds, className) {
         el.textContent = timeString;
     });
 }
+function displayUptimeShort(totalSeconds) {
+    const elements = document.querySelectorAll('.uptime-short');
+    if (elements.length === 0 || isNaN(totalSeconds)) return;
+    const t = parseInt(totalSeconds, 10);
+    const d = Math.floor(t / 86400), h = Math.floor((t % 86400) / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+    const p2 = n => String(n).padStart(2, '0');
+    let text;
+    if (d) text = `${d} ${tr('UNIT_DAY')} ${p2(h)}:${p2(m)}:${p2(s)}`;
+    else if (h) text = `${h}:${p2(m)}:${p2(s)}`;
+    else if (m) text = `${m} ${tr('UNIT_MIN')} ${p2(s)} ${tr('UNIT_SEC')}`;
+    else text = `${s} ${tr('UNIT_SEC')}`;
+    elements.forEach(el => { el.textContent = text; });
+}
+function setSidebarRadioState(on) {
+    const cell = get('sidebarRadioStatus');
+    if (!cell) return;
+    cell.classList.toggle('is-off', !on);
+    cell.title = tr(on ? 'RADIO_ACTIVITY_TOOLTIP' : 'RADIO_DISABLED');
+}
 var errors = [
     { code: -10, key: 'ERR_PIN_TRANSCEIVER' },
     { code: -11, key: 'ERR_PIN_ETHERNET' },

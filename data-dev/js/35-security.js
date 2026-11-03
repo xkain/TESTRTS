@@ -103,6 +103,7 @@ class Security {
                     if (ctx.uptime !== undefined) {
                         deviceUptimeSeconds = ctx.uptime;
                         displayUptime(deviceUptimeSeconds, 'uptime-display');
+                        displayUptimeShort(deviceUptimeSeconds);
                     }
                     if (ctx.netUptime !== undefined) {
                         netUptimeSeconds = ctx.netUptime;
@@ -132,6 +133,7 @@ class Security {
                         // On ajoute une seconde à l'uptime de l'appareil
                         deviceUptimeSeconds++;
                         displayUptime(deviceUptimeSeconds, 'uptime-display');
+                        displayUptimeShort(deviceUptimeSeconds);
 
                         // On ajoute une seconde à l'uptime réseau uniquement s'il est connecté (> 0)
                         if (netUptimeSeconds > 0) {
@@ -225,7 +227,6 @@ class Security {
                     // l'assistant (cf. Wifi.networkConfirmationOverlay()).
                     window.__onboardingDone = !!ctx.onboardingDone;
                     window.__currentHostname = ctx.hostname || '';
-                    setSidebarIdentity(ctx.hostname, ctx.version);
                     // Disponible dès ce tout premier appel (avant l'ouverture du Wizard) pour que
                     // le panneau Réseau connaisse le profil matériel sans dépendre d'un fetch séparé
                     // vers /modulesettings une fois le Wizard déjà affiché.
