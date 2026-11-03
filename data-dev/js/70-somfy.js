@@ -4445,11 +4445,12 @@ class Somfy {
             <div class="popup-actions"><button type="button" pop data-act="store"></button></div>`;
         }
         const cur = shade.flipPosition ? 100 - shade.position : shade.position;
+        const target = shade.flipPosition ? 100 - cs.draft.p : cs.draft.p;
         return `${head}
         <div class="sheet-my-cmp">
         <div><svg class="somfy-shade-icon" data-shadeid="${shade.shadeId}" style="--shade-position:${cur}; --fpos:${cur}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use></svg><span>${tr('CARD_MY_CURRENT')}</span><b>${fmt(shade.position, shade.tiltPosition || 0)}</b></div>
         <em>→</em>
-        <div class="sheet-my-target"><svg class="somfy-shade-icon card-panel-preview"><use href="#${st.ico}"></use></svg><span>${tr('SETMYPOS_TITLE')}</span><b class="sheet-my-target-val">${fmt(cs.draft.p, cs.draft.t)}</b></div>
+        <div class="sheet-my-target"><svg class="somfy-shade-icon card-panel-preview" style="--shade-position:${tiltType === 3 ? cur : target}; --fpos:${target}%; --shade-tilt:${tiltType ? cs.draft.t : 0}"><use href="#${st.ico}"></use></svg><span>${tr('SETMYPOS_TITLE')}</span><b class="sheet-my-target-val">${fmt(cs.draft.p, cs.draft.t)}</b></div>
         </div>
         <p class="card-sheet-hint">${tr('CARD_MY_VALUE_HINT')}</p>
         ${tiltType !== 3 ? row(false) : ''}${tiltType > 0 ? row(true) : ''}
