@@ -142,13 +142,6 @@ body.onboarding-active #langPromptToast {
     font-weight: bold;
     font-size: 1.5rem;
 }
-.status-item {
-    display: flex;
-    align-items: center;
-    padding-right: 20px;
-    border-right: 1px solid var(--color-text-secondary);
-    height: 40px;
-}
 .status-options {
     display: inline-flex;
     margin-left: 10px;
@@ -175,45 +168,10 @@ body.onboarding-active #langPromptToast {
     align-items: center;
     cursor: pointer;
 }
-.uptime-chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 14px;
-    gap: 12px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    user-select: none;
-}
-.uptime-text-block {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    line-height: 1.25;
-}
-.uptime-value-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
 .uptime-display {
     font-size: 0.88em;
     font-weight: 700;
     color: var(--color-text-main);
-}
-.uptime-status-dot {
-    width: 7px;
-    height: 7px;
-    background-color: var(--color-success);
-    border-radius:var(--radius-full);
-    display: inline-block;
-}
-.uptime-arrow-icon {
-    width: 14px;
-    height: 14px;
-    color: var(--color-border-shade-card);
-    transition: transform 0.2s ease;
-}
-.uptime-tooltip-container:hover .uptime-arrow-icon {
-    transform: rotate(180deg);
 }
 /*TOOLTIP*/
 /* Style visuel commun à TOUS les tooltips de l'app (fond, rayon, ombre, typographie du titre) --
@@ -317,16 +275,10 @@ body.onboarding-active #langPromptToast {
     font-weight: 600;
     color: var(--color-text-main);
 }
-.uptime-chip .uptime-display {
-    color: var(--color-text-main);
-}
-.uptime-tooltip .uptime-display.value {
+.uptime-tooltip .uptime-display.value,
+.uptime-tooltip .net-display.value {
     font-size: 1.1em;
     font-weight: 700;
-}
-.uptime-tooltip .net-display.value {
-    font-size: 0.9em;
-    opacity: 0.85;
 }
 /* Bulle "aide" partagée (icônes ? -- GPIO/fréquences radio, crédits firmware, upload/mise à jour) :
    élément UNIQUE ajouté au <body> et positionné en JS en position:fixed, plutôt qu'ancré en CSS pur
@@ -585,101 +537,128 @@ body.onboarding-active #langPromptToast {
 .sidebar-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
-    height: 100px;
+    gap: 11px;
+    height: var(--topbar-height);
     flex-shrink: 0;
     background: color-mix(in srgb, var(--color-accent) 5%, #121316) !important;
-    padding: 0 18px;
+    padding: 0 16px;
     box-sizing: border-box;
     border-bottom: 1px solid #22262d;
 }
 .sidebar-logo {
     display: block;
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     flex-shrink: 0;
     color: #ffffff;
 }
-.sidebar-identity {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-}
-.sidebar-host {
+.sidebar-title {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.05rem;
     color: #ffffff;
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
-}
-.sidebar-version {
-    font-size: 0.78rem;
-    color: #a3a8b2;
-}
-.sidebar-version:empty {
-    display: none;
 }
 .sidebar-status {
     display: flex;
-    align-items: center;
     gap: 6px;
     flex-shrink: 0;
     padding: 10px 12px;
     border-bottom: 1px solid #22262d;
-    font-size: 0.8rem;
+}
+.status-cell {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 0;
+    border-radius: 8px;
+    background: #1a1d22;
+    font-size: 0.7rem;
     color: #c9ccd3;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
-.sidebar-status .radio-activity-dot.radio-activity-radar {
-    width: 28px;
-    height: 28px;
+.status-cell-wide {
+    flex-grow: 1.6;
+    cursor: default;
 }
-.sidebar-status .radio-activity-radar-icon {
-    width: 18px;
-    height: 18px;
+.status-cell-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
     color: #8b919c;
 }
-.sidebar-status .status-item {
-    padding: 0;
-    border: none;
-    height: auto;
+.status-cell-dot {
+    position: absolute;
+    top: 7px;
+    right: 8px;
+    width: 7px;
+    height: 7px;
+    border-radius: var(--radius-full);
+    background: #5d636d;
+}
+.status-cell-dot.is-up {
+    background: var(--color-success);
+}
+.status-cell-dot.is-down {
+    background: var(--color-danger);
 }
 .sidebar-status .status-options {
+    display: inline-flex;
     margin-left: 0;
 }
 .sidebar-status .opt-badge {
     display: none;
 }
 .sidebar-status .opt-badge.active {
-    display: inline-block;
-    color: #e4e7ec;
-    background: #1c2026;
-    border-color: #2c313a;
-    font-size: 0.75rem;
-    padding: 4px 8px;
+    display: inline;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #c9ccd3;
+    font-weight: 400;
 }
-.sidebar-status .uptime-tooltip-container {
-    margin-left: auto;
+.sidebar-status .uptime-tooltip {
+    left: 50%;
+    right: auto;
+    font-size: 1rem;
+    transform: translate(-50%, -8px);
+    white-space: normal;
 }
-.sidebar-status .uptime-chip {
-    gap: 6px;
-    padding: 4px 8px;
-    border-radius: var(--radius-md);
-    background: #1c2026;
+.sidebar-status .uptime-tooltip::before {
+    left: 50%;
+    right: auto;
+    margin-left: -6px;
 }
-.sidebar-status .uptime-chip .uniblocSvg-F {
+.sidebar-status .uptime-tooltip-container:hover .uptime-tooltip {
+    transform: translate(-50%, 0);
+}
+#sidebarRadioStatus.is-off {
+    background: #16181c;
+    color: #5d636d;
+}
+#sidebarRadioStatus.is-off .status-cell-icon {
+    color: #5d636d;
+}
+#sidebarRadioStatus.is-off .status-cell-label {
+    text-decoration: line-through;
+}
+#sidebarRadioStatus.is-off::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 5px;
+    width: 2px;
+    height: 22px;
+    border-radius: 1px;
+    background: #5d636d;
+    transform: translateX(-50%) rotate(45deg);
+}
+#sidebarRadioStatus.is-off .radio-activity-dot {
     display: none;
-}
-.sidebar-status .uptime-chip .uptime-display {
-    font-size: 0.75rem;
-    color: #e4e7ec;
-    font-variant-numeric: tabular-nums;
-}
-.sidebar-status .uptime-arrow-icon {
-    width: 12px;
-    height: 12px;
-    color: #8b919c;
 }
 .sidebar-nav {
     flex-grow: 1;
@@ -746,20 +725,6 @@ body.onboarding-active #langPromptToast {
 }
 .nav-section.active .nav-section-title {
     color: #c9ccd3;
-}
-.nav-badge {
-    margin-left: auto;
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0;
-    text-transform: none;
-    white-space: nowrap;
-}
-.nav-badge-warning {
-    color: #f6c26b;
-    border: 1px solid #8a6420;
 }
 body.fw-update .sub-nav-item[data-grpid="divFirmware"]::after {
     content: "";

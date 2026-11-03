@@ -171,37 +171,21 @@
     <aside class="sidebar">
         <div class="sidebar-brand">
             <svg class="sidebar-logo"><use href="#svg-logo"></use></svg>
-            <div class="sidebar-identity">
-                <span id="spanSidebarHost" class="sidebar-host">ESPSomfy-RTS</span>
-                <span id="spanSidebarVersion" class="sidebar-version"></span>
-            </div>
+            <span class="sidebar-title">ESPSomfy-RTS</span>
         </div>
         <div class="sidebar-status">
-            <span id="headerRadioActivityDesktop" class="radio-activity-dot radio-activity-radar" tr="RADIO_ACTIVITY_TOOLTIP" title="">
-                <span class="radio-activity-radar-glow" aria-hidden="true"></span>
-                <svg class="radio-activity-radar-icon"><use href="#svg-tabRadio"></use></svg>
-            </span>
-            <span class="status-item">
-                <div class="status-options">
+            <div id="sidebarNetStatus" class="status-cell">
+                <svg class="status-cell-icon"><use id="sidebarNetIcon" href="#svg-wifi"></use></svg>
+                <span class="status-options">
                     <span class="opt-badge" id="wifiBadge" data-conn="wifi" tr="TOPBAR_TOOLTIP_WIFI" title="">WIFI</span>
                     <span class="opt-badge" data-conn="lan" tr="TOPBAR_TOOLTIP_LAN" title="">LAN</span>
                     <span class="opt-badge" data-conn="poe" tr="TOPBAR_TOOLTIP_POE" title="">POE</span>
-                </div>
-            </span>
-            <div class="uptime-tooltip-container" title="Détails de la durée de fonctionnement">
-                <div class="uptime-chip">
-                    <div class="uniblocSvg-F">
-                        <svg><use href="#svg-horloge"></use></svg>
-                    </div>
-                    <div class="uptime-text-block">
-                        <div class="uptime-value-row">
-                            <span class="uptime-display">--j --h --m --s</span>
-                            <span class="uptime-status-dot"></span>
-                        </div>
-                    </div>
-                    <svg class="uptime-arrow-icon"><use href="#svg-arrowDown"></use></svg>
-                </div>
-
+                </span>
+                <span id="sidebarNetDot" class="status-cell-dot"></span>
+            </div>
+            <div class="uptime-tooltip-container status-cell status-cell-wide">
+                <svg class="status-cell-icon"><use href="#svg-horloge"></use></svg>
+                <span class="uptime-short">--</span>
                 <div class="uptime-tooltip app-tooltip">
                     <div class="app-tooltip-title" tr="TOPBAR_Uptime"></div>
                     <div class="app-tooltip-row">
@@ -215,6 +199,11 @@
                         <span class="net-display value">--j --h --m --s</span>
                     </div>
                 </div>
+            </div>
+            <div id="sidebarRadioStatus" class="status-cell">
+                <svg class="status-cell-icon"><use href="#svg-tabRadio"></use></svg>
+                <span class="status-cell-label" tr="TAB_RADIO">Radio</span>
+                <span id="headerRadioActivityDesktop" class="radio-activity-dot status-cell-dot" aria-hidden="true"></span>
             </div>
         </div>
         <nav class="sidebar-nav">
@@ -230,7 +219,7 @@
                 <a class="sub-nav-item" data-grpid="divSomfySchedules"><svg class="nav-icon"><use href="#svg-navSchedule"></use></svg><span tr="SUBTAB_SCHEDULES">Plannings</span></a>
             </div>
             <div class="nav-section" data-section="divRadioSettings">
-                <div class="nav-section-title"><span class="nav-section-label" tr="TAB_RADIO">Radio</span><span id="barsideRadioDisable" class="nav-badge nav-badge-warning" style="display: none;" tr="IS_DISABLED">désactivé</span></div>
+                <div class="nav-section-title"><span class="nav-section-label" tr="TAB_RADIO">Radio</span></div>
                 <a class="sub-nav-item" data-grpid="divTransceiverSettings"><svg class="nav-icon"><use href="#svg-antenna"></use></svg><span tr="SUBTAB_RADIO">Configuration</span></a>
                 <a class="sub-nav-item" data-grpid="divListener"><svg class="nav-icon"><use href="#svg-remote"></use></svg><span tr="SUBTAB_LISTENERS">Télécommandes</span></a>
                 <a class="sub-nav-item" data-grpid="divRepeater"><svg class="nav-icon"><use href="#svg-repeater"></use></svg><span tr="SUBTAB_REPEATER">Répéteur</span></a>

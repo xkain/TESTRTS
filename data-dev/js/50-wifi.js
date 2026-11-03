@@ -286,16 +286,19 @@ class Wifi {
     updateMobileNetStatus() {
         if (typeof somfy !== 'undefined') somfy.updateWelcomeSteps();
         const use = get('mobileNetIcon'), dot = get('mobileNetDot'), wrap = get('mobileNetStatus');
-        if (!use || !dot) return;
         const type = this._netType || (this.isHotspot ? 'hotspot' : 'wifi');
         const ICONS = { hotspot: '#svg-hotspot', wifi: '#svg-wifi', lan: '#svg-ethernet', poe: '#svg-ethernet0' };
-        use.setAttribute('href', ICONS[type] || '#svg-wifi');
-
         // Le hotspot est monté par l'appareil lui-même : il n'y a pas de lien distant à perdre,
         // donc jamais d'état "déconnecté" à signaler pour ce mode.
         const up = (type === 'hotspot') ? true
                  : (type === 'wifi') ? !!this._wifiLinkUp
                  : !!this._ethLinkUp;
+        get('sidebarNetIcon')?.setAttribute('href', ICONS[type] || '#svg-wifi');
+        get('sidebarNetDot')?.classList.toggle('is-up', up);
+        get('sidebarNetDot')?.classList.toggle('is-down', !up);
+        if (!use || !dot) return;
+        use.setAttribute('href', ICONS[type] || '#svg-wifi');
+
         dot.classList.toggle('is-up', up);
         dot.classList.toggle('is-down', !up);
         if (wrap) {
@@ -907,10 +910,7 @@ class Wifi {
             if (hostVal && hostVal !== (window.__currentHostname || '')) {
                 putJSONSync('/setgeneral', { hostname: hostVal }, (err) => {
                     if (err) logger.error('Failed to save hostname from network confirmation:', err);
-                    else {
-                        window.__currentHostname = hostVal;
-                        setSidebarIdentity(hostVal);
-                    }
+                    else window.__currentHostname = hostVal;
                     proceed();
                 });
             }
