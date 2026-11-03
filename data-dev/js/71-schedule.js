@@ -227,9 +227,9 @@ class _SomfySchedule {
     // au démarrage (cf. loadSomfy), donc chacun se resynchronise indépendamment plutôt que de
     // supposer que this.schedules est déjà peuplé.
     _syncScheduleIndicators() {
-        if (typeof this.restoreCardDetails === 'function') {
-            this.restoreCardDetails('shade');
-            this.restoreCardDetails('group');
+        if (typeof this.refreshCardSheet === 'function') {
+            this.refreshCardSheet('shade');
+            this.refreshCardSheet('group');
         }
     }
     renderScheduleBadges(containerId, targetType, targetId) {

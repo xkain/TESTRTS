@@ -4147,10 +4147,10 @@ class Somfy {
             const card = `<div class="somfyShadeCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-shadeid="${shade.shadeId}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${shade.shadeType}" data-tilt="${shade.tiltType}" data-tiltposition="${shade.tiltPosition}" data-tilttarget="${shade.tiltTarget}" data-tiltdirection="${shade.tiltDirection || 0}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}" data-windy="${(shade.flags & 0x10) === 0x10 ? 'true' : 'false'}" data-sunny="${(shade.flags & 0x20) === 0x20 ? 'true' : 'false'}">
             <div class="dash-card-content">
             <div class="dash-card-header">
-            <div class="shade-icon" data-shadeid="${shade.shadeId}" onclick="somfy.toggleCardDetails('shade', ${shade.shadeId});">
+            <div class="shade-icon" data-shadeid="${shade.shadeId}" onclick="somfy.openCardSheet('shade', ${shade.shadeId});">
             <svg class="somfy-shade-icon" data-shadeid="${shade.shadeId}" style="--shade-position:${iconPos}; --fpos:${iconPos}%; --shade-tilt:${shade.tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use></svg>
             </div>
-            <div class="shade-name" onclick="somfy.toggleCardDetails('shade', ${shade.shadeId});">
+            <div class="shade-name" onclick="somfy.openCardSheet('shade', ${shade.shadeId});">
             <span class="shadectl-name">${escHtml(shade.name)}</span>
             <span class="shadectl-state"><span class="val-pos">${this.shadeStateText(shade)}</span>${shade.tiltType !== 0 ? `<span class="val-tilt"> · ∠ <span class="val-tilt-pos">${shade.tiltPosition}%</span></span>` : ''}<span class="val-my myShade-badge">${this.myBadgeText(shade)}</span></span>
             </div>
@@ -4158,7 +4158,7 @@ class Somfy {
             <div class="indicator indicator-wind"><svg><use href="#indic-wind"></use></svg></div>
             <div class="indicator indicator-sun"><svg><use href="#indic-sun"></use></svg></div>
             </div>
-            <button type="button" class="card-expand" title="${tr('CARD_DETAILS')}" onclick="somfy.toggleCardDetails('shade', ${shade.shadeId});"><svg><use href="#svg-arrowDown"></use></svg></button>
+            <button type="button" class="card-expand" title="${tr('CARD_DETAILS')}" onclick="somfy.openCardSheet('shade', ${shade.shadeId});"><svg><use href="#svg-add"></use></svg></button>
             </div>
             <div class="shadectl-controls-wrapper">
             ${pagesSeg}
@@ -4170,7 +4170,6 @@ class Somfy {
             </div>
             </div>
             </div>
-            <div class="dash-card-details" id="cardDetails_shade_${shade.shadeId}"></div>
             </div>
             </div>`;
             if (!byRoom.has(shade.roomId)) byRoom.set(shade.roomId, []);
@@ -4191,11 +4190,35 @@ class Somfy {
         let shadeControls = get('divShadeControls');
         shadeControls.innerHTML = divCtl;
         this.checkEmptyState();
-        // Appui long sur les boutons de commande : maintenir 2s sur up/down déclenche
-        // l'inclinaison (équipements avec tilt) -- PLUS sur "my", qui a son propre bouton dédié
-        // (icône étoile, onclick direct). Gère aussi le cas où le geste tactile se transforme en
-        // défilement de page (touchmove) avant les 2s.
-        let btns = shadeControls.querySelectorAll('div.cmd-button');
+        this.bindShadeCmdButtons(shadeControls);
+        // Applique les préférences d'interface persistées par équipement (page de carrousel par
+        // défaut, visibilité du badge "My") -- cf. getShadeUIPrefs. Fait après
+        // coup plutôt que dans le template ci-dessus car shadeCarouselGoTo() a besoin du
+        // data-pages déjà posé sur le DOM pour clamper correctement.
+        for (let i = 0; i < shades.length; i++) {
+            this.applyShadeUIPrefs(shades[i].shadeId);
+        }
+        this.updateRoomCounts();
+        this.setListDraggable(get('divShadeList'), '.shade-draggable', (list) => {
+            let items = list.querySelectorAll('.shade-draggable');
+            let order = [];
+            for (let i = 0; i < items.length; i++) {
+                order.push(parseInt(items[i].getAttribute('data-shadeid'), 10));
+            }
+            putJSONSync('/shadeSortOrder', order, (err) => {
+                if (err) return;
+                order.forEach((id, i) => { const sh = (this.shades || []).find(x => x.shadeId === id); if (sh) sh.sortOrder = i; });
+                this.setShadesList(this.shades);
+            });
+        });
+        this._syncScheduleIndicators();
+    }
+    // Appui long sur les boutons de commande : maintenir 2s sur up/down déclenche
+    // l'inclinaison (équipements avec tilt) -- PLUS sur "my", qui a son propre bouton dédié
+    // (icône étoile, onclick direct). Gère aussi le cas où le geste tactile se transforme en
+    // défilement de page (touchmove) avant les 2s.
+    bindShadeCmdButtons(root) {
+        let btns = root.querySelectorAll('div.cmd-button');
         const clearTiltTimer = () => {
             if (this.btnTimer) { clearTimeout(this.btnTimer); this.btnTimer = null; }
         };
@@ -4206,7 +4229,7 @@ class Somfy {
             if (!isPrimaryPress(event)) return;
             const btnEl = event.currentTarget;
             clearTiltTimer();
-            let elShade = btnEl.closest('div.somfyShadeCtl');
+            let elShade = btnEl.closest('[data-tilt]');
             let cmd = btnEl.getAttribute('data-cmd');
             let shadeId = parseInt(btnEl.getAttribute('data-shadeid'), 10);
             this.btnDown = new Date().getTime();
@@ -4249,27 +4272,6 @@ class Somfy {
             }, true);
             btns[i].addEventListener('touchcancel', clearTiltTimer, true);
         }
-        // Applique les préférences d'interface persistées par équipement (page de carrousel par
-        // défaut, visibilité du badge "My") -- cf. getShadeUIPrefs/openShadeCardMenu. Fait après
-        // coup plutôt que dans le template ci-dessus car shadeCarouselGoTo() a besoin du
-        // data-pages déjà posé sur le DOM pour clamper correctement.
-        for (let i = 0; i < shades.length; i++) {
-            this.applyShadeUIPrefs(shades[i].shadeId);
-        }
-        this.updateRoomCounts();
-        this.setListDraggable(get('divShadeList'), '.shade-draggable', (list) => {
-            let items = list.querySelectorAll('.shade-draggable');
-            let order = [];
-            for (let i = 0; i < items.length; i++) {
-                order.push(parseInt(items[i].getAttribute('data-shadeid'), 10));
-            }
-            putJSONSync('/shadeSortOrder', order, (err) => {
-                if (err) return;
-                order.forEach((id, i) => { const sh = (this.shades || []).find(x => x.shadeId === id); if (sh) sh.sortOrder = i; });
-                this.setShadesList(this.shades);
-            });
-        });
-        this._syncScheduleIndicators();
     }
     // Déplace le carrousel de contrôles d'une carte équipement vers la page pageIndex (bornée, pas de
     // boucle) : met à jour la translation du track, l'attribut data-page (source de vérité pour la
@@ -4293,27 +4295,247 @@ class Somfy {
         if (myPos < 0) return '';
         return ` · My ${myPos}%${tiltType !== 0 && myTilt >= 0 ? ` ∠ ${myTilt}%` : ''}`;
     }
-    toggleCardDetails(kind, id) {
-        if (!this._expandedCards) this._expandedCards = new Set();
-        const key = `${kind}_${id}`;
-        if (this._expandedCards.has(key)) this._expandedCards.delete(key);
-        else this._expandedCards.add(key);
-        this.refreshCardDetails(kind, id);
+    openCardSheet(kind, id, tab) {
+        const host = get('divHomePnl');
+        if (!host) return;
+        this.closeShadePositioners();
+        let ov = host.querySelector('.card-sheet-overlay:not([data-closing])');
+        if (!ov) {
+            ov = document.createElement('div');
+            ov.className = 'card-sheet-overlay';
+            ov.onclick = (e) => { if (e.target === ov) this.closeCardSheet(); };
+            host.appendChild(ov);
+            void ov.offsetHeight;
+            ov.classList.add('open');
+        }
+        if (!this._cardSheetKey) {
+            this._cardSheetKey = (e) => { if (e.key === 'Escape') this.closeCardSheet(); };
+            document.addEventListener('keydown', this._cardSheetKey);
+        }
+        this._cardSheet = { kind: kind, id: parseInt(id, 10), tab: tab || 0, draft: null };
+        this.renderCardSheet();
     }
-    restoreCardDetails(kind) {
-        (this._expandedCards || new Set()).forEach(key => {
-            const [k, id] = key.split('_');
-            if (k === kind) this.refreshCardDetails(k, parseInt(id, 10));
+    closeCardSheet() {
+        this._cardSheet = null;
+        if (this._cardSheetKey) { document.removeEventListener('keydown', this._cardSheetKey); this._cardSheetKey = null; }
+        const ov = document.querySelector('.card-sheet-overlay:not([data-closing])');
+        if (!ov) return;
+        ov.dataset.closing = 'true';
+        ov.classList.remove('open');
+        setTimeout(() => ov.remove(), 250);
+    }
+    refreshCardSheet(kind, id) {
+        const cs = this._cardSheet;
+        if (!cs || cs.kind !== kind || (typeof id !== 'undefined' && cs.id !== id)) return;
+        this.renderCardSheet();
+    }
+    cardSheetTab(index) {
+        if (!this._cardSheet) return;
+        this._cardSheet.tab = index;
+        document.querySelectorAll('.card-sheet-pane').forEach((p, i) => { p.hidden = i !== index; });
+        document.querySelectorAll('.card-sheet-tab').forEach((b, i) => b.classList.toggle('active', i === index));
+        const body = document.querySelector('.card-sheet-body');
+        if (body) body.scrollTop = 0;
+    }
+    renderCardSheet() {
+        const cs = this._cardSheet;
+        const ov = document.querySelector('.card-sheet-overlay:not([data-closing])');
+        if (!cs || !ov) return;
+        if (ov.querySelector('input[type=range]:active, input[type=range][data-dragging="true"]')) return;
+        const isShade = cs.kind === 'shade';
+        const item = isShade ? (this.shades || []).find(x => x.shadeId === cs.id) : (this.groups || []).find(x => x.groupId === cs.id);
+        if (!item) { this.closeCardSheet(); return; }
+        const tabs = isShade ? this.shadeSheetTabs(item) : this.groupSheetTabs(item);
+        cs.tab = Math.min(cs.tab, tabs.length - 1);
+        const prev = ov.querySelector('.card-sheet-body');
+        const top = prev ? prev.scrollTop : 0;
+        const room = (_rooms.find(r => r.roomId === item.roomId) || { name: '' }).name;
+        let icon = `<div class="group-icon-wrapper"><svg><use href="#svg-group"></use></svg></div>`;
+        if (isShade) {
+            const st = this.shadeTypes.find(x => x.type === item.shadeType) || { ico: 'svg-window-shade' };
+            const p = item.flipPosition ? 100 - item.position : item.position;
+            icon = `<svg class="somfy-shade-icon" data-shadeid="${item.shadeId}" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${item.tiltType ? item.tiltPosition : 0}"><use href="#${st.ico}"></use></svg>`;
+        }
+        ov.innerHTML = `<div class="card-sheet" role="dialog" aria-modal="true" ${isShade ? `data-shadeid="${item.shadeId}" data-tilt="${item.tiltType || 0}"` : `data-groupid="${item.groupId}"`}>
+        <div class="card-sheet-grip"></div>
+        <div class="card-sheet-head">${icon}<div class="card-sheet-title"><b>${escHtml(item.name)}</b>${room ? `<span>${escHtml(room)}</span>` : ''}</div><div close title="${tr('BT_CLOSE')}" onclick="somfy.closeCardSheet();"><svg><use href="#svg-closeOverlay"></use></svg></div></div>
+        <div class="card-sheet-body">${tabs.map((t, i) => `<div class="card-sheet-pane"${i === cs.tab ? '' : ' hidden'}>${t.html}</div>`).join('')}</div>
+        <nav class="card-sheet-tabs">${tabs.map((t, i) => `<button type="button" class="card-sheet-tab${i === cs.tab ? ' active' : ''}" onclick="somfy.cardSheetTab(${i});"><svg><use href="#${t.icon}"></use></svg><span>${tr(t.label)}</span></button>`).join('')}</nav>
+        </div>`;
+        ov.querySelector('.card-sheet-body').scrollTop = top;
+        const panes = ov.querySelectorAll('.card-sheet-pane');
+        tabs.forEach((t, i) => { if (t.bind) t.bind(panes[i]); });
+        if (!this._cardAgoTimer && ov.querySelector('.card-ago')) this._cardAgoTimer = setInterval(() => this.tickCardAgo(), 1000);
+    }
+    shadeSheetTabs(shade) {
+        const tabs = [{ icon: 'svg-remote', label: 'RADIO_COMMAND', html: this.shadeSheetControlsHtml(shade), bind: (pane) => this.bindShadeCmdButtons(pane) }];
+        if (this.shadeTypeSupportsMy(this.shadeTypeOf(shade))) tabs.push({ icon: 'svg-favori', label: 'SETMYPOS_TITLE', html: this.shadeSheetMyHtml(shade), bind: (pane) => this.bindShadeSheetMy(pane, shade) });
+        tabs.push({ icon: 'svg-tabSettings', label: 'OPTION', html: this.shadeSheetOptionsHtml(shade), bind: (pane) => this.bindShadeSheetOptions(pane, shade) });
+        return tabs;
+    }
+    groupSheetTabs(group) {
+        return [
+            { icon: 'svg-remote', label: 'RADIO_COMMAND', html: this.groupSheetControlsHtml(group) },
+            { icon: 'svg-group', label: 'SUBTAB_DEVICES', html: this.groupSheetMembersHtml(group) },
+            { icon: 'svg-tabSettings', label: 'OPTION', html: this.cardSheetActionsHtml('group', group.groupId) }
+        ];
+    }
+    shadeSheetControlsHtml(shade) {
+        const id = shade.shadeId;
+        const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { ico: 'svg-window-shade' };
+        const p = shade.flipPosition ? 100 - shade.position : shade.position;
+        const hasPosition = !this.noMyShadeTypes.includes(shade.shadeType);
+        const btn = (cmd) => `<div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="${cmd}" data-shadeid="${id}"><svg><use href="#svg-${cmd}"></use></svg></div>`;
+        const buttons = this.toggleShadeTypes.includes(shade.shadeType) ? btn('toggle')
+            : `${btn('up')}${btn('my')}${btn('down')}<div class="button-outline cmd-button btn-somfy-svg animScale button-sunflag" data-cmd="sunflag" data-shadeid="${id}" data-on="${(shade.flags & 0x01) ? 'true' : 'false'}" title="${tr('VR_SUN_FLAG')}" style="${shade.sunSensor ? '' : 'display:none'}"><svg><use href="#svg-sun"></use></svg></div>`;
+        const slider = (tilt) => {
+            const v = tilt ? shade.tiltPosition : shade.position;
+            return `<div class="card-sheet-slider"><span>${tr(tilt ? 'OPT_PAGE_TILT' : 'IS_POSITION')}</span>
+            <div class="slider-wrapper${tilt ? ' tilt-slider' : ''}"><div class="slider-progress" style="width:${v}%;"><div class="slider-thumb-line"></div></div>
+            <input type="range" class="md3-range-input carousel-slider-${tilt ? 'tilt' : 'pos'}" data-bubble="true" min="0" max="100" step="1" value="${v}" data-realpos="${v}" oninput="syncSliderProgress(this);" onpointerdown="sliderDragStart(this);" onkeydown="sliderDragStart(this, true);" onkeyup="sliderDragEnd(this);" onchange="somfy.commitSliderTarget(this, ${id}, ${tilt});"></div></div>`;
+        };
+        const my = this.myBadgeText(shade).replace(/^ · /, '');
+        return `<div class="card-sheet-hero">
+        <svg class="somfy-shade-icon" data-shadeid="${id}" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${shade.tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use></svg>
+        <span class="card-sheet-state"><span class="val-pos">${this.shadeStateText(shade)}</span>${shade.tiltType ? `<span class="val-tilt"> · ∠ <span class="val-tilt-pos">${shade.tiltPosition}%</span></span>` : ''}</span>
+        ${my ? `<span class="card-sheet-sub">${my}</span>` : ''}
+        </div>
+        <div class="card-sheet-buttons">${buttons}</div>
+        ${hasPosition ? slider(false) : ''}${hasPosition && shade.tiltType > 0 ? slider(true) : ''}
+        ${this.shadeSheetInfoHtml(shade)}`;
+    }
+    shadeSheetMyHtml(shade) {
+        const cs = this._cardSheet;
+        const tiltType = shade.tiltType || 0;
+        const myPos = typeof shade.myPos === 'number' ? shade.myPos : -1;
+        const myTilt = typeof shade.myTiltPos === 'number' ? shade.myTiltPos : -1;
+        if (!cs.draft) cs.draft = { p: myPos >= 0 ? myPos : shade.position, t: myTilt >= 0 ? myTilt : (shade.tiltPosition || 0) };
+        const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { ico: 'svg-window-shade' };
+        const lbl = shade.flipPosition ? tr('IS_OPEN') : tr('IS_CLOSED');
+        const row = (tilt) => {
+            const v = tilt ? cs.draft.t : cs.draft.p;
+            return `<div class="positioner-row">
+            <span class="positioner-axis">${tr(tilt ? 'TILT_SHORT' : 'POS_SHORT')}</span>
+            <div class="slider-wrapper${tilt ? ' tilt-slider' : ''}"><div class="slider-progress" style="width:${v}%;"><div class="slider-thumb-line"></div></div><input class="md3-range-input" type="range" min="0" max="100" step="1" value="${v}" data-axis="${tilt ? 't' : 'p'}"></div>
+            <span class="positioner-val"><span class="positioner-pct"><span class="positioner-num">${v}</span>&nbsp;%</span><span class="positioner-sens">${lbl}</span></span>
+            </div>`;
+        };
+        return `<div class="card-sheet-mycur"><svg><use href="#svg-favori"></use></svg><span>${tr('SETMYPOS_TITLE')}</span><b>${this.myBadgeText(shade).replace(/^ · My /, '') || tr('CARD_MY_NONE')}</b></div>
+        <div class="card-panel-my">
+        <svg class="somfy-shade-icon card-panel-preview"><use href="#${st.ico}"></use></svg>
+        <div class="positioner-rows">${tiltType !== 3 ? row(false) : ''}${tiltType > 0 ? row(true) : ''}</div>
+        </div>
+        <div class="popup-actions">
+        <button type="button" pop line data-act="current">${tr('CARD_MY_CURRENT')}</button>
+        <button type="button" pop data-act="save"></button>
+        </div>`;
+    }
+    bindShadeSheetMy(pane, shade) {
+        const draft = this._cardSheet.draft;
+        const tiltType = shade.tiltType || 0;
+        const myPos = typeof shade.myPos === 'number' ? shade.myPos : -1;
+        const myTilt = typeof shade.myTiltPos === 'number' ? shade.myTiltPos : -1;
+        const preview = pane.querySelector('.card-panel-preview');
+        const btnSave = pane.querySelector('[data-act="save"]');
+        const inputs = pane.querySelectorAll('.md3-range-input[data-axis]');
+        const paint = () => {
+            const p = shade.flipPosition ? 100 - draft.p : draft.p;
+            preview.style.setProperty('--shade-position', tiltType === 3 ? (shade.flipPosition ? 100 - shade.position : shade.position) : p);
+            preview.style.setProperty('--fpos', `${p}%`);
+            preview.style.setProperty('--shade-tilt', tiltType ? draft.t : 0);
+            const same = tiltType === 3 ? draft.t === myTilt : (draft.p === myPos && (tiltType === 0 || draft.t === myTilt));
+            btnSave.textContent = tr(same ? 'BT_CLEAR_MY_POSITION' : 'BT_SET_MY_POSITION');
+            btnSave.classList.toggle('card-panel-clear', same);
+        };
+        const show = (input) => {
+            syncSliderProgress(input);
+            input.closest('.positioner-row').querySelector('.positioner-num').textContent = input.value;
+        };
+        inputs.forEach(input => {
+            input.oninput = () => {
+                show(input);
+                draft[input.dataset.axis] = parseInt(input.value, 10);
+                paint();
+            };
+            show(input);
         });
+        btnSave.onclick = (e) => {
+            e.preventDefault();
+            this.sendShadeMyPosition(shade.shadeId, draft.p, draft.t);
+        };
+        pane.querySelector('[data-act="current"]').onclick = (e) => {
+            e.preventDefault();
+            draft.p = shade.position;
+            draft.t = shade.tiltPosition || 0;
+            inputs.forEach(input => { input.value = draft[input.dataset.axis]; show(input); });
+            paint();
+        };
+        paint();
     }
-    refreshCardDetails(kind, id) {
-        const box = get(`cardDetails_${kind}_${id}`);
-        if (!box) return;
-        const card = box.closest(kind === 'shade' ? '.somfyShadeCtl' : '.somfyGroupCtl');
-        const open = !!(this._expandedCards && this._expandedCards.has(`${kind}_${id}`));
-        if (card) card.classList.toggle('is-expanded', open);
-        box.innerHTML = open ? (kind === 'shade' ? this.shadeDetailsHtml(id) : this.groupDetailsHtml(id)) : '';
-        if (open && !this._cardAgoTimer && box.querySelector('.card-ago')) this._cardAgoTimer = setInterval(() => this.tickCardAgo(), 1000);
+    shadeSheetOptionsHtml(shade) {
+        const id = shade.shadeId;
+        const type = this.shadeTypeOf(shade);
+        const hasPosition = !this.noMyShadeTypes.includes(type);
+        const prefs = this.getShadeUIPrefs(id);
+        const pages = [{ value: 0, label: tr('OPT_PAGE_BUTTONS') }];
+        if (hasPosition) pages.push({ value: 1, label: tr('IS_POSITION') });
+        if (hasPosition && shade.tiltType > 0) pages.push({ value: 2, label: tr('OPT_PAGE_TILT') });
+        const pageField = pages.length > 1 ? `<div class="positioner-field">
+        <span class="positioner-label">${tr('OPT_DEFAULT_CAROUSEL_PAGE')}</span>
+        <div class="positioner-seg" data-pref="page">${pages.map(p => `<button type="button" data-page="${p.value}" aria-pressed="${prefs.defaultCarouselPage === p.value ? 'true' : 'false'}">${p.label}</button>`).join('')}</div>
+        </div>` : '';
+        const badgeField = this.shadeTypeSupportsMy(type) ? `<label class="positioner-switch">
+        <span class="positioner-label">${tr('OPT_SHOW_MY_BADGE')}</span>
+        <span class="switch"><input type="checkbox" data-pref="badge" ${prefs.showMyBadge ? 'checked' : ''}><div></div></span>
+        </label>` : '';
+        return `${pageField || badgeField ? `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_DISPLAY')}</span></div>${pageField}${badgeField}</div>` : ''}
+        ${this.cardSheetActionsHtml('shade', id)}`;
+    }
+    bindShadeSheetOptions(pane, shade) {
+        const id = shade.shadeId;
+        pane.querySelectorAll('[data-pref="page"] button').forEach(btn => {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                const page = parseInt(btn.dataset.page, 10);
+                this.setShadeUIPrefs(id, { defaultCarouselPage: page });
+                this.shadeCarouselGoTo(id, page);
+                btn.parentNode.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+            };
+        });
+        const chk = pane.querySelector('[data-pref="badge"]');
+        if (chk) chk.onchange = () => {
+            this.setShadeUIPrefs(id, { showMyBadge: chk.checked });
+            this.applyShadeUIPrefs(id);
+        };
+    }
+    cardSheetActionsHtml(kind, id) {
+        return `<div class="card-actions">
+        <button type="button" class="card-btn" onclick="somfy.closeCardSheet(); somfy.openVirtualRemote('${kind}', ${id});"><svg><use href="#svg-remote"></use></svg>${tr('SUBTAB_VIRTUAL_REMOTE_S')}</button>
+        <button type="button" class="card-btn ghost" onclick="somfy.closeCardSheet(); somfy.openCardEditor('${kind}', ${id});"><svg><use href="#svg-edit"></use></svg>${tr('BT_EDIT')}</button>
+        </div>`;
+    }
+    groupSheetControlsHtml(group) {
+        const id = group.groupId;
+        const members = (group.linkedShades || []).map(m => (this.shades || []).find(x => x.shadeId === m.shadeId) || m);
+        const positioned = members.filter(m => !this.dryContactShadeTypes.includes(m.shadeType));
+        const open = positioned.filter(m => m.position !== this.closedPosition(m.shadeType, m.flipPosition)).length;
+        const summary = positioned.length ? tr('IS_SUMMARY_OPEN').replace('{n}', open).replace('{t}', positioned.length) : tr('GROUP_LINKED_COUNT').replace('{n}', members.length);
+        const btn = (cmd, title) => `<div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="${cmd}" data-groupid="${id}" title="${tr(title)}" onclick="somfy.sendGroupCommand(${id}, '${cmd}');"><svg><use href="#svg-${cmd}"></use></svg></div>`;
+        return `<div class="card-sheet-hero">
+        <div class="group-icon-wrapper"><svg><use href="#svg-group"></use></svg></div>
+        <span class="card-sheet-state">${summary}</span>
+        </div>
+        <div class="card-sheet-buttons">${btn('up', 'BT_OPEN')}${btn('my', 'BT_MY')}${btn('down', 'BT_CLOSE')}<div class="button-outline cmd-button btn-somfy-svg animScale button-sunflag" data-cmd="sunflag" data-groupid="${id}" data-on="${(group.flags & 0x01) ? 'true' : 'false'}" style="${group.sunSensor ? '' : 'display:none'}" title="${tr('VR_SUN_FLAG')}" onclick="somfy.sendGroupCommand(${id}, makeBool(this.dataset.on) ? 'flag' : 'sunflag');"><svg><use href="#svg-sun"></use></svg></div></div>
+        ${this.cardSchedulesHtml('group', id)}`;
+    }
+    groupSheetMembersHtml(group) {
+        const members = (group.linkedShades || []).map(m => (this.shades || []).find(x => x.shadeId === m.shadeId) || m);
+        const rows = members.map(m => {
+            const st = this.shadeTypes.find(x => x.type === m.shadeType) || { ico: 'svg-window-shade' };
+            const p = m.flipPosition ? 100 - m.position : m.position;
+            return `<div class="card-member" onclick="somfy.openCardSheet('shade', ${m.shadeId});"><svg class="somfy-shade-icon" data-shadeid="${m.shadeId}" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${m.tiltType ? m.tiltPosition : 0}"><use href="#${st.ico}"></use></svg><span class="card-member-name"><b>${escHtml(m.name)}</b>${m.sunSensor && (m.flags & 0x01) ? `<svg><title>${tr('VR_SUN_FLAG')}</title><use href="#svg-sun"></use></svg>` : ''}</span><div class="card-bar"><i style="width:${m.position}%"></i></div><em>${m.position}%</em></div>`;
+        }).join('');
+        return `<div class="card-block"><div class="card-block-head"><span>${tr('GROUP_LINKED_S')}</span></div>${rows || `<div class="card-empty">${tr('GROUP_LINKED_COUNT').replace('{n}', 0)}</div>`}</div>`;
     }
     openCardEditor(kind, id) {
         location.hash = _routeSlug(kind === 'shade' ? 'divSomfyMotors' : 'divSomfyGroups', id);
@@ -4344,7 +4566,7 @@ class Somfy {
             if (!r) return;
             r.lastRssi = msg.lastRssi;
         }
-        if (this._expandedCards && this._expandedCards.has(`shade_${shade.shadeId}`)) this.refreshCardDetails('shade', shade.shadeId);
+        this.refreshCardSheet('shade', shade.shadeId);
     }
     cardSchedulesHtml(kind, id) {
         const rows = (this.schedules || []).some(sc => sc.targetType === kind && sc.targetId === id)
@@ -4352,15 +4574,14 @@ class Somfy {
             : `<div class="card-empty">${tr('EMPTY_SCHEDULE_TITLE')}</div>`;
         return `<div class="card-block"><div class="card-block-head"><span>${tr('SUBTAB_SCHEDULES')}</span><button type="button" class="card-link" onclick="somfy.openAddScheduleInline('${kind}', ${id});">${tr('BT_ADD')}</button></div><div class="card-sched">${rows}</div></div>`;
     }
-    shadeDetailsHtml(shadeId) {
-        const shade = (this.shades || []).find(x => x.shadeId === shadeId);
-        if (!shade) return '';
+    shadeSheetInfoHtml(shade) {
+        const shadeId = shade.shadeId;
         const type = this.shadeTypeOf(shade);
         const kv = (k, v) => `<div class="card-kv"><span>${k}</span><b>${v}</b></div>`;
         const items = [];
         if (this.shadeTypeSupportsMy(type)) {
             const my = this.myBadgeText(shade).replace(/^ · My /, '');
-            items.push(kv(tr('SETMYPOS_TITLE'), `${my || tr('CARD_MY_NONE')} <button type="button" class="card-link" onclick="somfy.openShadeCardMenu(${shadeId});">${tr(my ? 'BT_EDIT' : 'CARD_MY_DEFINE')}</button>`));
+            items.push(kv(tr('SETMYPOS_TITLE'), `${my || tr('CARD_MY_NONE')} <button type="button" class="card-link" onclick="somfy.cardSheetTab(1);">${tr(my ? 'BT_EDIT' : 'CARD_MY_DEFINE')}</button>`));
         }
         if (shade.tiltType) items.push(kv(tr('OPT_PAGE_TILT'), `${shade.tiltPosition}%`));
         if (typeof shade.lastSentAgo === 'number') {
@@ -4382,28 +4603,7 @@ class Somfy {
         }).join('');
         return `<div class="card-grid">${items.join('')}</div>
         ${this.cardSchedulesHtml('shade', shadeId)}
-        <div class="card-block"><div class="card-block-head"><span>${tr('REMOTESLIST_TITLE')}</span></div>${remotes || `<div class="card-empty">${tr('REMOTESLIST_EMPTY')}</div>`}</div>
-        <div class="card-actions">
-        <button type="button" class="card-btn" onclick="somfy.openVirtualRemote('shade', ${shadeId});"><svg><use href="#svg-remote"></use></svg>${tr('SUBTAB_VIRTUAL_REMOTE_S')}</button>
-        <button type="button" class="card-btn ghost" onclick="somfy.openCardEditor('shade', ${shadeId});"><svg><use href="#svg-edit"></use></svg>${tr('BT_EDIT')}</button>
-        <button type="button" class="card-btn ghost" onclick="somfy.openShadeCardMenu(${shadeId});"><svg><use href="#svg-menuVertical"></use></svg>${tr('BT_MORE')}</button>
-        </div>`;
-    }
-    groupDetailsHtml(groupId) {
-        const group = (this.groups || []).find(g => g.groupId === groupId);
-        if (!group) return '';
-        const members = (group.linkedShades || []).map(m => (this.shades || []).find(x => x.shadeId === m.shadeId) || m);
-        const rows = members.map(m => {
-            const st = this.shadeTypes.find(x => x.type === m.shadeType) || { ico: 'svg-window-shade' };
-            const p = m.flipPosition ? 100 - m.position : m.position;
-            return `<div class="card-member"><svg class="somfy-shade-icon" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${m.tiltType ? m.tiltPosition : 0}"><use href="#${st.ico}"></use></svg><span class="card-member-name"><b>${escHtml(m.name)}</b>${m.sunSensor && (m.flags & 0x01) ? `<svg><title>${tr('VR_SUN_FLAG')}</title><use href="#svg-sun"></use></svg>` : ''}</span><div class="card-bar"><i style="width:${m.position}%"></i></div><em>${m.position}%</em></div>`;
-        }).join('');
-        return `<div class="card-block"><div class="card-block-head"><span>${tr('GROUP_LINKED_S')}</span></div>${rows || `<div class="card-empty">${tr('GROUP_LINKED_COUNT').replace('{n}', 0)}</div>`}</div>
-        ${this.cardSchedulesHtml('group', groupId)}
-        <div class="card-actions">
-        <button type="button" class="card-btn" onclick="somfy.openVirtualRemote('group', ${groupId});"><svg><use href="#svg-remote"></use></svg>${tr('SUBTAB_VIRTUAL_REMOTE_S')}</button>
-        <button type="button" class="card-btn ghost" onclick="somfy.openCardEditor('group', ${groupId});"><svg><use href="#svg-edit"></use></svg>${tr('BT_EDIT')}</button>
-        </div>`;
+        <div class="card-block"><div class="card-block-head"><span>${tr('REMOTESLIST_TITLE')}</span></div>${remotes || `<div class="card-empty">${tr('REMOTESLIST_EMPTY')}</div>`}</div>`;
     }
     shadeCarouselGoTo(shadeId, pageIndex) {
         const track = get(`carouselTrack_${shadeId}`);
@@ -4499,7 +4699,7 @@ class Somfy {
                     const myBadge = d.querySelector('.myShade-badge');
                     if (myBadge && idx >= 0) myBadge.textContent = this.myBadgeText(this.shades[idx]);
                 });
-                this.refreshCardDetails('shade', shadeId);
+                this.refreshCardSheet('shade', shadeId);
             }
             ui.successMessage(tr('MSG_SAVE_SUCCESS'));
         });
@@ -4529,140 +4729,6 @@ class Somfy {
         const badge = card.querySelector('.myShade-badge');
         if (badge) badge.style.display = prefs.showMyBadge ? '' : 'none';
         this.shadeCarouselGoTo(shadeId, prefs.defaultCarouselPage);
-    }
-    openShadeCardMenu(shadeId) {
-        if (typeof shadeId === 'undefined') return;
-        const card = document.querySelector(`div.somfyShadeCtl[data-shadeid="${shadeId}"]`);
-        const shade = (this.shades || []).find(x => x.shadeId === shadeId);
-        if (!card || !shade) return;
-        this.closeShadePositioners();
-
-        const shadeType = this.shadeTypeOf(shade);
-        const tiltType = shade.tiltType || 0;
-        const hasPosition = !this.noMyShadeTypes.includes(shadeType);
-        const supportsMy = this.shadeTypeSupportsMy(shadeType);
-        const prefs = this.getShadeUIPrefs(shadeId);
-        const st = this.shadeTypes.find(x => x.type === shadeType) || { ico: 'svg-window-shade' };
-
-        const pageOptions = [{ value: 0, label: tr('OPT_PAGE_BUTTONS') }];
-        if (hasPosition) pageOptions.push({ value: 1, label: tr('IS_POSITION') });
-        if (hasPosition && tiltType > 0) pageOptions.push({ value: 2, label: tr('OPT_PAGE_TILT') });
-        const pageField = pageOptions.length > 1 ? `
-        <div class="positioner-field">
-        <span class="positioner-label">${tr('OPT_DEFAULT_CAROUSEL_PAGE')}</span>
-        <div class="positioner-seg" id="segCardDefaultPage_${shadeId}">${pageOptions.map(p => `<button type="button" data-page="${p.value}" aria-pressed="${prefs.defaultCarouselPage === p.value ? 'true' : 'false'}">${p.label}</button>`).join('')}</div>
-        </div>` : '';
-        const badgeField = supportsMy ? `
-        <label class="positioner-switch" for="chkCardShowMyBadge_${shadeId}">
-        <span class="positioner-label">${tr('OPT_SHOW_MY_BADGE')}</span>
-        <span class="switch"><input id="chkCardShowMyBadge_${shadeId}" type="checkbox" ${prefs.showMyBadge ? 'checked' : ''}><div></div></span>
-        </label>` : '';
-
-        const myPos = typeof shade.myPos === 'number' ? shade.myPos : -1;
-        const myTilt = typeof shade.myTiltPos === 'number' ? shade.myTiltPos : -1;
-        const draft = { p: myPos >= 0 ? myPos : shade.position, t: myTilt >= 0 ? myTilt : (shade.tiltPosition || 0) };
-        const lbl = shade.flipPosition ? tr('IS_OPEN') : tr('IS_CLOSED');
-        const row = (tilt) => {
-            const v = tilt ? draft.t : draft.p;
-            return `<div class="positioner-row">
-            <span class="positioner-axis">${tr(tilt ? 'TILT_SHORT' : 'POS_SHORT')}</span>
-            <div class="slider-wrapper${tilt ? ' tilt-slider' : ''}"><div class="slider-progress" style="width:${v}%;"><div class="slider-thumb-line"></div></div><input class="md3-range-input" type="range" min="0" max="100" step="1" value="${v}" data-axis="${tilt ? 't' : 'p'}"></div>
-            <span class="positioner-val"><span class="positioner-pct"><span class="positioner-num">${v}</span>&nbsp;%</span><span class="positioner-sens">${lbl}</span></span>
-            </div>`;
-        };
-        const mySection = supportsMy ? `
-        <div class="card-panel-sec">
-        <div class="card-panel-sec-head"><svg><use href="#svg-favori"></use></svg>${tr('SETMYPOS_TITLE')}<em>${this.myBadgeText(shade).replace(/^ · My /, '') || tr('CARD_MY_NONE')}</em></div>
-        <div class="card-panel-my">
-        <svg class="somfy-shade-icon card-panel-preview"><use href="#${st.ico}"></use></svg>
-        <div class="positioner-rows">${tiltType !== 3 ? row(false) : ''}${tiltType > 0 ? row(true) : ''}</div>
-        </div>
-        <div class="popup-actions">
-        <button type="button" pop data-act="save"></button>
-        <button type="button" pop line data-act="current">${tr('CARD_MY_CURRENT')}</button>
-        </div>
-        </div>` : '';
-
-        const div = document.createElement('div');
-        div.className = 'shade-positioner shade-positioner-popup card-panel';
-        div.setAttribute('data-shadeid', shadeId);
-        div.onclick = (e) => e.stopPropagation();
-        div.innerHTML = `
-        <div class="shade-positioner-inner">
-        <div class="positioner-head">
-        <span class="positioner-title"><svg><use href="#svg-menuVertical"></use></svg>${tr('OPTION')}</span>
-        <button type="button" pop line data-act="close">${tr('BT_CLOSE')}</button>
-        </div>
-        <div class="card-panel-name"><svg class="somfy-shade-icon" style="--shade-position:${shade.flipPosition ? 100 - shade.position : shade.position}; --fpos:${shade.flipPosition ? 100 - shade.position : shade.position}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use></svg><b>${escHtml(shade.name)}</b></div>
-        ${pageField || badgeField ? `<div class="card-panel-sec"><div class="card-panel-sec-head"><svg><use href="#svg-eyeOn"></use></svg>${tr('CARD_DISPLAY')}</div><div class="positioner-rows">${pageField}${badgeField}</div></div>` : ''}
-        ${mySection}
-        </div>`;
-        card.classList.add('card-panel-open');
-        card.appendChild(div);
-
-        const close = () => {
-            div.classList.add('popup-slide-out');
-            setTimeout(() => { div.remove(); card.classList.remove('card-panel-open'); }, 300);
-        };
-        const preview = div.querySelector('.card-panel-preview');
-        const btnSave = div.querySelector('[data-act="save"]');
-        const paint = () => {
-            if (preview) {
-                const p = shade.flipPosition ? 100 - draft.p : draft.p;
-                preview.style.setProperty('--shade-position', tiltType === 3 ? (shade.flipPosition ? 100 - shade.position : shade.position) : p);
-                preview.style.setProperty('--fpos', `${p}%`);
-                preview.style.setProperty('--shade-tilt', tiltType ? draft.t : 0);
-            }
-            if (!btnSave) return;
-            const same = tiltType === 3 ? draft.t === myTilt : (draft.p === myPos && (tiltType === 0 || draft.t === myTilt));
-            btnSave.textContent = tr(same ? 'BT_CLEAR_MY_POSITION' : 'BT_SET_MY_POSITION');
-            btnSave.classList.toggle('card-panel-clear', same);
-        };
-        div.querySelectorAll('.md3-range-input[data-axis]').forEach(input => {
-            input.oninput = () => {
-                syncSliderProgress(input);
-                input.closest('.positioner-row').querySelector('.positioner-num').textContent = input.value;
-                draft[input.dataset.axis] = parseInt(input.value, 10);
-                paint();
-            };
-        });
-        const seg = div.querySelector(`#segCardDefaultPage_${shadeId}`);
-        if (seg) seg.querySelectorAll('button').forEach(btn => {
-            btn.onclick = (e) => {
-                e.preventDefault();
-                const page = parseInt(btn.getAttribute('data-page'), 10);
-                this.setShadeUIPrefs(shadeId, { defaultCarouselPage: page });
-                this.shadeCarouselGoTo(shadeId, page);
-                seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
-            };
-        });
-        const chk = div.querySelector(`#chkCardShowMyBadge_${shadeId}`);
-        if (chk) chk.onchange = () => {
-            this.setShadeUIPrefs(shadeId, { showMyBadge: chk.checked });
-            this.applyShadeUIPrefs(shadeId);
-        };
-        div.querySelector('[data-act="close"]').onclick = (e) => { e.preventDefault(); close(); };
-        if (btnSave) btnSave.onclick = (e) => {
-            e.preventDefault();
-            this.sendShadeMyPosition(shadeId, draft.p, draft.t);
-        };
-        const btnCur = div.querySelector('[data-act="current"]');
-        if (btnCur) btnCur.onclick = (e) => {
-            e.preventDefault();
-            draft.p = shade.position;
-            draft.t = shade.tiltPosition || 0;
-            div.querySelectorAll('.md3-range-input[data-axis]').forEach(input => {
-                input.value = draft[input.dataset.axis];
-                syncSliderProgress(input);
-                input.closest('.positioner-row').querySelector('.positioner-num').textContent = input.value;
-            });
-            paint();
-        };
-        div.querySelectorAll('.md3-range-input[data-axis]').forEach(input => syncSliderProgress(input));
-        paint();
-        setTimeout(() => {
-            document.body.addEventListener('click', close, { once: true });
-        }, 100);
     }
     // La liste des télécommandes liées vit dans la zone « Mise en service » de la fiche.
     setLinkedRemotesList(shade) {
@@ -4810,7 +4876,7 @@ class Somfy {
             btn.style.display = state.sunSensor ? '' : 'none';
             btn.dataset.on = (state.flags & 0x01) === 0x01;
         });
-        document.querySelectorAll(`.somfyShadeCtl[data-shadeid="${sId}"]`).forEach(d => {
+        document.querySelectorAll(`.somfyShadeCtl[data-shadeid="${sId}"], .card-sheet[data-shadeid="${sId}"]`).forEach(d => {
             Object.assign(d.dataset, {
                 direction: state.direction,
                 position: state.position,
@@ -4874,7 +4940,7 @@ class Somfy {
                 }
             }
         });
-        if ((parseInt(state.direction, 10) || 0) === 0 && this._expandedCards && this._expandedCards.has(`shade_${sId}`)) this.refreshCardDetails('shade', sId);
+        if ((parseInt(state.direction, 10) || 0) === 0) this.refreshCardSheet('shade', sId);
         this.syncGroupMovement(sId);
         // Après syncGroupMovement : le récapitulatif lit les data-moving/data-direction que celui-ci
         // vient de poser sur les cartes groupe.
@@ -4919,7 +4985,7 @@ class Somfy {
                 const openEl = d.querySelector('.groupctl-open');
                 if (openEl) openEl.textContent = positioned > 0 ? tr('IS_SUMMARY_OPEN').replace('{n}', open).replace('{t}', positioned) : tr('GROUP_LINKED_COUNT').replace('{n}', members.length);
             });
-            if (!moving && this._expandedCards && this._expandedCards.has(`group_${group.groupId}`)) this.refreshCardDetails('group', group.groupId);
+            if (!moving) this.refreshCardSheet('group', group.groupId);
         });
     }
     onShadeTypeChanged(el) {
@@ -5462,12 +5528,12 @@ class Somfy {
                 divCtl += `<div class="somfyGroupCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-groupid="${group.groupId}" data-roomid="${group.roomId}" data-remoteaddress="${group.remoteAddress}">
                 <div class="dash-card-content">
                 <div class="dash-card-header">
-                <div class="group-icon" onclick="somfy.toggleCardDetails('group', ${group.groupId});"><div class="group-icon-wrapper"><svg><use href="#svg-group"></use></svg></div></div>
-                <div class="group-name" onclick="somfy.toggleCardDetails('group', ${group.groupId});">
+                <div class="group-icon" onclick="somfy.openCardSheet('group', ${group.groupId});"><div class="group-icon-wrapper"><svg><use href="#svg-group"></use></svg></div></div>
+                <div class="group-name" onclick="somfy.openCardSheet('group', ${group.groupId});">
                 <span class="groupctl-name">${escHtml(group.name)}</span>
                 <span class="groupctl-shades"><span class="groupctl-open">${equipmentText}</span></span>
                 </div>
-                <button type="button" class="card-expand" title="${tr('CARD_DETAILS')}" onclick="somfy.toggleCardDetails('group', ${group.groupId});"><svg><use href="#svg-arrowDown"></use></svg></button>
+                <button type="button" class="card-expand" title="${tr('CARD_DETAILS')}" onclick="somfy.openCardSheet('group', ${group.groupId});"><svg><use href="#svg-add"></use></svg></button>
                 </div>
                 <div class="groupctl-buttons">
                 <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="up" data-groupid="${group.groupId}" title="${tr("BT_OPEN")}"><svg><use href="#svg-up"></use></svg></div>
@@ -5475,7 +5541,6 @@ class Somfy {
                 <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="down" data-groupid="${group.groupId}" title="${tr("BT_CLOSE")}"><svg><use href="#svg-down"></use></svg></div>
                 <div class="button-sunflag cmd-button btn-somfy-svg animScale" data-cmd="sunflag" data-groupid="${group.groupId}" data-on="${isSunActive}" style="${!group.sunSensor ? 'display:none' : ''}" title="${tr("VR_SUN_FLAG")}"><svg><use href="#svg-sun"></use></svg></div>
                 </div>
-                <div class="dash-card-details" id="cardDetails_group_${group.groupId}"></div>
                 </div>
                 </div>`;
             }
