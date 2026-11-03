@@ -4445,7 +4445,6 @@ class Somfy {
             <div class="sheet-my-ends"><span>${ends[0]}</span><span>${ends[1]}</span></div>
             </div>`;
         };
-        const fmt = (p, t) => tiltType === 3 ? `∠ ${t} %` : `${p} %${tiltType ? ` · ∠ ${t} %` : ''}`;
         const mode = cs.myMode || 'value';
         const head = `<div class="card-sheet-mycur"><svg><use href="#svg-favori"></use></svg><span>${tr('SETMYPOS_TITLE')}</span><b>${this.myBadgeText(shade).replace(/^ · My /, '') || tr('CARD_MY_NONE')}</b></div>
         <div class="positioner-seg card-sheet-mymode">${[['value', 'CARD_MY_MODE_VALUE'], ['live', 'CARD_MY_MODE_LIVE']].map(([m, k]) => `<button type="button" data-mymode="${m}" aria-pressed="${mode === m ? 'true' : 'false'}">${tr(k)}</button>`).join('')}</div>`;
@@ -4462,12 +4461,15 @@ class Somfy {
             <div class="popup-actions"><button type="button" pop data-act="store"></button></div>`;
         }
         const cur = shade.flipPosition ? 100 - shade.position : shade.position;
-        const target = shade.flipPosition ? 100 - cs.draft.p : cs.draft.p;
+        const mark = tiltType !== 3 ? this.myMarkGeometry(st.ico) : null;
+        const markY = mark ? mark[0] + mark[1] * (shade.flipPosition ? 100 - cs.draft.p : cs.draft.p) : 0;
         return `${head}
-        <div class="sheet-my-cmp">
-        <div><svg class="somfy-shade-icon" data-shadeid="${shade.shadeId}" style="--shade-position:${cur}; --fpos:${cur}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use></svg><span>${tr('CARD_MY_CURRENT')}</span><b>${fmt(shade.position, shade.tiltPosition || 0)}</b></div>
-        <em>→</em>
-        <div class="sheet-my-target"><svg class="somfy-shade-icon card-panel-preview" style="--shade-position:${tiltType === 3 ? cur : target}; --fpos:${target}%; --shade-tilt:${tiltType ? cs.draft.t : 0}"><use href="#${st.ico}"></use></svg><span>${tr('SETMYPOS_TITLE')}</span><b class="sheet-my-target-val">${fmt(cs.draft.p, cs.draft.t)}</b></div>
+        <div class="sheet-my-now-box">
+        <svg class="somfy-shade-icon" data-shadeid="${shade.shadeId}" viewBox="0 0 48 48" style="--shade-position:${cur}; --fpos:${cur}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use>${mark ? `<g class="sheet-my-mark" transform="translate(0 ${markY})"><path d="M3 0H45"></path><text x="45" y="-1.4">my</text></g>` : ''}</svg>
+        <div class="sheet-my-now-vals">
+        ${tiltType !== 3 ? `<div><span>${tr('IS_POSITION')}</span><b class="val-pos-pct">${shade.position} %</b></div>` : ''}
+        ${tiltType ? `<div><span>${tr('OPT_PAGE_TILT')}</span><b class="val-tilt-pct">${shade.tiltPosition || 0} %</b></div>` : ''}
+        </div>
         </div>
         <p class="card-sheet-hint">${tr('CARD_MY_VALUE_HINT')}</p>
         ${tiltType !== 3 ? row(false) : ''}${tiltType > 0 ? row(true) : ''}
@@ -4478,6 +4480,9 @@ class Somfy {
         <div class="popup-actions">
         <button type="button" pop data-act="save"></button>
         </div>`;
+    }
+    myMarkGeometry(ico) {
+        return { 'svg-window-shade': [11, 0.26], 'svg-window-blind': [11, 0.26], 'svg-shutter': [11, 0.26], 'svg-garage': [20, 0.2] }[ico] || null;
     }
     bindShadeSheetMy(pane, shade) {
         const draft = this._cardSheet.draft;
@@ -4504,16 +4509,13 @@ class Somfy {
             this.bindShadeCmdButtons(pane);
             return;
         }
-        const preview = pane.querySelector('.card-panel-preview');
-        const targetVal = pane.querySelector('.sheet-my-target-val');
+        const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { ico: 'svg-window-shade' };
+        const mark = pane.querySelector('.sheet-my-mark');
+        const geo = this.myMarkGeometry(st.ico);
         const btnSave = pane.querySelector('[data-act="save"]');
         const inputs = pane.querySelectorAll('.md3-range-input[data-axis]');
         const paint = () => {
-            const p = shade.flipPosition ? 100 - draft.p : draft.p;
-            preview.style.setProperty('--shade-position', tiltType === 3 ? (shade.flipPosition ? 100 - shade.position : shade.position) : p);
-            preview.style.setProperty('--fpos', `${p}%`);
-            preview.style.setProperty('--shade-tilt', tiltType ? draft.t : 0);
-            targetVal.textContent = tiltType === 3 ? `∠ ${draft.t} %` : `${draft.p} %${tiltType ? ` · ∠ ${draft.t} %` : ''}`;
+            if (mark && geo) mark.setAttribute('transform', `translate(0 ${geo[0] + geo[1] * (shade.flipPosition ? 100 - draft.p : draft.p)})`);
             const same = tiltType === 3 ? draft.t === myTilt : (draft.p === myPos && (tiltType === 0 || draft.t === myTilt));
             btnSave.textContent = tr(same ? 'BT_CLEAR_MY_POSITION' : 'BT_SET_MY_POSITION');
             btnSave.classList.toggle('card-panel-clear', same);
@@ -4693,8 +4695,6 @@ class Somfy {
             if (typeof shade._sentAt !== 'number') shade._sentAt = shade.lastSentAgo >= 0 ? Date.now() - shade.lastSentAgo * 1000 : 0;
             items.push(kv(tr('SHADE_ACT_SENT'), shade._sentAt ? `${escHtml(cmd)} · <span class="card-ago" data-at="${shade._sentAt}">${this.cardAgoText(shade._sentAt)}</span>` : tr('SHADE_ACT_NEVER')));
         }
-        if (this.shadeTypeSupportsMy(type)) items.push(kv(tr('SETMYPOS_TITLE'), this.myBadgeText(shade).replace(/^ · My /, '') || tr('CARD_MY_NONE')));
-        if (shade.tiltType) items.push(kv(tr('OPT_PAGE_TILT'), `${shade.tiltPosition}%`));
         if (shade.sunSensor) {
             const sunny = (shade.flags & 0x20) === 0x20, windy = (shade.flags & 0x10) === 0x10;
             items.push(kv(tr('CARD_SENSORS'), sunny ? `<span class="card-tag sun">${tr('VR_SUN')}</span>` : windy ? `<span class="card-tag wind">${tr('VR_WIND')}</span>` : tr('CARD_CALM')));
@@ -4707,6 +4707,14 @@ class Somfy {
             const has = typeof rssi === 'number' && rssi > -128;
             return `<div class="card-li"><svg><use href="#svg-remote"></use></svg><span>${r.remoteAddress}</span><em class="sig-${has ? this.rssiLevel(rssi) : 'unknown'}">${has ? `${rssi} dBm` : '—'}</em></div>`;
         }).join('');
+        if (this.shadeTypeSupportsMy(type)) {
+            const tiltType = shade.tiltType || 0;
+            const val = (v) => typeof v === 'number' && v >= 0 ? `${v} %` : tr('CARD_MY_NONE');
+            const my = [];
+            if (tiltType !== 3) my.push(kv(tr('IS_POSITION'), val(shade.myPos)));
+            if (tiltType) my.push(kv(tr('OPT_PAGE_TILT'), val(shade.myTiltPos)));
+            items.push(`<div class="sheet-my-pair"><span>${tr('SETMYPOS_TITLE')}</span>${my.join('')}</div>`);
+        }
         return `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_INFO')}</span></div><div class="card-grid">${items.join('')}</div></div>
         ${this.cardSchedulesHtml('shade', shadeId)}
         <div class="card-block"><div class="card-block-head"><span>${tr('REMOTESLIST_TITLE')}</span></div>${remotes ? `<div class="sheet-list">${remotes}</div>` : `<div class="card-empty">${tr('REMOTESLIST_EMPTY')}</div>`}</div>`;
@@ -5073,6 +5081,8 @@ class Somfy {
             // ("POS"/"TILT") est déjà un texte statique séparé dans le template -- ne PAS réinjecter
             // de préfixe ici, sous peine de doublon ("POS Pos: 100%").
             d.querySelectorAll('.val-pos').forEach(posEl => { posEl.innerText = this.shadeStateText(cached || state); });
+            d.querySelectorAll('.val-pos-pct').forEach(el => { el.textContent = `${state.position} %`; });
+            if (state.tiltType !== 0) d.querySelectorAll('.val-tilt-pct').forEach(el => { el.textContent = `${state.tiltPosition} %`; });
             if (state.tiltType !== 0) d.querySelectorAll('.val-tilt-pos').forEach(tiltEl => { tiltEl.innerText = `${state.tiltPosition}%`; });
 
             // Badge "My" du pied de carte : un seul élément combiné (position + tilt séparés par
