@@ -4417,7 +4417,7 @@ class Somfy {
         const geo = tiltType !== 3 && typeof shade.myPos === 'number' && shade.myPos >= 0 ? this.myMarkGeometry(st.ico) : null;
         const markY = geo ? geo[0] + geo[1] * (shade.flipPosition ? 100 - shade.myPos : shade.myPos) : 0;
         const hero = hasPosition ? `<div class="sheet-my-now-box">
-        <svg class="somfy-shade-icon" data-shadeid="${id}" viewBox="0 0 48 48" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use>${geo ? `<g class="sheet-my-mark" transform="translate(0 ${markY})"><path d="M3 0H45"></path><text x="45" y="-1.4">my</text></g>` : ''}</svg>
+        <svg class="somfy-shade-icon" data-shadeid="${id}" viewBox="0 0 48 48" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use>${geo ? `<g class="sheet-my-mark" transform="translate(0 ${markY})"><path d="M-4 0H52"></path><text x="-5.5" y="2">my</text></g>` : ''}</svg>
         <div class="sheet-my-now-vals">
         ${tiltType !== 3 ? `<div><span>${tr('IS_POSITION')}</span><b class="val-pos-pct">${shade.position} %</b></div>` : ''}
         ${tiltType ? `<div><span>${tr('OPT_PAGE_TILT')}</span><b class="val-tilt-pct">${shade.tiltPosition || 0} %</b></div>` : ''}
@@ -4453,6 +4453,7 @@ class Somfy {
             <div class="sheet-my-ends"><span>${ends[0]}</span><span>${ends[1]}</span></div>
             </div>`;
         };
+        const fmt = (p, t) => tiltType === 3 ? `∠ ${t} %` : `${p} %${tiltType ? ` · ∠ ${t} %` : ''}`;
         const mode = cs.myMode || 'value';
         const head = `<div class="card-sheet-mycur"><svg><use href="#svg-favori"></use></svg><span>${tr('SETMYPOS_TITLE')}</span><b>${this.myBadgeText(shade).replace(/^ · My /, '') || tr('CARD_MY_NONE')}</b></div>
         <div class="positioner-seg card-sheet-mymode">${[['value', 'CARD_MY_MODE_VALUE'], ['live', 'CARD_MY_MODE_LIVE']].map(([m, k]) => `<button type="button" data-mymode="${m}" aria-pressed="${mode === m ? 'true' : 'false'}">${tr(k)}</button>`).join('')}</div>`;
@@ -4469,15 +4470,12 @@ class Somfy {
             <div class="popup-actions"><button type="button" pop data-act="store"></button></div>`;
         }
         const cur = shade.flipPosition ? 100 - shade.position : shade.position;
-        const mark = tiltType !== 3 ? this.myMarkGeometry(st.ico) : null;
-        const markY = mark ? mark[0] + mark[1] * (shade.flipPosition ? 100 - cs.draft.p : cs.draft.p) : 0;
+        const target = shade.flipPosition ? 100 - cs.draft.p : cs.draft.p;
         return `${head}
-        <div class="sheet-my-now-box">
-        <svg class="somfy-shade-icon" data-shadeid="${shade.shadeId}" viewBox="0 0 48 48" style="--shade-position:${cur}; --fpos:${cur}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use>${mark ? `<g class="sheet-my-mark" transform="translate(0 ${markY})"><path d="M3 0H45"></path><text x="45" y="-1.4">my</text></g>` : ''}</svg>
-        <div class="sheet-my-now-vals">
-        ${tiltType !== 3 ? `<div><span>${tr('IS_POSITION')}</span><b class="val-pos-pct">${shade.position} %</b></div>` : ''}
-        ${tiltType ? `<div><span>${tr('OPT_PAGE_TILT')}</span><b class="val-tilt-pct">${shade.tiltPosition || 0} %</b></div>` : ''}
-        </div>
+        <div class="sheet-my-cmp">
+        <div><svg class="somfy-shade-icon" data-shadeid="${shade.shadeId}" style="--shade-position:${cur}; --fpos:${cur}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use></svg><span>${tr('CARD_MY_CURRENT')}</span><b>${fmt(shade.position, shade.tiltPosition || 0)}</b></div>
+        <em>→</em>
+        <div class="sheet-my-target"><svg class="somfy-shade-icon card-panel-preview" style="--shade-position:${tiltType === 3 ? cur : target}; --fpos:${target}%; --shade-tilt:${tiltType ? cs.draft.t : 0}"><use href="#${st.ico}"></use></svg><span>${tr('SETMYPOS_TITLE')}</span><b class="sheet-my-target-val">${fmt(cs.draft.p, cs.draft.t)}</b></div>
         </div>
         <p class="card-sheet-hint">${tr('CARD_MY_VALUE_HINT')}</p>
         ${tiltType !== 3 ? row(false) : ''}${tiltType > 0 ? row(true) : ''}
@@ -4517,13 +4515,16 @@ class Somfy {
             this.bindShadeCmdButtons(pane);
             return;
         }
-        const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { ico: 'svg-window-shade' };
-        const mark = pane.querySelector('.sheet-my-mark');
-        const geo = this.myMarkGeometry(st.ico);
+        const preview = pane.querySelector('.card-panel-preview');
+        const targetVal = pane.querySelector('.sheet-my-target-val');
         const btnSave = pane.querySelector('[data-act="save"]');
         const inputs = pane.querySelectorAll('.md3-range-input[data-axis]');
         const paint = () => {
-            if (mark && geo) mark.setAttribute('transform', `translate(0 ${geo[0] + geo[1] * (shade.flipPosition ? 100 - draft.p : draft.p)})`);
+            const p = shade.flipPosition ? 100 - draft.p : draft.p;
+            preview.style.setProperty('--shade-position', tiltType === 3 ? (shade.flipPosition ? 100 - shade.position : shade.position) : p);
+            preview.style.setProperty('--fpos', `${p}%`);
+            preview.style.setProperty('--shade-tilt', tiltType ? draft.t : 0);
+            targetVal.textContent = tiltType === 3 ? `∠ ${draft.t} %` : `${draft.p} %${tiltType ? ` · ∠ ${draft.t} %` : ''}`;
             const same = tiltType === 3 ? draft.t === myTilt : (draft.p === myPos && (tiltType === 0 || draft.t === myTilt));
             btnSave.textContent = tr(same ? 'BT_CLEAR_MY_POSITION' : 'BT_SET_MY_POSITION');
             btnSave.classList.toggle('card-panel-clear', same);
