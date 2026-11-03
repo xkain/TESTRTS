@@ -161,7 +161,7 @@ class Somfy {
         this.bindCarouselNavFeedback();
         this.bindVRKeyboard();
         initMultiClickToggle('#divTransceiverSettings .main-headerTitle', 'show-expert-gpio', 5);
-        initMultiClickToggle('.sidebar-brand, #showLogoHeader', () => this.screenShade(), 5);
+        initMultiClickToggle('.sidebar-brand', () => this.screenShade(), 5);
         this.initialized = true;
     }
     initPins() {
@@ -1369,10 +1369,6 @@ class Somfy {
         shades.forEach(el => { if (currentRoomId === 0 || parseInt(el.getAttribute('data-roomid'), 10) === currentRoomId) visibleShadesCount++; });
         groups.forEach(el => { if (currentRoomId === 0 || parseInt(el.getAttribute('data-roomid'), 10) === currentRoomId) visibleGroupsCount++; });
         const visibleCount = visibleShadesCount + visibleGroupsCount;
-        const showLogoHeader = getEl('showLogoHeader');
-        if (showLogoHeader) {
-            showLogoHeader.style.visibility = (isConfigOpen || totalDevices > 0 || hasRooms) ? 'visible' : 'hidden';
-        }
         // divGetStarted et divHomePnl sont mutuellement exclusifs : le premier ne doit s'afficher
         // QUE dans l'état vide (aucun équipement/room/groupe), auquel cas divHomePnl doit rester
         // masqué.

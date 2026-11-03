@@ -3486,8 +3486,7 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
 @property --rts-l { syntax: '<length>'; inherits: false; initial-value: 26px; }
 @property --rts-j { syntax: '<length>'; inherits: false; initial-value: 0px; }
 
-.sidebar-brand,
-#showLogoHeader {
+.sidebar-brand {
     user-select: none;
 }
 
