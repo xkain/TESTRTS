@@ -1428,20 +1428,26 @@
 
                     <div id="divSomfyMotors" class="subtab-content" style="display:none;">
                         <div id="divShadeListContainer">
+                            <div class="cfg-page-head">
+                                <div class="cfg-page-intro">
+                                    <h1 class="cfg-page-title" tr="SUBTAB_DEVICES"></h1>
+                                    <p class="cfg-page-desc"><span tr="PAGE_DEVICES_DESC">Les volets, stores et portes pilotés par ce boîtier. Ouvrez une tuile pour régler un équipement.</span> <span tr="DRAG_SORT"></span></p>
+                                </div>
+                                <div class="cfg-page-tools">
+                                    <span id="spanShadeCount" class="cfg-page-count"></span>
+                                    <div class="cfg-sort" data-kind="shade" role="group">
+                                        <button type="button" data-sort="room" aria-pressed="false" onclick="somfy.setCfgSort('shade', 'room');" tr="SORT_BY_ROOM">Par pièce</button>
+                                        <button type="button" data-sort="az" aria-pressed="false" onclick="somfy.setCfgSort('shade', 'az');" tr="SORT_AZ">A → Z</button>
+                                    </div>
+                                </div>
+                            </div>
                             <div id="divShadeEmptyState" class="empty-state" style="display:none;">
                                 <svg class="empty-icon"><use href="#svg-shutter"></use></svg>
                                 <p tr="EMPTY_DEVICE_TITLE"></p>
                                 <p class="empty-subtext" tr="EMPTY_DEVICE_DESC"></p>
                             </div>
                             <div id="divShadeListContent">
-                                <div class="dragtxt" tr="DRAG_SORT"></div>
                                 <div id="divShadeList" class="cfg-tiles"></div>
-                            </div>
-                            <div class="button-container-footerHtml">
-                                <button id="btnAddShade" class="fit" type="button" onclick="shadeSetup.open();">
-                                    <svg><use href="#svg-add"></use></svg>
-                                    <span tr="BT_ADD_DEVICE"></span>
-                                </button>
                             </div>
                         </div>
                         <div id="somfyShade" class="divsomfyShade" style="display:none;" data-bitlength="56">
@@ -1912,6 +1918,19 @@
 
                     <div id="divSomfyGroups" class="subtab-content" style="display:none;">
                         <div id="divGroupListContainer">
+                            <div class="cfg-page-head">
+                                <div class="cfg-page-intro">
+                                    <h1 class="cfg-page-title" tr="SUBTAB_GROUPS"></h1>
+                                    <p class="cfg-page-desc"><span tr="PAGE_GROUPS_DESC">Un groupe commande plusieurs équipements d’un seul geste, avec sa propre adresse radio.</span> <span tr="DRAG_SORT"></span></p>
+                                </div>
+                                <div class="cfg-page-tools">
+                                    <span id="spanGroupCount" class="cfg-page-count"></span>
+                                    <div class="cfg-sort" data-kind="group" role="group">
+                                        <button type="button" data-sort="room" aria-pressed="false" onclick="somfy.setCfgSort('group', 'room');" tr="SORT_BY_ROOM">Par pièce</button>
+                                        <button type="button" data-sort="az" aria-pressed="false" onclick="somfy.setCfgSort('group', 'az');" tr="SORT_AZ">A → Z</button>
+                                    </div>
+                                </div>
+                            </div>
                             <div id="divGroupEmptyState" class="empty-state" style="display:none;">
                                 <svg class="empty-icon"><use href="#svg-group"></use></svg>
                                 <p tr="EMPTY_GROUP_TITLE"></p>
@@ -1919,15 +1938,7 @@
                             </div>
 
                             <div id="divGroupListContent">
-                                <div class="dragtxt" tr="DRAG_SORT"></div>
                                 <div id="divGroupList" class="cfg-tiles"></div>
-                            </div>
-
-                            <div class="button-container-footerHtml">
-                                <button id="btnAddGroup"  class="fit" type="button" onclick="groupSetup.open();">
-                                    <svg><use href="#svg-add"></use></svg>
-                                    <span tr="BT_ADD_GROUP"></span>
-                                </button>
                             </div>
                         </div>
 
@@ -2131,6 +2142,15 @@
 
                     <div id="divSomfyRooms" class="subtab-content">
                         <div id="divRoomListContainer">
+                            <div class="cfg-page-head">
+                                <div class="cfg-page-intro">
+                                    <h1 class="cfg-page-title" tr="SUBTAB_ROOMS"></h1>
+                                    <p class="cfg-page-desc"><span tr="PAGE_ROOMS_DESC">Les pièces rangent équipements et groupes en sections sur le tableau de bord.</span> <span tr="DRAG_SORT"></span></p>
+                                </div>
+                                <div class="cfg-page-tools">
+                                    <span id="spanRoomCount" class="cfg-page-count"></span>
+                                </div>
+                            </div>
                             <div id="divRoomEmptyState" class="empty-state" style="display:none;">
                                 <svg class="empty-icon"><use href="#svg-emptyRoom"></use></svg>
                                 <p tr="EMPTY_ROOM_TITLE"></p>
@@ -2138,14 +2158,7 @@
                             </div>
 
                             <div id="divRoomListContent">
-                                <div class="dragtxt" tr="DRAG_SORT"></div>
                                 <div id="divRoomList" class="cfg-tiles"></div>
-                            </div>
-                            <div class="button-container-footerHtml">
-                                <button id="btnAddRoom"  class="fit" type="button" onclick="somfy.openEditRoom();">
-                                    <svg><use href="#svg-add"></use></svg>
-                                    <span tr="BT_ADD_ROOM"></span>
-                                </button>
                             </div>
                         </div>
                     </div>
