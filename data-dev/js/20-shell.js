@@ -792,6 +792,7 @@ const ROUTE_SLUGS = {
     divSomfySchedules: 'schedules',
     divTransceiverSettings: 'radio',
     divFrameLog: 'radio-logs',
+    divSettingsPnl: 'settings',
 };
 const ROUTE_SLUG_TO_GRPID = Object.fromEntries(Object.entries(ROUTE_SLUGS).map(([id, slug]) => [slug, id]));
 const ROUTE_EDITORS = {
@@ -910,6 +911,7 @@ const DOC_PAGES = {
     divMQTT: 'reseau/parametres-mqtt/',
     divSystemOptions: 'general/',
     divFirmware: 'firmware/',
+    divSettingsPnl: '',
 };
 function openPageHelp() {
     const url = DOC_BASE_URL + (DOC_PAGES[currentLeafId] || '');
@@ -980,7 +982,6 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
     // hash ou pas), ni un hashchange, ni un lien resté cliquable quelque part. onboarding.relaunch()
     // ne passe pas par ici et n'est donc pas concerné.
     if (isApMode && !window.__onboardingDone) return 'dashboard';
-    toggleMobileMenu(false);
     if (!grpid || !get(grpid)) grpid = 'divHomePnl';
     const leafId = _resolveDefaultChild(grpid);
     const topId = (leafId === 'divHomePnl') ? 'divHomePnl' : (ROUTE_LEAF_PARENT[leafId] || leafId);
@@ -999,6 +1000,8 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
     }
 
     clearOverlays();
+    get('btnMobileHome')?.classList.toggle('is-active', isDashboard);
+    get('btnMobileSettings')?.classList.toggle('is-active', !isDashboard);
 
     if (isDashboard) {
         if (typeof security !== 'undefined' && security.type !== 0 && !security.authenticated) {
@@ -1074,6 +1077,7 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
             const panel = get(id);
             if (panel) panel.style.display = (id === topId) ? '' : 'none';
         });
+        get('divSettingsPnl').style.display = (topId === 'divSettingsPnl') ? '' : 'none';
 
         // Sous-onglet réellement visible : sidebar (.sub-nav-item) et .subtab-container de la section active.
         document.querySelectorAll('.sub-nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === leafId));
@@ -1155,22 +1159,22 @@ function bindMobileUptimeTooltip() {
     });
 }
 
-function toggleMobileMenu(open) {
-    document.body.classList.toggle('mobile-menu-open', !!open);
-}
-function _placeBreadcrumb(mq) {
+function _placeMobileParts(mq) {
+    const status = document.querySelector('.sidebar-status');
+    const statusAnchor = mq.matches ? document.querySelector('#divSettingsPnl .settings-head') : document.querySelector('.sidebar-brand');
+    if (status && statusAnchor && status.previousElementSibling !== statusAnchor) statusAnchor.after(status);
     const bc = get('divSectionBreadcrumb'), help = get('btnPageHelp');
     const host = mq.matches ? get('divMobileBreadcrumbSlot') : document.querySelector('.top-bar');
     if (!host) return;
-    if (bc && bc.parentElement !== host) host.prepend(bc);
+    const back = host.querySelector('.crumb-back');
+    if (bc && bc.parentElement !== host) back ? back.after(bc) : host.prepend(bc);
     if (help && help.parentElement !== host) host.append(help);
 }
 function bindNavigation() {
     const mq = window.matchMedia('(max-width: 767px)');
-    _placeBreadcrumb(mq);
-    mq.addEventListener('change', () => { _placeBreadcrumb(mq); if (!mq.matches) toggleMobileMenu(false); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleMobileMenu(false); });
-    document.querySelectorAll('.nav-item, .sub-nav-item, .tab-container > span, .subtab-container > span').forEach(item => {
+    _placeMobileParts(mq);
+    mq.addEventListener('change', () => _placeMobileParts(mq));
+    document.querySelectorAll('.nav-item, .sub-nav-item, .tab-container > span, .subtab-container > span, .settings-row').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const grpid = item.getAttribute('data-grpid');

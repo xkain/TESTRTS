@@ -241,14 +241,12 @@
             <button id="btnReboot" type="button" line onclick="general.rebootDevice();"><svg><use href="#svg-restart"></use></svg><span tr="BT_REBOOT">Redémarrer</span></button>
         </div>
     </aside>
-    <div class="sidebar-scrim" onclick="toggleMobileMenu(false);"></div>
     <div id="divContainer" class="container" data-auth="false">
         <div id="divAuthenticated" style="display:none;">
 
             <div class="header" id="appHeader">
                 <div class="header-left">
-                    <button type="button" id="btnMobileMenu" class="mobile-menu-btn" onclick="toggleMobileMenu(true);"><svg><use href="#svg-navMenu"></use></svg></button>
-                    <button type="button" id="btnMobileHome" class="mobile-menu-btn" onclick="activateGrpid('divHomePnl');"><svg><use href="#svg-tabHome"></use></svg></button>
+                    <button type="button" id="btnMobileHome" class="mobile-menu-btn" onclick="confirmDiscardChanges(() => activateGrpid('divHomePnl'));"><svg><use href="#svg-tabHome"></use></svg></button>
                 </div>
                 <div class="header-right">
                     <div class="mobile-status-cluster">
@@ -286,6 +284,7 @@
                             </div>
                         </div>
                     </div>
+                    <button type="button" id="btnMobileSettings" class="mobile-menu-btn" onclick="confirmDiscardChanges(() => activateGrpid('divSettingsPnl'));"><svg><use href="#svg-tabSettings"></use></svg></button>
                 </div>
             </div>
             <div id="divConfigPnl" style="display:none;">
@@ -295,7 +294,42 @@
                      sans décalage entre deux position:sticky indépendants. Sur desktop, ce
                      déplacement est sans effet visuel : .subtab-container y est déjà masqué
                      (remplacé par le fil d'Ariane). -->
-                <div id="divMobileBreadcrumbSlot"></div>
+                <div id="divMobileBreadcrumbSlot">
+                    <a class="crumb-back" onclick="confirmDiscardChanges(() => activateGrpid('divSettingsPnl'));"><svg><use href="#svg-arrowLeft"></use></svg><span tr="SETTINGS_TITLE">Réglages</span></a>
+                </div>
+                <div id="divSettingsPnl" style="display:none;">
+                    <div class="settings-head">
+                        <h2 class="settings-title" tr="SETTINGS_TITLE">Réglages</h2>
+                        <button type="button" class="settings-help" onclick="openPageHelp();"><svg><use href="#svg-navHelp"></use></svg></button>
+                    </div>
+                    <div class="settings-sec" tr="TAB_SOMFY"></div>
+                    <div class="settings-list">
+                        <a class="settings-row" data-grpid="divSomfyMotors"><span class="uniblocSvg-F"><svg><use href="#svg-indicShutter"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_DEVICES"></b><span class="settings-row-desc" tr="SETTINGS_DESC_MOTORS"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" data-grpid="divSomfyGroups"><span class="uniblocSvg-F"><svg><use href="#svg-group"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_GROUPS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_GROUPS"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" data-grpid="divSomfyRooms"><span class="uniblocSvg-F"><svg><use href="#svg-navRoom"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_ROOMS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_ROOMS"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" data-grpid="divSomfySchedules"><span class="uniblocSvg-F"><svg><use href="#svg-navSchedule"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_SCHEDULES"></b><span class="settings-row-desc" tr="SETTINGS_DESC_SCHEDULES"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                    </div>
+                    <div class="settings-sec" tr="TAB_RADIO"></div>
+                    <div class="settings-list">
+                        <a class="settings-row" data-grpid="divTransceiverSettings"><span class="uniblocSvg-F"><svg><use href="#svg-antenna"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_RADIO"></b><span class="settings-row-desc" tr="SETTINGS_DESC_TRANSCEIVER"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" data-grpid="divListener"><span class="uniblocSvg-F"><svg><use href="#svg-remote"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_LISTENERS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_LISTENERS"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" data-grpid="divRepeater"><span class="uniblocSvg-F"><svg><use href="#svg-repeater"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_REPEATER"></b><span class="settings-row-desc" tr="SETTINGS_DESC_REPEATER"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" data-grpid="divFrameLog"><span class="uniblocSvg-F"><svg><use href="#svg-list"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_LOGS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_FRAMELOG"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                    </div>
+                    <div class="settings-sec" tr="TAB_NETWORK"></div>
+                    <div class="settings-list">
+                        <a class="settings-row" data-grpid="divNetAdapter"><span class="uniblocSvg-F"><svg><use href="#svg-tabReseau"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_CONNECTION"></b><span class="settings-row-desc" tr="SETTINGS_DESC_CONNECTION"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" data-grpid="divMQTT"><span class="uniblocSvg-F"><svg><use href="#svg-mqtt"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_MQTT"></b><span class="settings-row-desc" tr="SETTINGS_DESC_MQTT"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                    </div>
+                    <div class="settings-sec" tr="TAB_SYSTEM"></div>
+                    <div class="settings-list">
+                        <a class="settings-row" data-grpid="divSystemOptions"><span class="uniblocSvg-F"><svg><use href="#svg-tabSystem"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_GENERAL"></b><span class="settings-row-desc" tr="SETTINGS_DESC_GENERAL"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" data-grpid="divFirmware"><span class="uniblocSvg-F"><svg><use href="#svg-navFirmware"></use></svg></span><span class="settings-row-text"><b tr="IS_FIRMWARE"></b><span class="settings-row-desc" tr="SETTINGS_DESC_FIRMWARE"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                    </div>
+                    <div class="button-container-footerHtml">
+                        <button type="button" line onclick="general.rebootDevice();"><svg><use href="#svg-restart"></use></svg><span tr="BT_REBOOT">Redémarrer</span></button>
+                    </div>
+                </div>
                 <div id="divMobileStickyNav">
                     <div class="tab-container">
                         <span class="animScale" data-grpid="divHomePnl" tr="TAB_DASHBOARD" title="">
@@ -3176,9 +3210,6 @@
         </symbol>
         <symbol id="svg-tabHome" viewBox="0 0 48 48">
             <path fill="currentColor" d="M46 22.9l-7-6.7V6c0-.8-.7-1.5-1.5-1.5h-4.5c-.8 0-1.5.7-1.5 1.5v3l-5.4-5.2a3.1 3.1 0 0 0-4.1 0L2 22.9c-.6.6-.7 1.5-.1 2.1s1.5.6 2.1 0L23.5 6.5a.7.7 0 0 1 1 0l19.6 18.5c.6.6 1.5.6 2.1 0s.6-1.5-.3-2.1zM24.5 9.5a.7.7 0 0 0-1 0L6.2 26c-.2.2-.2.4-.2.5L6 42a3 3 0 0 0 3 3h9a1.5 1.5 0 0 0 1.5-1.5V30.8a.7.7 0 0 1 .8-.8h7.5a.7.7 0 0 1 .7.8V43.5a1.5 1.5 0 0 0 1.5 1.5h9a3 3 0 0 0 3-3V26c0-.1-.1-.3-.2-.5L24.5 9.5z"/>
-        </symbol>
-        <symbol id="svg-navMenu" viewBox="0 0 24 24">
-            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"/></g>
         </symbol>
         <symbol id="svg-navHelp" viewBox="0 0 24 24">
             <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/></g>

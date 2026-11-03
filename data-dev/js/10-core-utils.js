@@ -558,6 +558,7 @@ function setSidebarRadioState(on) {
     if (!cell) return;
     cell.classList.toggle('is-off', !on);
     cell.title = tr(on ? 'RADIO_ACTIVITY_TOOLTIP' : 'RADIO_DISABLED');
+    document.querySelector('.settings-row[data-grpid="divTransceiverSettings"]')?.classList.toggle('is-off', !on);
 }
 var errors = [
     { code: -10, key: 'ERR_PIN_TRANSCEIVER' },

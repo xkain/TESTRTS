@@ -56,6 +56,7 @@
     color-scheme:light;
     --color-bg-page:#f8fafd;
     --color-bg-surface-0: #fff;
+    --color-bg-nav-row: #f0f1f3;
     --color-bg-surface-1: #f2f2f2;
 
     --color-bg-surface-2: #fff;
@@ -146,6 +147,7 @@
     color-scheme:dark;
     --color-bg-page:#0a0a0a;
     --color-bg-surface-0: #0f0f0f;
+    --color-bg-nav-row: #1c1e22;
     --color-bg-surface-1: #111;
     --color-bg-surface-2: #131315;
     --color-bg-surface-3: #1c1e21;

@@ -4038,6 +4038,127 @@ div.frame-pulses {
         animation: slideUpFooter 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards;
     }
 }
+#divMobileBreadcrumbSlot {
+    display: none;
+}
+#divSettingsPnl {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 14px 14px 24px;
+    box-sizing: border-box;
+}
+.settings-sec {
+    padding: 16px 4px 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+}
+.settings-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 4px 2px 6px;
+}
+.settings-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-main);
+}
+.settings-help {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+.settings-help:hover,
+.settings-help:focus {
+    background: none;
+    color: var(--color-text-main);
+}
+.settings-help svg {
+    width: 22px;
+    height: 22px;
+}
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.settings-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 58px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border-radius: 14px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-nav-row);
+    color: var(--color-text-main);
+    text-decoration: none;
+    cursor: pointer;
+}
+.settings-row * {
+    pointer-events: none;
+}
+.settings-row .uniblocSvg-F svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+.settings-row-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+.settings-row-text b {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+.settings-row-desc {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+}
+.settings-row-chev {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    color: var(--color-text-secondary);
+}
+.settings-row.is-off {
+    opacity: 0.55;
+}
+.settings-row.is-off b {
+    text-decoration: line-through;
+}
+body.fw-update .settings-row[data-grpid="divFirmware"]::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 38px;
+    width: 9px;
+    height: 9px;
+    margin-top: -4.5px;
+    border-radius: var(--radius-full);
+    background: var(--color-danger);
+}
 .section-breadcrumb {
     display: flex;
     align-items: center;
@@ -4123,34 +4244,9 @@ div.frame-pulses {
 }
 
 @media screen and (max-width: 767px) {
-    .top-bar {
-        display: none;
-    }
+    .top-bar,
     .sidebar {
-        z-index: 2001;
-        height: 100dvh;
-        transform: translateX(-100%);
-        transition: transform 0.25s ease, filter 0.5s ease;
-    }
-    body.mobile-menu-open .sidebar {
-        transform: none;
-        box-shadow: 8px 0 30px rgba(0, 0, 0, 0.4);
-    }
-    .sidebar-scrim {
-        position: fixed;
-        inset: 0;
-        z-index: 2000;
-        background: rgba(0, 0, 0, 0.5);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.25s ease;
-    }
-    body.mobile-menu-open .sidebar-scrim {
-        opacity: 1;
-        pointer-events: auto;
-    }
-    body.mobile-menu-open {
-        overflow: hidden;
+        display: none;
     }
     #divMobileStickyNav {
         display: none;
@@ -4176,6 +4272,61 @@ div.frame-pulses {
     }
     #divMobileBreadcrumbSlot:not(:has(.section-breadcrumb-parent:not(:empty))) {
         display: none;
+    }
+    .crumb-back {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex: none;
+        padding-right: 10px;
+        border-right: 1px solid var(--color-border);
+        color: var(--color-accent);
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .crumb-back svg {
+        width: 16px;
+        height: 16px;
+    }
+    #divMobileBreadcrumbSlot .section-breadcrumb {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        font-size: 0.8rem;
+    }
+    #divMobileBreadcrumbSlot .section-breadcrumb > span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    #divMobileBreadcrumbSlot .section-breadcrumb[data-depth="3"] .section-breadcrumb-parent,
+    #divMobileBreadcrumbSlot .section-breadcrumb[data-depth="3"] .section-breadcrumb-parent + .section-breadcrumb-sep {
+        display: none;
+    }
+    #divSettingsPnl .sidebar-status {
+        padding: 0;
+        margin: 8px 0 4px;
+        border: 0;
+        color: var(--color-text-main);
+    }
+    #divSettingsPnl .status-cell {
+        background: var(--color-bg-nav-row);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-main);
+        border-radius: 12px;
+    }
+    #divSettingsPnl .status-cell-icon {
+        color: var(--color-text-secondary);
+    }
+    #divSettingsPnl .sidebar-status .opt-badge.active {
+        color: var(--color-text-main);
+    }
+    #divSettingsPnl #sidebarRadioStatus.is-off {
+        background: var(--color-bg-nav-row);
+        color: var(--color-text-secondary);
+        opacity: 0.6;
     }
     #divMobileBreadcrumbSlot .top-bar-help {
         width: 34px;
@@ -4251,6 +4402,11 @@ div.frame-pulses {
     .mobile-menu-btn:focus {
         background: none;
         color: var(--color-text-main);
+    }
+    .mobile-menu-btn.is-active,
+    .mobile-menu-btn.is-active:hover,
+    .mobile-menu-btn.is-active:focus {
+        color: var(--color-accent);
     }
     body.onboarding-active .mobile-menu-btn {
         visibility: hidden;
@@ -4883,16 +5039,16 @@ div.frame-pulses {
     :is(#somfyShade, #somfyGroup) .tile-side .uniRow { width: 100%; flex: none; }
     :is(#somfyShade, #somfyGroup) .tile-col:first-child { flex: 0.8 1 0; }
 }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog) { padding-bottom: 70px; }
-body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog) > .button-container-footerHtml { display: none; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) { padding-bottom: 70px; }
+body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { display: none; }
 @media (min-width: 768px) {
-    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog) > .button-container-footerHtml { left: var(--sidebar-width); }
+    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { left: var(--sidebar-width); }
 }
 @media (max-width: 767px) {
-    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
-    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
+    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
+    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
 }
 #divShadeSetup .gw-members { display: flex; flex-direction: column; gap: 8px; }
 #divShadeSetup .gw-member { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1.5px solid var(--color-border); border-radius: var(--radius-row); cursor: pointer; }
