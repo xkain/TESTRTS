@@ -4413,12 +4413,20 @@ class Somfy {
             <div class="slider-wrapper${tilt ? ' tilt-slider' : ''}"><div class="slider-progress" style="width:${v}%;"><div class="slider-thumb-line"></div></div>
             <input type="range" class="md3-range-input carousel-slider-${tilt ? 'tilt' : 'pos'}" data-bubble="true" min="0" max="100" step="1" value="${v}" data-realpos="${v}" oninput="syncSliderProgress(this);" onpointerdown="sliderDragStart(this);" onkeydown="sliderDragStart(this, true);" onkeyup="sliderDragEnd(this);" onchange="somfy.commitSliderTarget(this, ${id}, ${tilt});"></div></div>`;
         };
-        const my = this.myBadgeText(shade).replace(/^ · /, '');
-        return `<div class="card-sheet-hero">
-        <svg class="somfy-shade-icon" data-shadeid="${id}" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${shade.tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use></svg>
-        <span class="card-sheet-state"><span class="val-pos">${this.shadeStateText(shade)}</span>${shade.tiltType ? `<span class="val-tilt"> · ∠ <span class="val-tilt-pos">${shade.tiltPosition}%</span></span>` : ''}</span>
-        ${my ? `<span class="card-sheet-sub">${my}</span>` : ''}
+        const tiltType = shade.tiltType || 0;
+        const geo = tiltType !== 3 && typeof shade.myPos === 'number' && shade.myPos >= 0 ? this.myMarkGeometry(st.ico) : null;
+        const markY = geo ? geo[0] + geo[1] * (shade.flipPosition ? 100 - shade.myPos : shade.myPos) : 0;
+        const hero = hasPosition ? `<div class="sheet-my-now-box">
+        <svg class="somfy-shade-icon" data-shadeid="${id}" viewBox="0 0 48 48" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use>${geo ? `<g class="sheet-my-mark" transform="translate(0 ${markY})"><path d="M3 0H45"></path><text x="45" y="-1.4">my</text></g>` : ''}</svg>
+        <div class="sheet-my-now-vals">
+        ${tiltType !== 3 ? `<div><span>${tr('IS_POSITION')}</span><b class="val-pos-pct">${shade.position} %</b></div>` : ''}
+        ${tiltType ? `<div><span>${tr('OPT_PAGE_TILT')}</span><b class="val-tilt-pct">${shade.tiltPosition || 0} %</b></div>` : ''}
         </div>
+        </div>` : `<div class="card-sheet-hero">
+        <svg class="somfy-shade-icon" data-shadeid="${id}" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:0"><use href="#${st.ico}"></use></svg>
+        <span class="card-sheet-state"><span class="val-pos">${this.shadeStateText(shade)}</span></span>
+        </div>`;
+        return `${hero}
         <div class="card-sheet-buttons">${buttons}</div>
         ${hasPosition ? slider(false) : ''}${hasPosition && shade.tiltType > 0 ? slider(true) : ''}
         ${this.shadeSheetInfoHtml(shade)}`;
