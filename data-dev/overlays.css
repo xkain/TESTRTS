@@ -6,8 +6,7 @@
  *  ANIMATIONS & UTILITAIRES PARTAGÉS (keyframes, chargement, transitions)
  *  ======================================================================= */
 
-.lang-loaded .sidebar,
-.lang-loaded .top-bar-right {
+.lang-loaded .sidebar {
     filter: blur(0px);
 }
 

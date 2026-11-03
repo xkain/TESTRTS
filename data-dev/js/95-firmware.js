@@ -654,6 +654,7 @@ class Firmware {
         // leurs clés ne correspondent plus forcément. On renvoie celui de la langue active et celui
         // de repli, pris au tag du NOUVEAU firmware (cf. fetchGithubRawContent).
         window.__fwVersionTag = got;
+        setSidebarIdentity(null, got);
         const codes = [...new Set([window.__activeLangCode, window.__defaultLangCode].filter(Boolean))];
         let langFailed = false;
         for (let i = 0; i < codes.length; i++) {

@@ -550,6 +550,7 @@ class General {
                 } else {
                     ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                     logger.debug('General settings saved:', response);
+                    setSidebarIdentity(obj.hostname);
                     if (obj.accentColor) {
                         this._savedAccent = obj.accentColor;
                         localStorage.setItem('accentColor', obj.accentColor);

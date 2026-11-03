@@ -907,7 +907,10 @@ class Wifi {
             if (hostVal && hostVal !== (window.__currentHostname || '')) {
                 putJSONSync('/setgeneral', { hostname: hostVal }, (err) => {
                     if (err) logger.error('Failed to save hostname from network confirmation:', err);
-                    else window.__currentHostname = hostVal;
+                    else {
+                        window.__currentHostname = hostVal;
+                        setSidebarIdentity(hostVal);
+                    }
                     proceed();
                 });
             }

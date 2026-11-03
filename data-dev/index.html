@@ -159,20 +159,24 @@
             <svg class="section-breadcrumb-sep"><use href="#svg-arrowRight"></use></svg>
             <span class="section-breadcrumb-detail"></span>
         </div>
-        <div class="top-bar-right">
-            <!-- Pendant desktop de #headerRadioActivityMobile ci-dessous : les deux portent le
-                 MÊME balisage (classe .radio-activity-dot pour la visibilité + le ciblage par
-                 somfy.pulseRadioActivity(), traitement visuel .radio-activity-radar avec l'icône
-                 svg-tabRadio et le halo radiant au pulse). Toute modification de structure doit
-                 être reportée sur les deux, sans quoi l'utilisateur ne reconnaît plus l'indicateur
-                 en passant d'un écran à l'autre. Seul le gabarit diffère, ajusté en media query
-                 mobile pour s'aligner sur les icônes voisines (cf. main.css). -->
+    </header>
+    <!-- Reste dans le flux normal (visible) même pendant l'onboarding : body.onboarding-active
+    (main.css) la floute et la rend non cliquable, plutôt que de la masquer -- élimine tout
+    risque de flicker au boot puisqu'aucune règle ne bascule plus son display. -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <svg class="sidebar-logo"><use href="#svg-logo"></use></svg>
+            <div class="sidebar-identity">
+                <span id="spanSidebarHost" class="sidebar-host">ESPSomfy-RTS</span>
+                <span id="spanSidebarVersion" class="sidebar-version"></span>
+            </div>
+        </div>
+        <div class="sidebar-status">
             <span id="headerRadioActivityDesktop" class="radio-activity-dot radio-activity-radar" tr="RADIO_ACTIVITY_TOOLTIP" title="">
                 <span class="radio-activity-radar-glow" aria-hidden="true"></span>
                 <svg class="radio-activity-radar-icon"><use href="#svg-tabRadio"></use></svg>
             </span>
             <span class="status-item">
-                <span tr="SUBTAB_CONNECTION">Connexion</span>
                 <div class="status-options">
                     <span class="opt-badge" id="wifiBadge" data-conn="wifi" tr="TOPBAR_TOOLTIP_WIFI" title="">WIFI</span>
                     <span class="opt-badge" data-conn="lan" tr="TOPBAR_TOOLTIP_LAN" title="">LAN</span>
@@ -184,16 +188,13 @@
                     <div class="uniblocSvg-F">
                         <svg><use href="#svg-horloge"></use></svg>
                     </div>
-
                     <div class="uptime-text-block">
-                        <span class="label" tr="TOPBAR_Uptime"></span>
                         <div class="uptime-value-row">
                             <span class="uptime-display">--j --h --m --s</span>
                             <span class="uptime-status-dot"></span>
                         </div>
                     </div>
                     <svg class="uptime-arrow-icon"><use href="#svg-arrowDown"></use></svg>
-
                 </div>
 
                 <div class="uptime-tooltip app-tooltip">
@@ -211,69 +212,34 @@
                 </div>
             </div>
         </div>
-    </header>
-    <!-- Reste dans le flux normal (visible) même pendant l'onboarding : body.onboarding-active
-    (main.css) la floute et la rend non cliquable, plutôt que de la masquer -- élimine tout
-    risque de flicker au boot puisqu'aucune règle ne bascule plus son display. -->
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <svg width="80" height="80"><use href="#svg-logo"></use></svg>
-            <span class="site-title">ESPSomfy-RTS</span>
-        </div>
-
         <nav class="sidebar-nav">
             <a class="nav-item" data-grpid="divHomePnl">
                 <svg class="nav-icon"><use href="#svg-tabHome"></use></svg>
                 <span tr="TAB_DASHBOARD">Tableau de bord</span>
             </a>
-            <div class="nav-group">
-                <a class="nav-item has-submenu" data-grpid="divNetworkSettings">
-                    <svg class="nav-icon"><use href="#svg-tabReseau"></use></svg>
-                    <span tr="TAB_NETWORK">Réseau</span>
-                    <svg class="arrow-icon"><use href="#svg-arrowDown"></use></svg>
-                </a>
-                <div class="submenu" style="display:none;">
-                    <a class="sub-nav-item selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION">Connexion</a>
-                    <a class="sub-nav-item" data-grpid="divMQTT" tr="SUBTAB_MQTT">MQTT</a>
-                </div>
+            <div class="nav-section" data-section="divSomfySettings">
+                <div class="nav-section-title"><span class="nav-section-label" tr="TAB_SOMFY">Somfy</span></div>
+                <a class="sub-nav-item" data-grpid="divSomfyMotors"><svg class="nav-icon"><use href="#svg-indicShutter"></use></svg><span tr="SUBTAB_DEVICES">Équipements</span></a>
+                <a class="sub-nav-item" data-grpid="divSomfyGroups"><svg class="nav-icon"><use href="#svg-group"></use></svg><span tr="SUBTAB_GROUPS">Groupes</span></a>
+                <a class="sub-nav-item" data-grpid="divSomfyRooms"><svg class="nav-icon"><use href="#svg-emptyRoom"></use></svg><span tr="SUBTAB_ROOMS">Pièces</span></a>
+                <a class="sub-nav-item" data-grpid="divSomfySchedules"><svg class="nav-icon"><use href="#svg-schedule"></use></svg><span tr="SUBTAB_SCHEDULES">Plannings</span></a>
             </div>
-            <div class="nav-group">
-                <a class="nav-item has-submenu" data-grpid="divRadioSettings">
-                    <svg class="nav-icon"><use href="#svg-tabRadio"></use></svg>
-                    <span tr="TAB_RADIO">Radio</span>
-                    <span id="barsideRadioDisable" style="display: none;" tr="IS_DISABLED">désactivé</span>
-                    <svg class="arrow-icon"><use href="#svg-arrowDown"></use></svg>
-                </a>
-                <div class="submenu" style="display:none;">
-                    <a class="sub-nav-item selected" data-grpid="divTransceiverSettings" tr="SUBTAB_RADIO">Configuration</a>
-                    <a class="sub-nav-item" data-grpid="divFrameLog" tr="SUBTAB_LOGS">Journaux</a>
-                </div>
+            <div class="nav-section" data-section="divRadioSettings">
+                <div class="nav-section-title"><span class="nav-section-label" tr="TAB_RADIO">Radio</span><span id="barsideRadioDisable" class="nav-badge nav-badge-warning" style="display: none;" tr="IS_DISABLED">désactivé</span></div>
+                <a class="sub-nav-item" data-grpid="divTransceiverSettings"><svg class="nav-icon"><use href="#svg-antenna"></use></svg><span tr="SUBTAB_RADIO">Configuration</span></a>
+                <a class="sub-nav-item" data-grpid="divListener"><svg class="nav-icon"><use href="#svg-remote"></use></svg><span tr="SUBTAB_LISTENERS">Télécommandes</span></a>
+                <a class="sub-nav-item" data-grpid="divRepeater"><svg class="nav-icon"><use href="#svg-repeater"></use></svg><span tr="SUBTAB_REPEATER">Répéteur</span></a>
+                <a class="sub-nav-item" data-grpid="divFrameLog"><svg class="nav-icon"><use href="#svg-list"></use></svg><span tr="SUBTAB_LOGS">Journaux</span></a>
             </div>
-            <div class="nav-group">
-                <a class="nav-item has-submenu" data-grpid="divSomfySettings">
-                    <svg class="nav-icon"><use href="#svg-indicShutter"></use></svg>
-                    <span tr="TAB_SOMFY">Somfy</span>
-                    <svg class="arrow-icon"><use href="#svg-arrowDown"></use></svg>
-                </a>
-                <div class="submenu" style="display:none;">
-                    <a class="sub-nav-item selected" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES">Devices</a>
-                    <a class="sub-nav-item" data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS">Groupes</a>
-                    <a class="sub-nav-item" data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS">Pièces</a>
-                    <a class="sub-nav-item" data-grpid="divRepeater" tr="SUBTAB_REPEATER">Répéteur</a>
-                    <a class="sub-nav-item" data-grpid="divListener" tr="SUBTAB_LISTENERS">Télécommandes</a>
-                    <a class="sub-nav-item" data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES">Plannings</a>
-                </div>
+            <div class="nav-section" data-section="divNetworkSettings">
+                <div class="nav-section-title"><span class="nav-section-label" tr="TAB_NETWORK">Réseau</span></div>
+                <a class="sub-nav-item" data-grpid="divNetAdapter"><svg class="nav-icon"><use href="#svg-tabReseau"></use></svg><span tr="SUBTAB_CONNECTION">Connexion</span></a>
+                <a class="sub-nav-item" data-grpid="divMQTT"><svg class="nav-icon"><use href="#svg-mqtt"></use></svg><span tr="SUBTAB_MQTT">MQTT</span></a>
             </div>
-            <div class="nav-group">
-                <a class="nav-item has-submenu" data-grpid="divSystemSettings">
-                    <svg class="nav-icon"><use href="#svg-tabSystem"></use></svg>
-                    <span tr="TAB_SYSTEM">Système</span>
-                    <svg class="arrow-icon"><use href="#svg-arrowDown"></use></svg>
-                </a>
-                <div class="submenu" style="display:none;">
-                    <a class="sub-nav-item selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL">Général</a>
-                    <a class="sub-nav-item" data-grpid="divFirmware" tr="IS_FIRMWARE">Firmware</a>
-                </div>
+            <div class="nav-section" data-section="divSystemSettings">
+                <div class="nav-section-title"><span class="nav-section-label" tr="TAB_SYSTEM">Système</span></div>
+                <a class="sub-nav-item" data-grpid="divSystemOptions"><svg class="nav-icon"><use href="#svg-tabSystem"></use></svg><span tr="SUBTAB_GENERAL">Général</span></a>
+                <a class="sub-nav-item" data-grpid="divFirmware"><svg class="nav-icon"><use href="#svg-firmware"></use></svg><span tr="IS_FIRMWARE">Firmware</span></a>
             </div>
         </nav>
         <div class="sidebar-footer">
@@ -1465,7 +1431,7 @@
                     </div>
                 </div>
                 <div id="divSomfySettings" style="display:none;">
-                    <div id="subtabContainer-divSomfySettings" class="subtab-container"><span class="selected" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES"></span><span data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS"></span><span data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS"></span><span data-grpid="divRepeater" tr="SUBTAB_REPEATER"></span><span data-grpid="divListener" tr="SUBTAB_LISTENERS"></span>
+                    <div id="subtabContainer-divSomfySettings" class="subtab-container"><span class="selected" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES"></span><span data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS"></span><span data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS"></span>
 
                         <span data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES"></span></div>
 
@@ -2193,98 +2159,6 @@
                         </div>
                     </div>
 
-                    <div id="divRepeater" style="display:none;" class="subtab-content">
-                        <div class="main-header">
-                            <div class="main-headerBlock">
-                                <h2 class="main-headerTitle" tr="REPEAT_REMOTE_TITLE"></h2>
-                                <p class="main-headerDesc" tr="REPEATER_PAGE_DESC"></p>
-                            </div>
-                            <div class="main-headerAmbient">
-                                <svg><use href="#svg-repeater"></use></svg>
-                            </div>
-                        </div>
-                        <div class="tile-wrap">
-                            <div class="tile-side">
-                                <div class="unibloc-container">
-                                    <h3 class="unibloc-title tile-title"><span tr="REPEATER_CAPACITY"></span></h3>
-                                    <div class="ls-metrics">
-                                        <div class="ls-metric"><b><span id="spanRepeaterCount">0</span><small>/<span id="spanRepeaterMax">7</span></small></b><span tr="REPEATER_COUNT"></span></div>
-                                        <div class="ls-metric"><b id="spanRepeaterHeard">0</b><span tr="REPEATER_HEARD"></span></div>
-                                    </div>
-                                    <div class="ls-last"><span tr="RADIO_RX_LAST"></span><b id="spanRepeaterLast">—</b></div>
-                                </div>
-                                <div class="unibloc-container tile-tip">
-                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
-                                    <p class="tile-tip-text" tr="REPEAT_REMOTE_DESC_2"></p>
-                                </div>
-                            </div>
-                            <div class="tile-cols">
-                                <div class="unibloc-container">
-                                    <h3 class="unibloc-title tile-title"><span tr="REPEATER_LIST_TITLE"></span><span id="spanRepeaterBadge" class="ls-count"></span></h3>
-                                    <div id="divRepeaterEmptyState" class="empty-state" style="display:none;">
-                                        <svg class="empty-icon"><use href="#svg-emptyRepeater"></use></svg>
-                                        <p tr="EMPTY_REPEATER_TITLE"></p>
-                                        <p class="empty-subtext" tr="EMPTY_REPEATER_DESC"></p>
-                                    </div>
-                                    <div id="divRepeaterListContent">
-                                        <p class="ls-desc" tr="REPEATER_LIST_DESC"></p>
-                                        <div id="divRepeatList" class="ls-rows"></div>
-                                    </div>
-                                    <button id="btnLinkRepeater" class="ls-cta" type="button" onclick="somfy.linkRepeatRemote();">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
-                                        <span class="ls-cta-t"><b tr="REPEATER_CAPTURE"></b><small tr="REPEATER_CAPTURE_DESC"></small></span>
-                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="divListener" style="display:none;" class="subtab-content">
-                        <div class="main-header">
-                            <div class="main-headerBlock">
-                                <h2 class="main-headerTitle" tr="LISTENER_PAGE_TITLE"></h2>
-                                <p class="main-headerDesc" tr="LISTENER_PAGE_DESC"></p>
-                            </div>
-                            <div class="main-headerAmbient">
-                                <svg><use href="#svg-remote"></use></svg>
-                            </div>
-                        </div>
-                        <div class="tile-wrap">
-                            <div class="tile-side">
-                                <div class="unibloc-container">
-                                    <h3 class="unibloc-title tile-title"><span tr="LISTENER_ACTIVITY"></span></h3>
-                                    <div class="ls-metrics">
-                                        <div class="ls-metric"><b><span id="spanListenerCount">0</span><small>/<span id="spanListenerMax">14</span></small></b><span tr="LISTENER_COUNT"></span></div>
-                                        <div class="ls-metric"><b id="spanListenerPresses">0</b><span tr="LISTENER_PRESSES"></span></div>
-                                    </div>
-                                    <div class="ls-last"><span tr="LISTENER_LAST_PRESS"></span><b id="spanListenerLast">—</b></div>
-                                </div>
-                                <div class="unibloc-container tile-tip">
-                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
-                                    <p class="tile-tip-text" tr="LISTENER_TIP"></p>
-                                </div>
-                            </div>
-                            <div class="tile-cols">
-                                <div class="unibloc-container">
-                                    <h3 class="unibloc-title tile-title"><span tr="SUBTAB_LISTENERS"></span><span id="spanListenerBadge" class="ls-count"></span></h3>
-                                    <div id="divListenerEmptyState" class="empty-state" style="display:none;">
-                                        <svg class="empty-icon"><use href="#svg-remote"></use></svg>
-                                        <p tr="EMPTY_LISTENER_TITLE"></p>
-                                        <p class="empty-subtext" tr="EMPTY_LISTENER_DESC"></p>
-                                    </div>
-                                    <div id="divListenerListContent">
-                                        <p class="ls-desc" tr="LISTENER_LIST_DESC"></p>
-                                        <div id="divListenList" class="ls-rows"></div>
-                                    </div>
-                                    <button id="btnLinkListener" class="ls-cta" type="button" onclick="somfy.linkListenRemote();">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
-                                        <span class="ls-cta-t"><b tr="LISTENER_CAPTURE"></b><small tr="LISTENER_CAPTURE_DESC"></small></span>
-                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <div id="divSomfySchedules" style="display:none;" class="subtab-content">
                         <div id="divScheduleListContainer">
                             <div id="divScheduleEmptyState" class="empty-state" style="display:none;">
@@ -2310,6 +2184,8 @@
                 <div id="divRadioSettings" style="display:none;">
                     <div id="subtabContainer-divRadioSettings" class="subtab-container">
                         <span class="selected" data-grpid="divTransceiverSettings" tr="SUBTAB_RADIO"></span>
+                        <span data-grpid="divListener" tr="SUBTAB_LISTENERS"></span>
+                        <span data-grpid="divRepeater" tr="SUBTAB_REPEATER"></span>
                         <span data-grpid="divFrameLog" tr="SUBTAB_LOGS"></span>
                     </div>
                     <div id="divTransceiverSettings" class="subtab-content">
@@ -2771,6 +2647,98 @@
                         </div>
                     </div>
 
+                    <div id="divListener" style="display:none;" class="subtab-content">
+                        <div class="main-header">
+                            <div class="main-headerBlock">
+                                <h2 class="main-headerTitle" tr="LISTENER_PAGE_TITLE"></h2>
+                                <p class="main-headerDesc" tr="LISTENER_PAGE_DESC"></p>
+                            </div>
+                            <div class="main-headerAmbient">
+                                <svg><use href="#svg-remote"></use></svg>
+                            </div>
+                        </div>
+                        <div class="tile-wrap">
+                            <div class="tile-side">
+                                <div class="unibloc-container">
+                                    <h3 class="unibloc-title tile-title"><span tr="LISTENER_ACTIVITY"></span></h3>
+                                    <div class="ls-metrics">
+                                        <div class="ls-metric"><b><span id="spanListenerCount">0</span><small>/<span id="spanListenerMax">14</span></small></b><span tr="LISTENER_COUNT"></span></div>
+                                        <div class="ls-metric"><b id="spanListenerPresses">0</b><span tr="LISTENER_PRESSES"></span></div>
+                                    </div>
+                                    <div class="ls-last"><span tr="LISTENER_LAST_PRESS"></span><b id="spanListenerLast">—</b></div>
+                                </div>
+                                <div class="unibloc-container tile-tip">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
+                                    <p class="tile-tip-text" tr="LISTENER_TIP"></p>
+                                </div>
+                            </div>
+                            <div class="tile-cols">
+                                <div class="unibloc-container">
+                                    <h3 class="unibloc-title tile-title"><span tr="SUBTAB_LISTENERS"></span><span id="spanListenerBadge" class="ls-count"></span></h3>
+                                    <div id="divListenerEmptyState" class="empty-state" style="display:none;">
+                                        <svg class="empty-icon"><use href="#svg-remote"></use></svg>
+                                        <p tr="EMPTY_LISTENER_TITLE"></p>
+                                        <p class="empty-subtext" tr="EMPTY_LISTENER_DESC"></p>
+                                    </div>
+                                    <div id="divListenerListContent">
+                                        <p class="ls-desc" tr="LISTENER_LIST_DESC"></p>
+                                        <div id="divListenList" class="ls-rows"></div>
+                                    </div>
+                                    <button id="btnLinkListener" class="ls-cta" type="button" onclick="somfy.linkListenRemote();">
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
+                                        <span class="ls-cta-t"><b tr="LISTENER_CAPTURE"></b><small tr="LISTENER_CAPTURE_DESC"></small></span>
+                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="divRepeater" style="display:none;" class="subtab-content">
+                        <div class="main-header">
+                            <div class="main-headerBlock">
+                                <h2 class="main-headerTitle" tr="REPEAT_REMOTE_TITLE"></h2>
+                                <p class="main-headerDesc" tr="REPEATER_PAGE_DESC"></p>
+                            </div>
+                            <div class="main-headerAmbient">
+                                <svg><use href="#svg-repeater"></use></svg>
+                            </div>
+                        </div>
+                        <div class="tile-wrap">
+                            <div class="tile-side">
+                                <div class="unibloc-container">
+                                    <h3 class="unibloc-title tile-title"><span tr="REPEATER_CAPACITY"></span></h3>
+                                    <div class="ls-metrics">
+                                        <div class="ls-metric"><b><span id="spanRepeaterCount">0</span><small>/<span id="spanRepeaterMax">7</span></small></b><span tr="REPEATER_COUNT"></span></div>
+                                        <div class="ls-metric"><b id="spanRepeaterHeard">0</b><span tr="REPEATER_HEARD"></span></div>
+                                    </div>
+                                    <div class="ls-last"><span tr="RADIO_RX_LAST"></span><b id="spanRepeaterLast">—</b></div>
+                                </div>
+                                <div class="unibloc-container tile-tip">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
+                                    <p class="tile-tip-text" tr="REPEAT_REMOTE_DESC_2"></p>
+                                </div>
+                            </div>
+                            <div class="tile-cols">
+                                <div class="unibloc-container">
+                                    <h3 class="unibloc-title tile-title"><span tr="REPEATER_LIST_TITLE"></span><span id="spanRepeaterBadge" class="ls-count"></span></h3>
+                                    <div id="divRepeaterEmptyState" class="empty-state" style="display:none;">
+                                        <svg class="empty-icon"><use href="#svg-emptyRepeater"></use></svg>
+                                        <p tr="EMPTY_REPEATER_TITLE"></p>
+                                        <p class="empty-subtext" tr="EMPTY_REPEATER_DESC"></p>
+                                    </div>
+                                    <div id="divRepeaterListContent">
+                                        <p class="ls-desc" tr="REPEATER_LIST_DESC"></p>
+                                        <div id="divRepeatList" class="ls-rows"></div>
+                                    </div>
+                                    <button id="btnLinkRepeater" class="ls-cta" type="button" onclick="somfy.linkRepeatRemote();">
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
+                                        <span class="ls-cta-t"><b tr="REPEATER_CAPTURE"></b><small tr="REPEATER_CAPTURE_DESC"></small></span>
+                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div id="divFrameLog" class="subtab-content frame-log" style="display:none;">
                         <div class="main-header">
                             <div class="main-headerBlock">
