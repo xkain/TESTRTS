@@ -349,6 +349,12 @@ class Somfy {
                 if (spanMaxRooms)  spanMaxRooms.innerText = (somfy.maxRooms - 2);
                 if (spanMaxShades) spanMaxShades.innerText = (somfy.maxShades - 2);
                 if (spanMaxGroups) spanMaxGroups.innerText = (somfy.maxGroups - 2);
+                this.maxRooms = somfy.maxRooms;
+                this.maxShades = somfy.maxShades;
+                this.maxGroups = somfy.maxGroups;
+                this.setCfgCount('shade', (this.shades || []).length);
+                this.setCfgCount('group', (this.groups || []).length);
+                this.setCfgCount('room', Math.max(0, _rooms.length - 1));
 
                 // Persisté (contrairement à maxRooms/Shades/Groups ci-dessus, seulement utilisés
                 // ponctuellement pour ces spans) : consommé plus tard par _openEditScheduleGroup() et
@@ -1352,9 +1358,9 @@ class Somfy {
         const hasRooms = _rooms.length > 1;
         const totalDevices = shades.length + groups.length;
 
-        togglePair(hasRooms, 'divRoomEmptyState', 'divRoomListContent');
-        togglePair(groups.length > 0, 'divGroupEmptyState', 'divGroupListContent');
-        togglePair(shades.length > 0, 'divShadeEmptyState', 'divShadeListContent');
+        setDisp(getEl('divRoomEmptyState'), !hasRooms);
+        setDisp(getEl('divGroupEmptyState'), groups.length === 0);
+        setDisp(getEl('divShadeEmptyState'), shades.length === 0);
 
         const divRepeatList = getEl('divRepeatList');
         togglePair(divRepeatList && divRepeatList.children.length > 0, 'divRepeaterEmptyState', 'divRepeaterListContent');
@@ -1390,11 +1396,6 @@ class Somfy {
 
             if (divShadeControls) divShadeControls.style.display = isConfigOpen ? 'none' : '';
             if (divGroupControls) divGroupControls.style.display = isConfigOpen ? 'none' : '';
-
-            const divShadeListContent = getEl('divShadeListContent');
-            const divGroupListContent = getEl('divGroupListContent');
-            if (divShadeListContent) divShadeListContent.style.display = visibleShadesCount === 0 ? 'none' : '';
-            if (divGroupListContent) divGroupListContent.style.display = visibleGroupsCount === 0 ? 'none' : '';
         }
 
         // Colonne Groupes masquée / Équipements pleine largeur + centrée si aucun groupe n'est
@@ -3819,7 +3820,7 @@ class Somfy {
         return `<div class="cfg-tile" data-roomid="${shade.roomId}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-shadetype="${shade.shadeType}" onclick="somfy.openEditShade(${shade.shadeId});">
         <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#${st.indic}"></use></svg></span>${this.cfgTileMenu(`somfy.openEditShade(${shade.shadeId})`, `somfy.deleteShade(${shade.shadeId})`)}</div>
         <div class="cfg-tile-name"><span class="name-text">${escHtml(shade.name)}</span>${typeKey ? `<span class="cfg-tile-sub">${tr(typeKey)}</span>` : ''}</div>
-        <div class="cfg-tile-foot"><span class="cfg-tile-id">${tr('ID')}${shade.remoteAddress}</span>${typeof shadeSetup !== 'undefined' ? shadeSetup.badgeHtml(shade) : ''}</div>
+        <div class="cfg-tile-foot"><span class="cfg-tile-id">${tr('ID')}${shade.remoteAddress}</span>${this.cfgTileRoomHtml(shade.roomId)}${typeof shadeSetup !== 'undefined' ? shadeSetup.badgeHtml(shade) : ''}</div>
         </div>`;
     }
     groupTileHtml(group) {
@@ -3832,7 +3833,7 @@ class Somfy {
         return `<div class="cfg-tile" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});">
         <div class="cfg-tile-top">${members.length ? `<span class="cfg-tile-stack">${icons}</span>` : `<span class="cfg-tile-icon"><svg><use href="#svg-group"></use></svg></span>`}${this.cfgTileMenu(`somfy.openEditGroup(${group.groupId})`, `somfy.deleteGroup(${group.groupId})`)}</div>
         <div class="cfg-tile-name"><span class="name-text">${escHtml(group.name)}</span><span class="cfg-tile-sub">${tr('GROUP_LINKED_COUNT').replace('{n}', members.length)}</span></div>
-        <div class="cfg-tile-foot"><span class="cfg-tile-id">${tr('ID')}${group.remoteAddress}</span></div>
+        <div class="cfg-tile-foot"><span class="cfg-tile-id">${tr('ID')}${group.remoteAddress}</span>${this.cfgTileRoomHtml(group.roomId)}</div>
         </div>`;
     }
     toggleTileMenu(btn) {
@@ -3852,6 +3853,55 @@ class Somfy {
         }).join('');
     }
 
+    cfgSortMode(kind) {
+        let mode = null;
+        try { mode = localStorage.getItem('cfgSort.' + kind); } catch (e) { mode = null; }
+        return mode === 'room' || mode === 'az' ? mode : (kind === 'group' ? 'az' : 'room');
+    }
+    setCfgSort(kind, mode) {
+        try { localStorage.setItem('cfgSort.' + kind, mode); } catch (e) { }
+        this.renderCfgList(kind);
+    }
+    renderCfgList(kind) {
+        const isShade = kind === 'shade';
+        const items = (isShade ? this.shades : this.groups) || [];
+        const html = isShade ? (it => this.shadeTileHtml(it)) : (it => this.groupTileHtml(it));
+        const mode = this.cfgSortMode(kind);
+        const list = get(isShade ? 'divShadeList' : 'divGroupList');
+        const body = mode === 'az'
+            ? items.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base', numeric: true })).map(html).join('')
+            : this.cfgTilesByRoom(items, html);
+        list.innerHTML = this.cfgAddTileHtml(kind) + body;
+        list.classList.toggle('cfg-sort-az', mode === 'az');
+        document.querySelectorAll(`.cfg-sort[data-kind="${kind}"]`).forEach(seg => {
+            seg.style.display = items.length > 1 ? '' : 'none';
+            seg.querySelectorAll('button').forEach(b => {
+                const on = b.dataset.sort === mode;
+                b.classList.toggle('on', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+        });
+        this.setCfgCount(kind, items.length);
+    }
+    setCfgCount(kind, n) {
+        const el = get({ shade: 'spanShadeCount', group: 'spanGroupCount', room: 'spanRoomCount' }[kind]);
+        if (!el) return;
+        const max = { shade: this.maxShades, group: this.maxGroups, room: this.maxRooms }[kind];
+        el.textContent = max ? `${n}/${max - 2}` : `${n}`;
+    }
+    cfgAddTileHtml(kind) {
+        const conf = {
+            shade: ['shadeSetup.open();', `<span tr="BT_ADD_DEVICE">${tr('BT_ADD_DEVICE')}</span>`],
+            group: ['groupSetup.open();', `<span tr="BT_ADD_GROUP">${tr('BT_ADD_GROUP')}</span>`],
+            room: ['somfy.openEditRoom();', `<span tr="BT_ADD_ROOM">${tr('BT_ADD_ROOM')}</span>`]
+        }[kind];
+        return `<button type="button" class="cfg-tile cfg-tile-add" onclick="${conf[0]}"><span class="cfg-tile-plus"><svg><use href="#svg-add"></use></svg></span>${conf[1]}</button>`;
+    }
+    cfgTileRoomHtml(roomId) {
+        const room = _rooms.find(r => r.roomId === roomId) || { name: tr('HOME') };
+        return `<span class="cfg-tile-room"><svg><use href="#svg-navRoom"></use></svg>${escHtml(room.name)}</span>`;
+    }
+
     setRoomsList(rooms) {
         if (this.dashEditing) { this._dashPending.rooms = rooms; return; }
         let divCfg = '';
@@ -3866,7 +3916,7 @@ class Somfy {
             divPills += `<div class="room-pill animScale" data-roomid="${room.roomId}" onclick="somfy.selectRoom(${room.roomId})"><span>${escHtml(room.name)}</span><span class="room-count">0</span></div>`;
 
             divCfg += `<div class="cfg-tile" data-roomid="${room.roomId}" onclick="somfy.openEditRoom(${room.roomId});">
-            <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#svg-emptyRoom"></use></svg></span>${this.cfgTileMenu(`somfy.openEditRoom(${room.roomId})`, `somfy.deleteRoom(${room.roomId})`)}</div>
+            <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#svg-navRoom"></use></svg></span>${this.cfgTileMenu(`somfy.openEditRoom(${room.roomId})`, `somfy.deleteRoom(${room.roomId})`)}</div>
             <div class="cfg-tile-name"><span class="name-text">${escHtml(room.name)}</span></div>
             <div class="cfg-tile-foot"><span class="cfg-tile-stat" data-kind="shade"><b>0</b> ${tr('SUBTAB_DEVICES')}</span><span class="cfg-tile-stat" data-kind="group"><b>0</b> ${tr('SUBTAB_GROUPS')}</span></div>
             </div>`;
@@ -3881,7 +3931,8 @@ class Somfy {
         const navContainer = document.querySelector('.room-nav-container');
         if(navContainer) navContainer.style.display = rooms.length === 0 ? 'none' : 'flex';
 
-        get('divRoomList').innerHTML = divCfg;
+        get('divRoomList').innerHTML = this.cfgAddTileHtml('room') + divCfg;
+        this.setCfgCount('room', rooms.length);
         get('selShadeRoom').innerHTML = divOpts;
         get('selGroupRoom').innerHTML = divOpts;
 
@@ -4080,7 +4131,7 @@ class Somfy {
 
         div.innerHTML = `
         <div class="message-content room-content">
-        ${modalHeader(titleKey, 'svg-emptyRoom', {
+        ${modalHeader(titleKey, 'svg-navRoom', {
             subtitle: descKey,
             rightContent: `<div class="somfyMaxId"><span id="spanRoomId">${roomId}</span>/<span id="spanMaxRooms">${roomData.maxRooms || 14}</span></div>`
         })}
@@ -4342,7 +4393,7 @@ class Somfy {
             divCtl += byRoom.get(id).join('');
         });
         this.syncVRLayout();
-        get('divShadeList').innerHTML = this.cfgTilesByRoom(shades, shade => this.shadeTileHtml(shade));
+        this.renderCfgList('shade');
         let shadeControls = get('divShadeControls');
         shadeControls.innerHTML = divCtl;
         this.checkEmptyState();
@@ -5875,7 +5926,7 @@ class Somfy {
             }
         }
         this.syncVRLayout();
-        get('divGroupList').innerHTML = this.cfgTilesByRoom(groups || [], group => this.groupTileHtml(group));
+        this.renderCfgList('group');
         let groupControls = get('divGroupControls');
         groupControls.innerHTML = divCtl;
         this.checkEmptyState();
