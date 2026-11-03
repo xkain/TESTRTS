@@ -5353,13 +5353,19 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divHomePnl .column-hidden-toggle[hidden] { display: none; }
 #divHomePnl .column-hidden-toggle svg { width: 14px; height: 14px; fill: currentColor; }
 #divHomePnl .column-hidden-toggle.active { color: var(--color-accent); border-color: color-mix(in srgb, var(--color-accent), transparent 50%); }
-#divHomePnl .sheet-my-cmp { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid var(--color-border); background: var(--color-bg-row); }
-#divHomePnl .sheet-my-cmp > div { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
-#divHomePnl .sheet-my-cmp .somfy-shade-icon { width: 110px; height: 110px; }
-#divHomePnl .sheet-my-cmp span { font-size: 0.72em; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--color-text-secondary); text-align: center; }
-#divHomePnl .sheet-my-cmp b { font-size: 1.15em; font-weight: 700; color: var(--color-text-main); font-variant-numeric: tabular-nums; white-space: nowrap; }
-#divHomePnl .sheet-my-cmp em { font-size: 1.6em; font-style: normal; color: var(--color-text-secondary); }
-#divHomePnl .sheet-my-cmp .sheet-my-target b { color: var(--color-warning); }
+#divHomePnl .sheet-my-now-box { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 12px; border-radius: 12px; border: 1px solid var(--color-border); background: var(--color-bg-row); }
+#divHomePnl .sheet-my-now-box .somfy-shade-icon { flex: none; width: 110px; height: 110px; overflow: visible; }
+#divHomePnl .sheet-my-now-vals { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+#divHomePnl .sheet-my-now-vals div { display: flex; flex-direction: column; }
+#divHomePnl .sheet-my-now-vals span { font-size: 0.8em; color: var(--color-text-secondary); }
+#divHomePnl .sheet-my-now-vals b { font-size: 1.7em; font-weight: 700; color: var(--color-text-main); font-variant-numeric: tabular-nums; }
+#divHomePnl .sheet-my-mark { transition: transform 0.2s ease; }
+#divHomePnl .sheet-my-mark path { fill: none; stroke: var(--color-warning); stroke-width: 1.4; stroke-dasharray: 2.5 2; }
+#divHomePnl .sheet-my-mark text { font-size: 4.2px; font-weight: 700; fill: var(--color-warning); text-anchor: end; }
+#divHomePnl .card-sheet .sheet-my-pair { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; padding: 8px; border-radius: 12px; border: 1px dashed color-mix(in srgb, var(--color-warning), transparent 50%); }
+#divHomePnl .card-sheet .sheet-my-pair > span { grid-column: 1 / -1; margin: -2px 2px 0; font-size: 0.72em; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--color-warning); }
+#divHomePnl .card-sheet .sheet-my-pair .card-kv b { color: var(--color-warning); }
+#divHomePnl .card-sheet .sheet-my-pair .card-kv:nth-child(2):last-child { grid-column: 1 / -1; }
 #divHomePnl .sheet-my-slider { display: flex; flex-direction: column; gap: 8px; }
 #divHomePnl .sheet-my-slider-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.85em; color: var(--color-text-secondary); }
 #divHomePnl .sheet-my-slider-head b { font-size: 1.1em; color: var(--color-text-main); font-variant-numeric: tabular-nums; }
