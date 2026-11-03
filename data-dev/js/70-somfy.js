@@ -4370,16 +4370,16 @@ class Somfy {
         if (!this._cardAgoTimer && ov.querySelector('.card-ago')) this._cardAgoTimer = setInterval(() => this.tickCardAgo(), 1000);
     }
     shadeSheetTabs(shade) {
-        const tabs = [{ icon: 'svg-remote', label: 'RADIO_COMMAND', html: this.shadeSheetControlsHtml(shade), bind: (pane) => this.bindShadeCmdButtons(pane) }];
+        const tabs = [{ icon: 'svg-ctl', label: 'RADIO_COMMAND', html: this.shadeSheetControlsHtml(shade), bind: (pane) => this.bindShadeCmdButtons(pane) }];
         if (this.shadeTypeSupportsMy(this.shadeTypeOf(shade))) tabs.push({ icon: 'svg-favori', label: 'SETMYPOS_TITLE', html: this.shadeSheetMyHtml(shade), bind: (pane) => this.bindShadeSheetMy(pane, shade) });
-        tabs.push({ icon: 'svg-tabSettings', label: 'OPTION', html: this.shadeSheetOptionsHtml(shade), bind: (pane) => this.bindShadeSheetOptions(pane, shade) });
+        tabs.push({ icon: 'svg-eyeOn', label: 'OPTION', html: this.shadeSheetOptionsHtml(shade), bind: (pane) => this.bindShadeSheetOptions(pane, shade) });
         return tabs;
     }
     groupSheetTabs(group) {
         return [
-            { icon: 'svg-remote', label: 'RADIO_COMMAND', html: this.groupSheetControlsHtml(group) },
-            { icon: 'svg-group', label: 'SUBTAB_DEVICES', html: this.groupSheetMembersHtml(group) },
-            { icon: 'svg-tabSettings', label: 'OPTION', html: `${this.cardSheetPrefsHtml('group', group.groupId, '')}${this.cardSheetActionsHtml('group', group.groupId)}`, bind: (pane) => this.bindCardSheetPrefs(pane, 'group', group.groupId) }
+            { icon: 'svg-ctl', label: 'RADIO_COMMAND', html: this.groupSheetControlsHtml(group) },
+            { icon: 'svg-list', label: 'SUBTAB_DEVICES', html: this.groupSheetMembersHtml(group) },
+            { icon: 'svg-eyeOn', label: 'OPTION', html: `${this.cardSheetPrefsHtml('group', group.groupId, '')}${this.cardSheetActionsHtml('group', group.groupId)}`, bind: (pane) => this.bindCardSheetPrefs(pane, 'group', group.groupId) }
         ];
     }
     shadeSheetControlsHtml(shade) {
@@ -4525,24 +4525,21 @@ class Somfy {
         const pages = [{ value: 0, label: tr('OPT_PAGE_BUTTONS') }];
         if (hasPosition) pages.push({ value: 1, label: tr('IS_POSITION') });
         if (hasPosition && shade.tiltType > 0) pages.push({ value: 2, label: tr('OPT_PAGE_TILT') });
-        const pageField = pages.length > 1 ? `<div class="positioner-field">
-        <span class="positioner-label">${tr('OPT_DEFAULT_CAROUSEL_PAGE')}</span>
-        <div class="positioner-seg" data-pref="page">${pages.map(p => `<button type="button" data-page="${p.value}" aria-pressed="${prefs.defaultCarouselPage === p.value ? 'true' : 'false'}">${p.label}</button>`).join('')}</div>
-        </div>` : '';
-        const badgeField = this.shadeTypeSupportsMy(type) ? `<label class="positioner-switch">
-        <span class="positioner-label">${tr('OPT_SHOW_MY_BADGE')}</span>
-        <span class="switch"><input type="checkbox" data-pref="badge" ${prefs.showMyBadge ? 'checked' : ''}><div></div></span>
-        </label>` : '';
-        return `${this.cardSheetPrefsHtml('shade', id, pageField + badgeField)}
+        const pageRow = pages.length > 1 ? this.sheetOptRow('OPT_DEFAULT_CAROUSEL_PAGE', 'CARD_OPT_PAGE_DESC', `<div class="positioner-seg sheet-pseg" data-pref="page">${pages.map(p => `<button type="button" data-page="${p.value}" aria-pressed="${prefs.defaultCarouselPage === p.value ? 'true' : 'false'}">${p.label}</button>`).join('')}</div>`) : '';
+        const badgeRow = this.shadeTypeSupportsMy(type) ? this.sheetOptRow('OPT_SHOW_MY_BADGE', 'CARD_OPT_BADGE_DESC', this.sheetSwitch('data-pref="badge"', prefs.showMyBadge)) : '';
+        return `${this.cardSheetPrefsHtml('shade', id, pageRow + badgeRow)}
         ${this.cardSheetActionsHtml('shade', id)}`;
+    }
+    sheetOptRow(label, desc, control) {
+        return `<div class="sheet-opt"><div class="sheet-opt-txt"><span>${tr(label)}</span><em>${tr(desc)}</em></div>${control}</div>`;
+    }
+    sheetSwitch(attr, on) {
+        return `<label class="switch"><input type="checkbox" ${attr} ${on ? 'checked' : ''}><div></div></label>`;
     }
     cardSheetPrefsHtml(kind, id, extra) {
         const prefs = this.cardUIPrefs(kind, id);
-        const sw = (key, label) => `<label class="positioner-switch">
-        <span class="positioner-label">${tr(label)}</span>
-        <span class="switch"><input type="checkbox" data-cardpref="${key}" ${prefs[key] ? 'checked' : ''}><div></div></span>
-        </label>`;
-        return `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_DISPLAY')}</span></div>${extra}${sw('compact', 'CARD_OPT_COMPACT')}${sw('confirm', 'CARD_OPT_CONFIRM')}${sw('hidden', 'CARD_OPT_HIDE')}</div>`;
+        const sw = (key, label, desc) => this.sheetOptRow(label, desc, this.sheetSwitch(`data-cardpref="${key}"`, prefs[key]));
+        return `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_DISPLAY')}</span></div>${extra}${sw('compact', 'CARD_OPT_COMPACT', 'CARD_OPT_COMPACT_DESC')}${sw('confirm', 'CARD_OPT_CONFIRM', 'CARD_OPT_CONFIRM_DESC')}${sw('hidden', 'CARD_OPT_HIDE', 'CARD_OPT_HIDE_DESC')}</div>`;
     }
     bindCardSheetPrefs(pane, kind, id) {
         pane.querySelectorAll('[data-cardpref]').forEach(chk => {
@@ -4568,11 +4565,14 @@ class Somfy {
         this.bindCardSheetPrefs(pane, 'shade', id);
     }
     cardSheetActionsHtml(kind, id) {
-        return `<div class="card-actions">
-        <button type="button" class="card-btn" onclick="somfy.closeCardSheet(); somfy.openVirtualRemote('${kind}', ${id});"><svg><use href="#svg-remote"></use></svg>${tr('SUBTAB_VIRTUAL_REMOTE_S')}</button>
-        <button type="button" class="card-btn ghost" onclick="somfy.closeCardSheet(); somfy.openCardEditor('${kind}', ${id});"><svg><use href="#svg-edit"></use></svg>${tr('BT_EDIT')}</button>
-        ${kind === 'shade' ? `<button type="button" class="card-btn ghost" onclick="somfy.openCardRadioLog(${id});"><svg><use href="#svg-wave"></use></svg>${tr('LOG_TITLE')}</button>` : ''}
-        </div>`;
+        return `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_SHORTCUTS')}</span></div>
+        <div class="sheet-links">
+        <button type="button" class="sheet-link-btn" onclick="somfy.closeCardSheet(); somfy.openVirtualRemote('${kind}', ${id});"><svg><use href="#svg-remote"></use></svg><span>${tr('SUBTAB_VIRTUAL_REMOTE_S')}</span></button>
+        <button type="button" class="sheet-link-btn" onclick="somfy.closeCardSheet(); somfy.openCardEditor('${kind}', ${id});"><svg><use href="#svg-edit"></use></svg><span>${tr('BT_EDIT')}</span></button>
+        <button type="button" class="sheet-link-btn" onclick="somfy.closeCardSheet(); somfy.openAddScheduleInline('${kind}', ${id});"><svg><use href="#svg-schedule"></use></svg><span>${tr('CARD_ADD_SCHEDULE')}</span></button>
+        ${kind === 'shade' ? `<button type="button" class="sheet-link-btn" onclick="somfy.openCardRadioLog(${id});"><svg><use href="#svg-wave"></use></svg><span>${tr('LOG_TITLE')}</span></button>` : ''}
+        </div></div>
+        <p class="card-sheet-hint">${tr('CARD_PREFS_LOCAL_HINT')}</p>`;
     }
     groupSheetControlsHtml(group) {
         const id = group.groupId;
@@ -4630,38 +4630,36 @@ class Somfy {
     }
     cardSchedulesHtml(kind, id) {
         const rows = (this.schedules || []).some(sc => sc.targetType === kind && sc.targetId === id)
-            ? this._buildScheduleTooltipHtml(kind, id).replace(/^<div class="schedule-popover-title">[\s\S]*?<\/div>/, '')
+            ? this._buildScheduleTooltipHtml(kind, id).replace(/^<div class="schedule-popover-title">[\s\S]*?<\/div>/, '').replace(/(<div class="schedule-popover-row[^"]*">)/g, '$1<svg class="sheet-li-ico"><use href="#svg-schedule"></use></svg>')
             : `<div class="card-empty">${tr('EMPTY_SCHEDULE_TITLE')}</div>`;
-        return `<div class="card-block"><div class="card-block-head"><span>${tr('SUBTAB_SCHEDULES')}</span><button type="button" class="card-link" onclick="somfy.openAddScheduleInline('${kind}', ${id});">${tr('BT_ADD')}</button></div><div class="card-sched">${rows}</div></div>`;
+        return `<div class="card-block"><div class="card-block-head"><span>${tr('SUBTAB_SCHEDULES')}</span><button type="button" class="card-link" onclick="somfy.closeCardSheet(); somfy.openAddScheduleInline('${kind}', ${id});">+ ${tr('BT_ADD')}</button></div><div class="card-sched">${rows}</div></div>`;
     }
     shadeSheetInfoHtml(shade) {
         const shadeId = shade.shadeId;
         const type = this.shadeTypeOf(shade);
         const kv = (k, v) => `<div class="card-kv"><span>${k}</span><b>${v}</b></div>`;
         const items = [];
-        if (this.shadeTypeSupportsMy(type)) {
-            const my = this.myBadgeText(shade).replace(/^ · My /, '');
-            items.push(kv(tr('SETMYPOS_TITLE'), `${my || tr('CARD_MY_NONE')} <button type="button" class="card-link" onclick="somfy.cardSheetTab(1);">${tr(my ? 'BT_EDIT' : 'CARD_MY_DEFINE')}</button>`));
-        }
-        if (shade.tiltType) items.push(kv(tr('OPT_PAGE_TILT'), `${shade.tiltPosition}%`));
         if (typeof shade.lastSentAgo === 'number') {
             const W = typeof shadeSetup !== 'undefined' && shadeSetup.words ? shadeSetup.words(type) : {};
             const cmd = { Up: W.up, Down: W.down }[shade.lastSentCmd] || shade.lastSentCmd || '';
             if (typeof shade._sentAt !== 'number') shade._sentAt = shade.lastSentAgo >= 0 ? Date.now() - shade.lastSentAgo * 1000 : 0;
             items.push(kv(tr('SHADE_ACT_SENT'), shade._sentAt ? `${escHtml(cmd)} · <span class="card-ago" data-at="${shade._sentAt}">${this.cardAgoText(shade._sentAt)}</span>` : tr('SHADE_ACT_NEVER')));
         }
+        if (this.shadeTypeSupportsMy(type)) items.push(kv(tr('SETMYPOS_TITLE'), this.myBadgeText(shade).replace(/^ · My /, '') || tr('CARD_MY_NONE')));
+        if (shade.tiltType) items.push(kv(tr('OPT_PAGE_TILT'), `${shade.tiltPosition}%`));
         if (shade.sunSensor) {
             const sunny = (shade.flags & 0x20) === 0x20, windy = (shade.flags & 0x10) === 0x10;
             items.push(kv(tr('CARD_SENSORS'), sunny ? `<span class="card-tag sun">${tr('VR_SUN')}</span>` : windy ? `<span class="card-tag wind">${tr('VR_WIND')}</span>` : tr('CARD_CALM')));
             items.push(kv(tr('VR_SUN_FLAG'), tr((shade.flags & 0x01) ? 'ENABLED' : 'IS_DISABLED')));
         }
+        items.push(kv(tr('ROOM'), escHtml((_rooms.find(r => r.roomId === shade.roomId) || { name: tr('HOME') }).name)));
         const remotes = (shade.linkedRemotes || []).map(r => {
             let rssi = r.lastRssi;
             if (!(typeof rssi === 'number' && rssi > -128)) rssi = this._getStoredRemoteSignal(r.remoteAddress);
             const has = typeof rssi === 'number' && rssi > -128;
             return `<div class="card-li"><svg><use href="#svg-remote"></use></svg><span>${r.remoteAddress}</span><em class="sig-${has ? this.rssiLevel(rssi) : 'unknown'}">${has ? `${rssi} dBm` : '—'}</em></div>`;
         }).join('');
-        return `<div class="card-grid">${items.join('')}</div>
+        return `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_INFO')}</span></div><div class="card-grid">${items.join('')}</div></div>
         ${this.cardSchedulesHtml('shade', shadeId)}
         <div class="card-block"><div class="card-block-head"><span>${tr('REMOTESLIST_TITLE')}</span></div>${remotes || `<div class="card-empty">${tr('REMOTESLIST_EMPTY')}</div>`}</div>`;
     }
