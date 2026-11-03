@@ -4331,6 +4331,22 @@ class Somfy {
         if (!cs || cs.kind !== kind || (typeof id !== 'undefined' && cs.id !== id)) return;
         this.renderCardSheet();
     }
+    fitCardSheetHeight(ov) {
+        const body = ov.querySelector('.card-sheet-body');
+        const panes = [...ov.querySelectorAll('.card-sheet-pane')];
+        if (!body || !panes.length) return;
+        const top = body.scrollTop;
+        const shown = panes.map(p => p.hidden);
+        let h = 0;
+        panes.forEach((p, i) => {
+            panes.forEach((q, j) => { q.hidden = j !== i; });
+            h = Math.max(h, p.offsetHeight);
+        });
+        panes.forEach((p, i) => { p.hidden = shown[i]; });
+        const pad = parseFloat(getComputedStyle(body).paddingTop) + parseFloat(getComputedStyle(body).paddingBottom);
+        body.style.flex = `0 1 ${Math.ceil(h + pad)}px`;
+        body.scrollTop = top;
+    }
     cardSheetTab(index) {
         if (!this._cardSheet) return;
         this._cardSheet.tab = index;
@@ -4367,6 +4383,7 @@ class Somfy {
         ov.querySelector('.card-sheet-body').scrollTop = top;
         const panes = ov.querySelectorAll('.card-sheet-pane');
         tabs.forEach((t, i) => { if (t.bind) t.bind(panes[i]); });
+        this.fitCardSheetHeight(ov);
         if (!this._cardAgoTimer && ov.querySelector('.card-ago')) this._cardAgoTimer = setInterval(() => this.tickCardAgo(), 1000);
     }
     shadeSheetTabs(shade) {
@@ -4663,7 +4680,7 @@ class Somfy {
         const rows = (this.schedules || []).some(sc => sc.targetType === kind && sc.targetId === id)
             ? this._buildScheduleTooltipHtml(kind, id).replace(/^<div class="schedule-popover-title">[\s\S]*?<\/div>/, '').replace(/(<div class="schedule-popover-row[^"]*">)/g, '$1<svg class="sheet-li-ico"><use href="#svg-schedule"></use></svg>')
             : `<div class="card-empty">${tr('EMPTY_SCHEDULE_TITLE')}</div>`;
-        return `<div class="card-block"><div class="card-block-head"><span>${tr('SUBTAB_SCHEDULES')}</span><button type="button" class="card-link" onclick="somfy.closeCardSheet(); somfy.openAddScheduleInline('${kind}', ${id});">+ ${tr('BT_ADD')}</button></div><div class="card-sched">${rows}</div></div>`;
+        return `<div class="card-block"><div class="card-block-head"><span>${tr('SUBTAB_SCHEDULES')}</span><button type="button" class="card-link" onclick="somfy.closeCardSheet(); somfy.openAddScheduleInline('${kind}', ${id});">+ ${tr('BT_ADD')}</button></div><div class="card-sched sheet-list">${rows}</div></div>`;
     }
     shadeSheetInfoHtml(shade) {
         const shadeId = shade.shadeId;
@@ -4692,7 +4709,7 @@ class Somfy {
         }).join('');
         return `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_INFO')}</span></div><div class="card-grid">${items.join('')}</div></div>
         ${this.cardSchedulesHtml('shade', shadeId)}
-        <div class="card-block"><div class="card-block-head"><span>${tr('REMOTESLIST_TITLE')}</span></div>${remotes || `<div class="card-empty">${tr('REMOTESLIST_EMPTY')}</div>`}</div>`;
+        <div class="card-block"><div class="card-block-head"><span>${tr('REMOTESLIST_TITLE')}</span></div>${remotes ? `<div class="sheet-list">${remotes}</div>` : `<div class="card-empty">${tr('REMOTESLIST_EMPTY')}</div>`}</div>`;
     }
     shadeCarouselGoTo(shadeId, pageIndex) {
         const track = get(`carouselTrack_${shadeId}`);

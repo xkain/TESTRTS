@@ -5318,6 +5318,7 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divHomePnl .card-sheet .card-kv span { font-size: 1em; }
 #divHomePnl .card-sheet .card-kv b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #divHomePnl .card-sheet .card-sched { display: flex; flex-direction: column; gap: 8px; }
+#divHomePnl .card-sheet .sheet-list { display: flex; flex-direction: column; gap: 8px; max-height: 196px; overflow-y: auto; overscroll-behavior: contain; }
 #divHomePnl .card-sheet :is(.card-li, .schedule-popover-row) { gap: 10px; padding: 8px 10px; border-radius: var(--radius-btn); border: 1px solid var(--color-border); background: var(--color-bg-row); font-size: 0.85em; }
 #divHomePnl .card-sheet .schedule-popover-row + .schedule-popover-row { border-top: 1px solid var(--color-border); }
 #divHomePnl .card-sheet :is(.card-li svg, .sheet-li-ico) { flex: none; width: 18px; height: 18px; fill: var(--color-text-secondary); color: var(--color-text-secondary); }
