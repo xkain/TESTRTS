@@ -16,7 +16,7 @@
     "TAB_DASHBOARD": "Dashboard",
     "TAB_SYSTEM": "System",
     "TAB_NETWORK": "Netzwerk",
-    "TAB_SOMFY": "Somfy",
+    "TAB_SOMFY": "Installation",
     "TAB_RADIO": "Funk",
 
 "INDEX_SUBTAB": "SUBTAB",
@@ -27,7 +27,7 @@
     "SUBTAB_GROUPS": "Gruppen",
     "SUBTAB_ROOMS": "Räume",
     "SUBTAB_REPEATER": "Repeater",
-    "SUBTAB_LISTENERS": "Fernbedienungen",
+    "SUBTAB_LISTENERS": "Auslöser",
     "SUBTAB_VIRTUAL_REMOTE_L": "Virtuelle Fernbedienung",
     "SUBTAB_VIRTUAL_REMOTE_S": "Fernbedienung",
     "SUBTAB_SCHEDULES": "Zeitpläne",

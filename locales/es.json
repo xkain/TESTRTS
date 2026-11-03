@@ -16,7 +16,7 @@
     "TAB_DASHBOARD": "Panel",
     "TAB_SYSTEM": "Sistema",
     "TAB_NETWORK": "Red",
-    "TAB_SOMFY": "Somfy",
+    "TAB_SOMFY": "Instalación",
     "TAB_RADIO": "Radio",
 
 "INDEX_SUBTAB": "SUBTAB",
@@ -27,7 +27,7 @@
     "SUBTAB_GROUPS": "Grupos",
     "SUBTAB_ROOMS": "Habitaciones",
     "SUBTAB_REPEATER": "Repetidor",
-    "SUBTAB_LISTENERS": "Mandos",
+    "SUBTAB_LISTENERS": "Disparadores",
     "SUBTAB_VIRTUAL_REMOTE_L": "Mando virtual",
     "SUBTAB_VIRTUAL_REMOTE_S": "Mando",
     "SUBTAB_SCHEDULES": "Horarios",
