@@ -5318,6 +5318,15 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divHomePnl .card-sheet-tab svg { width: 22px; height: 22px; fill: currentColor; }
 #divHomePnl .card-sheet-tab span { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #divHomePnl .card-sheet-tab.active { color: var(--color-accent); }
+#divHomePnl .card-sheet-mymode button { height: 34px; }
+#divHomePnl .card-sheet-hint { margin: 0; font-size: 0.8em; line-height: 1.45; text-align: center; color: var(--color-text-secondary); }
+#divHomePnl :is(.somfyShadeCtl, .somfyGroupCtl).card-compact :is(.shadectl-controls-wrapper, .groupctl-buttons) { display: none; }
+#divHomePnl :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: none; }
+#divHomePnl.show-hidden-cards :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: flex; opacity: 0.5; }
+#divHomePnl .column-hidden-toggle { display: inline-flex; align-items: center; gap: 5px; width: auto; min-width: 0; align-self: center; height: 28px; margin: 12px auto 0; padding: 0 12px; border-radius: var(--radius-full); border: 1px solid var(--color-control-border); background: var(--color-control-bg); color: var(--color-text-secondary); font-size: 0.75em; font-weight: 600; text-transform: none; letter-spacing: normal; cursor: pointer; }
+#divHomePnl .column-hidden-toggle[hidden] { display: none; }
+#divHomePnl .column-hidden-toggle svg { width: 14px; height: 14px; fill: currentColor; }
+#divHomePnl .column-hidden-toggle.active { color: var(--color-accent); border-color: color-mix(in srgb, var(--color-accent), transparent 50%); }
 #divHomePnl .card-panel-my { display: flex; align-items: center; gap: 12px; }
 #divHomePnl .card-panel-my .positioner-rows { flex: 1 1 auto; min-width: 0; }
 #divHomePnl .card-panel-preview { width: 72px; height: 72px; flex: none; }
