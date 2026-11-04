@@ -1,0 +1,19 @@
+{
+  "contract": 1,
+  "id": "silhouette",
+  "name": "Silhouette",
+  "author": "xkain",
+  "version": "1.0.0",
+  "description": {
+    "fr": "Silhouettes pleines, dans la lignée des icônes de la barre latérale.",
+    "en": "Solid silhouettes, in line with the sidebar icons."
+  },
+  "tokens": {
+    "light": {
+      "--pk-ink": "#1b1e23"
+    },
+    "dark": {
+      "--pk-ink": "#e4e3e8"
+    }
+  }
+}

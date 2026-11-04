@@ -1,6 +1,36 @@
 {
   "contract": 1,
   "packs": {
+    "aplat": {
+      "name": "Aplat",
+      "author": "xkain",
+      "version": "1.0.0",
+      "description": {
+        "fr": "Pictogrammes à trait épais et couleurs pleines, lisibles en petit.",
+        "en": "Bold-outline pictograms in flat colours, legible at small sizes."
+      },
+      "size": 1514
+    },
+    "relief": {
+      "name": "Relief",
+      "author": "xkain",
+      "version": "1.0.0",
+      "description": {
+        "fr": "Matières en dégradé : métal, verre et tissu éclairés par le haut.",
+        "en": "Shaded materials: metal, glass and fabric lit from above."
+      },
+      "size": 2423
+    },
+    "silhouette": {
+      "name": "Silhouette",
+      "author": "xkain",
+      "version": "1.0.0",
+      "description": {
+        "fr": "Silhouettes pleines, dans la lignée des icônes de la barre latérale.",
+        "en": "Solid silhouettes, in line with the sidebar icons."
+      },
+      "size": 1332
+    },
     "trait": {
       "name": "Trait",
       "author": "xkain",

@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+    <defs>
+<clipPath id="cw"><path d="M9.3 12H38.7V34a4.7 4.7 0 0 1-4.7 4.7H14a4.7 4.7 0 0 1-4.7-4.7Z"/></clipPath>
+<clipPath id="cd"><rect x="6" y="8.5" width="36" height="33.5"/></clipPath>
+<clipPath id="ca"><rect x="6" y="11" width="36" height="31"/></clipPath>
+<clipPath id="cg"><rect x="13" y="22" width="22" height="18.5" rx="1.5"/></clipPath>
+<clipPath id="cp"><rect x="9" y="15" width="30" height="25.5"/></clipPath>
+<pattern id="pSh" patternUnits="userSpaceOnUse" width="48" height="4"><rect width="48" height="4" fill="color-mix(in srgb,var(--color-accent),#000 34%)"/><rect y=".5" width="48" height="3" fill="var(--color-accent)"/></pattern>
+<pattern id="pSt" patternUnits="userSpaceOnUse" width="8.5" height="48"><rect width="4.25" height="48" fill="var(--color-accent)"/><rect x="4.25" width="4.25" height="48" fill="var(--pk-acc-soft)"/></pattern>
+</defs>
+<symbol id="svg-shutter" viewBox="0 0 48 48" data-my="13.7 0.25">
+    <rect x="8" y="9" width="32" height="31" rx="6" fill="var(--pk-glass)" stroke="var(--pk-ink)" stroke-width="2.6"/>
+    <g clip-path="url(#cw)"><g class="lattes-group move-up" style="--travel:25"><rect x="9.3" y="12" width="29.4" height="26.7" fill="url(#pSh)"/><rect x="9.3" y="36.2" width="29.4" height="2.5" fill="var(--pk-ink)"/></g></g>
+    <rect x="6" y="6" width="36" height="6" rx="3" fill="var(--pk-ink)"/>
+</symbol>
+<symbol id="svg-window-shade" viewBox="0 0 48 48" data-my="13.7 0.25">
+    <rect x="8" y="9" width="32" height="31" rx="6" fill="var(--pk-glass)" stroke="var(--pk-ink)" stroke-width="2.6"/>
+    <g clip-path="url(#cw)"><g class="lattes-group move-up" style="--travel:25"><rect x="9.3" y="12" width="29.4" height="26" fill="var(--color-accent)"/><rect x="9.3" y="35.8" width="29.4" height="2.9" rx="1.45" fill="var(--pk-ink)"/></g></g>
+    <rect x="6" y="6" width="36" height="6" rx="3" fill="var(--pk-ink)"/>
+</symbol>
+<symbol id="svg-window-blind" viewBox="0 0 48 48" data-my="13.7 0.25">
+    <rect x="8" y="9" width="32" height="31" rx="6" fill="var(--pk-glass)" stroke="var(--pk-ink)" stroke-width="2.6"/>
+    <g clip-path="url(#cw)"><g class="lattes-group move-up" style="--travel:25">
+    <rect x="9.3" y="13.2" width="29.4" height="2.4" rx="1.2" class="blind-slat" fill="var(--color-accent)"/>
+    <rect x="9.3" y="16" width="29.4" height="2.4" rx="1.2" class="blind-slat" fill="var(--color-accent)"/>
+    <rect x="9.3" y="18.8" width="29.4" height="2.4" rx="1.2" class="blind-slat" fill="var(--color-accent)"/>
+    <rect x="9.3" y="21.6" width="29.4" height="2.4" rx="1.2" class="blind-slat" fill="var(--color-accent)"/>
+    <rect x="9.3" y="24.4" width="29.4" height="2.4" rx="1.2" class="blind-slat" fill="var(--color-accent)"/>
+    <rect x="9.3" y="27.2" width="29.4" height="2.4" rx="1.2" class="blind-slat" fill="var(--color-accent)"/>
+    <rect x="9.3" y="30" width="29.4" height="2.4" rx="1.2" class="blind-slat" fill="var(--color-accent)"/>
+    <rect x="9.3" y="32.8" width="29.4" height="2.4" rx="1.2" class="blind-slat" fill="var(--color-accent)"/>
+    <rect x="9.3" y="35.6" width="29.4" height="2.4" rx="1.2" class="blind-slat" fill="var(--color-accent)"/>
+    <rect x="9.3" y="37" width="29.4" height="1.7" fill="var(--pk-ink)"/>
+    </g></g>
+    <rect x="6" y="6" width="36" height="6" rx="3" fill="var(--pk-ink)"/>
+</symbol>
+<symbol id="svg-cdrapery" viewBox="0 0 48 48">
+    <rect x="9" y="11" width="30" height="29" rx="5" fill="var(--pk-glass)" stroke="var(--pk-ink)" stroke-width="2.6"/>
+    <g clip-path="url(#cd)">
+    <g class="lattes-group move-left" style="--travel:13"><rect x="6.5" y="8.5" width="17" height="33" rx="3" fill="var(--color-accent)"/><rect x="11.5" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/><rect x="17.5" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/></g>
+    <g class="lattes-group move-right" style="--travel:13"><rect x="24.5" y="8.5" width="17" height="33" rx="3" fill="var(--color-accent)"/><rect x="29.3" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/><rect x="35.3" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/></g>
+    </g>
+    <rect x="5" y="6" width="38" height="3" rx="1.5" fill="var(--pk-ink)"/>
+</symbol>
+<symbol id="svg-ldrapery" viewBox="0 0 48 48">
+    <rect x="9" y="11" width="30" height="29" rx="5" fill="var(--pk-glass)" stroke="var(--pk-ink)" stroke-width="2.6"/>
+    <g clip-path="url(#cd)"><g class="lattes-group move-left" style="--travel:30"><rect x="6.5" y="8.5" width="35" height="33" rx="3" fill="var(--color-accent)"/><rect x="12" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/><rect x="18" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/><rect x="24" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/><rect x="30" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/><rect x="36" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/></g></g>
+    <rect x="5" y="6" width="38" height="3" rx="1.5" fill="var(--pk-ink)"/>
+</symbol>
+<symbol id="svg-rdrapery" viewBox="0 0 48 48">
+    <g transform="matrix(-1 0 0 1 48 0)">
+    <rect x="9" y="11" width="30" height="29" rx="5" fill="var(--pk-glass)" stroke="var(--pk-ink)" stroke-width="2.6"/>
+    <g clip-path="url(#cd)"><g class="lattes-group move-left" style="--travel:30"><rect x="6.5" y="8.5" width="35" height="33" rx="3" fill="var(--color-accent)"/><rect x="12" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/><rect x="18" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/><rect x="24" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/><rect x="30" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/><rect x="36" y="10" width="1.2" height="30" rx=".6" fill="color-mix(in srgb,var(--color-accent),#000 34%)" opacity=".5"/></g></g>
+    <rect x="5" y="6" width="38" height="3" rx="1.5" fill="var(--pk-ink)"/>
+    </g>
+</symbol>
+<symbol id="svg-awning" viewBox="0 0 48 48">
+    <rect x="12" y="19" width="24" height="20.5" rx="4" fill="var(--pk-glass)" stroke="var(--pk-ink)" stroke-width="2.6"/>
+    <rect x="5" y="40.5" width="38" height="2.6" rx="1.3" fill="var(--pk-ink)"/>
+    <g clip-path="url(#ca)"><g class="lattes-group move-up" style="--travel:24"><rect x="7" y="10" width="34" height="22" fill="url(#pSt)"/><path d="M7 32H41V34q-2.125 3.4-4.25 0q-2.125 3.4-4.25 0q-2.125 3.4-4.25 0q-2.125 3.4-4.25 0q-2.125 3.4-4.25 0q-2.125 3.4-4.25 0q-2.125 3.4-4.25 0q-2.125 3.4-4.25 0Z" fill="color-mix(in srgb,var(--color-accent),#000 34%)"/></g></g>
+    <rect x="5" y="6" width="38" height="6" rx="3" fill="var(--pk-ink)"/>
+</symbol>
+<symbol id="svg-garage" viewBox="0 0 48 48" data-my="21.3 0.185">
+    <rect x="13" y="22" width="22" height="18.5" rx="1.5" fill="var(--pk-glass)"/>
+    <g clip-path="url(#cg)"><g class="lattes-group move-up" style="--travel:18.5">
+    <rect x="13.5" y="22.4" width="21" height="5.4" rx="1.4" fill="var(--color-accent)"/>
+    <rect x="13.5" y="28.4" width="21" height="5.4" rx="1.4" fill="var(--color-accent)"/>
+    <rect x="13.5" y="34.4" width="21" height="5.4" rx="1.4" fill="var(--color-accent)"/>
+    </g></g>
+    <path d="M5 20.5 24 8.5l19 12" fill="none" stroke="var(--pk-ink)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M9.5 18v22.5M38.5 18v22.5" fill="none" stroke="var(--pk-ink)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="4" y="40.5" width="40" height="2.8" rx="1.4" fill="var(--pk-ink)"/>
+</symbol>
+<symbol id="svg-lgate" viewBox="0 0 48 48">
+    <g clip-path="url(#cp)"><g class="lattes-group move-left" style="--travel:30">
+    <rect x="10.8" y="19.8" width="26.4" height="18.4" rx="2.6" fill="none" stroke="var(--color-accent)" stroke-width="2.4"/>
+    <rect x="12" y="23.6" width="24" height="2.4" rx="1.2" fill="var(--color-accent)"/><rect x="12" y="27.8" width="24" height="2.4" rx="1.2" fill="var(--color-accent)"/><rect x="12" y="32" width="24" height="2.4" rx="1.2" fill="var(--color-accent)"/>
+    </g></g>
+    <rect x="5" y="15" width="4" height="26.5" rx="2" fill="var(--pk-ink)"/><rect x="39" y="15" width="4" height="26.5" rx="2" fill="var(--pk-ink)"/>
+    <rect x="3" y="40.5" width="42" height="2.6" rx="1.3" fill="var(--pk-ink)"/>
+</symbol>
+<symbol id="svg-rgate" viewBox="0 0 48 48">
+    <g transform="matrix(-1 0 0 1 48 0)">
+    <g clip-path="url(#cp)"><g class="lattes-group move-left" style="--travel:30">
+    <rect x="10.8" y="19.8" width="26.4" height="18.4" rx="2.6" fill="none" stroke="var(--color-accent)" stroke-width="2.4"/>
+    <rect x="12" y="23.6" width="24" height="2.4" rx="1.2" fill="var(--color-accent)"/><rect x="12" y="27.8" width="24" height="2.4" rx="1.2" fill="var(--color-accent)"/><rect x="12" y="32" width="24" height="2.4" rx="1.2" fill="var(--color-accent)"/>
+    </g></g>
+    <rect x="5" y="15" width="4" height="26.5" rx="2" fill="var(--pk-ink)"/><rect x="39" y="15" width="4" height="26.5" rx="2" fill="var(--pk-ink)"/>
+    <rect x="3" y="40.5" width="42" height="2.6" rx="1.3" fill="var(--pk-ink)"/>
+    </g>
+</symbol>
+<symbol id="svg-cgate" viewBox="0 0 48 48">
+    <g clip-path="url(#cp)">
+    <g class="lattes-group move-left" style="--travel:14.5"><rect x="10.8" y="19.8" width="12.6" height="18.4" rx="2.6" fill="none" stroke="var(--color-accent)" stroke-width="2.4"/><rect x="12" y="23.6" width="10.2" height="2.4" rx="1.2" fill="var(--color-accent)"/><rect x="12" y="27.8" width="10.2" height="2.4" rx="1.2" fill="var(--color-accent)"/><rect x="12" y="32" width="10.2" height="2.4" rx="1.2" fill="var(--color-accent)"/></g>
+    <g class="lattes-group move-right" style="--travel:14.5"><rect x="24.6" y="19.8" width="12.6" height="18.4" rx="2.6" fill="none" stroke="var(--color-accent)" stroke-width="2.4"/><rect x="25.8" y="23.6" width="10.2" height="2.4" rx="1.2" fill="var(--color-accent)"/><rect x="25.8" y="27.8" width="10.2" height="2.4" rx="1.2" fill="var(--color-accent)"/><rect x="25.8" y="32" width="10.2" height="2.4" rx="1.2" fill="var(--color-accent)"/></g>
+    </g>
+    <rect x="5" y="15" width="4" height="26.5" rx="2" fill="var(--pk-ink)"/><rect x="39" y="15" width="4" height="26.5" rx="2" fill="var(--pk-ink)"/>
+    <rect x="3" y="40.5" width="42" height="2.6" rx="1.3" fill="var(--pk-ink)"/>
+</symbol>
+<symbol id="svg-switch1" viewBox="0 0 48 48">
+    <rect x="9" y="9" width="30" height="30" rx="8" fill="var(--pk-glass)" stroke="var(--pk-ink)" stroke-width="2.6"/>
+    <rect x="17" y="15" width="14" height="18" rx="4" fill="color-mix(in srgb,var(--color-accent) var(--fpos,0%),var(--pk-ink-soft))"/>
+</symbol>
+<symbol id="svg-switch2" viewBox="0 0 48 48">
+    <rect x="9" y="9" width="30" height="30" rx="8" fill="var(--pk-glass)" stroke="var(--pk-ink)" stroke-width="2.6"/>
+    <rect x="13.5" y="15" width="10" height="18" rx="3.5" fill="color-mix(in srgb,var(--color-accent) var(--fpos,0%),var(--pk-ink-soft))"/>
+    <rect x="24.5" y="15" width="10" height="18" rx="3.5" fill="color-mix(in srgb,var(--color-accent) var(--fpos,0%),var(--pk-ink-soft))"/>
+</symbol>
+</svg>

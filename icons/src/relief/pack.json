@@ -1,0 +1,47 @@
+{
+  "contract": 1,
+  "id": "relief",
+  "name": "Relief",
+  "author": "xkain",
+  "version": "1.0.0",
+  "description": {
+    "fr": "Matières en dégradé : métal, verre et tissu éclairés par le haut.",
+    "en": "Shaded materials: metal, glass and fabric lit from above."
+  },
+  "tokens": {
+    "light": {
+      "--pk-fr1": "#ffffff",
+      "--pk-fr2": "#d2d7de",
+      "--pk-glint-f": "rgba(255,255,255,.6)",
+      "--pk-hl": "rgba(255,255,255,.75)",
+      "--pk-ink-soft": "#a3a9b2",
+      "--pk-int1": "#5a616b",
+      "--pk-int2": "#2a2f36",
+      "--pk-metal1": "#f3f4f6",
+      "--pk-metal2": "#959ca6",
+      "--pk-sky1": "#cadcf3",
+      "--pk-sky2": "#f4f8fc",
+      "--pk-stripe": "#f8f5ef",
+      "--pk-stroke": "rgba(20,24,30,.16)",
+      "--pk-wall1": "#f0eee9",
+      "--pk-wall2": "#e0ddd6"
+    },
+    "dark": {
+      "--pk-fr1": "#4c535e",
+      "--pk-fr2": "#2a2f37",
+      "--pk-glint-f": "rgba(255,255,255,.08)",
+      "--pk-hl": "rgba(255,255,255,.2)",
+      "--pk-ink-soft": "#5c636d",
+      "--pk-int1": "#0b0e12",
+      "--pk-int2": "#1b1f25",
+      "--pk-metal1": "#7d858f",
+      "--pk-metal2": "#373d46",
+      "--pk-sky1": "#132238",
+      "--pk-sky2": "#283a52",
+      "--pk-stripe": "color-mix(in srgb, var(--color-accent) 30%, #3a3f47)",
+      "--pk-stroke": "rgba(0,0,0,.45)",
+      "--pk-wall1": "#2b3037",
+      "--pk-wall2": "#22262c"
+    }
+  }
+}
