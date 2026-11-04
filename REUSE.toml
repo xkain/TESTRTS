@@ -7,7 +7,7 @@ SPDX-PackageDownloadLocation = "https://github.com/xkain/ESPSomfy-RTS"
 # binaires (images), et produits de build. Tout le reste porte son en-tete dans le fichier.
 
 [[annotations]]
-path = ["locales/**", "online/lang/**"]
+path = ["locales/**", "online/lang/**", "icons/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 xkain <https://github.com/xkain>"
 SPDX-License-Identifier = "AGPL-3.0-or-later"

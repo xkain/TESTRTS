@@ -1,0 +1,15 @@
+{
+  "contract": 1,
+  "packs": {
+    "trait": {
+      "name": "Trait",
+      "author": "xkain",
+      "version": "1.0.0",
+      "description": {
+        "fr": "Dessin au trait fin, une seule couleur d'accent.",
+        "en": "Fine line drawing in a single accent colour."
+      },
+      "size": 1749
+    }
+  }
+}

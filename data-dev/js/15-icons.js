@@ -25,6 +25,7 @@ const ICON_PACK_ATTRS = new Set(['id', 'class', 'style', 'href', 'viewBox', 'pre
 const ICON_PACK_CLASSES = new Set(['lattes-group', 'move-up', 'move-left', 'move-right', 'blind-slat', 'gate-leaf-l',
     'gate-leaf-r', 'switch-top', 'switch-bottom', 'switch-led', 'switch-glow']);
 const ICON_PACK_REF = /url\(\s*['"]?#([\w-]+)['"]?\s*\)/g;
+const ICON_PACK_ID = /^[a-z0-9-]{1,32}$/;
 
 class IconPacks {
     constructor() {
@@ -48,11 +49,21 @@ class IconPacks {
         try {
             this.apply(pack);
             this.installed = this.meta(pack);
+            this._installedPack = pack;
             this.ignored = null;
         } catch (err) {
             this.ignored = err.message;
             logger.warn('Icon pack ignored:', err.message);
         }
+        this.showCurrent();
+    }
+    showCurrent() {
+        const el = get('currentIconPackDisplay');
+        if (!el) return;
+        // L'attribut tr seulement pour le libellé par défaut : le traducteur écraserait un nom de pack.
+        if (this.installed) el.removeAttribute('tr');
+        else el.setAttribute('tr', 'ICONS_DEFAULT');
+        el.textContent = this.installed ? this.installed.name : tr('ICONS_DEFAULT');
     }
     meta(pack) {
         return { id: String(pack.id || ''), name: String(pack.name || pack.id || ''), author: String(pack.author || ''), version: String(pack.version || '') };
@@ -61,7 +72,7 @@ class IconPacks {
     validate(pack) {
         if (!pack || typeof pack !== 'object') throw new Error('not an object');
         if (Math.floor(Number(pack.contract)) !== ICON_CONTRACT) throw new Error('contract ' + pack.contract + ' (expected ' + ICON_CONTRACT + ')');
-        if (!/^[a-z0-9-]{1,32}$/.test(pack.id || '')) throw new Error('invalid id');
+        if (!ICON_PACK_ID.test(pack.id || '')) throw new Error('invalid id');
         const doc = new DOMParser().parseFromString(String(pack.svg || ''), 'image/svg+xml');
         const root = doc.documentElement;
         if (doc.querySelector('parsererror') || root.localName !== 'svg') throw new Error('invalid svg');
@@ -150,6 +161,156 @@ class IconPacks {
         get('iconPackTokens')?.remove();
         this.applied = null;
         this.refreshUses();
+    }
+    // --- Catalogue : l'aperçu ne s'applique qu'à la page, seule l'installation écrit sur le boîtier.
+    openManager() {
+        const div = document.createElement('div');
+        div.id = 'divIconManagerOverlay';
+        div.className = 'modal-overlay';
+        const sample = ['svg-shutter', 'svg-window-blind', 'svg-cdrapery', 'svg-awning', 'svg-garage', 'svg-cgate', 'svg-switch1']
+            .map(i => `<svg viewBox="0 0 48 48"><use href="#${i}"></use></svg>`).join('');
+        div.innerHTML = `
+        <div class="message-content lang-manager-content">
+        ${modalHeader('ICONS_TITLE', 'svg-indicShutter', { subtitle: 'ICONS_TITLE_DESC' })}
+        <div class="overlay-scroll-content">
+        <div class="icon-pack-sample">${sample}</div>
+        <p id="iconPackNotice" class="lang-catalog-manual-import-info"></p>
+        <div id="iconCatalog" class="lang-catalog"></div>
+        ${fileDropZone('fileIconImport', 'FILE_PICK_ICONS')}
+        <input id="fileIconImport" type="file" accept="application/json,.json" style="display:none" onchange="iconPacks.importFile(this)"/>
+        </div>
+        <div class="hrModal margin0"></div>
+        <div class="button-container-modal"><div class="button-content-modal">
+        <button id="btnIconManagerClose" line type="button">${tr('BT_CLOSE')}</button>
+        </div></div>
+        </div>`;
+        shOverlay(div);
+        div.onclick = (e) => {
+            if (e.target.closest('#btnIconManagerClose')) requestCloseOverlay(div);
+        };
+        // Quelle que soit la façon dont la modale se ferme, un aperçu non installé ne survit pas.
+        new MutationObserver((m, obs) => {
+            if (div.isConnected) return;
+            obs.disconnect();
+            this.cancelPreview();
+        }).observe(get('divContainer'), { childList: true });
+        this._catalog = null;
+        this.renderCatalog();
+        fetch(GITHUB_RAW_ROOT + 'main/icons/manifest.json', { cache: 'no-store' })
+            .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+            .then(m => { this._catalog = m && m.packs ? m.packs : {}; })
+            .catch(err => { logger.warn('Icon catalog unavailable:', err.message); this._catalog = false; })
+            .finally(() => this.renderCatalog());
+    }
+    renderCatalog() {
+        const panel = get('iconCatalog');
+        if (!panel) return;
+        const notice = get('iconPackNotice');
+        const previewing = this.applied && (!this.installed || this.applied.id !== this.installed.id);
+        let msg = '';
+        if (previewing) msg = tr('ICONS_PREVIEW_INFO');
+        else if (this.ignored) msg = tr('ICONS_IGNORED').replace('{REASON}', this.ignored);
+        else if (this._catalog === false) msg = tr('ICONS_CATALOG_UNAVAILABLE');
+        notice.textContent = msg;
+        notice.style.display = msg ? '' : 'none';
+        const shown = this.applied ? this.applied.id : '';
+        const row = (id, name, sub, badge, actions) => `
+            <div class="lang-catalog-row" data-pack="${id}">
+                <div class="lang-catalog-info"><span>${escHtml(name)}</span>${sub ? `<span class="uniStatus">${escHtml(sub)}</span>` : ''}${badge}</div>
+                <div class="lang-catalog-actions">${actions}</div>
+            </div>`;
+        const active = `<span class="lang-catalog-badge active">${tr('IS_ACTIVE')}</span>`;
+        const btn = (label, call, line) => `<button type="button" pop ${line ? 'line ' : ''}onclick="${call}">${label}</button>`;
+        let html = row('', tr('ICONS_DEFAULT'), '', !this.installed && !previewing ? active : '',
+            this.installed ? btn(tr('LANG_MODAL_USE_LANG'), 'iconPacks.useDefault()') : '');
+        const packs = Object.assign({}, this._catalog || {});
+        if (this.installed && !packs[this.installed.id]) packs[this.installed.id] = this.installed;
+        if (this._preview && !packs[this._preview.id]) packs[this._preview.id] = this.meta(this._preview);
+        for (const [id, p] of Object.entries(packs)) {
+            if (!ICON_PACK_ID.test(id)) continue;
+            const isInstalled = this.installed && this.installed.id === id;
+            const isShown = shown === id;
+            let actions = '';
+            if (isShown && !isInstalled) actions = btn(tr('BT_INSTALL_LANG'), `iconPacks.install('${id}')`) + btn(tr('BT_CANCEL'), 'iconPacks.cancelPreview()', true);
+            else if (!isInstalled) actions = btn(tr('ICONS_PREVIEW'), `iconPacks.preview('${id}')`, true);
+            const sub = [p.author, p.version].filter(Boolean).join(' · ');
+            html += row(id, p.name || id, sub, isInstalled && isShown ? active : '', actions);
+        }
+        panel.innerHTML = html;
+    }
+    async preview(id) {
+        try {
+            let pack = this._preview && this._preview.id === id ? this._preview : null;
+            if (!pack) {
+                const r = await fetch(GITHUB_RAW_ROOT + 'main/icons/' + encodeURIComponent(id) + '.json', { cache: 'no-store' });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                pack = await r.json();
+            }
+            this.apply(pack);
+            this._preview = pack;
+        } catch (err) {
+            ui.serviceError({ desc: tr('ERR_ICONS_INVALID').replace('{REASON}', escHtml(err.message)) });
+        }
+        this.renderCatalog();
+    }
+    importFile(input) {
+        const file = input.files && input.files[0];
+        input.value = '';
+        if (!file) return;
+        file.text().then(txt => {
+            const pack = JSON.parse(txt);
+            this.apply(pack);
+            this._preview = pack;
+        }).catch(err => {
+            ui.serviceError({ desc: tr('ERR_ICONS_INVALID').replace('{REASON}', escHtml(err.message)) });
+        }).finally(() => this.renderCatalog());
+    }
+    cancelPreview() {
+        if (!this._preview) return;
+        this._preview = null;
+        if (this._installedPack) this.apply(this._installedPack);
+        else this.restoreDefaults();
+        this.renderCatalog();
+    }
+    async install(id) {
+        const pack = this._preview;
+        if (!pack || pack.id !== id) return;
+        const div = get('divIconManagerOverlay');
+        setOverlayLock(div, 'confirm', {});
+        try {
+            const gz = await new Response(new Blob([JSON.stringify(pack)]).stream().pipeThrough(new CompressionStream('gzip'))).blob();
+            if (gz.size > ICON_PACK_MAX) throw new Error(tr('ERR_ICONS_TOO_LARGE'));
+            const fd = new FormData();
+            fd.append('file', gz, 'pack.json.gz');
+            const resp = await fetch(baseUrl + '/uploadIcons', { method: 'POST', body: fd, headers: { apikey: security.apiKey || '' } });
+            if (resp.status === 413) throw new Error(tr('ERR_ICONS_TOO_LARGE'));
+            const json = await resp.json().catch(() => ({}));
+            if (json.status !== 'ok') throw new Error(json.error || json.desc || ('HTTP ' + resp.status));
+            this.installed = this.meta(pack);
+            this._installedPack = pack;
+            this._preview = null;
+            this.ignored = null;
+        } catch (err) {
+            ui.serviceError({ desc: escHtml(err.message), service: '/uploadIcons' });
+        }
+        clearOverlayLock(div);
+        this.showCurrent();
+        this.renderCatalog();
+    }
+    async useDefault() {
+        try {
+            const resp = await deviceFetch('/deleteIcons', { method: 'POST' });
+            if (resp.status !== 'ok') throw resp;
+            this.installed = null;
+            this._installedPack = null;
+            this._preview = null;
+            this.ignored = null;
+            this.restoreDefaults();
+        } catch (err) {
+            ui.serviceError(err);
+        }
+        this.showCurrent();
+        this.renderCatalog();
     }
     // Un <use> ne suit pas toujours le remplacement du <symbol> qu'il vise : on réaffecte son href.
     refreshUses() {

@@ -2359,6 +2359,20 @@ button:disabled:active {
     color: var(--color-text-secondary);
 }
 
+/* Bande d'aperçu du gestionnaire de packs d'icônes : quelques équipements à mi-course, qui suivent
+   le pack affiché (installé ou en aperçu). */
+.icon-pack-sample {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    --shade-position: 55;
+    --fpos: 100%;
+    --shade-tilt: 60;
+}
+.icon-pack-sample svg { width: 44px; height: 44px; }
+
 /* ==========================================================================
  *  SUGGESTION DE LANGUE NAVIGATEUR -- toast discret, non bloquant,
  *  déclenché par checkBrowserLangSuggestion() (10-core-utils.js).
