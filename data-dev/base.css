@@ -125,7 +125,6 @@
     --color-shade-stone1:#e7e9ec;
     --color-shade-stone2:#b3b8bf;
     --color-shade-edge:rgba(0,0,0,.16);
-    --color-shade-glow-op:0;
     --color-shade-int1:#57524b;
     --color-shade-int2:#262420;
     --color-shade-leaf1:#5e646c;
@@ -234,7 +233,6 @@
     --color-shade-stone1:#6b7077;
     --color-shade-stone2:#43474d;
     --color-shade-edge:rgba(255,255,255,.1);
-    --color-shade-glow-op:.75;
     --color-shade-int1:#16140f;
     --color-shade-int2:#060605;
     --color-shade-leaf1:#7a8089;
