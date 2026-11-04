@@ -1,0 +1,31 @@
+{
+  "contract": 1,
+  "id": "trait",
+  "name": "Trait",
+  "author": "xkain",
+  "version": "1.0.0",
+  "description": {
+    "fr": "Dessin au trait fin, une seule couleur d'accent.",
+    "en": "Fine line drawing in a single accent colour."
+  },
+  "tokens": {
+    "light": {
+      "--pk-frame": "#2c3038",
+      "--pk-muted": "#a3a9b2",
+      "--pk-glass": "#eaf1f9",
+      "--pk-glint": "rgba(255,255,255,.95)",
+      "--pk-interior": "#d3d7de",
+      "--pk-stripe-base": "#fff",
+      "--pk-stripe-mix": "20%"
+    },
+    "dark": {
+      "--pk-frame": "#d3d7dd",
+      "--pk-muted": "#5c636d",
+      "--pk-glass": "#1f2935",
+      "--pk-glint": "rgba(255,255,255,.12)",
+      "--pk-interior": "#0f1216",
+      "--pk-stripe-base": "#1c2026",
+      "--pk-stripe-mix": "45%"
+    }
+  }
+}
