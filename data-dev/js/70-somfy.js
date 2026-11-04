@@ -4683,7 +4683,7 @@ class Somfy {
         </div>`;
     }
     myMarkGeometry(ico) {
-        return { 'svg-window-shade': [11, 0.26], 'svg-window-blind': [11, 0.26], 'svg-shutter': [11, 0.26], 'svg-garage': [20, 0.2] }[ico] || null;
+        return { 'svg-window-shade': [11.25, 0.28], 'svg-window-blind': [11.25, 0.28], 'svg-shutter': [11.25, 0.28], 'svg-garage': [20.25, 0.21] }[ico] || null;
     }
     bindShadeSheetMy(pane, shade) {
         const draft = this._cardSheet.draft;
