@@ -178,20 +178,14 @@ class IconPacks {
             <div class="icon-pack-scene-icons">${scene}</div>
         </div>
         <div class="icon-pack-body">
-            <div class="icon-pack-label">${tr('ICONS_SECTION_DEFAULT')}</div>
-            <div class="icon-pack-tile is-default" data-pack="" onclick="iconPacks.select('')">
-                <div class="icon-pack-thumb" id="iconThumbDefault"></div>
-                <div class="icon-pack-txt"><div class="icon-pack-name">${tr('ICONS_DEFAULT')}</div><div class="icon-pack-meta">${tr('ICONS_DEFAULT_DESC')}</div></div>
-                <span class="icon-pack-tag"></span>
-            </div>
-            <div class="icon-pack-label icon-pack-label-dl">${tr('ICONS_SECTION_DOWNLOAD')}<span id="iconPackCount"></span></div>
+            <div class="icon-pack-label"><span id="iconPackCount"></span>
+                <label for="fileIconImport" class="icon-pack-import"><svg><use href="#svg-upload"></use></svg>${tr('FILE_PICK_ICONS')}</label></div>
             <p id="iconPackNotice" class="lang-catalog-manual-import-info margin0"></p>
             <div class="icon-pack-grid-wrap"><div class="icon-pack-grid" id="iconCatalog"></div></div>
-            ${fileDropZone('fileIconImport', 'FILE_PICK_ICONS')}
+            <div class="icon-pack-drop">${fileDropZone('fileIconImport', 'FILE_PICK_ICONS')}</div>
             <input id="fileIconImport" type="file" accept="application/json,.json" style="display:none" onchange="iconPacks.importFile(this)"/>
         </div>
         <div class="hrModal margin0"></div>
-        <p class="lang-catalog-manual-import-info icon-pack-foot-txt" id="iconPackFootTxt"></p>
         <div class="button-container-modal"><div class="button-content-modal" id="iconPackFoot"></div></div>
         </div>`;
         shOverlay(div);
@@ -208,7 +202,6 @@ class IconPacks {
         this._packs = this._packs || {};
         if (this._installedPack) this._packs[this._installedPack.id] = this._installedPack;
         this._selected = this.installed ? this.installed.id : '';
-        get('iconThumbDefault').innerHTML = this.thumbHtml(null);
         this.renderCatalog();
         this.animateScene();
         fetch(GITHUB_RAW_ROOT + 'main/icons/manifest.json', { cache: 'no-store' })
@@ -273,9 +266,6 @@ class IconPacks {
         const tag = id => id === inst ? `<span class="lang-catalog-badge active">${tr('ICONS_INSTALLED')}</span>`
             : id === sel ? `<span class="lang-catalog-badge">${tr('ICONS_PREVIEW')}</span>` : '';
         const name = id => id ? ((this._packs[id] && this._packs[id].name) || (this._catalog && this._catalog[id] && this._catalog[id].name) || id) : tr('ICONS_DEFAULT');
-        const def = document.querySelector('#divIconManagerOverlay .icon-pack-tile.is-default');
-        def.classList.toggle('selected', sel === '');
-        def.querySelector('.icon-pack-tag').innerHTML = tag('');
         // Grille
         const packs = Object.assign({}, this._catalog || {});
         Object.values(this._packs).forEach(p => { if (!packs[p.id]) packs[p.id] = this.meta(p); });
@@ -285,7 +275,12 @@ class IconPacks {
         const msg = this._catalog === false ? tr('ICONS_CATALOG_UNAVAILABLE') : (this.ignored ? tr('ICONS_IGNORED').replace('{REASON}', this.ignored) : '');
         notice.textContent = msg;
         notice.style.display = msg ? '' : 'none';
-        grid.innerHTML = ids.map(id => {
+        // Tuile par défaut en tête de grille, distinguée par sa bordure en pointillés.
+        grid.innerHTML = `<div class="icon-pack-tile is-default${sel === '' ? ' selected' : ''}" data-pack="" onclick="iconPacks.select('')">
+                <div class="icon-pack-thumb">${this.thumbHtml(null)}</div>
+                <div class="icon-pack-name">${tr('ICONS_DEFAULT')}</div>
+                <div class="icon-pack-meta">${tr('ICONS_DEFAULT_DESC')}</div>
+                <span class="icon-pack-tag">${tag('')}</span></div>` + ids.map(id => {
             const p = packs[id];
             const size = p.size ? ` · ${(p.size / 1024).toFixed(1).replace('.', ',')} Ko` : '';
             return `<div class="icon-pack-tile${id === sel ? ' selected' : ''}" data-pack="${id}" onclick="iconPacks.select('${id}')">
@@ -297,18 +292,9 @@ class IconPacks {
         ids.forEach(id => this.renderThumb(id));
         // Pied : une seule action, celle qui correspond à la tuile choisie
         const btn = (label, go, attr) => `<button type="button" ${attr} onclick="iconPacks.${go}()">${label}</button>`;
-        let st, actions;
-        if (sel === inst) {
-            st = inst ? tr('ICONS_FOOT_INSTALLED').replace('{NAME}', escHtml(name(inst))) : tr('ICONS_FOOT_DEFAULT');
-            actions = `<button type="button" line data-icon-close>${tr('BT_CLOSE')}</button>`;
-        } else if (sel === '') {
-            st = tr('ICONS_FOOT_PREVIEW_DEFAULT').replace('{NAME}', escHtml(name(inst)));
-            actions = btn(tr('BT_CANCEL'), 'cancelPreview', 'line') + btn(tr('ICONS_BACK_DEFAULT'), 'install', '');
-        } else {
-            st = tr('ICONS_FOOT_PREVIEW').replace('{NAME}', escHtml(name(sel))) + (inst ? ' ' + tr('ICONS_FOOT_REPLACES').replace('{NAME}', escHtml(name(inst))) : '');
-            actions = btn(tr('BT_CANCEL'), 'cancelPreview', 'line') + btn(tr('BT_INSTALL_LANG'), 'install', '');
-        }
-        get('iconPackFootTxt').innerHTML = st;
+        let actions;
+        if (sel === inst) actions = `<button type="button" line data-icon-close>${tr('BT_CLOSE')}</button>`;
+        else actions = btn(tr('BT_CANCEL'), 'cancelPreview', 'line') + btn(tr(sel === '' ? 'ICONS_BACK_DEFAULT' : 'BT_INSTALL_LANG'), 'install', '');
         get('iconPackFoot').innerHTML = actions;
     }
     async select(id) {

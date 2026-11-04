@@ -2376,8 +2376,6 @@ button:disabled:active {
 .icon-pack-body { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px 18px 12px; }
 .icon-pack-body > * { flex: none; }
 .icon-pack-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.75em; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-secondary); }
-.icon-pack-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
-.icon-pack-label-dl { margin-top: 10px; }
 .icon-pack-grid-wrap { flex: 0 1 auto; min-height: 0; overflow-y: auto; margin: 0 -4px; padding: 2px 4px; }
 .icon-pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); gap: 8px; }
 .icon-pack-tile { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 8px; border-radius: var(--radius-lg); border: 1.5px solid var(--color-border); background: var(--color-bg-card); cursor: pointer; }
@@ -2389,11 +2387,19 @@ button:disabled:active {
 .icon-pack-name { font-weight: 700; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .icon-pack-meta { font-size: 0.75em; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .icon-pack-tag { position: absolute; top: 6px; right: 6px; }
-.icon-pack-tile.is-default { flex-direction: row; align-items: center; gap: 10px; }
-.icon-pack-tile.is-default .icon-pack-thumb { width: 96px; flex: none; }
-.icon-pack-tile.is-default .icon-pack-txt { flex: 1; min-width: 0; }
-.icon-pack-tile.is-default .icon-pack-tag { position: static; }
-.icon-pack-foot-txt { margin: 0; padding: 10px 15px 0; text-align: center; }
+.icon-pack-tile.is-default { border-style: dashed; }
+.icon-pack-tile.is-default.selected { border-style: solid; }
+/* Sur écran tactile, aucun fichier ne peut être glissé dans la page : la grande zone de dépôt
+   n'y serait qu'un bouton haut de 100 px, remplacé par ce lien à droite du compteur. */
+.icon-pack-import { display: none; align-items: center; gap: 4px; color: var(--color-accent); font-weight: 600; text-transform: none; letter-spacing: 0; cursor: pointer; }
+.icon-pack-import svg { width: 14px; height: 14px; }
+@media (hover: none) and (pointer: coarse) {
+    .icon-pack-import { display: inline-flex; }
+    .icon-pack-drop { display: none; }
+}
+@media (max-width: 767px) {
+    .message-content.icon-pack-content { max-height: calc(100dvh - 32px); }
+}
 @media (max-width: 520px) {
     .icon-pack-scene-icons svg { width: 15%; max-width: 40px; }
 }
