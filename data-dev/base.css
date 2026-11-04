@@ -2359,19 +2359,54 @@ button:disabled:active {
     color: var(--color-text-secondary);
 }
 
-/* Bande d'aperçu du gestionnaire de packs d'icônes : quelques équipements à mi-course, qui suivent
-   le pack affiché (installé ou en aperçu). */
-.icon-pack-sample {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
-    margin-bottom: 12px;
-    --shade-position: 55;
-    --fpos: 100%;
-    --shade-tilt: 60;
+/* Gestionnaire de packs d'icônes : hauteur bornée, seule la grille des packs défile, de sorte que
+   la modale garde la même taille avec 2 ou 20 packs et que la zone de dépôt reste visible. */
+.message-content.icon-pack-content { max-height: min(680px, calc(100dvh - 32px)); text-align: left; }
+.icon-pack-content > * { flex: none; }
+.icon-pack-scene { padding: 10px 18px 8px; background: var(--color-bg-input); border-bottom: 1px solid var(--color-border); --shade-position: 55; --fpos: 55%; --shade-tilt: 60; }
+.icon-pack-scene-icons { display: flex; justify-content: space-between; gap: 2px; }
+.icon-pack-scene-icons svg { width: 15%; max-width: 58px; aspect-ratio: 1; height: auto; }
+.icon-pack-scene-line { display: flex; align-items: center; gap: 10px; margin-top: 6px; font-size: 0.9em; }
+.icon-pack-slider.slider-wrapper { flex: 1; min-width: 80px; width: auto; height: 22px; border-radius: var(--radius-md); }
+.icon-pack-slider .slider-progress { border-radius: var(--radius-md); }
+.icon-pack-slider .slider-thumb-line { height: 12px; }
+.icon-pack-body { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px 18px 12px; }
+.icon-pack-body > * { flex: none; }
+.icon-pack-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.75em; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-secondary); }
+.icon-pack-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.icon-pack-label-dl { margin-top: 10px; }
+.icon-pack-notice { margin: 0; font-size: 0.85em; line-height: 1.4; color: var(--color-text-secondary); }
+.icon-pack-grid-wrap { flex: 0 1 auto; min-height: 0; overflow-y: auto; margin: 0 -4px; padding: 2px 4px; }
+.icon-pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); gap: 8px; }
+.icon-pack-tile { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 8px; border-radius: var(--radius-lg); border: 1.5px solid var(--color-border); background: var(--color-bg-card); cursor: pointer; }
+.icon-pack-tile:hover { border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border)); }
+.icon-pack-tile.selected { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent) inset; }
+.icon-pack-tile.is-broken { opacity: .5; }
+.icon-pack-thumb { display: flex; justify-content: space-between; padding: 4px; border-radius: var(--radius-md); background: var(--color-bg-input); aspect-ratio: 3.2; --shade-position: 60; --fpos: 100%; --shade-tilt: 60; }
+.icon-pack-thumb svg { width: 32%; aspect-ratio: 1; height: auto; }
+.icon-pack-name { font-weight: 700; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-pack-meta { font-size: 0.75em; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-pack-tag { position: absolute; top: 6px; right: 6px; }
+.icon-pack-tile.is-default { flex-direction: row; align-items: center; gap: 10px; }
+.icon-pack-tile.is-default .icon-pack-thumb { width: 96px; flex: none; }
+.icon-pack-tile.is-default .icon-pack-txt { flex: 1; min-width: 0; }
+.icon-pack-tile.is-default .icon-pack-tag { position: static; }
+.chip-installed, .chip-preview { display: inline-block; font-size: 0.7em; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.chip-installed { background: color-mix(in srgb, var(--color-success) 18%, var(--color-bg-card)); color: var(--color-success); }
+.chip-preview { background: color-mix(in srgb, var(--color-warning) 18%, var(--color-bg-card)); color: var(--color-warning); }
+.icon-pack-drop.file-drop { flex-direction: row; justify-content: center; gap: 8px; padding: 9px 12px; }
+.icon-pack-drop.file-drop svg { width: 18px; height: 18px; margin: 0; }
+.icon-pack-foot { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-top: 1px solid var(--color-border); }
+.icon-pack-foot-txt { flex: 1; min-width: 0; font-size: 0.85em; color: var(--color-text-secondary); line-height: 1.35; }
+.icon-pack-foot-btns { display: flex; gap: 8px; }
+.icon-pack-foot-btns button { width: auto; white-space: nowrap; }
+@media (max-width: 520px) {
+    .icon-pack-scene-icons svg { width: 15%; max-width: 40px; }
+    .icon-pack-foot { flex-wrap: wrap; }
+    .icon-pack-foot-txt { flex-basis: 100%; }
+    .icon-pack-foot-btns { flex: 1; }
+    .icon-pack-foot-btns button { flex: 1; }
 }
-.icon-pack-sample svg { width: 44px; height: 44px; }
 
 /* ==========================================================================
  *  SUGGESTION DE LANGUE NAVIGATEUR -- toast discret, non bloquant,
