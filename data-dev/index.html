@@ -3182,15 +3182,37 @@
             await init();
         })();
     </script>
-    <!-- Découpes des icônes d'équipement (svg-shutter, svg-garage...) : hors du sprite, car un
-         clipPath logé sous un <svg> en display:none n'est pas garanti d'être appliqué. -->
+    <!-- Matières des icônes d'équipement (svg-shutter, svg-garage...) : dégradés, motifs et découpes.
+         Hors du sprite, car un <svg> en display:none ne garantit pas qu'on puisse y référencer un
+         dégradé ou un clipPath ; et leurs var() se résolvent ICI, à la racine du thème, pas sur l'icône
+         qui les utilise -- un --color-accent redéfini localement (.empty-icon) n'y change rien. -->
     <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
         <defs>
-            <clipPath id="shd-cw"><rect x="8.75" y="10" width="30.5" height="29.25"/></clipPath>
-            <clipPath id="shd-cd"><rect x="6" y="8" width="36" height="33.5"/></clipPath>
-            <clipPath id="shd-ca"><rect x="5.5" y="10.5" width="37" height="32"/></clipPath>
-            <clipPath id="shd-cg"><rect x="12" y="21" width="24" height="20.5"/></clipPath>
-            <clipPath id="shd-cp"><rect x="8.5" y="15" width="31" height="26"/></clipPath>
+            <linearGradient id="shd-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--color-shade-sky1)"/><stop offset="1" stop-color="var(--color-shade-sky2)"/></linearGradient>
+            <radialGradient id="shd-glow" cx=".5" cy=".7" r=".7"><stop offset="0" stop-color="#ffc46b" stop-opacity="var(--color-shade-glow-op)"/><stop offset="1" stop-color="#ff9d3a" stop-opacity="0"/></radialGradient>
+            <linearGradient id="shd-pvc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--color-shade-pvc1)"/><stop offset="1" stop-color="var(--color-shade-pvc2)"/></linearGradient>
+            <linearGradient id="shd-alu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--color-shade-alu1)"/><stop offset=".6" stop-color="var(--color-shade-alu2)"/><stop offset="1" stop-color="var(--color-shade-alu3)"/></linearGradient>
+            <linearGradient id="shd-slat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--color-shade-alu1)"/><stop offset=".45" stop-color="var(--color-shade-alu2)"/><stop offset="1" stop-color="var(--color-shade-alu3)"/></linearGradient>
+            <linearGradient id="shd-stone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--color-shade-stone1)"/><stop offset="1" stop-color="var(--color-shade-stone2)"/></linearGradient>
+            <linearGradient id="shd-pillar" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="var(--color-shade-stone2)"/><stop offset=".4" stop-color="var(--color-shade-stone1)"/><stop offset="1" stop-color="var(--color-shade-stone2)"/></linearGradient>
+            <linearGradient id="shd-sh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="var(--color-shade-shadow-op)"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>
+            <linearGradient id="shd-awsh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="var(--color-shade-shadow-op)"/><stop offset=".45" stop-color="#000" stop-opacity="0"/></linearGradient>
+            <linearGradient id="shd-int" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--color-shade-int2)"/><stop offset="1" stop-color="var(--color-shade-int1)"/></linearGradient>
+            <linearGradient id="shd-board" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--color-shade-leaf1)"/><stop offset="1" stop-color="var(--color-shade-leaf2)"/></linearGradient>
+            <linearGradient id="shd-door" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--color-shade-alu1)"/><stop offset="1" stop-color="var(--color-shade-alu2)"/></linearGradient>
+            <linearGradient id="shd-fabv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="var(--color-shade-fab-d)"/><stop offset=".18" stop-color="var(--color-shade-fab)"/><stop offset=".5" stop-color="var(--color-shade-fab-l)"/><stop offset=".82" stop-color="var(--color-shade-fab)"/><stop offset="1" stop-color="var(--color-shade-fab-d)"/></linearGradient>
+            <linearGradient id="shd-pleat" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="var(--color-shade-fab-d)"/><stop offset=".35" stop-color="var(--color-shade-fab-l)"/><stop offset=".65" stop-color="var(--color-shade-fab)"/><stop offset="1" stop-color="var(--color-shade-fab-d)"/></linearGradient>
+            <linearGradient id="shd-brass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--color-shade-brass1)"/><stop offset="1" stop-color="var(--color-shade-brass2)"/></linearGradient>
+            <pattern id="shd-pSlat" patternUnits="userSpaceOnUse" width="48" height="2.2"><rect width="48" height="2.2" fill="url(#shd-slat)"/><rect y="1.95" width="48" height=".25" fill="rgba(0,0,0,.28)"/><rect width="48" height=".25" fill="rgba(255,255,255,.5)"/></pattern>
+            <pattern id="shd-pWeave" patternUnits="userSpaceOnUse" width="1" height="1"><rect width="1" height=".45" fill="rgba(0,0,0,.16)"/></pattern>
+            <pattern id="shd-pPleat" patternUnits="userSpaceOnUse" width="4" height="48"><rect width="4" height="48" fill="url(#shd-pleat)"/></pattern>
+            <pattern id="shd-pStripe" patternUnits="userSpaceOnUse" width="7.4" height="48"><rect width="3.7" height="48" fill="var(--color-shade-fab)"/><rect x="3.7" width="3.7" height="48" fill="var(--color-shade-cream)"/></pattern>
+            <clipPath id="shd-cwin"><rect x="11.5" y="11" width="25" height="28.5"/></clipPath>
+            <clipPath id="shd-crol"><rect x="11" y="11" width="26" height="28.5"/></clipPath>
+            <clipPath id="shd-cdr"><rect x="4" y="7.5" width="40" height="40.5"/></clipPath>
+            <clipPath id="shd-caw"><rect x="4" y="10" width="40" height="38"/></clipPath>
+            <clipPath id="shd-cga"><rect x="9" y="17" width="30" height="26"/></clipPath>
+            <clipPath id="shd-cgt"><rect x="8.5" y="10" width="31" height="32"/></clipPath>
         </defs>
     </svg>
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
@@ -3456,11 +3478,16 @@
 
         <!-- SOMFY > EQUIPEMENTS -->
         <symbol id="svg-shutter" viewBox="0 0 48 48">
-            <rect x="8" y="9.25" width="32" height="30.75" rx="2" fill="var(--color-shade-glass)" stroke="var(--color-shade-frame)" stroke-width="1.5"/>
-            <path d="M14 36 20 14M18.5 36 23 21" fill="none" stroke="var(--color-shade-glint)" stroke-linecap="round"/>
-            <g clip-path="url(#shd-cw)"><g class="lattes-group" style="transform:translateY(calc(-28px + (0.28px * var(--shade-position, 0))))"><rect x="8.75" y="10" width="30.5" height="29.25" fill="var(--color-accent)"/><path d="M8.75 11.85h30.5v0.55h-30.5zm0 2.4h30.5v0.55h-30.5zm0 2.4h30.5v0.55h-30.5zm0 2.4h30.5v0.55h-30.5zm0 2.4h30.5v0.55h-30.5zm0 2.4h30.5v0.55h-30.5zm0 2.4h30.5v0.55h-30.5zm0 2.4h30.5v0.55h-30.5zm0 2.4h30.5v0.55h-30.5zm0 2.4h30.5v0.55h-30.5zm0 2.4h30.5v0.55h-30.5z" fill="var(--color-accent-dark)"/><rect x="8.75" y="37.65" width="30.5" height="1.6" fill="var(--color-accent-dark)"/></g></g>
-            <rect x="6" y="5" width="36" height="5.5" rx="2" fill="var(--color-shade-frame)"/>
-            <rect x="5" y="40" width="38" height="2.75" rx="1.375" fill="var(--color-shade-frame)"/>
+            <rect x="11" y="11" width="26" height="28.5" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
+            <rect x="12.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-sky)"/><rect x="24.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-sky)"/>
+            <rect x="12.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-glow)"/><rect x="24.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-glow)"/>
+            <path d="M12.6 30 23.4 17.5V22L12.6 34.5zM24.6 26l10.8-12.5v2.5L24.6 28.5z" fill="var(--color-shade-refl)"/>
+            <rect x="23.55" y="23" width=".9" height="3.2" rx=".45" fill="var(--color-shade-alu3)"/>
+            <g clip-path="url(#shd-cwin)"><g class="lattes-group" style="transform:translateY(calc(-27.5px + (0.275px * var(--shade-position, 0))))"><rect x="11.5" y="11" width="25" height="28.5" fill="url(#shd-pSlat)"/><rect x="11.5" y="37.7" width="25" height="1.8" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="11.5" y="39.2" width="25" height=".3" fill="rgba(0,0,0,.28)"/></g></g>
+            <rect x="11" y="11.5" width="26" height="3.5" fill="url(#shd-sh)"/>
+            <rect x="10.3" y="11" width="1.2" height="28.5" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="36.5" y="11" width="1.2" height="28.5" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <rect x="8" y="5" width="32" height="6.5" rx="1" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="8" y="5" width="32" height=".8" rx=".4" fill="rgba(255,255,255,.5)"/>
+            <rect x="6.5" y="39.5" width="35" height="2.6" rx=".7" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="7.5" y="42.1" width="33" height="2.6" fill="url(#shd-sh)" opacity=".6"/>
         </symbol>
         <symbol id="svg-add" viewBox="0 0 24 24">
             <path fill="currentColor" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6z" />
@@ -3491,11 +3518,15 @@
             <path fill="currentColor" d="M9 4h6v8h4.84L12 19.84L4.16 12H9z" />
         </symbol>
         <symbol id="svg-window-shade" viewBox="0 0 48 48">
-            <rect x="8" y="9.25" width="32" height="30.75" rx="2" fill="var(--color-shade-glass)" stroke="var(--color-shade-frame)" stroke-width="1.5"/>
-            <path d="M14 36 20 14M18.5 36 23 21" fill="none" stroke="var(--color-shade-glint)" stroke-linecap="round"/>
-            <g clip-path="url(#shd-cw)"><g class="lattes-group" style="transform:translateY(calc(-28px + (0.28px * var(--shade-position, 0))))"><rect x="8.75" y="10" width="30.5" height="28" fill="var(--color-accent)" opacity=".9"/><rect x="8.75" y="37.6" width="30.5" height="1.65" rx=".8" fill="var(--color-shade-frame)"/><rect x="22.5" y="36.3" width="3" height="1.5" rx=".75" fill="var(--color-shade-frame)"/></g></g>
-            <rect x="6" y="5" width="36" height="5.5" rx="2" fill="var(--color-shade-frame)"/>
-            <rect x="5" y="40" width="38" height="2.75" rx="1.375" fill="var(--color-shade-frame)"/>
+            <rect x="11" y="11" width="26" height="28.5" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
+            <rect x="12.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-sky)"/><rect x="24.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-sky)"/>
+            <rect x="12.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-glow)"/><rect x="24.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-glow)"/>
+            <path d="M12.6 30 23.4 17.5V22L12.6 34.5zM24.6 26l10.8-12.5v2.5L24.6 28.5z" fill="var(--color-shade-refl)"/>
+            <rect x="23.55" y="23" width=".9" height="3.2" rx=".45" fill="var(--color-shade-alu3)"/>
+            <g clip-path="url(#shd-crol)"><g class="lattes-group" style="transform:translateY(calc(-27.5px + (0.275px * var(--shade-position, 0))))"><rect x="11" y="11" width="26" height="27" fill="url(#shd-fabv)" opacity=".93"/><rect x="11" y="11" width="26" height="27" fill="url(#shd-pWeave)"/><rect x="11" y="37.6" width="26" height="1.7" rx=".85" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/></g></g>
+            <rect x="11" y="11.5" width="26" height="3" fill="url(#shd-sh)"/>
+            <rect x="9" y="6" width="30" height="5.5" rx="2.75" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/><rect x="10" y="6.4" width="28" height=".7" rx=".35" fill="rgba(255,255,255,.5)"/>
+            <rect x="6.5" y="39.5" width="35" height="2.6" rx=".7" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="7.5" y="42.1" width="33" height="2.6" fill="url(#shd-sh)" opacity=".6"/>
         </symbol>
         <symbol id="svg-up" viewBox="0 0 48 48">
             <path d="M33 28.5l-9-9-9 9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
@@ -3756,58 +3787,97 @@
             <path fill="currentColor" d="M2 21v-2h2V3h16v16h2v2zM6 7h8V5H6zm0 4h8V9H6zm0 8h12v-6h-2v1.825q.35.25.55.625t.2.8q0 .725-.513 1.238T15 18t-1.237-.513t-.513-1.237q0-.425.2-.8t.55-.625V13H6zM16 7h2V5h-2zm0 4h2V9h-2z" />
         </symbol>
         <symbol id="svg-window-blind" viewBox="0 0 48 48">
-            <rect x="8" y="9.25" width="32" height="30.75" rx="2" fill="var(--color-shade-glass)" stroke="var(--color-shade-frame)" stroke-width="1.5"/>
-            <path d="M14 36 20 14M18.5 36 23 21" fill="none" stroke="var(--color-shade-glint)" stroke-linecap="round"/>
-            <g clip-path="url(#shd-cw)"><g class="lattes-group" style="transform:translateY(calc(-28px + (0.28px * var(--shade-position, 0))))"><path d="M14.75 10h.5v28h-.5zM32.75 10h.5v28h-.5z" fill="var(--color-shade-muted)"/><rect class="blind-slat" x="8.75" y="11.2" width="30.5" height="2.3" fill="var(--color-accent)"/><rect class="blind-slat" x="8.75" y="14.25" width="30.5" height="2.3" fill="var(--color-accent)"/><rect class="blind-slat" x="8.75" y="17.3" width="30.5" height="2.3" fill="var(--color-accent)"/><rect class="blind-slat" x="8.75" y="20.35" width="30.5" height="2.3" fill="var(--color-accent)"/><rect class="blind-slat" x="8.75" y="23.4" width="30.5" height="2.3" fill="var(--color-accent)"/><rect class="blind-slat" x="8.75" y="26.45" width="30.5" height="2.3" fill="var(--color-accent)"/><rect class="blind-slat" x="8.75" y="29.5" width="30.5" height="2.3" fill="var(--color-accent)"/><rect class="blind-slat" x="8.75" y="32.55" width="30.5" height="2.3" fill="var(--color-accent)"/><rect class="blind-slat" x="8.75" y="35.6" width="30.5" height="2.3" fill="var(--color-accent)"/><rect x="8.75" y="37.9" width="30.5" height="1.35" fill="var(--color-accent-dark)"/></g></g>
-            <rect x="6" y="5" width="36" height="5.5" rx="2" fill="var(--color-shade-frame)"/>
-            <rect x="5" y="40" width="38" height="2.75" rx="1.375" fill="var(--color-shade-frame)"/>
+            <rect x="11" y="11" width="26" height="28.5" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
+            <rect x="12.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-sky)"/><rect x="24.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-sky)"/>
+            <rect x="12.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-glow)"/><rect x="24.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-glow)"/>
+            <path d="M12.6 30 23.4 17.5V22L12.6 34.5zM24.6 26l10.8-12.5v2.5L24.6 28.5z" fill="var(--color-shade-refl)"/>
+            <rect x="23.55" y="23" width=".9" height="3.2" rx=".45" fill="var(--color-shade-alu3)"/>
+            <g clip-path="url(#shd-cwin)"><g class="lattes-group" style="transform:translateY(calc(-27px + (0.27px * var(--shade-position, 0))))">
+            <rect x="16.4" y="11" width=".35" height="27" fill="rgba(240,240,240,.75)"/><rect x="31.25" y="11" width=".35" height="27" fill="rgba(240,240,240,.75)"/>
+            <rect x="11.5" y="12" width="25" height="2.2" class="blind-slat" fill="url(#shd-slat)"/>
+            <rect x="11.5" y="14.75" width="25" height="2.2" class="blind-slat" fill="url(#shd-slat)"/>
+            <rect x="11.5" y="17.5" width="25" height="2.2" class="blind-slat" fill="url(#shd-slat)"/>
+            <rect x="11.5" y="20.25" width="25" height="2.2" class="blind-slat" fill="url(#shd-slat)"/>
+            <rect x="11.5" y="23" width="25" height="2.2" class="blind-slat" fill="url(#shd-slat)"/>
+            <rect x="11.5" y="25.75" width="25" height="2.2" class="blind-slat" fill="url(#shd-slat)"/>
+            <rect x="11.5" y="28.5" width="25" height="2.2" class="blind-slat" fill="url(#shd-slat)"/>
+            <rect x="11.5" y="31.25" width="25" height="2.2" class="blind-slat" fill="url(#shd-slat)"/>
+            <rect x="11.5" y="34" width="25" height="2.2" class="blind-slat" fill="url(#shd-slat)"/>
+            <rect x="11.5" y="37.9" width="25" height="1.5" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            </g></g>
+            <rect x="11" y="11.5" width="26" height="3.5" fill="url(#shd-sh)"/>
+            <rect x="10.3" y="11" width="1.2" height="28.5" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="36.5" y="11" width="1.2" height="28.5" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <rect x="8" y="5" width="32" height="6.5" rx="1" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="8" y="5" width="32" height=".8" rx=".4" fill="rgba(255,255,255,.5)"/>
+            <rect x="6.5" y="39.5" width="35" height="2.6" rx=".7" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="7.5" y="42.1" width="33" height="2.6" fill="url(#shd-sh)" opacity=".6"/>
         </symbol>
         <symbol id="svg-indicDrapery" viewBox="0 0 24 24">
             <path fill="currentColor" d="M8 20v1a1 1 0 0 0 .98-1.196zm8 0l-.98-.196A1 1 0 0 0 16 21zM4 12a1 1 0 1 0 0 2zm16 2a1 1 0 1 0 0-2zM5 4v1h5V3H5zm3 16v-1H5v2h3zm-4-1h1V5H3v14zm6-15l-.997.083v-.001l.004.049l.008.173c.007.154.012.382.009.668a15 15 0 0 1-.198 2.239c-.297 1.782-.989 3.754-2.477 5.03L7 13l.65.76c2.013-1.725 2.821-4.253 3.149-6.22a17 17 0 0 0 .215-3.317l-.015-.279l-.002-.018v-.008zm-3 9H6c0 1.097.266 2.93.514 4.414a100 100 0 0 0 .502 2.766l.003.012v.004L8 20l.98-.196V19.8l-.002-.01l-.008-.041a58 58 0 0 1-.143-.747a98 98 0 0 1-.34-1.917C8.233 15.57 8 13.903 8 13zm12-9V3h-5v2h5zm-3 16v1h3v-2h-3zm4-1h1V5h-2v14zM14 4a71 71 0 0 0-.997-.082v.008L13 3.944a5 5 0 0 0-.015.28A17 17 0 0 0 13.2 7.54c.328 1.967 1.136 4.495 3.148 6.22L17 13l.65-.76c-1.487-1.275-2.179-3.247-2.476-5.03a15 15 0 0 1-.19-2.906l.013-.222zm3 9h-1c0 .903-.234 2.57-.486 4.086a98 98 0 0 1-.453 2.504l-.03.16l-.009.04l-.002.01v.003L16 20l.98.196v-.001l.001-.003l.003-.012l.04-.208a100 100 0 0 0 .462-2.558C17.734 15.93 18 14.097 18 13zM4 13v1h3v-2H4zm6-9v1h4V3h-4zm10 9v-1h-3v2h3zm-1 7v1a2 2 0 0 0 2-2h-2zM5 20v-1H3a2 2 0 0 0 2 2zM19 4v1h2a2 2 0 0 0-2-2zM5 4V3a2 2 0 0 0-2 2h2z" />
         </symbol>
         <symbol id="svg-ldrapery" viewBox="0 0 48 48">
-            <rect x="8" y="9.25" width="32" height="30.75" rx="2" fill="var(--color-shade-glass)" stroke="var(--color-shade-frame)" stroke-width="1.5"/>
-            <path d="M14 36 20 14M18.5 36 23 21" fill="none" stroke="var(--color-shade-glint)" stroke-linecap="round"/>
-            <rect x="5" y="40" width="38" height="2.75" rx="1.375" fill="var(--color-shade-frame)"/>
-            <g clip-path="url(#shd-cd)"><g class="lattes-group" style="transform:translateX(calc(-31px + (0.31px * var(--shade-position, 0))))"><rect x="6" y="8" width="36" height="33.5" fill="var(--color-accent)"/><path d="M8.3 8h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7z" fill="var(--color-accent-dark)"/><rect x="6" y="8" width="36" height="1.6" fill="var(--color-accent-dark)"/></g></g>
-            <rect x="4" y="6.2" width="40" height="1.6" rx=".8" fill="var(--color-shade-frame)"/>
-            <path d="M4.5 5.3a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4zM43.5 5.3a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4z" fill="var(--color-shade-frame)"/>
+            <rect x="11" y="10" width="26" height="30" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
+            <rect x="12.6" y="11.6" width="10.8" height="26.8" fill="url(#shd-sky)"/><rect x="24.6" y="11.6" width="10.8" height="26.8" fill="url(#shd-sky)"/>
+            <path d="M12.6 30 23.4 17.5V22L12.6 34.5zM24.6 26l10.8-12.5v2.5L24.6 28.5z" fill="var(--color-shade-refl)"/>
+            <rect x="9" y="39.8" width="30" height="1.8" rx=".5" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <g clip-path="url(#shd-cdr)"><g class="lattes-group" style="transform:translateX(calc(-32px + (0.32px * var(--shade-position, 0))))"><rect x="4.5" y="8" width="39" height="40" fill="url(#shd-pPleat)"/><rect x="4.5" y="8" width="39" height="1.6" fill="var(--color-shade-fab-d)"/><path d="M6 7.3a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01z" fill="url(#shd-brass)"/></g></g>
+            <rect x="4" y="6.6" width="40" height="1.4" rx=".7" fill="url(#shd-brass)"/>
+            <circle cx="4" cy="7.3" r="1.9" fill="url(#shd-brass)"/><circle cx="44" cy="7.3" r="1.9" fill="url(#shd-brass)"/>
         </symbol>
         <symbol id="svg-awning" viewBox="0 0 48 48">
-            <rect x="11.5" y="17" width="25" height="23.5" rx="1.5" fill="var(--color-shade-glass)" stroke="var(--color-shade-frame)" stroke-width="1.5"/>
-            <path d="M16 37 21.5 21M20.5 37 24.5 26" fill="none" stroke="var(--color-shade-glint)" stroke-linecap="round"/>
-            <rect x="4" y="40.5" width="40" height="1.5" rx=".75" fill="var(--color-shade-muted)"/>
-            <g clip-path="url(#shd-ca)"><g class="lattes-group" style="transform:translateY(calc(-26px + (0.26px * var(--shade-position, 0))))"><rect x="6.5" y="10.5" width="35" height="23" fill="var(--color-accent)"/><path d="M7 10.5h3.5v23h-3.5zm7 0h3.5v23h-3.5zm7 0h3.5v23h-3.5zm7 0h3.5v23h-3.5zm7 0h3.5v23h-3.5z" fill="color-mix(in srgb, var(--color-accent) var(--color-shade-stripe-mix), var(--color-shade-stripe-base))"/><path d="M6.5 33.5H41.5V36q-1.75 2.6-3.5 0q-1.75 2.6-3.5 0q-1.75 2.6-3.5 0q-1.75 2.6-3.5 0q-1.75 2.6-3.5 0q-1.75 2.6-3.5 0q-1.75 2.6-3.5 0q-1.75 2.6-3.5 0q-1.75 2.6-3.5 0q-1.75 2.6-3.5 0Z" fill="var(--color-accent-dark)"/></g></g>
-            <rect x="5" y="5.5" width="38" height="5.5" rx="2.75" fill="var(--color-shade-frame)"/>
+            <rect x="11.5" y="17.5" width="25" height="25.5" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
+            <rect x="13" y="19" width="10.4" height="24" fill="url(#shd-sky)"/><rect x="24.6" y="19" width="10.4" height="24" fill="url(#shd-sky)"/>
+            <rect x="13" y="19" width="10.4" height="24" fill="url(#shd-glow)"/><rect x="24.6" y="19" width="10.4" height="24" fill="url(#shd-glow)"/>
+            <path d="M13 35 23.4 24v4.5L13 39.5zM24.6 32 35 21v2.5L24.6 34.5z" fill="var(--color-shade-refl)"/>
+            <g clip-path="url(#shd-caw)"><g class="lattes-group" style="transform:translateY(calc(-23px + (0.23px * var(--shade-position, 0))))">
+            <rect x="5" y="31" width="38" height="10" fill="url(#shd-sh)"/>
+            <rect x="5.5" y="10" width="37" height="22" fill="url(#shd-pStripe)"/>
+            <rect x="5.5" y="10" width="37" height="22" fill="url(#shd-awsh)"/>
+            <rect x="5.5" y="31.5" width="37" height="1.2" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <path d="M5.5 32.7H42.5V35q-1.85 2.6-3.7 0q-1.85 2.6-3.7 0q-1.85 2.6-3.7 0q-1.85 2.6-3.7 0q-1.85 2.6-3.7 0q-1.85 2.6-3.7 0q-1.85 2.6-3.7 0q-1.85 2.6-3.7 0q-1.85 2.6-3.7 0q-1.85 2.6-3.7 0Z" fill="url(#shd-pStripe)"/>
+            </g></g>
+            <rect x="7.5" y="4.5" width="2" height="3" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="38.5" y="4.5" width="2" height="3" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <rect x="4.5" y="6" width="39" height="5" rx="2.5" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="6" y="6.4" width="36" height=".7" rx=".35" fill="rgba(255,255,255,.5)"/>
         </symbol>
         <symbol id="svg-indicAwning" viewBox="0 0 24 24">
             <path fill="currentColor" d="M5.06 7c-.43 0-.84.14-1.22.42s-.6.64-.7 1.08l-1.03 4.41c-.25 1.09-.05 2.01.58 2.82c.12.12.24.24.35.34c.59.57 1.24.93 2.18.93s1.69-.41 2.25-.95c.63.62 1.39.95 2.33.95c.84 0 1.64-.37 2.2-.93c.68.63 1.45.93 2.3.93c.87 0 1.61-.33 2.24-.95c.57.57 1.32.95 2.27.95s1.62-.35 2.19-.94c.09-.09.18-.19.28-.29c.66-.82.86-1.77.61-2.86L20.86 8.5c-.13-.44-.36-.8-.73-1.08A1.88 1.88 0 0 0 18.94 7z" />
         </symbol>
         <symbol id="svg-garage" viewBox="0 0 48 48">
-            <rect x="12" y="21" width="24" height="20.5" fill="var(--color-shade-interior)"/>
-            <path d="M4.5 19.5 24 8l19.5 11.5M8.5 17v24.5M39.5 17v24.5" fill="none" stroke="var(--color-shade-frame)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-            <g clip-path="url(#shd-cg)"><g class="lattes-group" style="transform:translateY(calc(-21px + (0.21px * var(--shade-position, 0))))"><path d="M13 21.2h22a.7.7 0 0 1 .7.7v3.35a.7.7 0 0 1-.7.7H13a.7.7 0 0 1-.7-.7v-3.35a.7.7 0 0 1 .7-.7zm0 5.1h22a.7.7 0 0 1 .7.7v3.35a.7.7 0 0 1-.7.7H13a.7.7 0 0 1-.7-.7v-3.35a.7.7 0 0 1 .7-.7zm0 5.1h22a.7.7 0 0 1 .7.7v3.35a.7.7 0 0 1-.7.7H13a.7.7 0 0 1-.7-.7v-3.35a.7.7 0 0 1 .7-.7zm0 5.1h22a.7.7 0 0 1 .7.7v3.35a.7.7 0 0 1-.7.7H13a.7.7 0 0 1-.7-.7v-3.35a.7.7 0 0 1 .7-.7z" fill="var(--color-accent)"/><path d="M14 22.6h3.5v1.9h-3.5zm5.5 0h3.5v1.9h-3.5zm5.5 0h3.5v1.9h-3.5zm5.5 0h3.5v1.9h-3.5z" fill="var(--color-shade-glass)"/><rect x="22.5" y="38.6" width="3" height=".9" rx=".45" fill="var(--color-accent-dark)"/></g></g>
-            <rect x="11" y="19.6" width="26" height="1.6" rx=".5" fill="var(--color-shade-frame)"/>
-            <rect x="3.5" y="41.5" width="41" height="1.6" rx=".8" fill="var(--color-shade-frame)"/>
+            <rect x="9" y="17" width="30" height="26" fill="url(#shd-int)"/>
+            <path d="M14 31.5q0-2 2-2.4l2.5-2.6h11l2.5 2.6q2 .4 2 2.4V37H14z" fill="rgba(255,255,255,.07)"/>
+            <g clip-path="url(#shd-cga)"><g class="lattes-group" style="transform:translateY(calc(-25.5px + (0.255px * var(--shade-position, 0))))">
+            <rect x="9" y="17.2" width="30" height="6.2" fill="url(#shd-door)"/><rect x="9" y="23.6" width="30" height="6.2" fill="url(#shd-door)"/><rect x="9" y="30" width="30" height="6.2" fill="url(#shd-door)"/><rect x="9" y="36.4" width="30" height="6.2" fill="url(#shd-door)"/>
+            <path d="M9 23.4h30v.2H9zm0 6.4h30v.2H9zm0 6.4h30v.2H9zM9 25.6h30v.35H9zm0 2.1h30v.35H9zm0 4.3h30v.35H9zm0 2.1h30v.35H9zm0 4.3h30v.35H9zm0 2.1h30v.35H9z" fill="rgba(0,0,0,.16)"/>
+            <path d="M11.5 19h4.6v2.2h-4.6zm6.8 0h4.6v2.2h-4.6zm6.8 0h4.6v2.2h-4.6zm6.8 0h4.6v2.2h-4.6z" fill="url(#shd-int)"/>
+            <path d="M11.5 19h4.6v.6h-4.6zm6.8 0h4.6v.6h-4.6zm6.8 0h4.6v.6h-4.6zm6.8 0h4.6v.6h-4.6z" fill="var(--color-shade-refl)"/>
+            <rect x="22.5" y="40" width="3" height=".8" rx=".4" fill="var(--color-shade-alu3)"/>
+            <rect x="9" y="42.6" width="30" height=".4" fill="rgba(0,0,0,.28)"/>
+            </g></g>
+            <rect x="9" y="17" width="30" height="2.5" fill="url(#shd-sh)"/>
+            <rect x="7" y="14" width="34" height="3" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <rect x="7.5" y="17" width="1.5" height="26" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="39" y="17" width="1.5" height="26" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
         </symbol>
         <symbol id="svg-indicGarage" viewBox="0 0 24 24">
             <path fill="currentColor" d="M4 21V9l8-6l8 6v12h-3V11H7v10zm5-2h6v-2H9zm0-4h6v-2H9z" />
         </symbol>
         <symbol id="svg-rdrapery" viewBox="0 0 48 48">
-            <rect x="8" y="9.25" width="32" height="30.75" rx="2" fill="var(--color-shade-glass)" stroke="var(--color-shade-frame)" stroke-width="1.5"/>
-            <path d="M14 36 20 14M18.5 36 23 21" fill="none" stroke="var(--color-shade-glint)" stroke-linecap="round"/>
-            <rect x="5" y="40" width="38" height="2.75" rx="1.375" fill="var(--color-shade-frame)"/>
-            <g clip-path="url(#shd-cd)"><g class="lattes-group" style="transform:translateX(calc(31px - (0.31px * var(--shade-position, 0))))"><rect x="6" y="8" width="36" height="33.5" fill="var(--color-accent)"/><path d="M8.3 8h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7z" fill="var(--color-accent-dark)"/><rect x="6" y="8" width="36" height="1.6" fill="var(--color-accent-dark)"/></g></g>
-            <rect x="4" y="6.2" width="40" height="1.6" rx=".8" fill="var(--color-shade-frame)"/>
-            <path d="M4.5 5.3a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4zM43.5 5.3a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4z" fill="var(--color-shade-frame)"/>
+            <rect x="11" y="10" width="26" height="30" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
+            <rect x="12.6" y="11.6" width="10.8" height="26.8" fill="url(#shd-sky)"/><rect x="24.6" y="11.6" width="10.8" height="26.8" fill="url(#shd-sky)"/>
+            <path d="M12.6 30 23.4 17.5V22L12.6 34.5zM24.6 26l10.8-12.5v2.5L24.6 28.5z" fill="var(--color-shade-refl)"/>
+            <rect x="9" y="39.8" width="30" height="1.8" rx=".5" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <g clip-path="url(#shd-cdr)"><g class="lattes-group" style="transform:translateX(calc(32px - (0.32px * var(--shade-position, 0))))"><rect x="4.5" y="8" width="39" height="40" fill="url(#shd-pPleat)"/><rect x="4.5" y="8" width="39" height="1.6" fill="var(--color-shade-fab-d)"/><path d="M6 7.3a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01z" fill="url(#shd-brass)"/></g></g>
+            <rect x="4" y="6.6" width="40" height="1.4" rx=".7" fill="url(#shd-brass)"/>
+            <circle cx="4" cy="7.3" r="1.9" fill="url(#shd-brass)"/><circle cx="44" cy="7.3" r="1.9" fill="url(#shd-brass)"/>
         </symbol>
         <symbol id="svg-cdrapery" viewBox="0 0 48 48">
-            <rect x="8" y="9.25" width="32" height="30.75" rx="2" fill="var(--color-shade-glass)" stroke="var(--color-shade-frame)" stroke-width="1.5"/>
-            <path d="M14 36 20 14M18.5 36 23 21" fill="none" stroke="var(--color-shade-glint)" stroke-linecap="round"/>
-            <rect x="5" y="40" width="38" height="2.75" rx="1.375" fill="var(--color-shade-frame)"/>
-            <g clip-path="url(#shd-cd)"><g class="lattes-group" style="transform:translateX(calc(-14px + (0.14px * var(--shade-position, 0))))"><rect x="6" y="8" width="18" height="33.5" fill="var(--color-accent)"/><path d="M8.3 8h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7z" fill="var(--color-accent-dark)"/><rect x="6" y="8" width="18" height="1.6" fill="var(--color-accent-dark)"/></g><g class="lattes-group" style="transform:translateX(calc(14px - (0.14px * var(--shade-position, 0))))"><rect x="24" y="8" width="18" height="33.5" fill="var(--color-accent)"/><path d="M26.3 8h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7zm3 0h0.7v33.5h-0.7z" fill="var(--color-accent-dark)"/><rect x="24" y="8" width="18" height="1.6" fill="var(--color-accent-dark)"/></g></g>
-            <rect x="4" y="6.2" width="40" height="1.6" rx=".8" fill="var(--color-shade-frame)"/>
-            <path d="M4.5 5.3a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4zM43.5 5.3a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4z" fill="var(--color-shade-frame)"/>
+            <rect x="11" y="10" width="26" height="30" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
+            <rect x="12.6" y="11.6" width="10.8" height="26.8" fill="url(#shd-sky)"/><rect x="24.6" y="11.6" width="10.8" height="26.8" fill="url(#shd-sky)"/>
+            <path d="M12.6 30 23.4 17.5V22L12.6 34.5zM24.6 26l10.8-12.5v2.5L24.6 28.5z" fill="var(--color-shade-refl)"/>
+            <rect x="9" y="39.8" width="30" height="1.8" rx=".5" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <g clip-path="url(#shd-cdr)">
+            <g class="lattes-group" style="transform:translateX(calc(-14.5px + (0.145px * var(--shade-position, 0))))"><rect x="4.5" y="8" width="19.5" height="40" fill="url(#shd-pPleat)"/><rect x="4.5" y="8" width="19.5" height="1.6" fill="var(--color-shade-fab-d)"/><path d="M6 7.3a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01z" fill="url(#shd-brass)"/></g>
+            <g class="lattes-group" style="transform:translateX(calc(14.5px - (0.145px * var(--shade-position, 0))))"><rect x="24" y="8" width="19.5" height="40" fill="url(#shd-pPleat)"/><rect x="24" y="8" width="19.5" height="1.6" fill="var(--color-shade-fab-d)"/><path d="M25 7.3a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01zm3.5 0a.8.8 0 1 0 0 .01z" fill="url(#shd-brass)"/></g>
+            </g>
+            <rect x="4" y="6.6" width="40" height="1.4" rx=".7" fill="url(#shd-brass)"/>
+            <circle cx="4" cy="7.3" r="1.9" fill="url(#shd-brass)"/><circle cx="44" cy="7.3" r="1.9" fill="url(#shd-brass)"/>
         </symbol>
         <!-- Interrupteur mural. Plaque neutre, BASCULEURS teintés par --fpos : un interrupteur n'a
              pas de course, c'est sa couleur seule qui dit Marche ou Arrêt. Le petit témoin reste un
@@ -3816,15 +3886,20 @@
              ailleurs la partie MOBILE d'un équipement ne tient pas ici, un interrupteur n'ayant
              aucune course à figurer. Elle rattache l'état allumé au reste de l'interface. -->
         <symbol id="svg-switch1" viewBox="0 0 48 48">
-            <rect x="9" y="9" width="30" height="30" rx="7" fill="var(--color-shade-glass)" stroke="var(--color-shade-frame)" stroke-width="1.5"/>
-            <rect class="switch-rocker" x="17" y="14.5" width="14" height="19" rx="3.5" fill="color-mix(in srgb, var(--color-accent) var(--fpos, 0%), var(--color-shade-muted))"/>
-            <path d="M22.15 17.5h3.7a.65.65 0 0 1 0 1.3h-3.7a.65.65 0 0 1 0-1.3zM24 29a1 1 0 1 0 0 2a1 1 0 1 0 0-2z" fill="var(--color-bg-card)"/>
+            <rect x="12.8" y="13.4" width="24" height="24" rx="3.5" fill="rgba(0,0,0,.28)" opacity=".6"/>
+            <rect x="12" y="12" width="24" height="24" rx="3.5" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
+            <rect x="16" y="16" width="16" height="16" rx="1.6" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
+            <rect x="16" y="16" width="16" height="8" rx="1.6" class="switch-top"/><rect x="16" y="24" width="16" height="8" rx="1.6" class="switch-bottom"/>
+            <circle cx="24" cy="29" r="3" class="switch-glow"/><circle cx="24" cy="29" r=".9" class="switch-led"/>
         </symbol>
         <symbol id="svg-switch2" viewBox="0 0 48 48">
-            <rect x="9" y="9" width="30" height="30" rx="7" fill="var(--color-shade-glass)" stroke="var(--color-shade-frame)" stroke-width="1.5"/>
-            <rect class="switch-rocker" x="13.5" y="14.5" width="10" height="19" rx="3" fill="color-mix(in srgb, var(--color-accent) var(--fpos, 0%), var(--color-shade-muted))"/>
-            <rect class="switch-rocker" x="24.5" y="14.5" width="10" height="19" rx="3" fill="color-mix(in srgb, var(--color-accent) var(--fpos, 0%), var(--color-shade-muted))"/>
-            <path d="M17.15 17.5h2.7a.65.65 0 0 1 0 1.3h-2.7a.65.65 0 0 1 0-1.3zM28.15 17.5h2.7a.65.65 0 0 1 0 1.3h-2.7a.65.65 0 0 1 0-1.3zM18.5 29a1 1 0 1 0 0 2a1 1 0 1 0 0-2zM29.5 29a1 1 0 1 0 0 2a1 1 0 1 0 0-2z" fill="var(--color-bg-card)"/>
+            <rect x="12.8" y="13.4" width="24" height="24" rx="3.5" fill="rgba(0,0,0,.28)" opacity=".6"/>
+            <rect x="12" y="12" width="24" height="24" rx="3.5" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
+            <rect x="15.5" y="16" width="8.1" height="16" rx="1.4" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/><rect x="24.4" y="16" width="8.1" height="16" rx="1.4" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
+            <rect x="15.5" y="16" width="8.1" height="8" rx="1.4" class="switch-top"/><rect x="15.5" y="24" width="8.1" height="8" rx="1.4" class="switch-bottom"/>
+            <rect x="24.4" y="16" width="8.1" height="8" rx="1.4" class="switch-top"/><rect x="24.4" y="24" width="8.1" height="8" rx="1.4" class="switch-bottom"/>
+            <circle cx="19.55" cy="29" r="2.6" class="switch-glow"/><circle cx="19.55" cy="29" r=".8" class="switch-led"/>
+            <circle cx="28.45" cy="29" r="2.6" class="switch-glow"/><circle cx="28.45" cy="29" r=".8" class="switch-led"/>
         </symbol>
         <!-- Déclinaison plate pour les listes et les petites tailles (familles .shade-icon-wrapper
              et positionneur de groupe) : currentColor comme toute la famille indic, et pas d'état --
@@ -3848,19 +3923,31 @@
             <path fill="currentColor" d="M9 6v5H7V7H5v4H3V9H1v12h2v-2h2v2h2v-2h2v2h2v-2h2v2h2v-2h2v2h2v-2h2v2h2V9h-2v2h-2V7h-2v4h-2V6h-2v5h-2V6zm-6 7h2v4H3zm4 0h2v4H7zm4 0h2v4h-2zm4 0h2v4h-2zm4 0h2v4h-2z" />
         </symbol>
         <symbol id="svg-lgate" viewBox="0 0 48 48">
-            <rect x="3" y="41" width="42" height="1.5" rx=".75" fill="var(--color-shade-muted)"/>
-            <g clip-path="url(#shd-cp)"><g class="lattes-group" style="transform:translateX(calc(-31px + (0.31px * var(--shade-position, 0))))"><rect x="9.25" y="19.75" width="29.5" height="20.5" rx="1" fill="none" stroke="var(--color-accent)" stroke-width="1.5"/><path d="M10.75 21.5h26.5v2.4h-26.5zm0 3.6h26.5v2.4h-26.5zm0 3.6h26.5v2.4h-26.5zm0 3.6h26.5v2.4h-26.5zm0 3.6h26.5v2.4h-26.5z" fill="var(--color-accent)"/></g></g>
-            <path d="M5 16h3.5v25.5H5zM39.5 16H43v25.5h-3.5zM4.5 14.6h4.5v1.8H4.5zM39 14.6h4.5v1.8H39z" fill="var(--color-shade-frame)"/>
+            <g clip-path="url(#shd-cgt)"><g class="lattes-group" style="transform:translateX(calc(-31px + (0.31px * var(--shade-position, 0))))">
+            <rect x="9" y="16.5" width="30" height="23" rx=".6" fill="none" stroke="var(--color-shade-leaf2)" stroke-width="1.3"/>
+            <path d="M9.8 17.6h28.4v2.6H9.8zm0 3.5h28.4v2.6H9.8zm0 3.5h28.4v2.6H9.8zm0 3.5h28.4v2.6H9.8zm0 3.5h28.4v2.6H9.8zm0 3.5h28.4v2.6H9.8z" fill="url(#shd-board)"/>
+            <rect x="9" y="39.5" width="30" height="1.2" fill="url(#shd-sh)"/>
+            </g></g>
+            <ellipse cx="24" cy="42.4" rx="22" ry="1.2" fill="rgba(0,0,0,.28)" opacity=".6"/><rect x="8" y="40.6" width="32" height="1.1" rx=".55" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="2.5" y="14" width="6" height="28" fill="url(#shd-pillar)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="39.5" y="14" width="6" height="28" fill="url(#shd-pillar)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <rect x="1.8" y="12.5" width="7.4" height="2" rx=".4" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="38.8" y="12.5" width="7.4" height="2" rx=".4" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <rect x="2.5" y="14.5" width="6" height="1.5" fill="url(#shd-sh)"/><rect x="39.5" y="14.5" width="6" height="1.5" fill="url(#shd-sh)"/>
         </symbol>
         <symbol id="svg-cgate" viewBox="0 0 48 48">
-            <rect x="3" y="41" width="42" height="1.5" rx=".75" fill="var(--color-shade-muted)"/>
-            <g clip-path="url(#shd-cp)"><g class="lattes-group" style="transform:translateX(calc(-15.5px + (0.155px * var(--shade-position, 0))))"><rect x="9.25" y="19.75" width="14.5" height="20.5" rx="1" fill="none" stroke="var(--color-accent)" stroke-width="1.5"/><path d="M10.75 21.5h11.5v2.4h-11.5zm0 3.6h11.5v2.4h-11.5zm0 3.6h11.5v2.4h-11.5zm0 3.6h11.5v2.4h-11.5zm0 3.6h11.5v2.4h-11.5z" fill="var(--color-accent)"/></g><g class="lattes-group" style="transform:translateX(calc(15.5px - (0.155px * var(--shade-position, 0))))"><rect x="24.25" y="19.75" width="14.5" height="20.5" rx="1" fill="none" stroke="var(--color-accent)" stroke-width="1.5"/><path d="M25.75 21.5h11.5v2.4h-11.5zm0 3.6h11.5v2.4h-11.5zm0 3.6h11.5v2.4h-11.5zm0 3.6h11.5v2.4h-11.5zm0 3.6h11.5v2.4h-11.5z" fill="var(--color-accent)"/></g></g>
-            <path d="M5 16h3.5v25.5H5zM39.5 16H43v25.5h-3.5zM4.5 14.6h4.5v1.8H4.5zM39 14.6h4.5v1.8H39z" fill="var(--color-shade-frame)"/>
+            <g class="gate-leaf-l"><rect x="9" y="16.5" width="14.8" height="23" rx=".6" fill="none" stroke="var(--color-shade-leaf2)" stroke-width="1.3"/><path d="M9.8 17.6h13.2v2.6H9.8zm0 3.5h13.2v2.6H9.8zm0 3.5h13.2v2.6H9.8zm0 3.5h13.2v2.6H9.8zm0 3.5h13.2v2.6H9.8zm0 3.5h13.2v2.6H9.8z" fill="url(#shd-board)"/></g>
+            <g class="gate-leaf-r"><rect x="24.2" y="16.5" width="14.8" height="23" rx=".6" fill="none" stroke="var(--color-shade-leaf2)" stroke-width="1.3"/><path d="M25 17.6h13.2v2.6H25zm0 3.5h13.2v2.6H25zm0 3.5h13.2v2.6H25zm0 3.5h13.2v2.6H25zm0 3.5h13.2v2.6H25zm0 3.5h13.2v2.6H25z" fill="url(#shd-board)"/></g>
+            <ellipse cx="24" cy="42.4" rx="22" ry="1.2" fill="rgba(0,0,0,.28)" opacity=".6"/><rect x="8" y="40.6" width="32" height="1.1" rx=".55" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="2.5" y="14" width="6" height="28" fill="url(#shd-pillar)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="39.5" y="14" width="6" height="28" fill="url(#shd-pillar)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <rect x="1.8" y="12.5" width="7.4" height="2" rx=".4" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="38.8" y="12.5" width="7.4" height="2" rx=".4" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <rect x="2.5" y="14.5" width="6" height="1.5" fill="url(#shd-sh)"/><rect x="39.5" y="14.5" width="6" height="1.5" fill="url(#shd-sh)"/>
         </symbol>
         <symbol id="svg-rgate" viewBox="0 0 48 48">
-            <rect x="3" y="41" width="42" height="1.5" rx=".75" fill="var(--color-shade-muted)"/>
-            <g clip-path="url(#shd-cp)"><g class="lattes-group" style="transform:translateX(calc(31px - (0.31px * var(--shade-position, 0))))"><rect x="9.25" y="19.75" width="29.5" height="20.5" rx="1" fill="none" stroke="var(--color-accent)" stroke-width="1.5"/><path d="M10.75 21.5h26.5v2.4h-26.5zm0 3.6h26.5v2.4h-26.5zm0 3.6h26.5v2.4h-26.5zm0 3.6h26.5v2.4h-26.5zm0 3.6h26.5v2.4h-26.5z" fill="var(--color-accent)"/></g></g>
-            <path d="M5 16h3.5v25.5H5zM39.5 16H43v25.5h-3.5zM4.5 14.6h4.5v1.8H4.5zM39 14.6h4.5v1.8H39z" fill="var(--color-shade-frame)"/>
+            <g clip-path="url(#shd-cgt)"><g class="lattes-group" style="transform:translateX(calc(31px - (0.31px * var(--shade-position, 0))))">
+            <rect x="9" y="16.5" width="30" height="23" rx=".6" fill="none" stroke="var(--color-shade-leaf2)" stroke-width="1.3"/>
+            <path d="M9.8 17.6h28.4v2.6H9.8zm0 3.5h28.4v2.6H9.8zm0 3.5h28.4v2.6H9.8zm0 3.5h28.4v2.6H9.8zm0 3.5h28.4v2.6H9.8zm0 3.5h28.4v2.6H9.8z" fill="url(#shd-board)"/>
+            <rect x="9" y="39.5" width="30" height="1.2" fill="url(#shd-sh)"/>
+            </g></g>
+            <ellipse cx="24" cy="42.4" rx="22" ry="1.2" fill="rgba(0,0,0,.28)" opacity=".6"/><rect x="8" y="40.6" width="32" height="1.1" rx=".55" fill="url(#shd-alu)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="2.5" y="14" width="6" height="28" fill="url(#shd-pillar)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="39.5" y="14" width="6" height="28" fill="url(#shd-pillar)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <rect x="1.8" y="12.5" width="7.4" height="2" rx=".4" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/><rect x="38.8" y="12.5" width="7.4" height="2" rx=".4" fill="url(#shd-stone)" stroke="var(--color-shade-edge)" stroke-width=".3"/>
+            <rect x="2.5" y="14.5" width="6" height="1.5" fill="url(#shd-sh)"/><rect x="39.5" y="14.5" width="6" height="1.5" fill="url(#shd-sh)"/>
         </symbol>
         <symbol id="svg-play" viewBox="0 0 24 24">
             <path fill="currentColor" d="M21.409 9.353a2.998 2.998 0 0 1 0 5.294L8.597 21.614C6.534 22.737 4 21.277 4 18.968V5.033c0-2.31 2.534-3.769 4.597-2.648z" />
