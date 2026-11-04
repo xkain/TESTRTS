@@ -175,11 +175,7 @@ class IconPacks {
         <div class="message-content icon-pack-content">
         ${modalHeader('ICONS_TITLE', 'svg-indicShutter', { subtitle: 'ICONS_TITLE_DESC' })}
         <div class="icon-pack-scene">
-            <div class="icon-pack-scene-icons" id="iconScene">${scene}</div>
-            <div class="icon-pack-scene-line"><b id="iconSceneName"></b><span id="iconSceneTag"></span>
-                <div class="slider-wrapper icon-pack-slider"><div class="slider-progress" style="width:55%"><div class="slider-thumb-line"></div></div>
-                <input type="range" class="md3-range-input" min="0" max="100" step="1" value="55" aria-label="${tr('IS_POSITION')}" oninput="syncSliderProgress(this); iconPacks.setScenePos(this.value);"></div>
-            </div>
+            <div class="icon-pack-scene-icons">${scene}</div>
         </div>
         <div class="icon-pack-body">
             <div class="icon-pack-label">${tr('ICONS_SECTION_DEFAULT')}</div>
@@ -212,7 +208,6 @@ class IconPacks {
         this._packs = this._packs || {};
         if (this._installedPack) this._packs[this._installedPack.id] = this._installedPack;
         this._selected = this.installed ? this.installed.id : '';
-        this.setScenePos(55);
         get('iconThumbDefault').innerHTML = this.thumbHtml(null);
         this.renderCatalog();
         fetch(GITHUB_RAW_ROOT + 'main/icons/manifest.json', { cache: 'no-store' })
@@ -261,12 +256,6 @@ class IconPacks {
             el.closest('.icon-pack-tile').classList.add('is-broken');
         }
     }
-    setScenePos(v) {
-        const el = get('iconScene');
-        if (!el) return;
-        el.style.setProperty('--shade-position', v);
-        el.style.setProperty('--fpos', v + '%');
-    }
     renderCatalog() {
         const grid = get('iconCatalog');
         if (!grid) return;
@@ -275,9 +264,6 @@ class IconPacks {
         const tag = id => id === inst ? `<span class="lang-catalog-badge active">${tr('ICONS_INSTALLED')}</span>`
             : id === sel ? `<span class="lang-catalog-badge">${tr('ICONS_PREVIEW')}</span>` : '';
         const name = id => id ? ((this._packs[id] && this._packs[id].name) || (this._catalog && this._catalog[id] && this._catalog[id].name) || id) : tr('ICONS_DEFAULT');
-        // Scène et tuile par défaut
-        get('iconSceneName').textContent = name(sel);
-        get('iconSceneTag').innerHTML = tag(sel);
         const def = document.querySelector('#divIconManagerOverlay .icon-pack-tile.is-default');
         def.classList.toggle('selected', sel === '');
         def.querySelector('.icon-pack-tag').innerHTML = tag('');
