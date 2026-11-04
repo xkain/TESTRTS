@@ -33,6 +33,7 @@ class IconPacks {
         this.applied = null;    // pack affiché : installé, ou aperçu en cours
         this.ignored = null;    // raison du rejet du pack installé
         this._defaults = new Map();
+        this._packs = {};       // packs déjà téléchargés ou importés, par id
     }
     // Ne bloque jamais le démarrage : sans pack, ou pack refusé, la page reste sur le défaut.
     async loadInstalled() {
@@ -69,7 +70,7 @@ class IconPacks {
         return { id: String(pack.id || ''), name: String(pack.name || pack.id || ''), author: String(pack.author || ''), version: String(pack.version || '') };
     }
     // Lève une erreur au premier écart : le pack est alors ignoré en entier.
-    validate(pack) {
+    validate(pack, prefix = 'pk-') {
         if (!pack || typeof pack !== 'object') throw new Error('not an object');
         if (Math.floor(Number(pack.contract)) !== ICON_CONTRACT) throw new Error('contract ' + pack.contract + ' (expected ' + ICON_CONTRACT + ')');
         if (!ICON_PACK_ID.test(pack.id || '')) throw new Error('invalid id');
@@ -106,7 +107,7 @@ class IconPacks {
         }
         // Les matières du pack sont préfixées : un pack partiel ne doit pas écraser les shd-* dont
         // dépendent les icônes par défaut qu'il ne redéfinit pas. Les id de symboles restent.
-        const rename = id => (ids.has(id) && !ICON_PACK_SYMBOLS.includes(id)) ? 'pk-' + id : id;
+        const rename = id => (ids.has(id) && !ICON_PACK_SYMBOLS.includes(id)) ? prefix + id : id;
         for (const el of root.querySelectorAll('*')) {
             for (const a of [...el.attributes]) {
                 if (a.name === 'id') el.id = rename(a.value);
@@ -162,31 +163,42 @@ class IconPacks {
         this.applied = null;
         this.refreshUses();
     }
-    // --- Catalogue : l'aperçu ne s'applique qu'à la page, seule l'installation écrit sur le boîtier.
+    // --- Catalogue : toucher une tuile l'affiche en aperçu (page seulement) ; seule l'action du pied
+    // de la modale écrit sur le boîtier. La tuile par défaut se choisit comme les autres.
     openManager() {
         const div = document.createElement('div');
         div.id = 'divIconManagerOverlay';
         div.className = 'modal-overlay';
-        const sample = ['svg-shutter', 'svg-window-blind', 'svg-cdrapery', 'svg-awning', 'svg-garage', 'svg-cgate', 'svg-switch1']
+        const scene = ['svg-shutter', 'svg-window-blind', 'svg-cdrapery', 'svg-awning', 'svg-garage', 'svg-cgate']
             .map(i => `<svg viewBox="0 0 48 48"><use href="#${i}"></use></svg>`).join('');
         div.innerHTML = `
-        <div class="message-content lang-manager-content">
+        <div class="message-content icon-pack-content">
         ${modalHeader('ICONS_TITLE', 'svg-indicShutter', { subtitle: 'ICONS_TITLE_DESC' })}
-        <div class="overlay-scroll-content">
-        <div class="icon-pack-sample">${sample}</div>
-        <p id="iconPackNotice" class="lang-catalog-manual-import-info"></p>
-        <div id="iconCatalog" class="lang-catalog"></div>
-        ${fileDropZone('fileIconImport', 'FILE_PICK_ICONS')}
-        <input id="fileIconImport" type="file" accept="application/json,.json" style="display:none" onchange="iconPacks.importFile(this)"/>
+        <div class="icon-pack-scene">
+            <div class="icon-pack-scene-icons" id="iconScene">${scene}</div>
+            <div class="icon-pack-scene-line"><b id="iconSceneName"></b><span id="iconSceneTag"></span>
+                <div class="slider-wrapper icon-pack-slider"><div class="slider-progress" style="width:55%"><div class="slider-thumb-line"></div></div>
+                <input type="range" class="md3-range-input" min="0" max="100" step="1" value="55" aria-label="${tr('IS_POSITION')}" oninput="syncSliderProgress(this); iconPacks.setScenePos(this.value);"></div>
+            </div>
         </div>
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal"><div class="button-content-modal">
-        <button id="btnIconManagerClose" line type="button">${tr('BT_CLOSE')}</button>
-        </div></div>
+        <div class="icon-pack-body">
+            <div class="icon-pack-label">${tr('ICONS_SECTION_DEFAULT')}</div>
+            <div class="icon-pack-tile is-default" data-pack="" onclick="iconPacks.select('')">
+                <div class="icon-pack-thumb" id="iconThumbDefault"></div>
+                <div class="icon-pack-txt"><div class="icon-pack-name">${tr('ICONS_DEFAULT')}</div><div class="icon-pack-meta">${tr('ICONS_DEFAULT_DESC')}</div></div>
+                <span class="icon-pack-tag"></span>
+            </div>
+            <div class="icon-pack-label icon-pack-label-dl">${tr('ICONS_SECTION_DOWNLOAD')}<span id="iconPackCount"></span></div>
+            <p id="iconPackNotice" class="icon-pack-notice"></p>
+            <div class="icon-pack-grid-wrap"><div class="icon-pack-grid" id="iconCatalog"></div></div>
+            <label for="fileIconImport" class="file-drop icon-pack-drop"><svg><use href="#svg-upload"></use></svg><b class="file-drop-title">${tr('FILE_PICK_ICONS')}</b><span class="file-drop-hint">${tr('FILE_DROP_HINT')}</span></label>
+            <input id="fileIconImport" type="file" accept="application/json,.json" style="display:none" onchange="iconPacks.importFile(this)"/>
+        </div>
+        <div class="icon-pack-foot" id="iconPackFoot"></div>
         </div>`;
         shOverlay(div);
         div.onclick = (e) => {
-            if (e.target.closest('#btnIconManagerClose')) requestCloseOverlay(div);
+            if (e.target.closest('[data-icon-close]')) requestCloseOverlay(div);
         };
         // Quelle que soit la façon dont la modale se ferme, un aperçu non installé ne survit pas.
         new MutationObserver((m, obs) => {
@@ -195,59 +207,117 @@ class IconPacks {
             this.cancelPreview();
         }).observe(get('divContainer'), { childList: true });
         this._catalog = null;
+        this._packs = this._packs || {};
+        if (this._installedPack) this._packs[this._installedPack.id] = this._installedPack;
+        this._selected = this.installed ? this.installed.id : '';
+        this.setScenePos(55);
+        get('iconThumbDefault').innerHTML = this.thumbHtml(null);
         this.renderCatalog();
         fetch(GITHUB_RAW_ROOT + 'main/icons/manifest.json', { cache: 'no-store' })
             .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
             .then(m => { this._catalog = m && m.packs ? m.packs : {}; })
             .catch(err => { logger.warn('Icon catalog unavailable:', err.message); this._catalog = false; })
-            .finally(() => this.renderCatalog());
+            .finally(() => {
+                this.renderCatalog();
+                // Vignettes chargées une à une : chaque tuile se dessine dans le style de son pack.
+                Object.keys(this._catalog || {}).filter(id => ICON_PACK_ID.test(id)).forEach(id => this.fetchPack(id).then(() => this.renderThumb(id), () => {}));
+            });
+    }
+    fetchPack(id) {
+        if (this._packs[id]) return Promise.resolve(this._packs[id]);
+        return fetch(GITHUB_RAW_ROOT + 'main/icons/' + encodeURIComponent(id) + '.json', { cache: 'no-store' })
+            .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+            .then(p => { if (p.id !== id) throw new Error('id mismatch'); this._packs[id] = p; return p; });
+    }
+    // Vignette autonome : symboles et matières recopiés sous un préfixe propre à la tuile, et
+    // jetons de couleur limités à elle, pour ne rien emprunter au pack affiché par la page.
+    thumbHtml(pack) {
+        const ids = ['svg-shutter', 'svg-garage', 'svg-cgate'];
+        if (!pack) {
+            return ids.map(i => {
+                const el = this._defaults.get(i) || document.getElementById(i);
+                return `<svg viewBox="0 0 48 48">${el ? el.innerHTML : ''}</svg>`;
+            }).join('');
+        }
+        this._thumbSeq = (this._thumbSeq || 0) + 1;
+        const v = this.validate(pack, `th${this._thumbSeq}-`);
+        const defs = v.defs.map(d => d.outerHTML).join('');
+        return ids.map((i, n) => {
+            const sym = v.symbols.find(x => x.id === i) || this._defaults.get(i) || document.getElementById(i);
+            return `<svg viewBox="0 0 48 48">${n === 0 ? defs : ''}${sym ? sym.innerHTML : ''}</svg>`;
+        }).join('');
+    }
+    renderThumb(id) {
+        const el = document.querySelector(`#iconCatalog [data-pack="${id}"] .icon-pack-thumb`);
+        if (!el || !this._packs[id]) return;
+        try {
+            el.innerHTML = this.thumbHtml(this._packs[id]);
+            const v = this.validate(this._packs[id], 'x-');
+            const theme = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+            Object.entries(v.tokens[theme]).forEach(([k, val]) => el.style.setProperty(k, val));
+        } catch (err) {
+            el.closest('.icon-pack-tile').classList.add('is-broken');
+        }
+    }
+    setScenePos(v) {
+        const el = get('iconScene');
+        if (!el) return;
+        el.style.setProperty('--shade-position', v);
+        el.style.setProperty('--fpos', v + '%');
     }
     renderCatalog() {
-        const panel = get('iconCatalog');
-        if (!panel) return;
+        const grid = get('iconCatalog');
+        if (!grid) return;
+        const inst = this.installed ? this.installed.id : '';
+        const sel = this._selected;
+        const tag = id => id === inst ? `<span class="chip-installed">${tr('ICONS_INSTALLED')}</span>`
+            : id === sel ? `<span class="chip-preview">${tr('ICONS_PREVIEW')}</span>` : '';
+        const name = id => id ? ((this._packs[id] && this._packs[id].name) || (this._catalog && this._catalog[id] && this._catalog[id].name) || id) : tr('ICONS_DEFAULT');
+        // Scène et tuile par défaut
+        get('iconSceneName').textContent = name(sel);
+        get('iconSceneTag').innerHTML = tag(sel);
+        const def = document.querySelector('#divIconManagerOverlay .icon-pack-tile.is-default');
+        def.classList.toggle('selected', sel === '');
+        def.querySelector('.icon-pack-tag').innerHTML = tag('');
+        // Grille
+        const packs = Object.assign({}, this._catalog || {});
+        Object.values(this._packs).forEach(p => { if (!packs[p.id]) packs[p.id] = this.meta(p); });
+        const ids = Object.keys(packs).filter(id => ICON_PACK_ID.test(id));
+        get('iconPackCount').textContent = ids.length ? tr('ICONS_COUNT').replace('{N}', ids.length) : '';
         const notice = get('iconPackNotice');
-        const previewing = this.applied && (!this.installed || this.applied.id !== this.installed.id);
-        let msg = '';
-        if (previewing) msg = tr('ICONS_PREVIEW_INFO');
-        else if (this.ignored) msg = tr('ICONS_IGNORED').replace('{REASON}', this.ignored);
-        else if (this._catalog === false) msg = tr('ICONS_CATALOG_UNAVAILABLE');
+        const msg = this._catalog === false ? tr('ICONS_CATALOG_UNAVAILABLE') : (this.ignored ? tr('ICONS_IGNORED').replace('{REASON}', this.ignored) : '');
         notice.textContent = msg;
         notice.style.display = msg ? '' : 'none';
-        const shown = this.applied ? this.applied.id : '';
-        const row = (id, name, sub, badge, actions) => `
-            <div class="lang-catalog-row" data-pack="${id}">
-                <div class="lang-catalog-info"><span>${escHtml(name)}</span>${sub ? `<span class="uniStatus">${escHtml(sub)}</span>` : ''}${badge}</div>
-                <div class="lang-catalog-actions">${actions}</div>
-            </div>`;
-        const active = `<span class="lang-catalog-badge active">${tr('IS_ACTIVE')}</span>`;
-        const btn = (label, call, line) => `<button type="button" pop ${line ? 'line ' : ''}onclick="${call}">${label}</button>`;
-        let html = row('', tr('ICONS_DEFAULT'), '', !this.installed && !previewing ? active : '',
-            this.installed ? btn(tr('LANG_MODAL_USE_LANG'), 'iconPacks.useDefault()') : '');
-        const packs = Object.assign({}, this._catalog || {});
-        if (this.installed && !packs[this.installed.id]) packs[this.installed.id] = this.installed;
-        if (this._preview && !packs[this._preview.id]) packs[this._preview.id] = this.meta(this._preview);
-        for (const [id, p] of Object.entries(packs)) {
-            if (!ICON_PACK_ID.test(id)) continue;
-            const isInstalled = this.installed && this.installed.id === id;
-            const isShown = shown === id;
-            let actions = '';
-            if (isShown && !isInstalled) actions = btn(tr('BT_INSTALL_LANG'), `iconPacks.install('${id}')`) + btn(tr('BT_CANCEL'), 'iconPacks.cancelPreview()', true);
-            else if (!isInstalled) actions = btn(tr('ICONS_PREVIEW'), `iconPacks.preview('${id}')`, true);
-            const sub = [p.author, p.version].filter(Boolean).join(' · ');
-            html += row(id, p.name || id, sub, isInstalled && isShown ? active : '', actions);
+        grid.innerHTML = ids.map(id => {
+            const p = packs[id];
+            const size = p.size ? ` · ${(p.size / 1024).toFixed(1).replace('.', ',')} Ko` : '';
+            return `<div class="icon-pack-tile${id === sel ? ' selected' : ''}" data-pack="${id}" onclick="iconPacks.select('${id}')">
+                <div class="icon-pack-thumb"></div>
+                <div class="icon-pack-name">${escHtml(p.name || id)}</div>
+                <div class="icon-pack-meta">${escHtml(p.author || '')}${size}</div>
+                <span class="icon-pack-tag">${tag(id)}</span></div>`;
+        }).join('');
+        ids.forEach(id => this.renderThumb(id));
+        // Pied : une seule action, celle qui correspond à la tuile choisie
+        const btn = (label, go, cls) => `<button type="button" ${cls} onclick="iconPacks.${go}()">${label}</button>`;
+        let st, actions;
+        if (sel === inst) {
+            st = inst ? tr('ICONS_FOOT_INSTALLED').replace('{NAME}', escHtml(name(inst))) : tr('ICONS_FOOT_DEFAULT');
+            actions = `<button type="button" line data-icon-close>${tr('BT_CLOSE')}</button>`;
+        } else if (sel === '') {
+            st = tr('ICONS_FOOT_PREVIEW_DEFAULT').replace('{NAME}', escHtml(name(inst)));
+            actions = btn(tr('BT_CANCEL'), 'cancelPreview', 'line') + btn(tr('ICONS_BACK_DEFAULT'), 'install', 'pop');
+        } else {
+            st = tr('ICONS_FOOT_PREVIEW').replace('{NAME}', escHtml(name(sel))) + (inst ? ' ' + tr('ICONS_FOOT_REPLACES').replace('{NAME}', escHtml(name(inst))) : '');
+            actions = btn(tr('BT_CANCEL'), 'cancelPreview', 'line') + btn(tr('BT_INSTALL_LANG'), 'install', 'pop');
         }
-        panel.innerHTML = html;
+        get('iconPackFoot').innerHTML = `<div class="icon-pack-foot-txt">${st}</div><div class="icon-pack-foot-btns">${actions}</div>`;
     }
-    async preview(id) {
+    async select(id) {
         try {
-            let pack = this._preview && this._preview.id === id ? this._preview : null;
-            if (!pack) {
-                const r = await fetch(GITHUB_RAW_ROOT + 'main/icons/' + encodeURIComponent(id) + '.json', { cache: 'no-store' });
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                pack = await r.json();
-            }
-            this.apply(pack);
-            this._preview = pack;
+            if (id === '') this.restoreDefaults();
+            else this.apply(await this.fetchPack(id));
+            this._selected = id;
         } catch (err) {
             ui.serviceError({ desc: tr('ERR_ICONS_INVALID').replace('{REASON}', escHtml(err.message)) });
         }
@@ -259,22 +329,26 @@ class IconPacks {
         if (!file) return;
         file.text().then(txt => {
             const pack = JSON.parse(txt);
-            this.apply(pack);
-            this._preview = pack;
+            this.validate(pack);
+            this._packs[pack.id] = pack;
+            return this.select(pack.id);
         }).catch(err => {
             ui.serviceError({ desc: tr('ERR_ICONS_INVALID').replace('{REASON}', escHtml(err.message)) });
-        }).finally(() => this.renderCatalog());
+            this.renderCatalog();
+        });
     }
     cancelPreview() {
-        if (!this._preview) return;
-        this._preview = null;
+        const inst = this.installed ? this.installed.id : '';
+        if (this._selected === undefined || this._selected === inst) return;
+        this._selected = inst;
         if (this._installedPack) this.apply(this._installedPack);
         else this.restoreDefaults();
         this.renderCatalog();
     }
-    async install(id) {
-        const pack = this._preview;
-        if (!pack || pack.id !== id) return;
+    async install() {
+        if (this._selected === '') return this.useDefault();
+        const pack = this._packs[this._selected];
+        if (!pack) return;
         const div = get('divIconManagerOverlay');
         setOverlayLock(div, 'confirm', {});
         try {
@@ -288,7 +362,6 @@ class IconPacks {
             if (json.status !== 'ok') throw new Error(json.error || json.desc || ('HTTP ' + resp.status));
             this.installed = this.meta(pack);
             this._installedPack = pack;
-            this._preview = null;
             this.ignored = null;
         } catch (err) {
             ui.serviceError({ desc: escHtml(err.message), service: '/uploadIcons' });
@@ -303,8 +376,8 @@ class IconPacks {
             if (resp.status !== 'ok') throw resp;
             this.installed = null;
             this._installedPack = null;
-            this._preview = null;
             this.ignored = null;
+            this._selected = '';
             this.restoreDefaults();
         } catch (err) {
             ui.serviceError(err);
