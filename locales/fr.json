@@ -88,6 +88,7 @@
     "GENERAL_COLOR_DESC": "Personaliser la couleur d’accentuation de l'interface",
     "ICONS_TITLE": "Pack d'icônes",
     "ICONS_TITLE_DESC": "Touchez une tuile pour l'essayer. Rien n'est enregistré sur le boîtier avant « Installer ».",
+    "ICONS_TILE_DESC": "Choisir le style des équipements",
     "ICONS_DEFAULT": "Icônes par défaut",
     "ICONS_PREVIEW": "Aperçu",
     "ICONS_IGNORED": "Le pack installé a été ignoré, les icônes par défaut sont affichées : {REASON}",

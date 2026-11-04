@@ -88,6 +88,7 @@
     "GENERAL_COLOR_DESC": "Passen Sie die Akzentfarbe der Benutzeroberfläche an",
     "ICONS_TITLE": "Symbolpaket",
     "ICONS_TITLE_DESC": "Tippen Sie auf eine Kachel, um sie auszuprobieren. Vor „Installieren“ wird nichts auf dem Gerät gespeichert.",
+    "ICONS_TILE_DESC": "Stil der Geräte auswählen",
     "ICONS_DEFAULT": "Standardsymbole",
     "ICONS_PREVIEW": "Vorschau",
     "ICONS_IGNORED": "Das installierte Paket wurde ignoriert, die Standardsymbole werden angezeigt: {REASON}",
