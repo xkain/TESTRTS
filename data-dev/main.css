@@ -5470,8 +5470,17 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 }
 /* Lames du store vénitien (svg-window-blind) : chacune s'aplatit sur son propre axe, de la tranche
    (inclinaison 0) à la pleine largeur (100). Même --shade-tilt que la carte, rien à changer en JS. */
-.blind-slat { transform-box: fill-box; transform-origin: center; transform: scaleY(calc(.28 + .72 * var(--shade-tilt, 0) / 100)); transition: transform .4s ease-in-out; }
-.switch-rocker { transition: fill .4s ease; }
+.blind-slat { transform-box: fill-box; transform-origin: center; transform: scaleY(calc(.25 + .75 * var(--shade-tilt, 0) / 100)); transition: transform .4s ease-in-out; }
+/* Portail battant (svg-cgate) : chaque vantail pivote sur son gond, rendu par un écrasement horizontal. */
+.gate-leaf-l, .gate-leaf-r { transform-box: fill-box; transform: scaleX(calc(.1 + .9 * var(--shade-position, 0) / 100)); transition: transform .4s ease-in-out; }
+.gate-leaf-l { transform-origin: left center; }
+.gate-leaf-r { transform-origin: right center; }
+/* Contact sec (svg-switch1/2) : la touche s'enfonce en haut au repos, en bas une fois active, et le
+   voyant s'allume dans l'accent -- tout suit --fpos. */
+.switch-top { fill: #000; opacity: calc((100% - var(--fpos, 0%)) * .12); transition: opacity .4s ease; }
+.switch-bottom { fill: #000; opacity: calc(var(--fpos, 0%) * .12); transition: opacity .4s ease; }
+.switch-led { fill: color-mix(in srgb, var(--color-accent) var(--fpos, 0%), #9aa0a6); transition: fill .4s ease; }
+.switch-glow { fill: color-mix(in srgb, var(--color-accent) 45%, transparent); opacity: var(--fpos, 0%); transition: opacity .4s ease; }
 #divHomePnl .dash-topbar { display: flex; align-items: center; gap: 16px; width: 100%; box-sizing: border-box; padding-right: 20px; background: var(--color-room-bar-bg); border-bottom: 1px solid var(--color-border); }
 #divHomePnl .dash-topbar.is-empty { display: none; }
 #divHomePnl .dash-topbar .room-nav-container { flex: 1 1 auto; min-width: 0; width: auto; background: none; }
