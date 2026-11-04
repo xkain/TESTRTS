@@ -1594,6 +1594,7 @@ async function reopenSocket() {
     await initSockets();
 }
 async function init() {
+    iconPacks.loadInstalled();
     await security.init();
     general.init();
     wifi.init();
