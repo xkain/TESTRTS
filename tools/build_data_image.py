@@ -446,6 +446,7 @@ JS_CHUNKS_DIR = "js"
 JS_CHUNKS = (
     "00-bootstrap.js",    # constantes globales, config dev/geo, get()
     "10-core-utils.js",   # i18n, calcul solaire/uptime, helpers HTTP
+    "15-icons.js",        # class IconPacks (packs d'icônes d'équipement)
     "20-shell.js",        # websocket, overlays, dirty-tracking, routeur de navigation, init()
     "30-ui-binder.js",    # class UIBinder (moteur de binding générique)
     "35-security.js",     # class Security
