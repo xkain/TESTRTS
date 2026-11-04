@@ -187,7 +187,7 @@ class IconPacks {
             <div class="icon-pack-label icon-pack-label-dl">${tr('ICONS_SECTION_DOWNLOAD')}<span id="iconPackCount"></span></div>
             <p id="iconPackNotice" class="lang-catalog-manual-import-info margin0"></p>
             <div class="icon-pack-grid-wrap"><div class="icon-pack-grid" id="iconCatalog"></div></div>
-            <label for="fileIconImport" class="file-drop icon-pack-drop"><svg><use href="#svg-upload"></use></svg><b class="file-drop-title">${tr('FILE_PICK_ICONS')}</b><span class="file-drop-hint">${tr('FILE_DROP_HINT')}</span></label>
+            ${fileDropZone('fileIconImport', 'FILE_PICK_ICONS')}
             <input id="fileIconImport" type="file" accept="application/json,.json" style="display:none" onchange="iconPacks.importFile(this)"/>
         </div>
         <div class="hrModal margin0"></div>
@@ -210,6 +210,7 @@ class IconPacks {
         this._selected = this.installed ? this.installed.id : '';
         get('iconThumbDefault').innerHTML = this.thumbHtml(null);
         this.renderCatalog();
+        this.animateScene();
         fetch(GITHUB_RAW_ROOT + 'main/icons/manifest.json', { cache: 'no-store' })
             .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
             .then(m => { this._catalog = m && m.packs ? m.packs : {}; })
@@ -255,6 +256,14 @@ class IconPacks {
         } catch (err) {
             el.closest('.icon-pack-tile').classList.add('is-broken');
         }
+    }
+    // Relance le cycle de démonstration : retirer puis reposer la classe ne suffit pas sans reflow.
+    animateScene() {
+        const el = document.querySelector('#divIconManagerOverlay .icon-pack-scene');
+        if (!el) return;
+        el.classList.remove('is-animating');
+        void el.offsetWidth;
+        el.classList.add('is-animating');
     }
     renderCatalog() {
         const grid = get('iconCatalog');
@@ -307,6 +316,7 @@ class IconPacks {
             if (id === '') this.restoreDefaults();
             else this.apply(await this.fetchPack(id));
             this._selected = id;
+            this.animateScene();
         } catch (err) {
             ui.serviceError({ desc: tr('ERR_ICONS_INVALID').replace('{REASON}', escHtml(err.message)) });
         }
