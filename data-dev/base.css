@@ -2363,7 +2363,14 @@ button:disabled:active {
    la modale garde la même taille avec 2 ou 20 packs et que la zone de dépôt reste visible. */
 .message-content.icon-pack-content { max-height: min(680px, calc(100dvh - 32px)); text-align: left; }
 .icon-pack-content > * { flex: none; }
-.icon-pack-scene { padding: 10px 18px; border-bottom: 1px solid var(--color-border); --shade-position: 75; --fpos: 75%; --shade-tilt: 60; }
+/* Scène au repos à 75 % fermé ; à chaque tuile choisie, un seul cycle ouverture puis retour
+   (.is-animating). --icon-pos est déclarée par @property pour pouvoir être animée. */
+@property --icon-pos { syntax: '<number>'; inherits: true; initial-value: 75; }
+@keyframes icon-pack-demo { 0% { --icon-pos: 75; } 45% { --icon-pos: 0; } 100% { --icon-pos: 75; } }
+.icon-pack-scene { padding: 10px 18px; border-bottom: 1px solid var(--color-border); --icon-pos: 75; --shade-position: var(--icon-pos); --fpos: calc(var(--icon-pos) * 1%); --shade-tilt: 60; }
+.icon-pack-scene.is-animating { animation: icon-pack-demo 1.6s ease-in-out; }
+.icon-pack-scene.is-animating * { transition: none; }
+@media (prefers-reduced-motion: reduce) { .icon-pack-scene.is-animating { animation: none; } }
 .icon-pack-scene-icons { display: flex; justify-content: space-between; gap: 2px; }
 .icon-pack-scene-icons svg { width: 15%; max-width: 58px; aspect-ratio: 1; height: auto; }
 .icon-pack-body { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px 18px 12px; }
@@ -2386,8 +2393,6 @@ button:disabled:active {
 .icon-pack-tile.is-default .icon-pack-thumb { width: 96px; flex: none; }
 .icon-pack-tile.is-default .icon-pack-txt { flex: 1; min-width: 0; }
 .icon-pack-tile.is-default .icon-pack-tag { position: static; }
-.icon-pack-drop.file-drop { flex-direction: row; justify-content: center; gap: 8px; padding: 9px 12px; }
-.icon-pack-drop.file-drop svg { width: 18px; height: 18px; margin: 0; }
 .icon-pack-foot-txt { margin: 0; padding: 10px 15px 0; text-align: center; }
 @media (max-width: 520px) {
     .icon-pack-scene-icons svg { width: 15%; max-width: 40px; }
