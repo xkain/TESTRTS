@@ -1,0 +1,25 @@
+{
+  "contract": 1,
+  "id": "aplat",
+  "name": "Aplat",
+  "author": "xkain",
+  "version": "1.0.0",
+  "description": {
+    "fr": "Pictogrammes à trait épais et couleurs pleines, lisibles en petit.",
+    "en": "Bold-outline pictograms in flat colours, legible at small sizes."
+  },
+  "tokens": {
+    "light": {
+      "--pk-acc-soft": "color-mix(in srgb, var(--color-accent) 24%, #fff)",
+      "--pk-glass": "#edf2f8",
+      "--pk-ink": "#262a31",
+      "--pk-ink-soft": "#aab0b8"
+    },
+    "dark": {
+      "--pk-acc-soft": "color-mix(in srgb, var(--color-accent) 45%, #1c2026)",
+      "--pk-glass": "#222b36",
+      "--pk-ink": "#dadde2",
+      "--pk-ink-soft": "#5c636d"
+    }
+  }
+}
