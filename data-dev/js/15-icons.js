@@ -189,12 +189,14 @@ class IconPacks {
                 <span class="icon-pack-tag"></span>
             </div>
             <div class="icon-pack-label icon-pack-label-dl">${tr('ICONS_SECTION_DOWNLOAD')}<span id="iconPackCount"></span></div>
-            <p id="iconPackNotice" class="icon-pack-notice"></p>
+            <p id="iconPackNotice" class="lang-catalog-manual-import-info margin0"></p>
             <div class="icon-pack-grid-wrap"><div class="icon-pack-grid" id="iconCatalog"></div></div>
             <label for="fileIconImport" class="file-drop icon-pack-drop"><svg><use href="#svg-upload"></use></svg><b class="file-drop-title">${tr('FILE_PICK_ICONS')}</b><span class="file-drop-hint">${tr('FILE_DROP_HINT')}</span></label>
             <input id="fileIconImport" type="file" accept="application/json,.json" style="display:none" onchange="iconPacks.importFile(this)"/>
         </div>
-        <div class="icon-pack-foot" id="iconPackFoot"></div>
+        <div class="hrModal margin0"></div>
+        <p class="lang-catalog-manual-import-info icon-pack-foot-txt" id="iconPackFootTxt"></p>
+        <div class="button-container-modal"><div class="button-content-modal" id="iconPackFoot"></div></div>
         </div>`;
         shOverlay(div);
         div.onclick = (e) => {
@@ -270,8 +272,8 @@ class IconPacks {
         if (!grid) return;
         const inst = this.installed ? this.installed.id : '';
         const sel = this._selected;
-        const tag = id => id === inst ? `<span class="chip-installed">${tr('ICONS_INSTALLED')}</span>`
-            : id === sel ? `<span class="chip-preview">${tr('ICONS_PREVIEW')}</span>` : '';
+        const tag = id => id === inst ? `<span class="lang-catalog-badge active">${tr('ICONS_INSTALLED')}</span>`
+            : id === sel ? `<span class="lang-catalog-badge">${tr('ICONS_PREVIEW')}</span>` : '';
         const name = id => id ? ((this._packs[id] && this._packs[id].name) || (this._catalog && this._catalog[id] && this._catalog[id].name) || id) : tr('ICONS_DEFAULT');
         // Scène et tuile par défaut
         get('iconSceneName').textContent = name(sel);
@@ -299,19 +301,20 @@ class IconPacks {
         }).join('');
         ids.forEach(id => this.renderThumb(id));
         // Pied : une seule action, celle qui correspond à la tuile choisie
-        const btn = (label, go, cls) => `<button type="button" ${cls} onclick="iconPacks.${go}()">${label}</button>`;
+        const btn = (label, go, attr) => `<button type="button" ${attr} onclick="iconPacks.${go}()">${label}</button>`;
         let st, actions;
         if (sel === inst) {
             st = inst ? tr('ICONS_FOOT_INSTALLED').replace('{NAME}', escHtml(name(inst))) : tr('ICONS_FOOT_DEFAULT');
             actions = `<button type="button" line data-icon-close>${tr('BT_CLOSE')}</button>`;
         } else if (sel === '') {
             st = tr('ICONS_FOOT_PREVIEW_DEFAULT').replace('{NAME}', escHtml(name(inst)));
-            actions = btn(tr('BT_CANCEL'), 'cancelPreview', 'line') + btn(tr('ICONS_BACK_DEFAULT'), 'install', 'pop');
+            actions = btn(tr('BT_CANCEL'), 'cancelPreview', 'line') + btn(tr('ICONS_BACK_DEFAULT'), 'install', '');
         } else {
             st = tr('ICONS_FOOT_PREVIEW').replace('{NAME}', escHtml(name(sel))) + (inst ? ' ' + tr('ICONS_FOOT_REPLACES').replace('{NAME}', escHtml(name(inst))) : '');
-            actions = btn(tr('BT_CANCEL'), 'cancelPreview', 'line') + btn(tr('BT_INSTALL_LANG'), 'install', 'pop');
+            actions = btn(tr('BT_CANCEL'), 'cancelPreview', 'line') + btn(tr('BT_INSTALL_LANG'), 'install', '');
         }
-        get('iconPackFoot').innerHTML = `<div class="icon-pack-foot-txt">${st}</div><div class="icon-pack-foot-btns">${actions}</div>`;
+        get('iconPackFootTxt').innerHTML = st;
+        get('iconPackFoot').innerHTML = actions;
     }
     async select(id) {
         try {
