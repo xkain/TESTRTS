@@ -444,6 +444,11 @@ async function uploadLangGzBlob(code, gzBlob) {
     } catch (err) {
         throw new Error('upload-failed: ESP32 injoignable depuis ce navigateur (' + err.message + ')');
     }
+    if (upResp.status === 409) {
+        const err = new Error(tr('ERR_LANG_NO_SPACE'));
+        err.code = 'lang-limit';
+        throw err;
+    }
     let json;
     try {
         json = await upResp.json();

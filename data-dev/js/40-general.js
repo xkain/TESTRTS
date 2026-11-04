@@ -1765,7 +1765,8 @@ class General {
         // La source de vérité est l'attribut lang de la balise <html> ---
         // window.__defaultLangCode est là en ultime sécurité (probablement injecté par le serveur)
         const activeLang = document.documentElement.lang || window.__defaultLangCode || 'en';
-        panel.innerHTML = list.map(entry => {
+        const full = list.filter(e => e.installed).length >= LANG_MAX_INSTALLED;
+        panel.innerHTML = (full ? `<p class="lang-catalog-manual-import-info">${tr('ERR_LANG_NO_SPACE')}</p>` : '') + list.map(entry => {
             // Le nom natif du manifeste prime sur GENERAL_OPT_<CODE> : il reste correct
             // même pour une langue absente de la traduction actuellement chargée (tr() retomberait
             // sinon sur la clé brute).
@@ -1816,7 +1817,7 @@ class General {
                         ${fileDropZone(`fileLangImport_${entry.code}`, 'FILE_PICK_LANG')}
                         <button type="button" pop line style="margin-top:8px;" onclick="general.setPendingLang('${entry.code}')">${tr('BT_APPLY_LATER')}</button>
                     </div>`;
-                } else {
+                } else if (!full) {
                     actions = `<button type="button" pop onclick="general.downloadLang('${entry.code}')">${tr('LANG_MODAL_DOWNLOAD')}</button>`;
                 }
             }
@@ -1865,6 +1866,11 @@ class General {
             // appareil (pas juste un souci passager) : pas de message d'erreur ici, on bascule
             // directement vers le fallback d'import manuel (100% fiable, sans dépendance réseau)
             // plutôt que de laisser l'utilisateur face à une impasse.
+            if (err.code === 'lang-limit') {
+                ui.serviceError({ desc: err.message, service: '/uploadLang' });
+                this.loadLangCatalog();
+                return;
+            }
             if (err.message.startsWith('github-fetch-failed')) {
                 this._manualImportPending.add(code);
                 // Depuis un toast (acceptLangPrompt/reinstallActiveLang), la modale du catalogue
@@ -1932,7 +1938,7 @@ class General {
         })
         .catch(err => {
             logger.error('Failed to set pending language:', err);
-            ui.serviceError({ desc: err.message, service: '/setPendingLang' });
+            ui.serviceError({ desc: err.htmlError === 409 ? tr('ERR_LANG_NO_SPACE') : (err.message || err.desc), service: '/setPendingLang' });
         });
     }
     cancelPendingLang(code) {
