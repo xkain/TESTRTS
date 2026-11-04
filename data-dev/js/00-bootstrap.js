@@ -88,6 +88,8 @@ window.addEventListener('message', (event) => {
 // indépendamment des releases firmware -- contrairement au CONTENU d'une langue (cf.
 // fetchGithubRawContent), qui lui doit rester verrouillé sur le tag exact du firmware.
 const LANG_MANIFEST_URL = GITHUB_RAW_ROOT + 'main/locales/manifest.json';
+// Même plafond que MAX_INSTALLED_LANGS (WebI18n.cpp), langue d'usine comprise.
+const LANG_MAX_INSTALLED = 3;
 // Phase 4 i18n : en mode AP/hotspot (premier démarrage sans WiFi configuré), l'ESP32 sert la
 // page depuis l'IP par défaut de son propre point d'accès -- même heuristique que wifi.isHotspot
 // côté socket (50-wifi.js).

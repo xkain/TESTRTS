@@ -16,6 +16,9 @@ extern ConfigSettings settings;
 extern Web webServer;
 
 #define MAX_LANG_CATALOG_ENTRIES 24
+// Langue d'usine comprise. La partition spiffs (256 Ko) porte aussi la sauvegarde et le pack
+// d'icônes, et une mise à jour de langue y fait coexister l'ancienne et la nouvelle version.
+#define MAX_INSTALLED_LANGS 3
 
 namespace WebI18n {
   // Validation stricte partagée par tous les endpoints qui reçoivent un code langue en paramètre
@@ -30,6 +33,39 @@ namespace WebI18n {
       if(!isalnum((unsigned char)c) && c != '-') return false;
     }
     return true;
+  }
+
+  // Une langue déjà installée peut toujours être remplacée. Un seul parcours du dossier, sans
+  // LittleFS.exists() : il journalise une erreur pour tout fichier absent.
+  static bool langSlotAvailable(const String &code) {
+    String target = code + ".json.gz";
+    uint8_t count = 0;
+    bool present = false;
+    File dir = LittleFS.open("/locale");
+    if(dir && dir.isDirectory()) {
+      File entry = dir.openNextFile();
+      while(entry) {
+        if(!entry.isDirectory()) {
+          String name = entry.name();
+          int slash = name.lastIndexOf('/');
+          if(slash >= 0) name = name.substring(slash + 1);
+          if(name.endsWith(".json.gz")) {
+            count++;
+            if(name == target) present = true;
+          }
+        }
+        entry.close();
+        entry = dir.openNextFile();
+      }
+      dir.close();
+    }
+    return present || count < MAX_INSTALLED_LANGS;
+  }
+
+  static void sendLangLimit(AsyncWebServerRequest *request) {
+    char buf[64];
+    snprintf(buf, sizeof(buf), "{\"error\":\"lang limit reached\",\"max\":%d}", MAX_INSTALLED_LANGS);
+    request->send(409, _encoding_json, buf);
   }
 
   static void handleLang(AsyncWebServerRequest *request) {
@@ -115,6 +151,7 @@ namespace WebI18n {
       request->send(400, _encoding_json, "{\"error\":\"invalid code\"}");
       return;
     }
+    if(!langSlotAvailable(code)) { sendLangLimit(request); return; }
     strlcpy(settings.pendingLang, code.c_str(), sizeof(settings.pendingLang));
     settings.save();
     request->send(200, _encoding_json, "{\"status\":\"ok\"}");
@@ -281,7 +318,7 @@ namespace WebI18n {
   // sans que rien ne le remarque, `success` passant quand même à true au dernier paquet. Pour une
   // langue, cela donnerait un .json.gz coupé, renommé, puis servi par /lang avec
   // `Content-Encoding: gzip` : le navigateur répond « Erreur d'encodage de contenu ».
-  struct UploadState { bool success = false; bool rejected = false; bool writeFailed = false; uint32_t written = 0; };
+  struct UploadState { bool success = false; bool rejected = false; bool writeFailed = false; bool full = false; uint32_t written = 0; };
 
   static void handleUploadLang(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -294,6 +331,7 @@ namespace WebI18n {
 
     const char *tempPath = "/locale/upload.json.gz.tmp";
     UploadState *state = (UploadState *)request->_tempObject;
+    if(state && state->full) { sendLangLimit(request); return; }
     if(!state || !state->success) {
       LittleFS.remove(tempPath);
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Upload failed\"}");
@@ -362,6 +400,7 @@ namespace WebI18n {
       if(!state) return;
       state->success = false;
       state->writeFailed = false;
+      state->full = false;
       state->written = 0;
       // Refus AVANT toute écriture. Sous ESPAsyncWebServer ce callback s'exécute pendant l'analyse
       // de la requête, donc AVANT handleUploadLang() et son isAuthenticated() : sans ce test, un
@@ -371,9 +410,12 @@ namespace WebI18n {
       // la réception ; on réutilise le drapeau `rejected` déjà prévu pour le cas "GitOTA occupé",
       // qui fait retomber handleUploadLang() sur son "Upload failed" sans qu'un octet soit écrit.
       state->rejected = fsLocked || !webServer.checkAuth(request, true);
+      // Plafond vérifié avant d'ouvrir le temporaire : refusé, l'envoi n'écrit pas un octet.
+      if(!state->rejected && isValidLangCode(request->arg("code")) && !langSlotAvailable(request->arg("code")))
+        state->rejected = state->full = true;
       request->_tempObject = state;
       if(state->rejected)
-        Serial.printf("uploadLang: refuse (%s)\n", fsLocked ? "filesystem occupe" : "non authentifie");
+        Serial.printf("uploadLang: refuse (%s)\n", state->full ? "plafond de langues atteint" : fsLocked ? "filesystem occupe" : "non authentifie");
       else
         Serial.println("uploadLang: debut de reception");
       // GitOTA a déjà la main sur le filesystem (firmware/langue en cours) : on n'écrit rien,
