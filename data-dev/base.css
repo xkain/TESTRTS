@@ -2178,6 +2178,11 @@ button:disabled:active {
     transform-origin:center;
     transform-box:fill-box;
 }
+/* Course des parties mobiles : --travel (unités du viewBox 48) est posée par l'icône, la position
+   par la carte. 0 = parcours entier masqué, 100 = déployé. */
+.lattes-group.move-up { transform:translateY(calc((var(--shade-position, 0) / 100 - 1) * var(--travel) * 1px)); }
+.lattes-group.move-left { transform:translateX(calc((var(--shade-position, 0) / 100 - 1) * var(--travel) * 1px)); }
+.lattes-group.move-right { transform:translateX(calc((1 - var(--shade-position, 0) / 100) * var(--travel) * 1px)); }
 
 
 
