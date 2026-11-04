@@ -88,6 +88,7 @@
     "GENERAL_COLOR_DESC": "Personalice el color de acento de la interfaz",
     "ICONS_TITLE": "Paquete de iconos",
     "ICONS_TITLE_DESC": "Toque una tarjeta para probarla. No se guarda nada en el dispositivo antes de «Instalar».",
+    "ICONS_TILE_DESC": "Elegir el estilo de los equipos",
     "ICONS_DEFAULT": "Iconos por defecto",
     "ICONS_PREVIEW": "Vista previa",
     "ICONS_IGNORED": "El paquete instalado se ha ignorado, se muestran los iconos por defecto: {REASON}",

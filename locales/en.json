@@ -88,6 +88,7 @@
     "GENERAL_COLOR_DESC": "Customize the accent color of the interface",
     "ICONS_TITLE": "Icon pack",
     "ICONS_TITLE_DESC": "Tap a tile to try it. Nothing is saved on the device before “Install”.",
+    "ICONS_TILE_DESC": "Choose the style of your devices",
     "ICONS_DEFAULT": "Default icons",
     "ICONS_PREVIEW": "Preview",
     "ICONS_IGNORED": "The installed pack was ignored, the default icons are shown: {REASON}",
