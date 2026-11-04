@@ -46,7 +46,7 @@ XKAIN = "SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>"
 XKAIN_ONLY_IN_SRC = {
     "DiagConn.cpp", "DiagConn.h", "GitHubCA.h", "Recovery.cpp", "Recovery.h",
     "RecoveryPage.h", "Schedule.cpp", "Schedule.h", "StatusLed.cpp", "StatusLed.h",
-    "SunCalc.cpp", "SunCalc.h",
+    "SunCalc.cpp", "SunCalc.h", "WebIcons.cpp", "WebIcons.h",
 }
 
 LINE = {".cpp": "//", ".h": "//", ".ino": "//", ".js": "//",
