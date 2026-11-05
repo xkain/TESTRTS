@@ -4836,9 +4836,10 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 #divShadeSetup .setup-axes { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
 #divShadeSetup .setup-axis-q { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 6px; }
 #divShadeSetup .setup-axis-d { font-size: 12px; color: var(--color-text-secondary); margin-top: 6px; line-height: 1.4; }
-#divShadeSetup .setup-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-#divShadeSetup .setup-chip { padding: 7px 12px; border-radius: 999px; border: 1.5px solid var(--color-border); cursor: pointer; font-size: 13px; color: var(--color-text-main); background: var(--color-bg-card); }
-#divShadeSetup .setup-chip.sel { border-color: var(--color-accent); background: var(--color-accent-transp-94); color: var(--color-accent); }
+#divShadeSetup .setup-chips { display: inline-flex; flex-wrap: wrap; align-self: flex-start; max-width: 100%; gap: 2px; padding: 3px; border-radius: var(--radius-btn); border: 1px solid var(--color-control-border); background: var(--color-control-bg); }
+#divShadeSetup .setup-chip { padding: 6px 12px; border-radius: 7px; cursor: pointer; font-size: 13px; color: var(--color-text-secondary); }
+#divShadeSetup .setup-chip:hover { color: var(--color-text-main); }
+#divShadeSetup .setup-chip.sel { background: var(--color-bg-card); color: var(--color-accent); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
 :is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 #divLinkListener .setup-fields .uniRow, #divLinkRepeater .setup-fields .uniRow, #divShadeSetup .setup-fields .uniRow, #divShadeSetup .setup-adv-body .uniRow { min-width: 0; }
 #divShadeSetup .setup-pulse { max-width: 260px; margin-top: 8px; }
@@ -4941,6 +4942,8 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     #divShadeSetup .setup-tile svg { width: 30px; height: 30px; }
     #divShadeSetup .setup-fields, #divShadeSetup .setup-adv-body { grid-template-columns: minmax(0, 1fr); }
     #divShadeSetup .setup-task-b { padding-left: 14px; }
+    #divShadeSetup .setup-chips { display: grid; align-self: stretch; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+    #divShadeSetup .setup-chip { display: flex; align-items: center; justify-content: center; min-height: 32px; text-align: center; }
 }
 #divShadeSetupTasks .setup-row-done .editDevice-pair-icon svg { color: var(--color-success); fill: var(--color-success); }
 #divShadeSetup .setup-remotes-list { display: flex; flex-direction: column; gap: 8px; }
