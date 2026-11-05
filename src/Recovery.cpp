@@ -357,8 +357,11 @@ void Recovery::_apply(const RecoveryTargets &t) {
   }
   if(t.schedules) removeFile("/schedules.cfg");
   if(t.langs) {
-    // Le pack d'icônes suit les langues ; les icônes par défaut vivent dans index.html.
+    // Le pack d'icônes suit les langues ; les icônes par défaut vivent dans index.html. Son nom
+    // part aussi, sans quoi la page le retéléchargerait aussitôt.
     removeFile("/icons/pack.json.gz");
+    static const char *k[] = {"iconPack"};
+    removeKeys("CFG", k, 1);
     // Les packs téléchargés sont supprimés, la langue embarquée est conservée : sans elle, plus
     // aucun libellé ne s'afficherait après redémarrage.
     File dir = LittleFS.open("/locale");

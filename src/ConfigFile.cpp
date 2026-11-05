@@ -896,6 +896,13 @@ bool ShadeConfigFile::readSettingsRecord() {
         if(hex) strlcpy(settings.ledColorActivity, color, sizeof(settings.ledColorActivity));
       }
       if(!this->atRecordEnd()) settings.ledRfBlink = this->readBool(false);
+      if(!this->atRecordEnd()) {
+        char pack[sizeof(settings.iconPack)];
+        this->readVarString(pack, sizeof(pack));
+        bool ok = true;
+        for(const char *c = pack; ok && *c; c++) ok = islower((unsigned char)*c) || isdigit((unsigned char)*c) || *c == '-';
+        if(ok) strlcpy(settings.iconPack, pack, sizeof(settings.iconPack));
+      }
     }
     if(this->file.position() != startPos + this->header.settingsRecordSize) {
       DBG_PRINTLN("Reading to end of settings record");
@@ -1257,7 +1264,8 @@ bool ShadeConfigFile::writeSettingsRecord() {
   this->writeBool(settings.ledAddressable);
   this->writeUInt8(settings.ledColorOrder);
   this->writeVarString(settings.ledColorActivity);
-  this->writeBool(settings.ledRfBlink, CFG_REC_END);
+  this->writeBool(settings.ledRfBlink);
+  this->writeVarString(settings.iconPack, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeNetRecord() {
