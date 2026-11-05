@@ -1652,35 +1652,36 @@ class General {
     // --- Catalogue des langues : téléchargement à la demande depuis GitHub, suppression d'une
     // langue installée, avec progression via les évènements socket
     // langDownloadProgress/langDownloadComplete (cf. procLangDownloadProgress/Complete).
-    // Affiché en modal-overlay (même patron que RoomOverlay). ---
+    // Même mise en page que le gestionnaire de packs d'icônes (classes icon-pack-*) : toucher une
+    // tuile la sélectionne, seul le pied de la modale agit sur la langue choisie. ---
     openLangManager() {
         if (get('divLangManagerOverlay')) return;
         this._manualImportPending.clear();
+        this._langSel = null;
+        this._langBusy = false;
 
         const div = document.createElement('div');
         div.id = 'divLangManagerOverlay';
         div.className = 'modal-overlay';
         div.innerHTML = `
-        <div class="message-content lang-manager-content">
+        <div class="message-content icon-pack-content">
         ${modalHeader('GENERAL_LANGUAGE', 'svg-language', {
             subtitle: 'LANG_MODAL_TITLE_DESC',
         })}
-
-        <div class="overlay-scroll-content">
-
-        <div id="langCatalog" class="lang-catalog"></div>
-
-        ${fileDropZone('fileLangGlobalImport', 'FILE_PICK_LANG')}
-        <input id="fileLangGlobalImport" type="file" accept="application/json,.json,application/gzip,.gz" style="display:none"
-        onchange="general.handleGlobalLangUpload(this)"/>
+        <div class="icon-pack-body">
+            <div class="icon-pack-label"><span id="langCount"></span>
+                <label for="fileLangGlobalImport" class="icon-pack-import"><svg><use href="#svg-upload"></use></svg>${tr('FILE_PICK_LANG')}</label></div>
+            <p id="langNotice" class="lang-catalog-manual-import-info margin0" style="display:none"></p>
+            <div class="icon-pack-grid-wrap"><div class="icon-pack-grid" id="langCatalog"></div></div>
+            <div id="langSelInfo"></div>
+            <div class="icon-pack-drop">${fileDropZone('fileLangGlobalImport', 'FILE_PICK_LANG')}</div>
+            <input id="fileLangGlobalImport" type="file" accept="application/json,.json,application/gzip,.gz" style="display:none"
+            onchange="general.handleGlobalLangUpload(this)"/>
         </div>
-
         <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnLangManagerClose" line type="button">${tr('BT_CLOSE')}</button>
-        </div>
-        </div>
+        <div class="button-container-modal"><div class="button-content-modal" id="langFoot">
+            <button id="btnLangManagerClose" line type="button">${tr('BT_CLOSE')}</button>
+        </div></div>
         </div>`;
 
         shOverlay(div);
@@ -1758,85 +1759,114 @@ class General {
         })
         .finally(() => { if (overlay) overlay.remove(); });
     }
+    // Sans argument, redessine la grille depuis le dernier catalogue reçu (changement de sélection).
     renderLangCatalog(list, manifest) {
-        const panel = get('langCatalog');
-        if (!panel) return;
+        const grid = get('langCatalog');
+        if (!grid) return;
+        if (list) {
+            this._langCatalog = { list, manifest };
+            this._langBusy = false;
+        }
+        if (!this._langCatalog) return;
+        ({ list, manifest } = this._langCatalog);
 
         // La source de vérité est l'attribut lang de la balise <html> ---
         // window.__defaultLangCode est là en ultime sécurité (probablement injecté par le serveur)
         const activeLang = document.documentElement.lang || window.__defaultLangCode || 'en';
-        const full = list.filter(e => e.installed).length >= LANG_MAX_INSTALLED;
-        panel.innerHTML = (full ? `<p class="lang-catalog-manual-import-info">${tr('ERR_LANG_NO_SPACE')}</p>` : '') + list.map(entry => {
+        const installed = list.filter(e => e.installed).length;
+        const full = installed >= LANG_MAX_INSTALLED;
+        if (!list.some(e => e.code === this._langSel)) this._langSel = activeLang;
+        const sel = this._langSel;
+
+        get('langCount').textContent = tr('LANG_COUNT').replace('{N}', installed).replace('{MAX}', LANG_MAX_INSTALLED);
+        const notice = get('langNotice');
+        notice.textContent = full ? tr('ERR_LANG_NO_SPACE') : '';
+        notice.style.display = full ? '' : 'none';
+
+        grid.innerHTML = list.map(entry => {
             // Le nom natif du manifeste prime sur GENERAL_OPT_<CODE> : il reste correct
             // même pour une langue absente de la traduction actuellement chargée (tr() retomberait
             // sinon sur la clé brute).
             const manifestInfo = manifest && manifest.langs ? manifest.langs[entry.code] : null;
             const label = (manifestInfo && manifestInfo.native) || langLabel(entry.code);
-            const isActive = entry.code === activeLang;
-
+            const english = manifestInfo && manifestInfo.name && manifestInfo.name !== label ? manifestInfo.name : '';
             const isPending = window.__pendingLangCode === entry.code;
 
             let badge = '';
-            if (isActive) badge = `<span class="lang-catalog-badge active">${tr('LANG_MODAL_ACTIVE')}</span>`;
+            if (entry.code === activeLang) badge = `<span class="lang-catalog-badge active">${tr('LANG_MODAL_ACTIVE')}</span>`;
             else if (entry.installed) badge = `<span class="lang-catalog-badge">${tr('LANG_MODAL_INSTALLED')}</span>`;
             else if (isPending) badge = `<span class="lang-catalog-badge">${tr('LANG_PENDING_BADGE')}</span>`;
 
-            let actions = '';
-            let manualImportBlock = '';
-            if (!isActive && entry.installed) {
-                actions = `<button type="button" pop onclick="general.useLang('${entry.code}')">${tr('LANG_MODAL_USE_LANG')}</button>`;
-                // La langue embarquée d'usine pour cet environnement (window.__defaultLangCode --
-                // fr sur BOX, en sinon) reste le filet de sécurité universel côté backend
-                // (handleLang) -- jamais supprimable.
-                if (entry.code !== window.__defaultLangCode) {
-                    actions += `<button type="button" pop line onclick="general.deleteLang('${entry.code}')">${tr('LANG_MODAL_DELETE_LANG')}</button>`;
-                }
-            } else if (!isActive && !entry.installed && entry.downloadable) {
-                if (isPending) {
-                    // Persiste côté firmware (settings.pendingLang) -- reste affiché tel quel après
-                    // rechargement de page, tant que un navigateur ne l'a pas relayée (checkPendingLangApplied)
-                    // ou que l'utilisateur n'a pas annulé.
-                    manualImportBlock = `
-                    <div class="lang-catalog-manual-import">
-                        <p class="lang-catalog-manual-import-info">${tr('MSG_LANG_PENDING_INFO')}</p>
-                        <button type="button" pop line onclick="general.cancelPendingLang('${entry.code}')">${tr('BT_CANCEL_PENDING')}</button>
-                    </div>`;
-                }
-                // Le relais navigateur a confirmé qu'aucune route Internet n'existe depuis cet
-                // appareil (github-fetch-failed, cf. relayLangDownload) -- on remplace le bouton
-                // de téléchargement par le choix entre import manuel et mise en attente, plutôt
-                // qu'un message d'erreur.
-                else if (this._manualImportPending.has(entry.code)) {
-                    const rawUrl = manifestInfo && manifestInfo.path ? `${GITHUB_RAW_ROOT}main/${manifestInfo.path}` : '';
-                    manualImportBlock = `
-                    <div class="lang-catalog-manual-import">
-                        <p class="lang-catalog-manual-import-info">${tr('MSG_LANG_MANUAL_IMPORT_INFO')}</p>
-                        ${rawUrl ? `<a href="${rawUrl}" target="_blank" rel="noopener" class="link" style="display:block; margin-bottom:8px;">${tr('LANG_MANUAL_IMPORT_LINK')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>` : ''}
-                        <input id="fileLangImport_${entry.code}" type="file" accept="application/json,.json,application/gzip,.gz" style="display:none"
-                        onchange="general.handleManualLangImport('${entry.code}', this)"/>
-                        ${fileDropZone(`fileLangImport_${entry.code}`, 'FILE_PICK_LANG')}
-                        <button type="button" pop line style="margin-top:8px;" onclick="general.setPendingLang('${entry.code}')">${tr('BT_APPLY_LATER')}</button>
-                    </div>`;
-                } else if (!full) {
-                    actions = `<button type="button" pop onclick="general.downloadLang('${entry.code}')">${tr('LANG_MODAL_DOWNLOAD')}</button>`;
-                }
-            }
-
-            return `
-            <div class="lang-catalog-row" data-code="${entry.code}">
-                <div class="lang-catalog-info">
-                    <span class="lang-catalog-code">${entry.code}</span>
-                    <span>${label}</span>
-                    ${badge}
-                </div>
+            // Boîtier plein : une langue en ligne ne peut plus être choisie, sauf celle déjà mise
+            // en attente (il faut pouvoir l'annuler).
+            const off = !entry.installed && !isPending && (full || !entry.downloadable);
+            const cls = (entry.installed ? '' : ' is-remote') + (off ? ' is-disabled' : '') + (entry.code === sel ? ' selected' : '');
+            return `<div class="icon-pack-tile${cls}" data-lang="${entry.code}" onclick="general.selectLang('${entry.code}')">
+                <span class="lang-catalog-code">${entry.code}</span>
+                <div class="icon-pack-name">${label}</div>
+                <div class="icon-pack-meta">${english}</div>
                 <div class="lang-catalog-progress" id="langProgress_${entry.code}">
                     <div class="progress-bar"><div class="progress-bar-fill"></div></div>
                     <span class="progress-bar-value">0%</span>
                 </div>
-                <div class="lang-catalog-actions">${actions}</div>
-            </div>
-            ${manualImportBlock}`;
+                <span class="icon-pack-tag">${badge}</span></div>`;
         }).join('');
+
+        // Sous la grille : ce qu'il faut savoir de la langue choisie quand elle ne peut pas
+        // simplement être téléchargée (mise en attente, ou import manuel faute d'Internet).
+        const entry = list.find(e => e.code === sel);
+        const manifestInfo = manifest && manifest.langs ? manifest.langs[sel] : null;
+        let info = '';
+        if (window.__pendingLangCode === sel && !entry.installed) {
+            // Persiste côté firmware (settings.pendingLang) -- reste affiché tel quel après
+            // rechargement de page, tant que un navigateur ne l'a pas relayée (checkPendingLangApplied)
+            // ou que l'utilisateur n'a pas annulé.
+            info = `
+            <div class="lang-catalog-manual-import">
+                <p class="lang-catalog-manual-import-info">${tr('MSG_LANG_PENDING_INFO')}</p>
+                <button type="button" pop line onclick="general.cancelPendingLang('${sel}')">${tr('BT_CANCEL_PENDING')}</button>
+            </div>`;
+        }
+        // Le relais navigateur a confirmé qu'aucune route Internet n'existe depuis cet
+        // appareil (github-fetch-failed, cf. relayLangDownload) -- on remplace le bouton
+        // de téléchargement par le choix entre import manuel et mise en attente, plutôt
+        // qu'un message d'erreur.
+        else if (this._manualImportPending.has(sel)) {
+            const rawUrl = manifestInfo && manifestInfo.path ? `${GITHUB_RAW_ROOT}main/${manifestInfo.path}` : '';
+            info = `
+            <div class="lang-catalog-manual-import">
+                <p class="lang-catalog-manual-import-info">${tr('MSG_LANG_MANUAL_IMPORT_INFO')}</p>
+                ${rawUrl ? `<a href="${rawUrl}" target="_blank" rel="noopener" class="link" style="display:block; margin-bottom:8px;">${tr('LANG_MANUAL_IMPORT_LINK')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>` : ''}
+                <input id="fileLangImport_${sel}" type="file" accept="application/json,.json,application/gzip,.gz" style="display:none"
+                onchange="general.handleManualLangImport('${sel}', this)"/>
+                ${fileDropZone(`fileLangImport_${sel}`, 'FILE_PICK_LANG')}
+                <button type="button" pop line style="margin-top:8px;" onclick="general.setPendingLang('${sel}')">${tr('BT_APPLY_LATER')}</button>
+            </div>`;
+        }
+        get('langSelInfo').innerHTML = info;
+
+        // Pied : les actions possibles sur la langue choisie, à côté de Fermer.
+        let actions = '';
+        if (sel !== activeLang && !info) {
+            if (entry.installed) {
+                // La langue embarquée d'usine pour cet environnement (window.__defaultLangCode --
+                // fr sur BOX, en sinon) reste le filet de sécurité universel côté backend
+                // (handleLang) -- jamais supprimable.
+                if (sel !== window.__defaultLangCode) {
+                    actions += `<button type="button" lineRed onclick="general.deleteLang('${sel}')">${tr('LANG_MODAL_DELETE_LANG')}</button>`;
+                }
+                actions += `<button type="button" onclick="general.useLang('${sel}')">${tr('LANG_MODAL_USE_LANG')}</button>`;
+            } else if (entry.downloadable && !full) {
+                actions = `<button type="button" onclick="general.downloadLang('${sel}')">${tr('LANG_MODAL_DOWNLOAD')}</button>`;
+            }
+        }
+        get('langFoot').innerHTML = `<button id="btnLangManagerClose" line type="button">${tr('BT_CLOSE')}</button>${actions}`;
+    }
+    // Ignorée pendant un téléchargement : redessiner la grille effacerait sa barre de progression.
+    selectLang(code) {
+        if (this._langBusy) return;
+        this._langSel = code;
+        this.renderLangCatalog();
     }
     useLang(code) {
         this.onLanguageChanged(code).catch(err => ui.serviceError({ desc: err.message, service: '/setLang' }));
@@ -1873,6 +1903,7 @@ class General {
             }
             if (err.message.startsWith('github-fetch-failed')) {
                 this._manualImportPending.add(code);
+                this._langSel = code;
                 // Depuis un toast (acceptLangPrompt/reinstallActiveLang), la modale du catalogue
                 // n'est pas forcément ouverte -- l'ouvrir pour que l'utilisateur voie le bloc
                 // d'import qui vient d'être activé (openLangManager() réinitialise
@@ -1884,6 +1915,7 @@ class General {
                     const pending = new Set(this._manualImportPending);
                     this.openLangManager();
                     this._manualImportPending = pending;
+                    this._langSel = code;
                 }
                 return;
             }
@@ -1957,19 +1989,22 @@ class General {
     deleteLang(code) {
         deviceFetch('/deleteLang?code=' + code, { method: 'POST' })
         .then(resp => {
-            if (resp.status === 'ok') this.loadLangCatalog();
-            else ui.serviceError(resp);
+            if (resp.status !== 'ok') return ui.serviceError(resp);
+            // La tuile supprimée resterait choisie, en langue à télécharger : on revient à l'active.
+            this._langSel = null;
+            this.loadLangCatalog();
         })
         .catch(err => logger.error('Failed to delete language:', err));
     }
-    // Affiche la barre de progression d'une ligne du catalogue et efface ses boutons d'action,
-    // au déclenchement du téléchargement.
+    // Affiche la barre de progression d'une tuile du catalogue et retire les actions du pied
+    // (Fermer excepté), au déclenchement du téléchargement. La sélection reste figée jusqu'au
+    // prochain rendu du catalogue (cf. selectLang).
     showLangProgress(code) {
-        const row = document.querySelector(`.lang-catalog-row[data-code="${code}"]`);
-        const actions = row ? row.querySelector('.lang-catalog-actions') : null;
-        if (actions) actions.innerHTML = '';
         const prog = get(`langProgress_${code}`);
-        if (prog) prog.classList.add('active');
+        if (!prog) return;
+        prog.classList.add('active');
+        this._langBusy = true;
+        get('langFoot').querySelectorAll('button:not(#btnLangManagerClose)').forEach(b => b.remove());
     }
     procLangDownloadProgress(prog) {
         const block = get(`langProgress_${prog.code}`);
