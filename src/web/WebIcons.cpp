@@ -4,11 +4,13 @@
 #include <LittleFS.h>
 #include "Utils.h"   // wdtReset()
 #include "FwInfo.h"   // fsLocked
+#include "ConfigSettings.h"
 #include "Web.h"
 #include "WebCommon.h"
 #include "WebIcons.h"
 
 extern Web webServer;
+extern ConfigSettings settings;
 
 #define ICON_PACK_TMP "/icons/upload.tmp"
 // Le pack par défaut pèse 2,8 Ko gzippé : 16 Ko laisse de la marge à un pack tiers sans menacer
@@ -16,15 +18,33 @@ extern Web webServer;
 #define MAX_ICON_PACK_SIZE (16 * 1024)
 
 namespace WebIcons {
+  // Même règle que l'id d'un pack côté page (15-icons.js) : il finit dans settings et la sauvegarde.
+  static bool isValidPackId(const String &id) {
+    if(id.length() == 0 || id.length() >= sizeof(settings.iconPack)) return false;
+    for(size_t i = 0; i < id.length(); i++) {
+      char c = id.charAt(i);
+      if(!islower((unsigned char)c) && !isdigit((unsigned char)c) && c != '-') return false;
+    }
+    return true;
+  }
+  static void rememberPack(const char *id) {
+    if(strcmp(settings.iconPack, id) == 0) return;
+    strlcpy(settings.iconPack, id, sizeof(settings.iconPack));
+    settings.save();
+  }
+
   // Même patron que l'upload de langue (WebI18n.cpp) : temporaire, contrôle gzip, renommage. Un
   // échec à n'importe quelle étape laisse l'ancien pack en place.
   struct UploadState { bool success = false; bool rejected = false; bool writeFailed = false; bool tooBig = false; uint32_t written = 0; };
 
   static void handleIcons(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
-    // 404 = pas de pack : la page garde le défaut, sans message.
+    // 404 = pas de pack : la page garde le défaut. « wanted » nomme le pack d'une sauvegarde
+    // restaurée dont le fichier manque encore, que la page va chercher dans le catalogue.
     if(!LittleFS.exists(ICON_PACK_FILE)) {
-      request->send(404, _encoding_json, "{\"error\":\"no icon pack\"}");
+      char buf[96];
+      snprintf(buf, sizeof(buf), "{\"error\":\"no icon pack\",\"wanted\":\"%s\"}", settings.iconPack);
+      request->send(404, _encoding_json, buf);
       return;
     }
     webServer.handleStreamFile(request, "/icons/pack.json", _encoding_json, false, true);
@@ -38,6 +58,7 @@ namespace WebIcons {
       return;
     }
     if(LittleFS.exists(ICON_PACK_FILE)) LittleFS.remove(ICON_PACK_FILE);
+    rememberPack("");
     request->send(200, _encoding_json, "{\"status\":\"ok\"}");
   }
 
@@ -55,6 +76,11 @@ namespace WebIcons {
     if(!state || !state->success) {
       LittleFS.remove(ICON_PACK_TMP);
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Upload failed\"}");
+      return;
+    }
+    if(!isValidPackId(request->arg("id"))) {
+      LittleFS.remove(ICON_PACK_TMP);
+      request->send(400, _encoding_json, "{\"error\":\"invalid id\"}");
       return;
     }
     if(fsLocked) {
@@ -81,7 +107,8 @@ namespace WebIcons {
       request->send(500, _encoding_json, "{\"error\":\"rename failed\"}");
       return;
     }
-    Serial.printf("uploadIcons: pack installe (%u octets)\n", (unsigned)state->written);
+    rememberPack(request->arg("id").c_str());
+    Serial.printf("uploadIcons: pack %s installe (%u octets)\n", settings.iconPack, (unsigned)state->written);
     request->send(200, _encoding_json, "{\"status\":\"ok\"}");
   }
 

@@ -40,7 +40,11 @@ class IconPacks {
         let pack;
         try {
             const resp = await fetch(baseUrl + '/icons');
-            if (resp.status === 404) return;
+            if (resp.status === 404) {
+                const body = await resp.json().catch(() => ({}));
+                if (body.wanted) this.restoreWanted(body.wanted);
+                return;
+            }
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             pack = await resp.json();
         } catch (err) {
@@ -57,6 +61,38 @@ class IconPacks {
             logger.warn('Icon pack ignored:', err.message);
         }
         this.showCurrent();
+    }
+    // Une sauvegarde restaurée nomme un pack dont le fichier n'est pas (ou plus) sur le boîtier : on
+    // le reprend au catalogue. Sans session (PIN), l'envoi attend la connexion suivante.
+    async restoreWanted(id) {
+        if (!ICON_PACK_ID.test(id)) return;
+        try {
+            const pack = await this.fetchPack(id);
+            this.apply(pack);
+            await this.upload(pack);
+            this.installed = this.meta(pack);
+            this._installedPack = pack;
+            this.showCurrent();
+        } catch (err) {
+            logger.warn('Icon pack ' + id + ' not restored:', err.message);
+            if (err.status === 401 || err.status === 403) {
+                get('divContainer').addEventListener('afterlogin', () => this.loadInstalled(), { once: true });
+            }
+        }
+    }
+    async upload(pack) {
+        const gz = await new Response(new Blob([JSON.stringify(pack)]).stream().pipeThrough(new CompressionStream('gzip'))).blob();
+        if (gz.size > ICON_PACK_MAX) throw new Error(tr('ERR_ICONS_TOO_LARGE'));
+        const fd = new FormData();
+        fd.append('file', gz, 'pack.json.gz');
+        const resp = await fetch(baseUrl + '/uploadIcons?id=' + encodeURIComponent(pack.id), { method: 'POST', body: fd, headers: { apikey: security.apiKey || '' } });
+        if (resp.status === 413) throw new Error(tr('ERR_ICONS_TOO_LARGE'));
+        const json = await resp.json().catch(() => ({}));
+        if (json.status !== 'ok') {
+            const err = new Error(json.error || json.desc || ('HTTP ' + resp.status));
+            err.status = resp.status;
+            throw err;
+        }
     }
     showCurrent() {
         const el = get('currentIconPackDisplay');
@@ -337,14 +373,7 @@ class IconPacks {
         const div = get('divIconManagerOverlay');
         setOverlayLock(div, 'confirm', {});
         try {
-            const gz = await new Response(new Blob([JSON.stringify(pack)]).stream().pipeThrough(new CompressionStream('gzip'))).blob();
-            if (gz.size > ICON_PACK_MAX) throw new Error(tr('ERR_ICONS_TOO_LARGE'));
-            const fd = new FormData();
-            fd.append('file', gz, 'pack.json.gz');
-            const resp = await fetch(baseUrl + '/uploadIcons', { method: 'POST', body: fd, headers: { apikey: security.apiKey || '' } });
-            if (resp.status === 413) throw new Error(tr('ERR_ICONS_TOO_LARGE'));
-            const json = await resp.json().catch(() => ({}));
-            if (json.status !== 'ok') throw new Error(json.error || json.desc || ('HTTP ' + resp.status));
+            await this.upload(pack);
             this.installed = this.meta(pack);
             this._installedPack = pack;
             this.ignored = null;

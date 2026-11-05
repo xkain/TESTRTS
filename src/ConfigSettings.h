@@ -421,6 +421,9 @@ class ConfigSettings: BaseSettings {
     // tel quel le vocabulaire déjà utilisé par somfy.switchMobileTab('groups'|'devices') côté
     // web pour éviter une couche de correspondance supplémentaire.
     char defaultMobileTab[8] = "groups";
+    // Identifiant du pack d'icônes installé (vide = icônes par défaut). Le pack lui-même est un
+    // fichier hors sauvegarde : seul ce nom la suit, et la page retélécharge le pack s'il manque.
+    char iconPack[33] = "";
     // Indicateur logiciel (point lumineux dans le header, toutes pages) d'activité radio RTS
     // (émission/réception) ou de mouvement d'un équipement/groupe -- pendant visuel de la LED
     // GPIO physique (ledRfBlink) pour les appareils qui n'en ont pas, ou en plus de celle-ci.
