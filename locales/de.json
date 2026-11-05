@@ -135,6 +135,7 @@
 
 "INDEX_MODAL_LANGS": "MODAL LANGS",
     "LANG_MODAL_TITLE_DESC": "Neue Sprachen von GitHub herunterladen, eine JSON-Datei hochladen oder installierte Sprachen verwalten",
+    "LANG_COUNT": "{N}/{MAX} installiert",
     "LANG_MODAL_INSTALLED": "Installiert",
     "LANG_MODAL_ACTIVE": "Aktiv",
     "LANG_MODAL_DOWNLOAD": "Herunterladen",

@@ -2277,37 +2277,24 @@ button:disabled:active {
 }
 
 /* ==========================================================================
- *  CATALOGUE DES LANGUES (Phase 2 i18n) -- liste des langues installées et
- *  téléchargeables, dans la modale du gestionnaire de langues : construite par
- *  general.openLangManager() et peuplée par loadLangCatalog() (40-general.js).
+ *  CATALOGUE DES LANGUES (Phase 2 i18n) -- grille de tuiles de la modale du
+ *  gestionnaire de langues, construite par general.openLangManager() et peuplée par
+ *  renderLangCatalog() (40-general.js). La mise en page reprend les classes icon-pack-* ;
+ *  seuls le code de langue, les badges, la progression et l'import manuel sont propres ici.
  *  ========================================================================== */
-.lang-catalog {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 10px;
-    margin-bottom: 15px;
-    background: var(--color-bg-surface-3);
-    border-radius: var(--radius-row);
-    border: 1px solid var(--color-border);
-}
-.lang-catalog-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 6px 4px;
-}
-.lang-catalog-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-}
 .lang-catalog-code {
-    font-weight: 600;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 30px;
+    margin-bottom: 2px;
+    font-size: 0.9em;
+    border-radius: var(--radius-md);
+    font-weight: 800;
+    letter-spacing: .04em;
     text-transform: uppercase;
-    min-width: 26px;
+    background: color-mix(in srgb, var(--color-accent) 16%, var(--color-bg-input));
+    color: var(--color-accent);
 }
 .lang-catalog-badge {
     flex-shrink: 0;
@@ -2321,16 +2308,8 @@ button:disabled:active {
     background: var(--color-accent);
     color: #ffffff;
 }
-.lang-catalog-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-}
 .lang-catalog-progress {
     display: none;
-    flex: 1;
-    min-width: 60px;
     align-items: center;
     gap: 8px;
     --progress-bar-height: 6px;
@@ -2343,15 +2322,15 @@ button:disabled:active {
     min-width: 34px;
     text-align: right;
 }
-/* Fallback d'import manuel : substitué à la ligne de catalogue habituelle quand
- * le relais navigateur a confirmé qu'aucune route Internet n'existe depuis cet appareil. */
+/* Sous la grille, pour la langue choisie : import manuel quand le relais navigateur a confirmé
+ * qu'aucune route Internet n'existe depuis cet appareil, ou rappel d'une mise en attente. */
 .lang-catalog-manual-import {
-    margin: -2px 4px 8px;
     padding: 10px 12px;
     background: var(--color-bg-surface-2);
     border-radius: var(--radius-row);
     border: 1px dashed var(--color-border);
 }
+#langSelInfo:empty { display: none; }
 .lang-catalog-manual-import-info {
     margin: 0 0 8px;
     font-size: 0.85em;
@@ -2381,14 +2360,16 @@ button:disabled:active {
 .icon-pack-tile { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 8px; border-radius: var(--radius-lg); border: 1.5px solid var(--color-border); background: var(--color-bg-card); cursor: pointer; }
 .icon-pack-tile:hover { border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border)); }
 .icon-pack-tile.selected { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent) inset; }
-.icon-pack-tile.is-broken { opacity: .5; }
+.icon-pack-tile.is-broken, .icon-pack-tile.is-disabled { opacity: .5; }
+.icon-pack-tile.is-disabled { pointer-events: none; }
 .icon-pack-thumb { display: flex; justify-content: space-between; padding: 4px; border-radius: var(--radius-md); background: var(--color-bg-input); aspect-ratio: 3.2; --shade-position: 60; --fpos: 100%; --shade-tilt: 60; }
 .icon-pack-thumb svg { width: 32%; aspect-ratio: 1; height: auto; }
 .icon-pack-name { font-weight: 700; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .icon-pack-meta { font-size: 0.75em; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .icon-pack-tag { position: absolute; top: 6px; right: 6px; }
-.icon-pack-tile.is-default { border-style: dashed; }
-.icon-pack-tile.is-default.selected { border-style: solid; }
+/* Pointillés : la tuile par défaut des packs d'icônes, ou une langue pas encore sur le boîtier. */
+.icon-pack-tile.is-default, .icon-pack-tile.is-remote { border-style: dashed; }
+.icon-pack-tile.is-default.selected, .icon-pack-tile.is-remote.selected { border-style: solid; }
 /* Sur écran tactile, aucun fichier ne peut être glissé dans la page : la grande zone de dépôt
    n'y serait qu'un bouton haut de 100 px, remplacé par ce lien à droite du compteur. */
 .icon-pack-import { display: none; align-items: center; gap: 4px; color: var(--color-accent); font-weight: 600; text-transform: none; letter-spacing: 0; cursor: pointer; }
