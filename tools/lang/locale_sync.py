@@ -3,20 +3,17 @@
 # SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 # Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 """
-Fiabilise la comparaison ET la réécriture de locales/{en,de,es}.json par rapport à locales/fr.json
-(seule source de vérité éditée manuellement par le user -- cf. mémoire projet "Stratégie de synchro
-des locales" : Claude ne doit jamais éditer fr.json lui-même, ni synchroniser les autres langues
-sans demande explicite).
+Fiabilise la comparaison ET la réécriture de locales/{en,de,es}.json par rapport à locales/fr.json,
+la référence. Toute création, tout renommage ou toute suppression de clé suit le skill i18n-locales ;
+la resynchronisation des autres langues ne se lance que sur demande explicite, jamais en tâche de fond.
 
 fr.json est structuré en blocs logiques débutant par des clés séparatrices "INDEX_..." (page, puis
-immédiatement ses modaux/overlays), les clés à l'intérieur d'un bloc suivant l'ordre d'apparition
-dans l'IHM -- règle imposée par le user, ce script DOIT la respecter à 100% lors de toute réécriture
-(cf. cmd_apply). Piège à connaître : "INDEX_MENU" apparaît deux fois dans fr.json (séparateurs "TAB"
-et "SUBTAB" distincts) -- json.load() perdrait silencieusement la première occurrence (les clés
-dupliquées d'un objet JSON s'écrasent), d'où un parseur texte-brut dédié (parse_locale_file),
-utilisé UNIQUEMENT par apply -- la seule commande qui a besoin de préserver l'ordre/les doublons
-pour reconstruire la structure. status et renames restent sur json.load(), ce qui reste sûr : ils ne
-comparent que des ENSEMBLES de clés (appartenance), jamais leur ordre ni leur nombre d'occurrences.
+immédiatement ses modales/overlays), les clés à l'intérieur d'un bloc suivant l'ordre d'apparition
+dans l'IHM -- ce script DOIT la respecter à 100% lors de toute réécriture (cf. cmd_apply). Chaque
+index est unique, mais apply passe quand même par un parseur texte-brut (parse_locale_file) : lui
+seul conserve l'ordre et les lignes vides nécessaires pour reconstruire la structure, et il resterait
+juste si un index venait à être dupliqué, là où json.load() écraserait la première occurrence sans
+rien dire. status et renames restent sur json.load() : ils ne comparent que des ENSEMBLES de clés.
 
 Commandes :
   status                Compare l'état ACTUEL de fr.json aux 3 autres langues : clés manquantes
@@ -74,8 +71,8 @@ ENTRY_RE = re.compile(r'^\s*"((?:[^"\\]|\\.)+)"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,?\s
 
 
 def parse_locale_file(path):
-    """Parse séquentiel en texte brut (PAS json.load, cf. piège INDEX_MENU documenté en tête de
-    fichier) -- retourne la liste ORDONNÉE des entrées {key, value, blank_before}, blank_before
+    """Parse séquentiel en texte brut (PAS json.load, cf. en-tête du fichier) -- retourne la liste
+    ORDONNÉE des entrées {key, value, blank_before}, blank_before
     étant le nombre de lignes vides consécutives immédiatement avant cette entrée dans le fichier
     source (préserve donc aussi les doublons ET le découpage en blocs par lignes vides)."""
     with open(path, "r", encoding="utf-8") as f:
@@ -262,7 +259,7 @@ def cmd_apply(args):
     fr_path = LOCALES_DIR / f"{SOURCE_LANG}.json"
     fr_entries = parse_locale_file(fr_path)
 
-    # "INDEX_..." peut légitimement se répéter (séparateur structurel, cf. INDEX_MENU) -- toute
+    # Un "INDEX_..." répété reste toléré (séparateur structurel) -- toute
     # AUTRE clé dupliquée dans fr.json est une vraie erreur (coquille de frappe la plus probable)
     # qui fausserait la correspondance clé -> traduction ci-dessous : on s'arrête plutôt que de
     # deviner laquelle des deux occurrences est la bonne.

@@ -1308,7 +1308,7 @@ class General {
                 const v = parseInt(inputPin.value, 10);
                 // MTDI n'est la broche 12 que sur l'ESP32 d'origine ; les S2/S3/C3 ont un autre brochage.
                 const risky = v === 12 && (cm === '' || cm === 'esp32');
-                warn12.textContent = risky ? tr('GENERAL_LED_PIN_WARN_12') : '';
+                warn12.textContent = risky ? tr('LED_MODAL_PIN_WARN_12') : '';
                 warn12.style.display = risky ? '' : 'none';
             };
             updateWarn();

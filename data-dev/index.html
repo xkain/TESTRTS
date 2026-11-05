@@ -187,7 +187,7 @@
                 <svg class="status-cell-icon"><use href="#svg-horloge"></use></svg>
                 <span class="uptime-short">--</span>
                 <div class="uptime-tooltip app-tooltip">
-                    <div class="app-tooltip-title" tr="TOPBAR_Uptime"></div>
+                    <div class="app-tooltip-title" tr="TOPBAR_UPTIME"></div>
                     <div class="app-tooltip-row">
                         <span class="app-tooltip-dot device"></span>
                         <span class="app-tooltip-label" tr="TOPBAR_DEVICE">Appareil</span>
@@ -270,7 +270,7 @@
                         <div id="mobileUptime" class="uptime-tooltip-container mobile-status-btn">
                             <svg class="mobile-status-svg"><use href="#svg-horloge"></use></svg>
                             <div class="uptime-tooltip app-tooltip">
-                                <div class="app-tooltip-title" tr="TOPBAR_Uptime"></div>
+                                <div class="app-tooltip-title" tr="TOPBAR_UPTIME"></div>
                                 <div class="app-tooltip-row">
                                     <span class="app-tooltip-dot device"></span>
                                     <span class="app-tooltip-label" tr="TOPBAR_DEVICE">Appareil</span>
@@ -607,7 +607,7 @@
                                     </div>
                                     <div class="uniRow fw-uptime">
                                         <div class="uniText">
-                                            <div class="uniLabel" tr="TOPBAR_Uptime"></div>
+                                            <div class="uniLabel" tr="TOPBAR_UPTIME"></div>
                                         </div>
                                         <div class="uniColumn" style="align-items: flex-end; font-size: 0.9em; gap: 4px;">
                                             <div>
@@ -727,7 +727,7 @@
                                     </div>
                                 </div>
                                 <div class="unibloc-container fw-maint">
-                                    <h3 class="unibloc-title tile-title"><span tr="FW_TITLE_maintain"></span></h3>
+                                    <h3 class="unibloc-title tile-title"><span tr="FW_TITLE_MAINTAIN"></span></h3>
                                     <div class="row-To-Col-Mobile">
                                         <div class="uniRow flex1 feedback-card">
                                             <button id="btnBackupConfig" onclick="firmware.backup();" class="buttonUpdate unibuttonPad" type="button" style="height: 100%;">
@@ -924,7 +924,7 @@
                             </div>
                             <div class="hotspot-banner-action feedback-card">
                                 <button id="btnHotspotWizard" type="button" class="hotspot-redirect-btn" onclick="onboarding.relaunch();">
-                                    <span tr="GENERAL_RELAUNCH"></span>
+                                    <span tr="CONNEXION_RELAUNCH"></span>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                                 </button>
                             </div>
@@ -990,7 +990,7 @@
                                         <div class="uniRow">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-mac"></use></svg></div>
                                             <div class="unifield-content">
-                                                <span class="label" tr="CONNEXION_MAC_ADRESSE"></span>
+                                                <span class="label" tr="CONNEXION_MAC_ADDRESS"></span>
                                                 <span class="uniValue spanMacAddress">--:--:--:--:--:--</span>
                                             </div>
                                         </div>
@@ -1011,8 +1011,8 @@
                                                     <svg><use href="#svg-firstConnect"></use></svg>
                                                 </div>
                                                 <div class="devButtonUpdate">
-                                                    <div tr="GENERAL_RELAUNCH"></div>
-                                                    <div class="uniStatus" tr="GENERAL_RELAUNCH_DESC"></div>
+                                                    <div tr="CONNEXION_RELAUNCH"></div>
+                                                    <div class="uniStatus" tr="CONNEXION_RELAUNCH_DESC"></div>
                                                 </div>
                                             </div>
                                             <div class="uniRight">
@@ -1498,7 +1498,7 @@
                                         <div class="uniRow dirty-target">
                                             <div class="unifield-content">
                                                 <label class="label" for="fldShadeName" tr="NAME">Nom</label>
-                                                <input id="fldShadeName" class="inputAndSelect" name="shadeName" data-bind="name" type="text" maxlength="20" tr="SECURITY_ENTER_NAME" placeholder=" ">
+                                                <input id="fldShadeName" class="inputAndSelect" name="shadeName" data-bind="name" type="text" maxlength="20" tr="ENTER_NAME" placeholder=" ">
                                             </div>
                                         </div>
                                         <div class="uniRow dirty-target">
@@ -1593,7 +1593,7 @@
                                                 </div>
                                                 <div id="divShadeAddress" class="unifield-content">
                                                     <label class="label" for="fldShadeAddress" tr="DEVICE_ID">ID Télécommande</label>
-                                                    <input id="fldShadeAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADRESS_PH" placeholder=" ">
+                                                    <input id="fldShadeAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADDRESS_PH" placeholder=" ">
                                                 </div>
                                             </div>
                                             <div id="divGPIOControl" class="baseFlexCol">
@@ -1990,7 +1990,7 @@
                                         <div class="uniRow dirty-target">
                                             <div class="unifield-content">
                                                 <label class="label" for="fldGroupName" tr="NAME">Nom</label>
-                                                <input id="fldGroupName" class="inputAndSelect" name="groupName" data-bind="name" type="text" maxlength="20"  tr="SECURITY_ENTER_NAME" placeholder="entrer un Nom">
+                                                <input id="fldGroupName" class="inputAndSelect" name="groupName" data-bind="name" type="text" maxlength="20"  tr="ENTER_NAME" placeholder="entrer un Nom">
                                             </div>
                                         </div>
                                         <div class="uniRow dirty-target">
@@ -2040,7 +2040,7 @@
                                                 </div>
                                                 <div id="divGroupAddress" class="unifield-content">
                                                     <label class="label" for="fldGroupAddress" tr="GROUP_ID">ID Groupe</label>
-                                                    <input id="fldGroupAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADRESS_PH" placeholder=" ">
+                                                    <input id="fldGroupAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADDRESS_PH" placeholder=" ">
                                                 </div>
                                             </div>
                                         </div>
@@ -2848,7 +2848,7 @@
                                         <div class="frame-header">
                                             <span tr="RADIO_TIME"></span>
                                             <span tr="RADIO_COMMAND"></span>
-                                            <span tr="RADIO_ADRESS"></span>
+                                            <span tr="RADIO_ADDRESS"></span>
                                             <span tr="SCANFREQ_RSSI"></span>
                                             <span tr="RADIO_KEY"></span>
                                             <span tr="RADIO_CODE"></span>
