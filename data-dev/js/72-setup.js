@@ -301,7 +301,7 @@ class ShadeSetup {
         const c = this.c, body = this.$('.instructions-content');
         const obj = Object.assign({ name: c.name.trim(), shadeType: c.fam.type(c.axes), roomId: c.roomId, proto: c.proto, bitLength: c.bits, remoteAddress: c.addr, setupSteps: 0 },
             c.fam.settings ? c.fam.settings(c.axes, c) : {});
-        if (!obj.name || obj.name.length > 20) return ui.errorMessage(body, tr('ERR_DEVIVE_NAME_INVALID'));
+        if (!obj.name || obj.name.length > 20) return ui.errorMessage(body, tr('ERR_DEVICE_NAME_INVALID'));
         if (isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215) return ui.errorMessage(body, tr('ERR_REMOTE_ADDRESS_INVALID'));
         const owner = somfy.remoteAddressOwner(obj.remoteAddress, NaN, 255);
         if (owner) return ui.errorMessage(body, tr(owner.isGroup ? 'ERR_REMOTE_ADDRESS_USED_GROUP' : 'ERR_REMOTE_ADDRESS_USED_DEVICE').replace('{name}', escHtml(owner.name)));

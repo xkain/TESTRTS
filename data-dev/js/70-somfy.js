@@ -2044,7 +2044,7 @@ class Somfy {
             <div class="frame-main">
                 <span class="frame-cell frame-time" data-label="${escAttr(tr('RADIO_TIME'))}">${escHtml(frame.time)}</span>
                 <span class="frame-cell frame-cmd" data-label="${escAttr(tr('RADIO_COMMAND'))}"><svg class="frame-cmd-icon"><use href="#${this.frameCommandIcon(frame.command)}"></use></svg><span class="frame-cmd-text">${escHtml(frame.command)}${step}</span>${badge}</span>
-                <span class="frame-cell frame-addr" data-label="${escAttr(tr('RADIO_ADRESS'))}"><span class="frame-addr-value">${escHtml(frame.address)}</span>${name}</span>
+                <span class="frame-cell frame-addr" data-label="${escAttr(tr('RADIO_ADDRESS'))}"><span class="frame-addr-value">${escHtml(frame.address)}</span>${name}</span>
                 <span class="frame-cell frame-rssi sig-${this.rssiLevel(frame.rssi)}" data-label="${escAttr(tr('SCANFREQ_RSSI'))}">${escHtml(frame.rssi)}<em>${tr('UNIT_DBM')}</em></span>
                 <span class="frame-cell frame-key" data-label="${escAttr(tr('RADIO_KEY'))}">${escHtml(frame.encKey)}</span>
                 <span class="frame-cell frame-code" data-label="${escAttr(tr('RADIO_CODE'))}">${escHtml(frame.rcode)}</span>
@@ -5661,7 +5661,7 @@ class Somfy {
 
         const checks = [
             [isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215, 'ERR_REMOTE_ADDRESS_INVALID'],
-            [!obj.name || obj.name.length > 20, 'ERR_DEVIVE_NAME_INVALID'],
+            [!obj.name || obj.name.length > 20, 'ERR_DEVICE_NAME_INVALID'],
         ];
 
         const basicError = checks.find(c => c[0]);
@@ -6086,7 +6086,7 @@ class Somfy {
 
         const checks = [
             [isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215, 'ERR_REMOTE_ADDRESS_INVALID'],
-            [!obj.name || obj.name.length > 20, 'ERR_DEVIVE_NAME_INVALID']
+            [!obj.name || obj.name.length > 20, 'ERR_DEVICE_NAME_INVALID']
         ];
         const error = checks.find(c => c[0]);
         if (error) return ui.errorMessage(tr(error[1]));
@@ -6458,7 +6458,7 @@ class Somfy {
         <div class="overlay-scroll-content">
         <div class="uniRow"><div class="unifield-content"><label class="label" tr="REPEATER_ADDRESS">${tr('REPEATER_ADDRESS')}</label><span>${escHtml(address)}</span></div></div>
         <div class="uniRow"><div class="unifield-content"><label class="label" for="fldListenerName">${tr('NAME')}</label>
-        <input id="fldListenerName" class="inputAndSelect" type="text" maxlength="20" placeholder="${escAttr(tr('SECURITY_ENTER_NAME'))}" value="${escAttr(existing ? existing.name : '')}"></div></div>
+        <input id="fldListenerName" class="inputAndSelect" type="text" maxlength="20" placeholder="${escAttr(tr('ENTER_NAME'))}" value="${escAttr(existing ? existing.name : '')}"></div></div>
         ${warn}
         </div>
         <div class="hrDivFooter-Instruc"></div>

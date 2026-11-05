@@ -364,7 +364,7 @@ class Wifi {
 
         div.innerHTML = `
         <div class="message-content apPassword-content">
-        ${modalHeader('CONNEXION_AP_TITLE', 'svg-hotspot', {
+        ${modalHeader('AP_MODAL_TITLE', 'svg-hotspot', {
             subtitle: 'AP_MODAL_TITLE_DESC',
         })}
 

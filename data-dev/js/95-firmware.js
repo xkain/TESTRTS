@@ -666,8 +666,8 @@ class Firmware {
         clearOverlayLock(div);
         div.remove();
         const subMsg = langFailed
-            ? `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_LANG_RESTORE_FAILED').replace('%1', codes.join(', '))}`
-            : `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_RELEASE_SUCCES_2')}`;
+            ? `${tr('GIT_RELEASE_SUCCESS_1')}<br>${tr('GIT_LANG_RESTORE_FAILED').replace('%1', codes.join(', '))}`
+            : `${tr('GIT_RELEASE_SUCCESS_1')}<br>${tr('GIT_RELEASE_SUCCESS_2')}`;
         ui.successMessage(tr('GIT_RELEASE_SUCCESS_TITLE'), subMsg);
         general.reloadApp = true;
         setTimeout(() => general.reload(), 3000);
