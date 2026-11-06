@@ -3467,7 +3467,7 @@ class Somfy {
             ['RADIO_RX_FREQUENCY',   'RADIO_HELP_RX_FREQUENCY'],
             ['RADIO_RX_BANDWIDTH',   'RADIO_HELP_RX_BANDWIDTH']
         ];
-        // MEME PATRON QUE LES AUTRES MODALES DE CONTENU (DashboardPrefsOverlay, FeedbackOverlay) :
+        // MEME PATRON QUE LES AUTRES MODALES DE CONTENU (DashboardPrefsOverlay) :
         // en-tete, corps defilant, filet, pied. La premiere version empruntait celui des messages
         // (.info-content + .sub-message + .button-container-row), qui est taille pour UNE phrase :
         // trois explications n'y defilaient pas et debordaient sur petit ecran, et le bouton n'etait

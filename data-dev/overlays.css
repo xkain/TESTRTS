@@ -1515,40 +1515,6 @@ button[line].fw-sidebar-button:hover {
 .strength .signal {
     width:24px; height: 24px;
 }
-/* =======================================================================
- *  MODALE SÉCURITÉ (déverrouillage PIN / mot de passe, choix de méthode)
- *  ======================================================================= */
-
-#divSecurityPopupContent .SwitchBig {
-    width: 100%;
-}
-.SwitchBig-3 label {
-    padding: 8px 0;
-}
-.sec-type-desc {
-    margin: 22px 0 26px;
-    text-align: center;
-    font-size: 0.9em;
-    line-height: 1.5;
-    color: var(--color-text-secondary);
-}
-.sec-type-desc.is-warning {
-    color: var(--color-danger);
-}
-/* Libellé d'état d'un secret déjà enregistré ("un mot de passe est déjà enregistré" / "sera
-   supprimé"). Le masque factice (puces) ne disait rien de plus qu'un champ rempli : sans ce
-   libellé, rien ne distinguait à l'écran un secret enregistré d'une saisie conservée. */
-.sec-secret-hint {
-    margin: 8px 0 -8px 0;
-    font-size: 0.82em;
-    line-height: 1.4;
-    color: var(--color-text-secondary);
-}
-.pin-digit-row {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-}
 .prompt-content .sub-message p.is-warning {
     color: var(--color-danger);
     font-weight: 600;
@@ -1569,13 +1535,6 @@ button[line].fw-sidebar-button:hover {
 .led-pin-help {
     margin-top: 4px;
     line-height: 1.5;
-}
-#divPopupPin { text-align: center;}
-#divPopupPin div{ margin-top: 10px;}
-#divPopupPin.uniblocCol {
-    background: none;
-    border: none;
-    box-shadow: none;
 }
 /* =======================================================================
  *  ASSISTANT AVERTISSEMENT ETHERNET (inst-ethwarning)
@@ -3425,53 +3384,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
         white-space: normal;
     }
 }
-/* =======================================================================
- *  GÉOLOCALISATION (#divGeoPopupContent)
- *  ======================================================================= */
-
-/* Latitude et Longitude sont côte à côte dans un .baseFlexRow : le
- * min-width: 210px hérité de .uniRow empêche les deux cartes de se
- * rétrécir sous 420px + gap, et la modale déborde en largeur sur mobile.
- * Ces deux champs-là n'ont besoin que de la place de leur libellé. */
-#divGeoPopupContent .baseFlexRow > .uniRow {
-    min-width: auto;
-}
-
-/* En <button> plutôt qu'en <div> pour rester atteignable au clavier -- d'où la remise à zéro des
- * styles de bouton. */
-#divGeoPopupContent .input-paste-btn {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    width: auto;
-    margin: 0;
-    padding: 5px;
-    border: none;
-    background: none;
-    box-shadow: none;
-    color: var(--color-text-main);
-    cursor: pointer;
-    opacity: 0.6;
-}
-#divGeoPopupContent .input-paste-btn svg {
-    width: 20px;
-    height: 20px;
-}
-#divGeoPopupContent .input-paste-btn:hover,
-#divGeoPopupContent .input-paste-btn:focus-visible {
-    background: none;
-    color: var(--color-accent);
-    opacity: 1;
-}
-/* Réserve la place de l'icône pour qu'une valeur longue ne passe pas dessous. */
-#divGeoPopupContent .baseFlexRow .inputAndSelect {
-    padding-right: 36px;
-}
-
 /* =======================================================================
  *  TABLIER PLEIN ÉCRAN (.rts-shade)
  *  ======================================================================= */

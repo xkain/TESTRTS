@@ -354,215 +354,197 @@
                 <div id="divSystemSettings">
                     <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL"></span><span data-grpid="divFirmware" tr="IS_FIRMWARE"></span></div>
                     <div id="divSystemOptions" class="subtab-content">
-                        <div class="main-header">
-                            <div class="main-headerBlock">
-                                <h2 class="main-headerTitle" tr="GENERAL_TITLE"></h2>
-                                <p class="main-headerDesc" tr="GENERAL_DESC"></p>
-                            </div>
-                            <div class="main-headerAmbient">
-                                <svg><use href="#svg-tabSettings"></use></svg>
-                            </div>
-                        </div>
+                        <div class="gen-layout">
+                            <section class="gen-hero">
+                                <svg class="gen-hero-icon"><use href="#svg-tabSystem"></use></svg>
+                                <div class="gen-hero-text">
+                                    <span class="gen-hero-kick" tr="GENERAL_TITLE"></span>
+                                    <h2 id="genHeroHost" class="gen-hero-title"></h2>
+                                    <div id="genHeroUrl" class="gen-hero-url"></div>
+                                    <p class="gen-hero-desc" tr="GENERAL_DESC"></p>
+                                </div>
+                                <div class="gen-hero-chips">
+                                    <span class="gen-chip"><svg><use href="#svg-language"></use></svg><span id="genChipLang"></span></span>
+                                    <span class="gen-chip"><svg><use href="#svg-timezone"></use></svg><span id="genChipTz"></span></span>
+                                    <span class="gen-chip"><svg><use href="#svg-colorMode"></use></svg><span id="genChipTheme"></span></span>
+                                    <span class="gen-chip"><svg><use href="#svg-lock"></use></svg><span id="genChipSec"></span></span>
+                                </div>
+                            </section>
 
-                        <div class="tile-wrap">
-                            <div class="tile-side">
-                                <div class="unibloc-container hotspot-hidden">
-                                    <h3 class="unibloc-title tile-title"><span tr="GENERAL_ACCESS_INTEG"></span></h3>
-                                    <div id="divBtnHA" class="uniblocCol feedback-card gen-ha">
-                                        <button onclick="general.showHAOverlay()" class="buttonUpdate" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-homeAssistant0"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="HACS"></div>
-                                                    <div class="uniStatus" tr="GENERAL_HA_DESC"></div>
+                            <div class="gen-body">
+                                <nav id="genTabs" class="gen-tabs" role="tablist">
+                                    <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="GENERAL_TITLE_SERVICES"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="1" tr="GENERAL_TITLE_REGION"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="2" tr="GENERAL_TITLE_LOOK"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="3" tr="GENERAL_TITLE_SECURITY"></button>
+                                </nav>
+                                <div id="genPanels" class="gen-panels">
+                                    <div class="gen-grid" role="tabpanel" data-tab="0">
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GENERAL_TILE_NAME"></h3>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="fldHostname" tr="GENERAL_HOSTNAME"></label>
+                                                <div class="gen-input-box dirty-target">
+                                                    <input id="fldHostname" class="gen-input" name="hostname" type="text" data-bind="general.hostname" maxlength="31" tr="GENERAL_PH_HOSTNAME" placeholder="Enter un Nom d'hôte">
+                                                    <span class="gen-input-unit">.local</span>
                                                 </div>
                                             </div>
-                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="unibloc-container tile-tip hotspot-hidden">
-                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
-                                    <p class="tile-tip-text" tr="GENERAL_TIP_HOSTNAME"></p>
-                                </div>
-                            </div>
-                            <div class="tile-cols gen-grid">
-                                <div class="unibloc-container gen-serv">
-                                    <h3 class="unibloc-title tile-title"><span tr="GENERAL_TITLE_SERVICES"></span></h3>
-                                    <div class="uniblocRow">
-                                        <div class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="fldHostname" tr="GENERAL_HOSTNAME"></label>
-                                                <input id="fldHostname" class="inputAndSelect" name="hostname" type="text" data-bind="general.hostname" maxlength="31" tr="GENERAL_PH_HOSTNAME" placeholder="Enter un Nom d'hôte">
-                                            </div>
+                                            <p class="gen-tile-desc" tr="GENERAL_TIP_HOSTNAME"></p>
                                         </div>
-                                        <div class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-serverNTP"></use></svg>
-                                            </div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="fldNtptimesever" tr="GENERAL_NTP_SERVER"></label>
-                                                <input id="fldNtptimesever" class="inputAndSelect" name="ntptimeserver" type="text" maxlength="64" data-bind="general.ntpServer" tr="GENERAL_PH_NTP_SERVER" placeholder="Entrer votre Serveur NTP">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <label class="uniRow dirty-target">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-uPnP"></use></svg></div>
-                                            <div class="uniText">
-                                                <div class="uniLabel" tr="GENERAL_UPNP"></div>
-                                                <div class="uniStatus" tr="GENERAL_UPNP_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <span class="switch">
-                                                <input id="cbSsdpBroadcast" name="ssdpBroadcast" type="checkbox" data-bind="general.ssdpBroadcast">
-                                                <div></div>
-                                            </span>
-                                        </div>
-                                    </label>
-                                </div>
-                                <div class="unibloc-container">
-                                    <h3 class="unibloc-title tile-title"><span tr="GENERAL_TITLE_REGION"></span></h3>
-                                    <div class="uniRow dirty-target feedback-card">
-                                        <button id="btnOpenLangManager" onclick="general.openLangManager()" class="buttonUpdate unibuttonPad" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-language"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="GENERAL_LANGUAGE"></div>
-                                                    <div id="currentLangDisplay" class="uniStatus"></div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GENERAL_TILE_TIME"></h3>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="fldNtptimesever" tr="GENERAL_NTP_SERVER"></label>
+                                                <div class="gen-input-box dirty-target">
+                                                    <input id="fldNtptimesever" class="gen-input" name="ntptimeserver" type="text" maxlength="64" data-bind="general.ntpServer" tr="GENERAL_PH_NTP_SERVER" placeholder="Entrer votre Serveur NTP">
                                                 </div>
                                             </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                            </div>
-                                        </button>
-                                    </div>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-timezone"></use></svg></div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selTimeZone" tr="GENERAL_TIMEZONE"></label>
-                                                <select id="selTimeZone" class="inputAndSelect" name="timeZone" data-bind="general.posixZone"></select>
-                                            </div>
+                                            <p class="gen-tile-desc" tr="GENERAL_NTP_DESC"></p>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GENERAL_TILE_SERVICES"></h3>
+                                            <label class="gen-row dirty-target">
+                                                <span class="gen-row-text"><b tr="GENERAL_UPNP"></b><span tr="GENERAL_UPNP_DESC"></span></span>
+                                                <span class="switch"><input id="cbSsdpBroadcast" name="ssdpBroadcast" type="checkbox" data-bind="general.ssdpBroadcast"><div></div></span>
+                                            </label>
+                                            <label class="gen-row dirty-target" for="cbCheckForUpdate">
+                                                <span class="gen-row-text"><b tr="GENERAL_UPDATES"></b><span tr="GENERAL_UPDATES_DESC"></span></span>
+                                                <span class="switch"><input id="cbCheckForUpdate" type="checkbox" data-bind="general.checkForUpdate"><div></div></span>
+                                            </label>
                                         </div>
                                     </div>
-                                    <div class="uniRow hotspot-hidden feedback-card">
-                                        <button onclick="general.GeoOverlay();" class="buttonUpdate unibuttonPad" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-location"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="GENERAL_GEO_TITLE"></div>
-                                                    <div id="badgeGeoState" class="status-simple"></div>
-                                                    <div class="uniStatus" tr="GENERAL_GEO_TILE_DESC"></div>
+
+                                    <div class="gen-grid" role="tabpanel" data-tab="1" hidden>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GENERAL_TILE_LANG"></h3>
+                                            <div id="currentLangDisplay" class="gen-tile-value"></div>
+                                            <button id="btnOpenLangManager" type="button" class="gen-btn" onclick="general.openLangManager()"><svg><use href="#svg-language"></use></svg><span tr="GENERAL_LANGUAGE"></span></button>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GENERAL_TIMEZONE"></h3>
+                                            <div class="gen-field">
+                                                <div class="gen-input-box dirty-target">
+                                                    <select id="selTimeZone" class="gen-input" name="timeZone" data-bind="general.posixZone"></select>
                                                 </div>
                                             </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="unibloc-container">
-                                    <h3 class="unibloc-title tile-title"><span tr="GENERAL_TITLE_LOOK"></span></h3>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-colorMode"></use></svg></div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selThemeMode" tr="GENERAL_DISPLAY_MODE"></label>
-                                                <select id="selThemeMode" class="inputAndSelect" data-bind="general.themeMode" onchange="general.onModeThemeChanged();" data-datatype="int">
-                                                    <option value="0" selected tr="GENERAL_OPT_THEME_AUTO"></option>
-                                                    <option value="1" tr="GENERAL_OPT_THEME_DARK"></option>
-                                                    <option value="2" tr="GENERAL_OPT_THEME_LIGHT"></option>
-                                                </select>
-                                            </div>
+                                            <p class="gen-tile-desc" tr="GENERAL_TIMEZONE_DESC"></p>
                                         </div>
-                                    </div>
-                                    <label class="uniRow dirty-target">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-accentColor"></use></svg></div>
-                                            <div class="uniText">
-                                                <div class="uniLabel" tr="GENERAL_COLOR"></div>
-                                                <div class="uniStatus" tr="GENERAL_COLOR_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <span class="accent-swatch">
-                                                <input id="fldAccentColor" class="general-accent-color" name="accentColor" type="color" data-bind="general.accentColor"/>
-                                            </span>
-                                        </div>
-                                    </label>
-                                    <div class="uniRow feedback-card">
-                                        <button onclick="iconPacks.openManager()" class="buttonUpdate unibuttonPad" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-indicShutter"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="ICONS_TITLE"></div>
-                                                    <div id="currentIconPackDisplay" class="status-simple" tr="ICONS_DEFAULT"></div>
-                                                    <div class="uniStatus" tr="ICONS_TILE_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                            </div>
-                                        </button>
-                                    </div>
-                                    <div class="uniRow feedback-card">
-                                        <button onclick="general.FeedbackOverlay()" class="buttonUpdate unibuttonPad" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-haptic"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="GENERAL_FEEDBACK"></div>
-                                                    <div class="uniStatus" tr="GENERAL_FEEDBACK_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="unibloc-container gen-sec">
-                                    <h3 class="unibloc-title tile-title"><span tr="GENERAL_TITLE_SECURITY"></span></h3>
-                                    <div class="gen-row">
-                                        <div class="uniRow dirty-target feedback-card">
-                                            <button onclick="general.SecurityOverlay();" class="buttonUpdate" type="button">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div tr="GENERAL_SECURITY"></div>
-                                                        <div id="badgeSecurityState" class="status-simple state-pin">Code PIN</div>
-                                                        <div class="uniStatus" tr="GENERAL_SECURITY_DESC"></div>
+                                        <div class="gen-tile hotspot-hidden">
+                                            <h3 class="gen-tile-title" tr="GENERAL_GEO_TITLE"></h3>
+                                            <p class="gen-tile-desc" tr="GENERAL_GEO_TILE_DESC"></p>
+                                            <div class="gen-field-pair">
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="inputGeoLat" tr="GEO_LAT"></label>
+                                                    <div class="gen-input-box dirty-target">
+                                                        <input id="inputGeoLat" class="gen-input" type="number" min="-90" max="90" step="0.01" placeholder="48.85">
+                                                        <span class="gen-input-unit">°</span>
                                                     </div>
                                                 </div>
-                                                <div class="uniRight">
-                                                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                                </div>
-                                            </button>
-                                        </div>
-                                        <label class="uniRow dirty-target" for="cbCheckForUpdate">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-update0"></use></svg></div>
-                                                <div class="uniText">
-                                                    <div class="uniLabel" tr="GENERAL_UPDATES"></div>
-                                                    <div class="uniStatus" tr="GENERAL_UPDATES_DESC"></div>
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="inputGeoLon" tr="GEO_LON"></label>
+                                                    <div class="gen-input-box dirty-target">
+                                                        <input id="inputGeoLon" class="gen-input" type="number" min="-180" max="180" step="0.01" placeholder="2.35">
+                                                        <span class="gen-input-unit">°</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="uniRight">
-                                                <span class="switch">
-                                                    <input id="cbCheckForUpdate" type="checkbox" data-bind="general.checkForUpdate">
-                                                    <div></div>
+                                            <div class="gen-btn-row">
+                                                <button id="btnGeoExternal" type="button" class="gen-btn"><svg><use href="#svg-search"></use></svg><span tr="GEO_EXTERNAL"></span></button>
+                                                <button id="btnGeoDetect" type="button" class="gen-btn"><svg><use href="#svg-target"></use></svg><span tr="GEO_DETECT"></span></button>
+                                            </div>
+                                            <p class="gen-tile-desc" tr="GEO_PRIVACY_NOTE"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GENERAL_DISPLAY_MODE"></h3>
+                                            <div class="gen-seg dirty-target">
+                                                <label><input type="radio" name="genTheme" value="0"><span tr="GENERAL_OPT_THEME_AUTO"></span></label>
+                                                <label><input type="radio" name="genTheme" value="2"><span tr="GENERAL_OPT_THEME_LIGHT"></span></label>
+                                                <label><input type="radio" name="genTheme" value="1"><span tr="GENERAL_OPT_THEME_DARK"></span></label>
+                                                <select id="selThemeMode" hidden data-bind="general.themeMode" onchange="general.onModeThemeChanged();" data-datatype="int">
+                                                    <option value="0" selected></option>
+                                                    <option value="1"></option>
+                                                    <option value="2"></option>
+                                                </select>
+                                            </div>
+                                            <p class="gen-tile-desc" tr="GENERAL_DISPLAY_MODE_DESC"></p>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GENERAL_COLOR"></h3>
+                                            <div id="genSwatches" class="gen-swatches dirty-target">
+                                                <button type="button" class="gen-swatch" data-color="#1a5fb4" style="--swatch: #1a5fb4;" aria-label="#1a5fb4"></button>
+                                                <button type="button" class="gen-swatch" data-color="#2e7d32" style="--swatch: #2e7d32;" aria-label="#2e7d32"></button>
+                                                <button type="button" class="gen-swatch" data-color="#c2410c" style="--swatch: #c2410c;" aria-label="#c2410c"></button>
+                                                <button type="button" class="gen-swatch" data-color="#b3261e" style="--swatch: #b3261e;" aria-label="#b3261e"></button>
+                                                <button type="button" class="gen-swatch" data-color="#6d28d9" style="--swatch: #6d28d9;" aria-label="#6d28d9"></button>
+                                                <button type="button" class="gen-swatch" data-color="#0f766e" style="--swatch: #0f766e;" aria-label="#0f766e"></button>
+                                                <label class="gen-btn gen-swatch-other"><span tr="GENERAL_COLOR_OTHER"></span><input id="fldAccentColor" class="general-accent-color" name="accentColor" type="color" data-bind="general.accentColor"></label>
+                                            </div>
+                                            <p class="gen-tile-desc" tr="GENERAL_COLOR_DESC"></p>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="ICONS_TITLE"></h3>
+                                            <div id="currentIconPackDisplay" class="gen-tile-value" tr="ICONS_DEFAULT"></div>
+                                            <p class="gen-tile-desc" tr="ICONS_TILE_DESC"></p>
+                                            <button type="button" class="gen-btn" onclick="iconPacks.openManager()"><svg><use href="#svg-indicShutter"></use></svg><span tr="ICONS_BROWSE"></span></button>
+                                        </div>
+                                        <div id="genFeedbackTile" class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GENERAL_FEEDBACK"></h3>
+                                            <p class="gen-tile-desc" tr="GENERAL_FEEDBACK_LOCAL"></p>
+                                            <div class="gen-row dirty-target">
+                                                <span class="gen-row-text"><b tr="FEEDBACK_VISUAL_COMMANDS"></b><span tr="FEEDBACK_VISUAL_COMMANDS_DESC"></span></span>
+                                                <span class="gen-seg">
+                                                    <label><input type="radio" name="genFbCommands" value="scale"><span tr="FEEDBACK_STYLE_SCALE"></span></label>
+                                                    <label><input type="radio" name="genFbCommands" value="flash"><span tr="FEEDBACK_STYLE_FLASH"></span></label>
+                                                    <label><input type="radio" name="genFbCommands" value="off"><span tr="NONE"></span></label>
                                                 </span>
                                             </div>
-                                        </label>
+                                            <div class="gen-row dirty-target">
+                                                <span class="gen-row-text"><b tr="FEEDBACK_VISUAL_UI"></b><span tr="FEEDBACK_VISUAL_UI_DESC"></span></span>
+                                                <span class="gen-seg">
+                                                    <label><input type="radio" name="genFbUi" value="scale"><span tr="FEEDBACK_STYLE_SCALE"></span></label>
+                                                    <label><input type="radio" name="genFbUi" value="flash"><span tr="FEEDBACK_STYLE_FLASH"></span></label>
+                                                    <label><input type="radio" name="genFbUi" value="off"><span tr="NONE"></span></label>
+                                                </span>
+                                            </div>
+                                            <label class="gen-row dirty-target" for="cbFeedbackForms">
+                                                <span class="gen-row-text"><b tr="FEEDBACK_VISUAL_FORMS"></b><span tr="FEEDBACK_VISUAL_FORMS_DESC"></span></span>
+                                                <span class="switch"><input id="cbFeedbackForms" type="checkbox"><div></div></span>
+                                            </label>
+                                            <label class="gen-row dirty-target" for="cbFeedbackHaptic">
+                                                <span class="gen-row-text"><b tr="FEEDBACK_HAPTIC_TOGGLE"></b><span id="genHapticDesc" tr="FEEDBACK_HAPTIC_TOGGLE_DESC"></span></span>
+                                                <span class="switch"><input id="cbFeedbackHaptic" type="checkbox"><div></div></span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="gen-grid" role="tabpanel" data-tab="3" hidden>
+                                        <div id="genSecTile" class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GENERAL_SECURITY"></h3>
+                                            <div id="genSecBody" class="gen-sec-body"></div>
+                                            <div class="gen-sec-foot">
+                                                <span class="gen-tile-desc" tr="GENERAL_SECURITY_SEPARATE"></span>
+                                                <button id="btnGenSecApply" type="button" class="gen-btn gen-btn-primary" onclick="general.saveSecurity();" disabled><svg><use href="#svg-lock"></use></svg><span tr="BT_APPLY"></span></button>
+                                            </div>
+                                        </div>
+                                        <div class="gen-tile hotspot-hidden">
+                                            <h3 class="gen-tile-title" tr="HACS"></h3>
+                                            <p class="gen-tile-desc" tr="GENERAL_HA_TILE_DESC"></p>
+                                            <div class="gen-btn-row">
+                                                <button type="button" class="gen-btn" onclick="general.showHAOverlay()"><svg><use href="#svg-homeAssistant0"></use></svg><span tr="GENERAL_HA_OPEN"></span></button>
+                                                <button type="button" class="gen-btn" onclick="confirmDiscardChanges(() => activateGrpid('divMQTT'));"><svg><use href="#svg-mqtt"></use></svg><span tr="GENERAL_HA_MQTT"></span></button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="button-container-footerHtml">
-                            <button id="btnRebootGeneral" type="button" line onclick="general.rebootDevice();" tr="BT_REBOOT"></button>
-                            <button id="btnSaveGeneral" type="button" onclick="general.setGeneral();">
+                        <div class="button-container-footerHtml gen-foot">
+                            <span id="genDirtyText" class="gen-foot-text"></span>
+                            <button id="btnGenRevert" type="button" class="gen-foot-link" onclick="general.revertGeneral();" tr="BT_REVERT" hidden></button>
+                            <button id="btnSaveGeneral" type="button" class="gen-foot-save" onclick="general.setGeneral();">
                                 <svg><use href="#svg-save"></use></svg>
                                 <span tr="BT_SAVE"></span>
                             </button>
