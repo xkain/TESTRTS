@@ -1658,6 +1658,541 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
  *  PAGE SYSTÈME - GÉNÉRAL & FIRMWARE
  *  ======================================================================= */
 
+/* --- Page Général (#divSystemOptions, maquette A2) : colonne d'identité, onglets, tuiles --- */
+#divSystemOptions.subtab-content {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+    background: var(--bg);
+    color: var(--text);
+}
+#divSystemOptions [hidden] {
+    display: none;
+}
+/* Sans ça, le fond s'arrête sous la dernière tuile quand l'onglet affiché est court (mobile). */
+.container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divSystemOptions:not([style*="none"])) {
+    background: var(--bg);
+}
+.gen-layout {
+    display: grid;
+    grid-template-columns: minmax(300px, 32fr) minmax(0, 68fr);
+    min-height: calc(100vh - var(--topbar-height));
+}
+.gen-hero {
+    position: sticky;
+    top: var(--topbar-height);
+    align-self: start;
+    height: calc(100vh - var(--topbar-height) - 64px);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(12px, 2.2vh, 24px);
+    padding: clamp(20px, 3vh, 40px) clamp(20px, 2.5vw, 44px);
+    overflow: hidden;
+    background: var(--panel);
+    text-align: center;
+}
+.gen-hero-icon {
+    width: clamp(80px, min(8vw, 15vh), 140px);
+    height: clamp(80px, min(8vw, 15vh), 140px);
+    flex: none;
+    fill: currentColor;
+    color: var(--color-accent);
+}
+.gen-hero-text {
+    min-width: 0;
+}
+.gen-hero-kick {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+}
+.gen-hero-title {
+    margin: 6px 0 0;
+    font-size: clamp(26px, 2.6vw, 42px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+    color: var(--text);
+}
+.gen-hero-url {
+    margin-top: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-2);
+}
+.gen-hero-desc {
+    margin: 10px auto 0;
+    max-width: 36ch;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-3);
+}
+.gen-hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+.gen-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--r-pill);
+    background: var(--surface-2);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+}
+.gen-chip svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    fill: currentColor;
+}
+.gen-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+    padding: clamp(16px, 2.4vh, 28px) clamp(20px, 3vw, 48px) 96px;
+}
+.gen-tabs {
+    display: flex;
+    align-self: flex-start;
+    gap: 4px;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 4px;
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.gen-tabs::-webkit-scrollbar {
+    display: none;
+}
+.gen-tab {
+    flex: none;
+    width: auto;
+    min-height: 44px;
+    padding: 10px 18px;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: transparent;
+    color: var(--text-3);
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: none;
+    white-space: nowrap;
+}
+.gen-tab:hover {
+    background: var(--surface-2);
+}
+.gen-tab.selected {
+    background: var(--on-fill);
+    color: var(--on-fill-text);
+}
+.gen-panels {
+    touch-action: pan-y;
+}
+.gen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+}
+.gen-grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+}
+.gen-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 22px;
+    border-radius: var(--r-5);
+    background: var(--surface);
+}
+.gen-tile-title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+}
+.gen-tile-desc {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-3);
+}
+.gen-tile-desc.is-warning {
+    padding: 10px 12px;
+    border-radius: var(--r-3);
+    background: var(--warn-bg);
+    color: var(--warn);
+}
+.gen-tile-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+}
+.gen-tile > .gen-btn:last-child,
+.gen-tile > .gen-tile-desc:last-child {
+    margin-top: auto;
+}
+.gen-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+.gen-field-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+}
+.gen-field-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+.gen-input-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 46px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-2);
+    background: var(--surface);
+    transition: border-color .15s;
+}
+.gen-input-box:focus-within {
+    border-color: var(--color-accent);
+}
+.gen-input-box:has(.password-eye) {
+    padding-right: 44px;
+}
+input.gen-input,
+select.gen-input {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    margin: 0;
+    padding: 12px 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    appearance: none;
+}
+input.gen-input::-webkit-outer-spin-button,
+input.gen-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+select.gen-input {
+    padding-right: 24px;
+    cursor: pointer;
+    background: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 9 7 6 7-6'/%3E%3C/svg%3E") no-repeat right center;
+}
+select.gen-input option {
+    background: var(--surface);
+    color: var(--text);
+}
+.gen-input-unit {
+    flex: none;
+    font-size: 14px;
+    color: var(--text-3);
+}
+.gen-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin: 0 -12px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--r-2);
+}
+label.gen-row {
+    cursor: pointer;
+}
+.gen-row-text {
+    display: flex;
+    flex: 1 1 180px;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    font-size: 14px;
+    color: var(--text);
+}
+.gen-row-text > span {
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text-3);
+}
+.gen-seg {
+    display: inline-flex;
+    flex: none;
+    flex-wrap: wrap;
+    align-self: flex-start;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid transparent;
+    border-radius: var(--r-pill);
+    background: var(--surface-2);
+}
+.gen-seg label {
+    position: relative;
+    cursor: pointer;
+}
+.gen-seg input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.gen-seg span {
+    display: block;
+    padding: 7px 13px;
+    border-radius: var(--r-pill);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 18px;
+    color: var(--text-3);
+}
+.gen-seg input:checked + span {
+    background: var(--on-fill);
+    color: var(--on-fill-text);
+}
+.gen-seg input:focus-visible + span {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+.gen-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: -4px;
+    padding: 4px;
+    border: 1px solid transparent;
+    border-radius: var(--r-2);
+}
+.gen-swatch,
+.gen-swatch:hover {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    padding: 0;
+    border: 3px solid var(--surface);
+    border-radius: var(--r-pill);
+    background: var(--swatch);
+    box-shadow: 0 0 0 1px var(--border);
+}
+.gen-swatch.selected {
+    box-shadow: 0 0 0 3px var(--text);
+}
+.gen-btn {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 8px;
+    width: auto;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: none;
+    cursor: pointer;
+}
+.gen-btn:hover {
+    background: color-mix(in srgb, var(--surface-2), var(--text) 8%);
+}
+.gen-btn svg {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    fill: currentColor;
+}
+.gen-btn-primary,
+.gen-btn-primary:hover {
+    background: var(--color-accent);
+    color: var(--color-text-on-accent);
+}
+.gen-swatch-other {
+    position: relative;
+}
+.gen-btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.gen-sec-body,
+.gen-sec-pwd {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+#genSecTile .pin-digit-row {
+    display: flex;
+    align-self: flex-start;
+    gap: 4px;
+    margin: -4px;
+    padding: 4px;
+    border: 1px solid transparent;
+    border-radius: var(--r-2);
+}
+#genSecTile input.pin-digit {
+    width: 52px;
+    height: 56px;
+    font-size: 2.4em;
+}
+.gen-sec-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--divider);
+}
+.gen-sec-foot .gen-tile-desc {
+    flex: 1 1 200px;
+}
+#divSystemOptions > .button-container-footerHtml.gen-foot {
+    justify-content: flex-end;
+    gap: 12px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+}
+.gen-foot-text {
+    margin-right: auto;
+    font-size: 14px;
+    color: var(--text-3);
+}
+#divSystemOptions .gen-foot button {
+    min-height: 44px;
+    text-transform: none;
+    font-size: 14px;
+}
+#divSystemOptions .gen-foot .gen-foot-link {
+    min-width: 0;
+    padding: 0 6px;
+    border: 0;
+    background: transparent;
+    color: var(--color-accent);
+}
+@media (max-width: 999px) {
+    .gen-layout {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: 0;
+    }
+    .gen-hero {
+        position: static;
+        height: auto;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        justify-items: start;
+        gap: 10px 16px;
+        padding: 28px 48px 12px;
+        background: transparent;
+        text-align: left;
+    }
+    .gen-hero-icon {
+        width: 84px;
+        height: 84px;
+    }
+    .gen-hero-title {
+        font-size: 34px;
+    }
+    .gen-hero-desc {
+        margin-left: 0;
+    }
+    .gen-hero-chips {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+    .gen-body {
+        padding: 8px 48px 110px;
+    }
+}
+@media (max-width: 767px) {
+    .gen-hero {
+        gap: 8px 14px;
+        padding: 20px 16px 8px;
+    }
+    .gen-hero-icon {
+        width: 56px;
+        height: 56px;
+    }
+    .gen-hero-title {
+        font-size: 26px;
+    }
+    .gen-hero-url {
+        font-size: 14px;
+    }
+    .gen-hero-desc {
+        display: none;
+    }
+    .gen-body {
+        gap: 12px;
+        padding: 8px 16px 140px;
+    }
+    .gen-tab {
+        padding: 8px 14px;
+        font-size: 14px;
+    }
+    .gen-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+    .gen-tile {
+        padding: 18px;
+    }
+    .gen-field-pair {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .gen-row-text {
+        flex-basis: 100%;
+    }
+    #divSystemOptions > .button-container-footerHtml.gen-foot {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .gen-foot-text {
+        flex: 1 1 100%;
+        font-size: 13px;
+    }
+    #divSystemOptions .gen-foot .gen-foot-link {
+        flex: 0 1 auto;
+    }
+}
+
 .accent-swatch {
     position: relative;
     display: block;
@@ -4503,7 +5038,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
         pointer-events: auto;
         transform: translateY(0);
     }
-    #divSystemOptions,
     #divSomfyRooms,
     #divSomfyMotors,
     #divSomfyGroups {
@@ -4951,13 +5485,13 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 #divShadeSetupTasks .setup-signal svg { width: 14px; height: 14px; }
 #divShadeSetupTasks .setup-row .editDevice-pair-icon { position: relative; }
 #divShadeSetup .setup-single .setup-task-b { padding: 14px; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-side, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-cols, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col:not(:has(> .unibloc-container:not([style*="none"]))) { display: none; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title { display: flex; align-items: center; gap: 10px; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
-:is(#somfyShade, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
-:is(#somfyShade, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
+:is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap, :is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-side, :is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-cols, :is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+:is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
+:is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col:not(:has(> .unibloc-container:not([style*="none"]))) { display: none; }
+:is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title { display: flex; align-items: center; gap: 10px; }
+:is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
+:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
+:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
 #somfyShade .tile-pills { margin-left: auto; display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
 #somfyShade .tile-pills .setup-badge { margin: 0; font-size: 0.62em; }
 /* Survol et clic restent dans l'orange du badge : sans quoi button:hover/:active (base.css) le
@@ -5067,30 +5601,6 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #gpMembersBlock .gp-sep { border: 0; border-top: 1px solid var(--color-border); margin: 0 -20px; width: calc(100% + 40px); align-self: flex-start; height: 0; flex: none; box-sizing: border-box; }
 #gpMembersBlock .gp-cards { display: flex; flex-direction: column; gap: 8px; }
 #gpMembersBlock.gp-empty .gp-sep { display: none; }
-#divSystemOptions .tile-wrap .unibloc-container { margin: 0; }
-#divSystemOptions .tile-tip { display: none; }
-#divSystemOptions .gen-ha { margin: 0; width: 100%; }
-#btnRebootGeneral { display: none; }
-@media (max-width: 767px) { #btnRebootGeneral { display: flex; } }
-#divSystemOptions .gen-grid > .unibloc-container > .uniRow { flex: none; }
-#divSystemOptions .gen-row { display: flex; flex-direction: column; gap: 10px; }
-#divSystemOptions .gen-row > .uniRow { flex: 1 1 0; margin: 0; }
-@media (min-width: 1000px) {
-    .subtab-content#divSystemOptions { max-width: 1440px; }
-    #divSystemOptions .tile-side { flex-direction: row; }
-    #divSystemOptions .tile-side > * { flex: 1 1 0; }
-    #divSystemOptions .tile-cols.gen-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
-    #divSystemOptions .gen-grid > .gen-serv, #divSystemOptions .gen-grid > .gen-sec { grid-column: 1 / -1; }
-    #divSystemOptions .gen-serv .uniblocRow { flex-direction: row; }
-    #divSystemOptions .gen-serv .uniblocRow > .uniRow { flex: 1 1 0; }
-    #divSystemOptions .gen-row { flex-direction: row; }
-}
-@media (min-width: 1600px) {
-    #divSystemOptions .tile-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; grid-template-areas: "cols side"; }
-    #divSystemOptions .tile-side { grid-area: side; flex-direction: column; }
-    #divSystemOptions .tile-cols { grid-area: cols; }
-    #divSystemOptions .tile-tip { display: flex; flex-direction: column; }
-}
 #divFirmware .tile-wrap .unibloc-container { margin: 0; }
 #divFirmware .tile-tip { display: none; }
 #divFirmware .fw-grid > .unibloc-container > .uniRow { flex: none; }

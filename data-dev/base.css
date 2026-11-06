@@ -272,6 +272,68 @@
 }
 
 /* =======================================================================
+ *  JETONS DE LA NOUVELLE INTERFACE (maquette A2, validés le 05/11/2026)
+ *  Les pages migrées n'utilisent que ceux-ci ; les --color-* au-dessus
+ *  disparaîtront avec la dernière page de l'ancienne interface.
+ *  ======================================================================= */
+:root {
+    --r-1: 6px;
+    --r-2: 12px;
+    --r-3: 14px;
+    --r-4: 18px;
+    --r-5: 22px;
+    --r-pill: 999px;
+}
+:root[data-theme="light"] {
+    --bg: #eceae6;
+    --panel: #f7f6f3;
+    --surface: #ffffff;
+    --surface-2: #f1efeb;
+    --sunken: #dcdad5;
+    --topbar: #f8fafd;
+    --border: #dcdfe4;
+    --divider: #eeece8;
+    --text: #17181c;
+    --text-2: #3b3d44;
+    --text-3: #6b6d74;
+    --accent: #1a5fb4;
+    --on-fill: #17181c;
+    --on-fill-text: #ffffff;
+    --info-bg: #e5eefa;
+    --info: #154c90;
+    --warn-bg: #fff1d6;
+    --warn: #8a5300;
+    --danger-bg: #fdecea;
+    --danger: #b3261e;
+    --ok-bg: #e3f3e5;
+    --ok: #1f6b24;
+}
+:root[data-theme="dark"] {
+    --bg: #0e1013;
+    --panel: #1a1e24;
+    --surface: #222730;
+    --surface-2: #2a2f38;
+    --sunken: #16191e;
+    --topbar: #14171b;
+    --border: #363c47;
+    --divider: #2a2f38;
+    --text: #eceef2;
+    --text-2: #c3c8d1;
+    --text-3: #9aa0ab;
+    --accent: #6aa5ee;
+    --on-fill: #eceef2;
+    --on-fill-text: #0e1013;
+    --info-bg: #1b2c44;
+    --info: #8ab8f2;
+    --warn-bg: #3a2b0f;
+    --warn: #f2b24a;
+    --danger-bg: #3b1a18;
+    --danger: #ff8a80;
+    --ok-bg: #16301a;
+    --ok: #7bd17f;
+}
+
+/* =======================================================================
  *  COMPOSANTS GENERIQUES REUTILISABLES
  *  ======================================================================= */
 
@@ -923,7 +985,7 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
 
 /* =========================================================================
  * SECTION : RETOURS TACTILE & VISUEL (préférences utilisateur -- voir
- * general.FeedbackOverlay(), 40-general.js, bouton GENERAL_FEEDBACK).
+ * tuile #genFeedbackTile de la page Général, 40-general.js).
  *
  * Entièrement ADDITIF : n'édite aucune des règles :active déjà présentes
  * plus haut/plus bas dans ce fichier -- neutralisées ici via des overrides
@@ -1596,7 +1658,7 @@ fieldset {
 /* Même patron que .switch:has(input:disabled) et .slider-wrapper:has(.md3-range-input:disabled) :
  * grise la bascule et bloque le clic dès que ses entrées sont désactivées. Utilisé pour un réglage
  * qui n'a de sens que si un interrupteur amont est actif (ex: le style des commandes quand le
- * retour visuel des commandes est coupé, cf. general.FeedbackOverlay()) -- le curseur reste
+ * retour visuel des commandes est coupé) -- le curseur reste
  * visible sur la position mémorisée, il ne s'agit pas de perdre le choix mais de montrer qu'il
  * ne s'applique pas en l'état. */
 .SwitchBig:has(input:disabled) {
@@ -1657,7 +1719,7 @@ fieldset {
 }
 /* Même patron que .slider-wrapper:has(.md3-range-input:disabled) plus haut : grise le switch et
  * bloque le clic quand son input est désactivé (ex: interrupteur haptique sur un appareil sans
- * écran tactile, cf. general.FeedbackOverlay()). */
+ * écran tactile, cf. general._renderFeedback()). */
 .switch:has(input:disabled) {
     opacity:0.4;
     cursor:not-allowed;
