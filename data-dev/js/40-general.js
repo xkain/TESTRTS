@@ -65,6 +65,7 @@ class General {
         // appelé APRÈS celui-ci) : différé d'un tour pour compter le champ qui vient d'être marqué.
         ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateDirtyCount(), 0)));
         this._bindGeo();
+        this._saveBar = new SaveBar(page, { onSave: () => this.setGeneral(), onRevert: () => this.revertGeneral() });
         this.renderSecurityTile();
     }
     showGeneralTab(i) {
@@ -79,18 +80,54 @@ class General {
         document.querySelectorAll('#genPanels > [data-tab]').forEach(p => { p.hidden = parseInt(p.dataset.tab, 10) !== i; });
     }
     // La protection de l'interface s'enregistre à part (bouton de sa tuile, cf. saveSecurity) :
-    // elle n'entre ni dans le compteur ni dans Enregistrer/Annuler du bas de page.
-    _pageDirtyTargets() {
-        const sec = get('genSecTile');
-        return Array.from(get('divSystemOptions').querySelectorAll('.dirty-target'))
-            .filter(t => !sec.contains(t) && t.querySelector('.is-dirty'));
+    // elle n'entre pas dans la barre d'enregistrement.
+    // Chaque réglage compare sa valeur à l'écran à celle enregistrée : le thème, la couleur et la
+    // position ont leur propre référence, les retours visuels vivent dans le navigateur.
+    _generalFields() {
+        const s = this._lastSettings || {};
+        const page = get('divSystemOptions');
+        const radios = (name) => Array.from(page.querySelectorAll(`input[name="${name}"]`));
+        const radioVal = (name) => radios(name).find(r => r.checked)?.value || '';
+        const radioText = (name) => (v) => radios(name).find(r => r.value === String(v))?.nextElementSibling.textContent || v;
+        const yesNo = (v) => tr(v ? 'BT_YES' : 'BT_NO');
+        const tz = get('selTimeZone');
+        const tzText = (v) => Array.from(tz.options).find(o => o.value === v)?.text || v;
+        const geo = this._geoSettings || { geoLat: 99, geoLon: 0 };
+        const geoSet = geo.geoLat >= -90 && geo.geoLat <= 90;
+        const num = (v) => v === '' || isNaN(parseFloat(v)) ? v : String(parseFloat(v));
+        const fb = this.getFeedbackPrefs();
+        const fbStyle = (on, style) => on ? (style === 'flash' ? 'flash' : 'scale') : 'off';
+        const field = (label, els, saved, now, show = (v) => v, same = (a, b) => a === b) => ({ label, els, saved, now, show, same });
+        return [
+            field('GENERAL_HOSTNAME', [get('fldHostname')], s.hostname || '', get('fldHostname').value),
+            field('GENERAL_NTP_SERVER', [get('fldNtptimesever')], s.ntpServer || '', get('fldNtptimesever').value),
+            field('GENERAL_UPNP', [get('cbSsdpBroadcast')], !!s.ssdpBroadcast, get('cbSsdpBroadcast').checked, yesNo),
+            field('GENERAL_UPDATES', [get('cbCheckForUpdate')], !!s.checkForUpdate, get('cbCheckForUpdate').checked, yesNo),
+            field('GENERAL_TIMEZONE', [tz], s.posixZone || '', tz.value, tzText),
+            field('GEO_LAT', [get('inputGeoLat')], geoSet ? geo.geoLat.toFixed(2) : '', get('inputGeoLat').value.trim(), undefined, (a, b) => num(a) === num(b)),
+            field('GEO_LON', [get('inputGeoLon')], geoSet ? geo.geoLon.toFixed(2) : '', get('inputGeoLon').value.trim(), undefined, (a, b) => num(a) === num(b)),
+            field('GENERAL_DISPLAY_MODE', [get('selThemeMode'), ...radios('genTheme')], String(this._savedTheme ?? '0'), get('selThemeMode').value, radioText('genTheme')),
+            field('GENERAL_COLOR', [get('fldAccentColor')], (this._savedAccent || '').toLowerCase(), get('fldAccentColor').value.toLowerCase()),
+            field('FEEDBACK_VISUAL_COMMANDS', radios('genFbCommands'), fbStyle(fb.visualCommands, fb.styleCommands), radioVal('genFbCommands'), radioText('genFbCommands')),
+            field('FEEDBACK_VISUAL_UI', radios('genFbUi'), fbStyle(fb.visualUI, fb.style), radioVal('genFbUi'), radioText('genFbUi')),
+            field('FEEDBACK_VISUAL_FORMS', [get('cbFeedbackForms')], !!fb.visualForms, get('cbFeedbackForms').checked, yesNo),
+            field('FEEDBACK_HAPTIC_TOGGLE', [get('cbFeedbackHaptic')], !!fb.haptic, get('cbFeedbackHaptic').checked, yesNo)
+        ];
     }
+    // Un champ remis à sa valeur enregistrée perd aussi .is-dirty : le garde de sortie
+    // (confirmDiscardChanges) et la barre doivent dire la même chose.
     updateDirtyCount() {
-        const text = get('genDirtyText');
-        if (!text) return;
-        const n = this._pageDirtyTargets().length;
-        text.textContent = n === 0 ? tr('GENERAL_DIRTY_NONE') : n === 1 ? tr('GENERAL_DIRTY_ONE') : tr('GENERAL_DIRTY_MANY').replace('{N}', n);
-        get('btnGenRevert').hidden = n === 0;
+        if (!this._saveBar) return;
+        const diffs = [];
+        if (this._generalReady) this._generalFields().forEach(f => {
+            f.els.forEach(el => el.classList.remove('is-dirty'));
+            if (f.same(f.saved, f.now)) return;
+            (f.els.find(el => el.checked) || f.els[0]).classList.add('is-dirty');
+            diffs.push({ label: tr(f.label), from: f.show(f.saved), to: f.show(f.now) });
+        });
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        this._saveBar.update(diffs);
         get('btnGenSecApply').disabled = !get('genSecTile').querySelector('.is-dirty');
     }
     _clearPageDirty() {
@@ -107,6 +144,12 @@ class General {
         this.revertClientPreviews();
         this._clearPageDirty();
         this._renderHero();
+    }
+    // « Quitter sans enregistrer » rend les valeurs enregistrées : la barre compare des valeurs,
+    // elle réapparaîtrait sinon au retour sur la page.
+    discardChanges(scope) {
+        if (!scope || scope.contains(get('divSystemOptions'))) this.revertGeneral();
+        else this.revertClientPreviews(scope);
     }
     _renderHero() {
         const set = (id, v) => { const el = get(id); if (el) el.textContent = v; };
@@ -453,11 +496,14 @@ class General {
                 }
             }
 
+            this._generalReady = false;
             loadLang(() => {
                 ui.toElement(pnl, { general: settings });
 
                 this.populateLangSelect(settings.language);
                 this._renderHero();
+                this._generalReady = true;
+                this.updateDirtyCount();
             });
             if (settings.accentColor) {
                 this._savedAccent = settings.accentColor;
@@ -1351,7 +1397,6 @@ class General {
             () => {
                 if(typeof socket !== 'undefined') socket.close(3000, 'reboot');
                 putJSONSync('/reboot', {}, (err, response) => {
-                    get('btnSaveGeneral').classList.remove('disabled');
                     logger.debug('Reboot requested:', response);
                 });
                 ui.clearErrors();

@@ -634,11 +634,90 @@ function confirmDiscardChanges(onLeave, onStay, options) {
         if (typeof onStay === 'function') onStay();
     };
     div.querySelector('#btnUnsavedLeave').onclick = () => {
-        if (typeof general !== 'undefined' && typeof general.revertClientPreviews === 'function') general.revertClientPreviews(scope);
+        if (typeof general !== 'undefined' && general.initialized) general.discardChanges(scope);
         clearDirty(scope || undefined);
         closeOverlay(div);
         onLeave();
     };
+}
+
+// =========================================================================
+// SECTION : BARRE D'ENREGISTREMENT
+// =========================================================================
+// N'existe à l'écran que tant qu'une valeur diffère de la valeur enregistrée. La page lui passe la
+// liste des différences { label, from, to, secret } : elle seule sait lire et comparer ses champs.
+class SaveBar {
+    constructor(host, { onSave, onRevert }) {
+        this.diffs = [];
+        this.onSave = onSave;
+        this.onRevert = onRevert;
+        const el = this.el = document.createElement('div');
+        el.className = 'save-bar';
+        el.inert = true;
+        el.innerHTML = `
+    <button type="button" class="save-bar-list-btn"><svg><use href="#svg-list"></use></svg><i class="save-bar-badge"></i></button>
+    <span class="save-bar-text"></span>
+    <span class="save-bar-short"></span>
+    <button type="button" class="save-bar-revert-btn"></button>
+    <button type="button" class="save-bar-save-btn"><svg><use href="#svg-save"></use></svg><span></span></button>`;
+        host.appendChild(el);
+        el.querySelector('.save-bar-list-btn').onclick = () => this.showList();
+        el.querySelector('.save-bar-revert-btn').onclick = () => this.onRevert();
+        el.querySelector('.save-bar-save-btn').onclick = () => this.onSave();
+    }
+    static _value(d, v) {
+        if (d.secret) return '••••';
+        return v === '' || v == null ? tr('SAVEBAR_EMPTY') : String(v);
+    }
+    static detail(d) {
+        return tr('SAVEBAR_DETAIL').replace('{LABEL}', d.label).replace('{FROM}', SaveBar._value(d, d.from)).replace('{TO}', SaveBar._value(d, d.to));
+    }
+    static count(n) {
+        return n === 1 ? tr('SAVEBAR_DIRTY_ONE') : tr('SAVEBAR_DIRTY_MANY').replace('{N}', n);
+    }
+    update(diffs) {
+        this.diffs = diffs;
+        const el = this.el, n = diffs.length;
+        el.classList.toggle('shown', n > 0);
+        el.inert = n === 0;
+        // Vidée, la barre garde son dernier texte le temps de redescendre.
+        if (n === 0) return;
+        el.classList.toggle('many', n > 2);
+        el.querySelector('.save-bar-badge').textContent = n;
+        el.querySelector('.save-bar-list-btn').setAttribute('aria-label', tr('SAVEBAR_SHOW_LIST'));
+        el.querySelector('.save-bar-text').textContent = n === 1 ? SaveBar.detail(diffs[0])
+            : n === 2 ? tr('SAVEBAR_DIRTY_LIST').replace('{N}', n).replace('{LIST}', diffs.map(d => d.label).join(', '))
+            : SaveBar.count(n);
+        el.querySelector('.save-bar-short').textContent = n === 1 ? tr('SAVEBAR_SHORT_ONE') : tr('SAVEBAR_SHORT_MANY').replace('{N}', n);
+        el.querySelector('.save-bar-revert-btn').textContent = tr('BT_CANCEL');
+        el.querySelector('.save-bar-save-btn span').textContent = tr('BT_SAVE');
+    }
+    showList() {
+        const div = document.createElement('div');
+        div.className = 'modal-overlay';
+        div.innerHTML = `
+    <div class="message-content save-bar-sheet">
+    ${modalHeader('', 'svg-save', { type: 'small' })}
+    <div class="sub-message"><p>${tr('SAVEBAR_PENDING_DESC')}</p><ul class="save-bar-sheet-list"></ul></div>
+    <div class="button-container-row">
+    <button type="button" class="save-bar-sheet-stay-btn" line>${tr('BT_STAY_PAGE')}</button>
+    <button type="button" class="save-bar-sheet-revert-btn" line>${tr('BT_REVERT')}</button>
+    <button type="button" class="save-bar-sheet-save-btn">${tr('BT_SAVE')}</button>
+    </div>
+    </div>`;
+        // Libellés et valeurs viennent des champs saisis : textContent, jamais innerHTML.
+        div.querySelector('.modalHeader-title').textContent = SaveBar.count(this.diffs.length);
+        const list = div.querySelector('.save-bar-sheet-list');
+        this.diffs.forEach(d => {
+            const li = document.createElement('li');
+            li.textContent = SaveBar.detail(d);
+            list.appendChild(li);
+        });
+        shOverlay(div);
+        div.querySelector('.save-bar-sheet-stay-btn').onclick = () => closeOverlay(div);
+        div.querySelector('.save-bar-sheet-revert-btn').onclick = () => { closeOverlay(div); this.onRevert(); };
+        div.querySelector('.save-bar-sheet-save-btn').onclick = () => { closeOverlay(div); this.onSave(); };
+    }
 }
 
 // =========================================================================
