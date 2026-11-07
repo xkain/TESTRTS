@@ -675,6 +675,39 @@ body.modal-open {
 }
 
 /* =======================================================================
+ *  LISTE DES MODIFICATIONS NON ENREGISTRÉES (SaveBar.showList, 20-shell.js)
+ *  ======================================================================= */
+.save-bar-sheet {
+    max-width: 560px;
+    padding: 20px;
+    border-radius: var(--r-5);
+}
+.save-bar-sheet-list {
+    margin: 12px 0 0;
+    padding: 12px 16px;
+    list-style: none;
+    border-radius: var(--r-3);
+    background: var(--surface-2);
+    text-align: left;
+}
+.save-bar-sheet-list li + li {
+    margin-top: 6px;
+}
+.save-bar-sheet .button-container-row button {
+    flex: 1 1 auto;
+    width: auto;
+    border-radius: var(--r-2);
+    text-transform: none;
+    white-space: nowrap;
+}
+@media (max-width: 767px) {
+    .save-bar-sheet .button-container-row {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+}
+
+/* =======================================================================
  *  ASSISTANTS À ÉTAPES (wizard/stepper partagé : appairage, liaison groupe...)
  *  ======================================================================= */
 

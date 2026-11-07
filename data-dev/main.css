@@ -1662,7 +1662,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
 #divSystemOptions.subtab-content {
     max-width: none;
     margin: 0;
-    padding: 0;
+    padding: 0 0 110px;
     gap: 0;
     background: var(--bg);
     color: var(--text);
@@ -2084,29 +2084,6 @@ label.gen-row {
 .gen-sec-foot .gen-tile-desc {
     flex: 1 1 200px;
 }
-#divSystemOptions > .button-container-footerHtml.gen-foot {
-    justify-content: flex-end;
-    gap: 12px;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-}
-.gen-foot-text {
-    margin-right: auto;
-    font-size: 14px;
-    color: var(--text-3);
-}
-#divSystemOptions .gen-foot button {
-    min-height: 44px;
-    text-transform: none;
-    font-size: 14px;
-}
-#divSystemOptions .gen-foot .gen-foot-link {
-    min-width: 0;
-    padding: 0 6px;
-    border: 0;
-    background: transparent;
-    color: var(--color-accent);
-}
 @media (max-width: 999px) {
     .gen-layout {
         grid-template-columns: minmax(0, 1fr);
@@ -2179,17 +2156,6 @@ label.gen-row {
     }
     .gen-row-text {
         flex-basis: 100%;
-    }
-    #divSystemOptions > .button-container-footerHtml.gen-foot {
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    .gen-foot-text {
-        flex: 1 1 100%;
-        font-size: 13px;
-    }
-    #divSystemOptions .gen-foot .gen-foot-link {
-        flex: 0 1 auto;
     }
 }
 
@@ -5576,16 +5542,16 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     :is(#somfyShade, #somfyGroup) .tile-side .uniRow { width: 100%; flex: none; }
     :is(#somfyShade, #somfyGroup) .tile-col:first-child { flex: 0.8 1 0; }
 }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) { padding-bottom: 70px; }
-body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { display: none; }
+:is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
+:is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
+:is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) { padding-bottom: 70px; }
+body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { display: none; }
 @media (min-width: 768px) {
-    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { left: var(--sidebar-width); }
+    :is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { left: var(--sidebar-width); }
 }
 @media (max-width: 767px) {
-    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
-    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
+    :is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
+    :is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
 }
 #divShadeSetup .gw-members { display: flex; flex-direction: column; gap: 8px; }
 #divShadeSetup .gw-member { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1.5px solid var(--color-border); border-radius: var(--radius-row); cursor: pointer; }
