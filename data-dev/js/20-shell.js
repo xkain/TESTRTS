@@ -1230,68 +1230,6 @@ function _mountMobileSubtab(topId) {
     if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 }
 
-// Balayage horizontal vers l'onglet voisin, au doigt et sous 1000 px. Aux extrémités, le contenu
-// résiste (élastique) sans changer d'onglet. Le geste n'est pris qu'une fois nettement horizontal :
-// le défilement vertical reste au navigateur (touch-action: pan-y sur `area`, côté CSS).
-function bindTabSwipe(area, getIndex, count, setIndex) {
-    if (!area) return;
-    const mq = window.matchMedia('(max-width: 999px)');
-    const EDGE = 24, LOCK = 10;
-    let x0 = 0, y0 = 0, t0 = 0, dx = 0, mode = null;
-    // Bords d'écran laissés au geste "retour" du système ; champs et rangées défilantes gardent le leur.
-    const blocked = (el) => {
-        for (let n = el; n && n !== area; n = n.parentElement) {
-            if (n.matches('input, select, textarea')) return true;
-            if (n.scrollWidth > n.clientWidth && /auto|scroll/.test(getComputedStyle(n).overflowX)) return true;
-        }
-        return false;
-    };
-    const settle = (from) => {
-        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        area.style.transition = 'none';
-        area.style.transform = from ? `translateX(${from}px)` : '';
-        if (!from) return;
-        void area.offsetWidth;
-        area.style.transition = reduce ? 'none' : 'transform .2s ease';
-        area.style.transform = 'translateX(0)';
-    };
-    area.addEventListener('transitionend', () => { area.style.transition = ''; area.style.transform = ''; });
-    area.addEventListener('touchstart', (e) => {
-        mode = null;
-        if (!mq.matches || e.touches.length !== 1) return;
-        const t = e.touches[0];
-        if (t.clientX < EDGE || t.clientX > window.innerWidth - EDGE || blocked(e.target)) return;
-        x0 = t.clientX; y0 = t.clientY; t0 = Date.now(); dx = 0; mode = 'wait';
-    }, { passive: true });
-    area.addEventListener('touchmove', (e) => {
-        if (!mode) return;
-        const t = e.touches[0];
-        dx = t.clientX - x0;
-        const dy = t.clientY - y0;
-        if (mode === 'wait') {
-            if (Math.abs(dx) < LOCK && Math.abs(dy) < LOCK) return;
-            mode = Math.abs(dx) > Math.abs(dy) * 1.5 ? 'swipe' : null;
-            if (!mode) return;
-            area.style.transition = 'none';
-        }
-        const i = getIndex();
-        const atEnd = (dx > 0 && i === 0) || (dx < 0 && i === count - 1);
-        area.style.transform = `translateX(${atEnd ? dx / 4 : dx}px)`;
-    }, { passive: true });
-    const end = () => {
-        if (mode !== 'swipe') { mode = null; return; }
-        mode = null;
-        const i = getIndex();
-        const fast = Math.abs(dx) / Math.max(1, Date.now() - t0) > 0.4;
-        const next = (fast || Math.abs(dx) > area.clientWidth * 0.25) ? i + (dx < 0 ? 1 : -1) : i;
-        if (next === i || next < 0 || next >= count) { settle(dx / ((next < 0 || next >= count) ? 4 : 1)); return; }
-        setIndex(next);
-        settle(dx < 0 ? 48 : -48);
-    };
-    area.addEventListener('touchend', end);
-    area.addEventListener('touchcancel', () => { mode = null; settle(0); });
-}
-
 // Le tooltip d'uptime s'ouvre au :hover en CSS, ce qui suffit sur desktop. Sur tactile, :hover est
 // à la fois imprévisible et collant (il reste actif après le toucher), d'où cette bascule explicite
 // au clic sur la version mobile -- le CSS desktop reste inchangé.

@@ -1662,7 +1662,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
 #divSystemOptions.subtab-content {
     max-width: none;
     margin: 0;
-    padding: 0 0 110px;
+    padding: 0;
     gap: 0;
     background: var(--bg);
     color: var(--text);
@@ -1683,7 +1683,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     position: sticky;
     top: var(--topbar-height);
     align-self: start;
-    height: calc(100vh - var(--topbar-height) - 64px);
+    height: calc(100vh - var(--topbar-height));
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -1762,11 +1762,14 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     flex-direction: column;
     gap: 16px;
     min-width: 0;
-    padding: clamp(16px, 2.4vh, 28px) clamp(20px, 3vw, 48px) 96px;
+    /* La marge réservée à la barre d'enregistrement vit ici, dans la grille : posée sur la page,
+       elle laissait la colonne d'identité collante remonter d'autant en bas de page. */
+    padding: clamp(16px, 2.4vh, 28px) clamp(20px, 3vw, 48px) 110px;
 }
 .gen-tabs {
     display: flex;
     align-self: flex-start;
+    scroll-margin-top: calc(var(--topbar-height) + 16px);
     gap: 4px;
     max-width: 100%;
     box-sizing: border-box;
@@ -1799,9 +1802,6 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
 .gen-tab.selected {
     background: var(--on-fill);
     color: var(--on-fill-text);
-}
-.gen-panels {
-    touch-action: pan-y;
 }
 .gen-grid {
     display: grid;
@@ -2084,6 +2084,24 @@ label.gen-row {
 .gen-sec-foot .gen-tile-desc {
     flex: 1 1 200px;
 }
+.gen-pager {
+    display: flex;
+    gap: 12px;
+    padding-top: 8px;
+}
+.gen-pager-btn {
+    flex: 0 1 calc(50% - 6px);
+    min-height: 48px;
+    padding: 6px 16px;
+    border-radius: var(--r-3);
+    background: var(--surface);
+    line-height: 1.25;
+}
+.gen-pager-next {
+    justify-content: flex-end;
+    margin-left: auto;
+    text-align: right;
+}
 @media (max-width: 999px) {
     .gen-layout {
         grid-template-columns: minmax(0, 1fr);
@@ -2120,29 +2138,31 @@ label.gen-row {
 }
 @media (max-width: 767px) {
     .gen-hero {
-        gap: 8px 14px;
-        padding: 20px 16px 8px;
+        display: block;
+        padding: 16px 16px 0;
     }
-    .gen-hero-icon {
-        width: 56px;
-        height: 56px;
+    .gen-hero-icon,
+    .gen-hero-kick,
+    .gen-hero-url,
+    .gen-hero-desc,
+    .gen-hero-chips {
+        display: none;
     }
     .gen-hero-title {
-        font-size: 26px;
+        margin: 0;
+        font-size: 22px;
     }
-    .gen-hero-url {
-        font-size: 14px;
-    }
-    .gen-hero-desc {
-        display: none;
+    .gen-tabs {
+        scroll-margin-top: calc(var(--mobile-header-height) + 48px);
     }
     .gen-body {
         gap: 12px;
         padding: 8px 16px 140px;
     }
     .gen-tab {
-        padding: 8px 14px;
-        font-size: 14px;
+        min-height: 40px;
+        padding: 8px 12px;
+        font-size: 13px;
     }
     .gen-grid {
         grid-template-columns: minmax(0, 1fr);

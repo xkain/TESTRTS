@@ -45,7 +45,16 @@ class General {
             const tab = e.target.closest('.gen-tab');
             if (tab) this.showGeneralTab(parseInt(tab.dataset.tab, 10));
         });
-        bindTabSwipe(get('genPanels'), () => this._generalTab || 0, 4, (i) => this.showGeneralTab(i));
+        ['btnGenPrev', 'btnGenNext'].forEach(id => get(id).addEventListener('click', (e) => {
+            this.showGeneralTab(parseInt(e.currentTarget.dataset.tab, 10));
+            // Ramène la barre d'onglets en haut de l'écran : le nouvel onglet se lit depuis son début.
+            const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            get('genTabs').scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+        }));
+        // Les boutons dépendent de la hauteur de l'onglet affiché : elle change au chargement, à
+        // l'affichage de la page, au choix d'un mode de protection, à la rotation de l'écran.
+        if (window.ResizeObserver) new ResizeObserver(() => this._updatePager()).observe(get('genPanels'));
+        window.addEventListener('resize', () => this._updatePager());
         page.querySelectorAll('input[name="genTheme"]').forEach(r => r.addEventListener('change', () => {
             const sel = get('selThemeMode');
             sel.value = r.value;
@@ -75,9 +84,28 @@ class General {
             const on = parseInt(t.dataset.tab, 10) === i;
             t.classList.toggle('selected', on);
             t.setAttribute('aria-selected', on ? 'true' : 'false');
-            if (on) t.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            // Bande défilante (mobile) : on ne bouge qu'elle, jamais la page.
+            const strip = t.parentElement;
+            if (on && strip.scrollWidth > strip.clientWidth) strip.scrollLeft = t.offsetLeft - strip.offsetLeft - (strip.clientWidth - t.offsetWidth) / 2;
         });
         document.querySelectorAll('#genPanels > [data-tab]').forEach(p => { p.hidden = parseInt(p.dataset.tab, 10) !== i; });
+        this._updatePager();
+    }
+    // Onglet précédent et suivant en bas de l'onglet affiché, seulement quand il dépasse de
+    // l'écran : sur un onglet court, la barre d'onglets est déjà sous les yeux.
+    _updatePager() {
+        const pager = get('genPager'), panels = get('genPanels');
+        if (!pager || !panels.offsetParent) return;
+        const i = this._generalTab || 0;
+        const tabs = document.querySelectorAll('#genTabs .gen-tab');
+        [['btnGenPrev', i - 1], ['btnGenNext', i + 1]].forEach(([id, n]) => {
+            const btn = get(id);
+            btn.hidden = n < 0 || n >= tabs.length;
+            if (btn.hidden) return;
+            btn.dataset.tab = n;
+            btn.querySelector('span').textContent = tabs[n].textContent;
+        });
+        pager.hidden = panels.getBoundingClientRect().bottom + window.scrollY <= window.innerHeight;
     }
     // La protection de l'interface s'enregistre à part (bouton de sa tuile, cf. saveSecurity) :
     // elle n'entre pas dans la barre d'enregistrement.
