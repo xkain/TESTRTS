@@ -283,6 +283,15 @@
     --r-4: 18px;
     --r-5: 22px;
     --r-pill: 999px;
+    /* Échelle de texte en em : la page migrée pose 16 px sur son conteneur (html est à 14 px),
+       et seuls les éléments qui portent du texte fixent une taille, sinon les em se multiplient. */
+    --fs-1: .75em;
+    --fs-2: .8125em;
+    --fs-3: .875em;
+    --fs-4: .9375em;
+    --fs-5: 1.125em;
+    --fs-6: 1.25em;
+    --fs-7: 1.375em;
 }
 :root[data-theme="light"] {
     --bg: #eceae6;

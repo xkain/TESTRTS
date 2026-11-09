@@ -1666,6 +1666,8 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     gap: 0;
     background: var(--bg);
     color: var(--text);
+    /* Seul ancrage en px de la page : html est à 14 px pour l'ancienne interface. */
+    font-size: 16px;
 }
 #divSystemOptions [hidden] {
     display: none;
@@ -1706,7 +1708,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     min-width: 0;
 }
 .gen-hero-kick {
-    font-size: 12px;
+    font-size: var(--fs-1);
     font-weight: 700;
     letter-spacing: .06em;
     text-transform: uppercase;
@@ -1714,7 +1716,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
 }
 .gen-hero-title {
     margin: 6px 0 0;
-    font-size: clamp(26px, 2.6vw, 42px);
+    font-size: clamp(1.625em, 2.6vw, 2.625em);
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.05;
@@ -1723,14 +1725,14 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
 }
 .gen-hero-url {
     margin-top: 6px;
-    font-size: 15px;
+    font-size: var(--fs-4);
     font-weight: 600;
     color: var(--text-2);
 }
 .gen-hero-desc {
     margin: 10px auto 0;
     max-width: 36ch;
-    font-size: 14px;
+    font-size: var(--fs-3);
     line-height: 1.5;
     color: var(--text-3);
 }
@@ -1747,7 +1749,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     padding: 6px 12px;
     border-radius: var(--r-pill);
     background: var(--surface-2);
-    font-size: 13px;
+    font-size: var(--fs-2);
     font-weight: 600;
     color: var(--text-2);
 }
@@ -1791,7 +1793,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     border-radius: var(--r-pill);
     background: transparent;
     color: var(--text-3);
-    font-size: 15px;
+    font-size: var(--fs-4);
     font-weight: 600;
     text-transform: none;
     white-space: nowrap;
@@ -1808,7 +1810,8 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 16px;
 }
-.gen-grid > :last-child:nth-child(odd) {
+/* nth-of-type et non nth-child : le titre de section (<header>, mobile seulement) ne compte pas. */
+.gen-grid > div:last-child:nth-of-type(odd) {
     grid-column: 1 / -1;
 }
 .gen-tile {
@@ -1823,7 +1826,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
 }
 .gen-tile-title {
     margin: 0;
-    font-size: 12px;
+    font-size: var(--fs-1);
     font-weight: 700;
     letter-spacing: .06em;
     text-transform: uppercase;
@@ -1831,7 +1834,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
 }
 .gen-tile-desc {
     margin: 0;
-    font-size: 14px;
+    font-size: var(--fs-3);
     line-height: 1.5;
     color: var(--text-3);
 }
@@ -1842,7 +1845,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     color: var(--warn);
 }
 .gen-tile-value {
-    font-size: 20px;
+    font-size: var(--fs-6);
     font-weight: 700;
     color: var(--text);
 }
@@ -1857,7 +1860,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     min-width: 0;
 }
 .gen-field-label {
-    font-size: 13px;
+    font-size: var(--fs-2);
     font-weight: 700;
     color: var(--text);
 }
@@ -1895,7 +1898,7 @@ select.gen-input {
     border: 0;
     background: transparent;
     font: inherit;
-    font-size: 15px;
+    font-size: var(--fs-4);
     color: var(--text);
     outline: none;
     -webkit-appearance: none;
@@ -1918,7 +1921,7 @@ select.gen-input option {
 }
 .gen-input-unit {
     flex: none;
-    font-size: 14px;
+    font-size: var(--fs-3);
     color: var(--text-3);
 }
 .gen-row {
@@ -1940,11 +1943,13 @@ label.gen-row {
     flex-direction: column;
     gap: 2px;
     min-width: 0;
-    font-size: 14px;
     color: var(--text);
 }
+.gen-row-text > b {
+    font-size: var(--fs-3);
+}
 .gen-row-text > span {
-    font-size: 13px;
+    font-size: var(--fs-2);
     line-height: 1.45;
     color: var(--text-3);
 }
@@ -1976,9 +1981,9 @@ label.gen-row {
     display: block;
     padding: 7px 13px;
     border-radius: var(--r-pill);
-    font-size: 13px;
+    font-size: var(--fs-2);
     font-weight: 600;
-    line-height: 18px;
+    line-height: 1.4;
     color: var(--text-3);
 }
 .gen-seg input:checked + span {
@@ -2025,7 +2030,7 @@ label.gen-row {
     border-radius: var(--r-pill);
     background: var(--surface-2);
     color: var(--text);
-    font-size: 14px;
+    font-size: var(--fs-3);
     font-weight: 700;
     text-transform: none;
     cursor: pointer;
@@ -2102,6 +2107,10 @@ label.gen-row {
     margin-left: auto;
     text-align: right;
 }
+/* Titres de section : sur mobile seulement, où les onglets deviennent des sections empilées. */
+.gen-sec-head {
+    display: none;
+}
 @media (max-width: 999px) {
     .gen-layout {
         grid-template-columns: minmax(0, 1fr);
@@ -2123,7 +2132,7 @@ label.gen-row {
         height: 84px;
     }
     .gen-hero-title {
-        font-size: 34px;
+        font-size: 2.125em;
     }
     .gen-hero-desc {
         margin-left: 0;
@@ -2139,34 +2148,79 @@ label.gen-row {
 @media (max-width: 767px) {
     .gen-hero {
         display: block;
-        padding: 16px 16px 0;
+        padding: 18px 16px 6px;
     }
     .gen-hero-icon,
-    .gen-hero-kick,
+    .gen-hero-title,
     .gen-hero-url,
-    .gen-hero-desc,
-    .gen-hero-chips {
+    .gen-hero-chips,
+    .gen-tabs,
+    #genPager {
         display: none;
     }
-    .gen-hero-title {
-        margin: 0;
-        font-size: 22px;
+    .gen-hero-kick {
+        display: block;
+        font-size: var(--fs-7);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        text-transform: none;
+        color: var(--text);
     }
-    .gen-tabs {
-        scroll-margin-top: calc(var(--mobile-header-height) + 48px);
+    .gen-hero-desc {
+        max-width: none;
+        margin: 6px 0 0;
+        line-height: 1.45;
     }
     .gen-body {
-        gap: 12px;
-        padding: 8px 16px 140px;
+        gap: 0;
+        padding: 0 16px 140px;
     }
-    .gen-tab {
-        min-height: 40px;
-        padding: 8px 12px;
-        font-size: 13px;
+    #divSystemOptions .gen-grid[hidden] {
+        display: grid;
     }
     .gen-grid {
         grid-template-columns: minmax(0, 1fr);
         gap: 12px;
+        padding-bottom: 8px;
+    }
+    .gen-sec-head {
+        position: sticky;
+        top: var(--gen-stick-top, var(--mobile-header-height));
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 8px -16px 0;
+        padding: 7px 16px;
+        background: var(--bg);
+    }
+    /* Filet sur le titre réellement collé seulement ; une ombre et non une bordure, pour que la
+       barre ne grandisse pas d'un pixel en se collant. */
+    .gen-sec-head.is-stuck {
+        box-shadow: 0 1px 0 var(--border);
+    }
+    .gen-sec-head h2 {
+        margin: 0;
+        font-size: var(--fs-3);
+        font-weight: 700;
+        line-height: 1.2;
+        color: var(--text);
+    }
+    .gen-sec-mini {
+        display: flex;
+        flex: none;
+        gap: 3px;
+    }
+    .gen-sec-mini i {
+        display: block;
+        width: 10px;
+        height: 3px;
+        border-radius: var(--r-pill);
+        background: var(--border);
+    }
+    .gen-sec-mini i.on {
+        background: var(--color-accent);
     }
     .gen-tile {
         padding: 18px;

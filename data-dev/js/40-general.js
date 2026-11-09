@@ -55,6 +55,7 @@ class General {
         // l'affichage de la page, au choix d'un mode de protection, à la rotation de l'écran.
         if (window.ResizeObserver) new ResizeObserver(() => this._updatePager()).observe(get('genPanels'));
         window.addEventListener('resize', () => this._updatePager());
+        this._bindGenSections();
         page.querySelectorAll('input[name="genTheme"]').forEach(r => r.addEventListener('change', () => {
             const sel = get('selThemeMode');
             sel.value = r.value;
@@ -91,11 +92,34 @@ class General {
         document.querySelectorAll('#genPanels > [data-tab]').forEach(p => { p.hidden = parseInt(p.dataset.tab, 10) !== i; });
         this._updatePager();
     }
+    // Mobile : les onglets s'empilent en sections dont le titre se colle sous la navigation.
+    // Le filet ne se pose que sur le titre effectivement collé, d'où ce calcul au défilement.
+    _bindGenSections() {
+        const mq = window.matchMedia('(max-width: 767px)');
+        const page = get('divSystemOptions');
+        let raf = 0;
+        const update = () => {
+            raf = 0;
+            const heads = page.querySelectorAll('.gen-sec-head');
+            if (!mq.matches || !page.offsetParent) return heads.forEach(h => h.classList.remove('is-stuck'));
+            const top = Math.max(0, ...['appHeader', 'divMobileBreadcrumbSlot', 'divMobileStickyNav'].map(id => get(id)).filter(Boolean)
+                .map(e => e.getBoundingClientRect().bottom));
+            page.style.setProperty('--gen-stick-top', top + 'px');
+            heads.forEach(h => {
+                const r = h.getBoundingClientRect(), p = h.parentElement.getBoundingClientRect();
+                h.classList.toggle('is-stuck', r.top <= top + 1 && r.bottom > top && p.top + 9 < r.top);
+            });
+        };
+        this._updateGenSections = () => { if (!raf) raf = requestAnimationFrame(update); };
+        window.addEventListener('scroll', this._updateGenSections, { passive: true });
+        window.addEventListener('resize', this._updateGenSections);
+    }
     // Onglet précédent et suivant en bas de l'onglet affiché, seulement quand il dépasse de
     // l'écran : sur un onglet court, la barre d'onglets est déjà sous les yeux.
     _updatePager() {
         const pager = get('genPager'), panels = get('genPanels');
         if (!pager || !panels.offsetParent) return;
+        if (this._updateGenSections) this._updateGenSections();
         const i = this._generalTab || 0;
         const tabs = document.querySelectorAll('#genTabs .gen-tab');
         [['btnGenPrev', i - 1], ['btnGenNext', i + 1]].forEach(([id, n]) => {
