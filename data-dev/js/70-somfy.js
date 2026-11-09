@@ -352,9 +352,7 @@ class Somfy {
                 this.maxRooms = somfy.maxRooms;
                 this.maxShades = somfy.maxShades;
                 this.maxGroups = somfy.maxGroups;
-                this.setCfgCount('shade', (this.shades || []).length);
-                this.setCfgCount('group', (this.groups || []).length);
-                this.setCfgCount('room', Math.max(0, _rooms.length - 1));
+                ['shade', 'group', 'room'].forEach(k => this.renderCfgPage(k));
 
                 // Persisté (contrairement à maxRooms/Shades/Groups ci-dessus, seulement utilisés
                 // ponctuellement pour ces spans) : consommé plus tard par _openEditScheduleGroup() et
@@ -1364,9 +1362,6 @@ class Somfy {
         const hasRooms = _rooms.length > 1;
         const totalDevices = shades.length + groups.length;
 
-        setDisp(getEl('divRoomEmptyState'), !hasRooms);
-        setDisp(getEl('divGroupEmptyState'), groups.length === 0);
-        setDisp(getEl('divShadeEmptyState'), shades.length === 0);
 
         const divRepeatList = getEl('divRepeatList');
         togglePair(divRepeatList && divRepeatList.children.length > 0, 'divRepeaterEmptyState', 'divRepeaterListContent');
@@ -3801,42 +3796,220 @@ class Somfy {
                 : shades.filter(s => s.roomId === roomId).length + groups.filter(g => g.roomId === roomId).length;
             countEl.innerText = count;
         });
-        document.querySelectorAll('#divRoomList .cfg-tile').forEach(tile => {
-            const roomId = parseInt(tile.dataset.roomid, 10);
-            const set = (kind, n) => { const b = tile.querySelector(`.cfg-tile-stat[data-kind="${kind}"] b`); if (b) b.textContent = n; };
-            set('shade', shades.filter(s => s.roomId === roomId).length);
-            set('group', groups.filter(g => g.roomId === roomId).length);
+        this.renderCfgPage('room');
+    }
+
+    // =====================================================================
+    // SECTION : PAGES-LISTES (Équipements, Groupes, Pièces, Plannings)
+    // =====================================================================
+    // Un seul moteur pour les quatre pages : chacune fournit ses éléments (_cfgItems), le moteur
+    // applique filtre, recherche et tri, puis remplit la colonne d'identité (capacité, filtres).
+    _cfgConf(kind) {
+        return {
+            shade: { root: 'divShadeListContainer', list: 'divShadeList', max: this.maxShades ? this.maxShades - 2 : 0, modes: ['az', 'room'] },
+            group: { root: 'divGroupListContainer', list: 'divGroupList', max: this.maxGroups ? this.maxGroups - 2 : 0, modes: ['az', 'room'] },
+            room: { root: 'divRoomListContainer', list: 'divRoomList', max: this.maxRooms ? this.maxRooms - 2 : 0, modes: ['az'] },
+            schedule: { root: 'divScheduleListContainer', list: 'divScheduleList', max: this.maxSchedules || 30, modes: ['az', 'time'] }
+        }[kind];
+    }
+    _cfgStateOf(kind) {
+        if (!this._cfgState) this._cfgState = {};
+        return this._cfgState[kind] || (this._cfgState[kind] = { q: '', filter: 'all' });
+    }
+    _cfgRoomName(roomId) {
+        return (_rooms.find(r => r.roomId === roomId) || { name: tr('HOME') }).name;
+    }
+    _cfgItems(kind) {
+        if (kind === 'shade') return (this.shades || []).map(s => ({
+            name: s.name || '', roomId: s.roomId,
+            filters: [String(s.roomId)].concat(typeof shadeSetup !== 'undefined' && shadeSetup.missingSteps(s) ? ['todo'] : []),
+            text: `${s.name} ${this._cfgRoomName(s.roomId)} ${tr(this.shadeTypeKey(s.shadeType) || '')}`,
+            html: () => this.shadeTileHtml(s)
+        }));
+        if (kind === 'group') return (this.groups || []).map(g => ({
+            name: g.name || '', roomId: g.roomId, filters: [String(g.roomId)],
+            text: `${g.name} ${this._cfgRoomName(g.roomId)} ${this.groupMemberNames(g).join(' ')}`,
+            html: () => this.groupTileHtml(g)
+        }));
+        if (kind === 'room') return _rooms.filter(r => r.roomId !== 0).map(r => {
+            const nS = (this.shades || []).filter(s => s.roomId === r.roomId).length;
+            const nG = (this.groups || []).filter(g => g.roomId === r.roomId).length;
+            return { name: r.name || '', filters: [nS + nG ? 'used' : 'empty'], text: r.name || '', html: () => this.roomTileHtml(r, nS, nG) };
+        });
+        return this._groupSchedules(this.schedules).map(g => {
+            const target = this.scheduleTargetName(g);
+            return {
+                name: target, group: g,
+                filters: [...new Set(g.steps.map(({ sc }) => sc.timeRef === 'sunrise' || sc.timeRef === 'sunset' ? 'sun' : 'time'))],
+                text: `${target} ${g.name} ${g.steps.map(({ effectiveMinutes }) => formatMinutesOfDay(effectiveMinutes).main).join(' ')}`,
+                html: () => this.scheduleTileHtml(g)
+            };
         });
     }
-    cfgTileMenu(editJs, deleteJs) {
+    _cfgFilters(kind, items) {
+        const count = (key) => items.filter(it => it.filters.includes(key)).length;
+        const all = { key: 'all', label: tr(kind === 'schedule' ? 'LIST_FILTER_ALL_M' : 'LIST_FILTER_ALL_F'), n: items.length };
+        if (kind === 'room') return [all, { key: 'used', label: tr('LIST_FILTER_USED'), n: count('used'), dot: 'accent' }, { key: 'empty', label: tr('LIST_FILTER_EMPTY'), n: count('empty') }];
+        if (kind === 'schedule') return [all, { key: 'time', label: tr('SCHEDULE_TIME_REF_CLOCK'), n: count('time'), dot: 'accent' }, { key: 'sun', label: tr('VR_SUN'), n: count('sun'), dot: 'sun' }];
+        const rooms = _rooms.map(r => r.roomId).filter(id => items.some(it => it.roomId === id));
+        const list = [all].concat(rooms.map(id => ({ key: String(id), label: this._cfgRoomName(id), n: count(String(id)) })));
+        if (kind === 'shade' && count('todo')) list.push({ key: 'todo', label: tr('LIST_FILTER_TODO'), n: count('todo'), warn: true });
+        return list;
+    }
+    _cfgBody(kind, items, mode) {
+        const az = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
+        const head = (label, n, icon) => `<div class="cfg-tiles-title">${icon ? `<svg><use href="${icon}"></use></svg>` : ''}${escHtml(label)}<span>${n}</span></div>`;
+        if (kind === 'schedule') {
+            if (mode === 'time') return items.map(it => it.html()).join('');
+            const byTarget = new Map();
+            items.forEach(it => { if (!byTarget.has(it.name)) byTarget.set(it.name, []); byTarget.get(it.name).push(it); });
+            return [...byTarget.keys()].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })).map(name => {
+                const g = byTarget.get(name);
+                return head(name, g.length, this._scheduleTargetIcon(g[0].group)) + g.map(it => it.html()).join('');
+            }).join('');
+        }
+        if (mode !== 'room') return items.slice().sort(az).map(it => it.html()).join('');
+        const titled = _rooms.length > 1;
+        return _rooms.map(r => r.roomId).concat([...new Set(items.map(it => it.roomId))].filter(id => !_rooms.some(r => r.roomId === id))).map(id => {
+            const g = items.filter(it => it.roomId === id).sort(az);
+            return g.length ? (titled ? head(this._cfgRoomName(id), g.length) : '') + g.map(it => it.html()).join('') : '';
+        }).join('');
+    }
+    renderCfgPage(kind) {
+        const conf = this._cfgConf(kind);
+        const root = get(conf.root), list = get(conf.list);
+        if (!root || !list) return;
+        const st = this._cfgStateOf(kind);
+        const items = this._cfgItems(kind);
+        const filters = this._cfgFilters(kind, items);
+        if (!filters.some(f => f.key === st.filter && f.n)) st.filter = 'all';
+        const q = st.q.trim().toLowerCase();
+        const vis = items.filter(it => (st.filter === 'all' || it.filters.includes(st.filter)) && (!q || it.text.toLowerCase().includes(q)));
+        const mode = this.syncCfgSort(kind);
+        const n = items.length, max = conf.max;
+        const body = n && !vis.length
+            ? `<div class="cfg-nomatch"><b>${tr('LIST_NOMATCH_TITLE')}</b><span>${tr('LIST_NOMATCH_DESC')}</span><button type="button" class="gen-btn" onclick="somfy.resetCfgFilters('${kind}');">${tr('BT_SHOW_ALL')}</button></div>`
+            : this._cfgBody(kind, vis, mode);
+        list.innerHTML = this.cfgAddTileHtml(kind, max && n >= max) + body;
+        list.classList.toggle('cfg-sort-az', mode === 'az');
+        root.classList.toggle('is-empty', n === 0);
+
+        const left = Math.max(0, max - n);
+        root.querySelector('.gen-cap-n').innerHTML = max ? `${n} <small>${tr('LIST_CAP_OF').replace('{MAX}', max)}</small>` : `${n}`;
+        root.querySelector('.gen-cap-left').textContent = max ? tr(left === 1 ? 'LIST_CAP_FREE_ONE' : 'LIST_CAP_FREE_MANY').replace('{N}', left) : '';
+        root.querySelector('.gen-cap').classList.toggle('is-full', !!max && left === 0);
+        root.querySelector('.gen-meter i').style.width = max ? `${Math.min(100, Math.round(n / max * 100))}%` : '0';
+        root.querySelector('.gen-filters-list').innerHTML = filters.map(f => `<button type="button" class="gen-filter${f.warn ? ' is-warn' : ''}${st.filter === f.key ? ' on' : ''}" data-dot="${f.key === 'all' ? 'all' : f.dot || ''}" aria-pressed="${st.filter === f.key}" onclick="somfy.setCfgFilter('${kind}', '${f.key}');"><i class="gen-filter-dot"></i>${escHtml(f.label)}<span class="gen-filter-n">${f.n}</span></button>`).join('');
+        // Plannings : la note n'a de sens que tant que la position géographique manque.
+        if (kind === 'schedule') root.querySelector('.gen-hero-note').hidden = !!this._sunTimesToday();
+        root.querySelector('.gen-hero-menu').classList.toggle('has-query', !!q);
+    }
+    setCfgFilter(kind, key) {
+        const st = this._cfgStateOf(kind);
+        st.filter = st.filter === key && key !== 'all' ? 'all' : key;
+        this.renderCfgPage(kind);
+    }
+    setCfgSearch(kind, value) {
+        this._cfgStateOf(kind).q = value;
+        this.renderCfgPage(kind);
+    }
+    resetCfgFilters(kind) {
+        const st = this._cfgStateOf(kind);
+        st.q = '';
+        st.filter = 'all';
+        const input = get(this._cfgConf(kind).root).querySelector('.gen-search-input');
+        if (input) input.value = '';
+        this.renderCfgPage(kind);
+    }
+    // Mobile : recherche et tri vivent dans un menu ⋮ au bout de la ligne du titre.
+    toggleCfgTools(kind) {
+        const root = get(this._cfgConf(kind).root);
+        const btn = root.querySelector('.gen-hero-menu');
+        const open = !root.classList.contains('tools-open');
+        root.classList.toggle('tools-open', open);
+        btn.setAttribute('aria-expanded', open);
+        if (!open) return;
+        root.querySelector('.gen-search-input').focus();
+        const close = (e) => {
+            if (root.querySelector('.gen-tools').contains(e.target) || btn.contains(e.target)) return;
+            root.classList.remove('tools-open');
+            btn.setAttribute('aria-expanded', false);
+            document.removeEventListener('pointerdown', close, true);
+        };
+        document.addEventListener('pointerdown', close, true);
+    }
+    cfgNoteAction(kind) {
+        if (kind === 'schedule') return confirmDiscardChanges(() => { activateGrpid('divSystemOptions'); general.showGeneralTab(1); });
+        confirmDiscardChanges(() => { activateGrpid('divHomePnl'); this.startDashEdit(); });
+    }
+    cfgSortMode(kind) {
+        let mode = null;
+        try { mode = localStorage.getItem('cfgSort.' + kind); } catch (e) { mode = null; }
+        const modes = this._cfgConf(kind).modes;
+        return modes.includes(mode) ? mode : modes[0];
+    }
+    setCfgSort(kind, mode) {
+        try { localStorage.setItem('cfgSort.' + kind, mode); } catch (e) { }
+        this.renderCfgPage(kind);
+    }
+    syncCfgSort(kind) {
+        const mode = this.cfgSortMode(kind);
+        document.querySelectorAll(`.cfg-sort[data-kind="${kind}"] button`).forEach(b => {
+            const on = b.dataset.sort === mode;
+            b.classList.toggle('on', on);
+            b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        return mode;
+    }
+    // La tuile entière ouvre la fiche : le menu ne porte que ce qu'un clic sur la tuile ne fait pas.
+    cfgTileMenu(deleteJs, extraHtml = '') {
         return `<div class="cfg-tile-menu overlayHeader-dropdown-container" onclick="event.stopPropagation();">
         <button type="button" class="cfg-tile-more" title="${tr('OPTION')}" onclick="somfy.toggleTileMenu(this);"><svg><use href="#svg-menuVertical"></use></svg></button>
         <div class="overlayHeader-dropdown-menu">
-        <div class="dropdown-item" onclick="this.parentElement.classList.remove('show'); ${editJs};"><svg><use href="#svg-edit"></use></svg>${tr('BT_EDIT')}</div>
+        ${extraHtml}
         <div class="dropdown-item is-danger" onclick="this.parentElement.classList.remove('show'); ${deleteJs};"><svg><use href="#svg-trash"></use></svg>${tr('BT_DELETE')}</div>
         </div>
         </div>`;
     }
+    shadeTypeKey(shadeType) {
+        return document.querySelector(`#selShadeType option[value="${shadeType}"]`)?.getAttribute('tr') || '';
+    }
+    shadeTileState(shade) {
+        return this.shadeStateText(shade) + (shade.tiltType ? ` · ∠ ${shade.tiltPosition}%` : '');
+    }
     shadeTileHtml(shade) {
         const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { indic: 'svg-indicRoller' };
-        const typeKey = document.querySelector(`#selShadeType option[value="${shade.shadeType}"]`)?.getAttribute('tr');
+        const typeKey = this.shadeTypeKey(shade.shadeType);
         return `<div class="cfg-tile" data-roomid="${shade.roomId}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-shadetype="${shade.shadeType}" onclick="somfy.openEditShade(${shade.shadeId});">
-        <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#${st.indic}"></use></svg></span>${this.cfgTileMenu(`somfy.openEditShade(${shade.shadeId})`, `somfy.deleteShade(${shade.shadeId})`)}</div>
+        <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#${st.indic}"></use></svg></span>${this.cfgTileMenu(`somfy.deleteShade(${shade.shadeId})`)}</div>
         <div class="cfg-tile-name"><span class="name-text">${escHtml(shade.name)}</span>${typeKey ? `<span class="cfg-tile-sub">${tr(typeKey)}</span>` : ''}</div>
-        <div class="cfg-tile-foot"><span class="cfg-tile-id">${tr('ID')}${shade.remoteAddress}</span>${this.cfgTileRoomHtml(shade.roomId)}${typeof shadeSetup !== 'undefined' ? shadeSetup.badgeHtml(shade) : ''}</div>
+        <div class="cfg-tile-state">${this.shadeTileState(shade)}</div>
+        <div class="cfg-tile-foot">${this.cfgTileRoomHtml(shade.roomId)}${typeof shadeSetup !== 'undefined' ? shadeSetup.badgeHtml(shade) : ''}<span class="cfg-tile-id">${shade.remoteAddress}</span></div>
         </div>`;
+    }
+    groupMemberNames(group) {
+        return (group.linkedShades || []).map(m => ((this.shades || []).find(x => x.shadeId === m.shadeId) || m).name || '');
     }
     groupTileHtml(group) {
         const members = group.linkedShades || [];
+        const names = this.groupMemberNames(group);
         const icons = members.slice(0, 3).map(m => {
             const sh = (this.shades || []).find(x => x.shadeId === m.shadeId);
             const st = this.shadeTypes.find(x => x.type === (sh ? sh.shadeType : m.shadeType)) || { indic: 'svg-indicRoller' };
             return `<span><svg><use href="#${st.indic}"></use></svg></span>`;
         }).join('') + (members.length > 3 ? `<span class="cfg-tile-more-n">+${members.length - 3}</span>` : '');
         return `<div class="cfg-tile" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});">
-        <div class="cfg-tile-top">${members.length ? `<span class="cfg-tile-stack">${icons}</span>` : `<span class="cfg-tile-icon"><svg><use href="#svg-group"></use></svg></span>`}${this.cfgTileMenu(`somfy.openEditGroup(${group.groupId})`, `somfy.deleteGroup(${group.groupId})`)}</div>
+        <div class="cfg-tile-top">${members.length ? `<span class="cfg-tile-stack">${icons}</span>` : `<span class="cfg-tile-icon"><svg><use href="#svg-group"></use></svg></span>`}${this.cfgTileMenu(`somfy.deleteGroup(${group.groupId})`)}</div>
         <div class="cfg-tile-name"><span class="name-text">${escHtml(group.name)}</span><span class="cfg-tile-sub">${tr('GROUP_LINKED_COUNT').replace('{n}', members.length)}</span></div>
-        <div class="cfg-tile-foot"><span class="cfg-tile-id">${tr('ID')}${group.remoteAddress}</span>${this.cfgTileRoomHtml(group.roomId)}</div>
+        ${names.length ? `<div class="cfg-tile-state">${escHtml(names.slice(0, 3).join(', '))}${names.length > 3 ? ` +${names.length - 3}` : ''}</div>` : ''}
+        <div class="cfg-tile-foot">${this.cfgTileRoomHtml(group.roomId)}<span class="cfg-tile-id">${group.remoteAddress}</span></div>
+        </div>`;
+    }
+    roomTileHtml(room, nShades, nGroups) {
+        return `<div class="cfg-tile" data-roomid="${room.roomId}" onclick="somfy.openEditRoom(${room.roomId});">
+        <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#svg-navRoom"></use></svg></span>${this.cfgTileMenu(`somfy.deleteRoom(${room.roomId})`)}</div>
+        <div class="cfg-tile-name"><span class="name-text">${escHtml(room.name)}</span></div>
+        <div class="cfg-tile-state">${nShades + nGroups ? tr('LIST_ROOM_STATS').replace('{S}', nShades).replace('{G}', nGroups) : tr('LIST_ROOM_EMPTY')}</div>
         </div>`;
     }
     toggleTileMenu(btn) {
@@ -3844,77 +4017,21 @@ class Somfy {
         document.querySelectorAll('.overlayHeader-dropdown-menu.show').forEach(m => { if (m !== menu) m.classList.remove('show'); });
         menu.classList.toggle('show');
     }
-    cfgTilesByRoom(items, html) {
-        const byRoom = new Map();
-        items.forEach(it => { if (!byRoom.has(it.roomId)) byRoom.set(it.roomId, []); byRoom.get(it.roomId).push(html(it)); });
-        const order = _rooms.map(r => r.roomId).filter(id => byRoom.has(id));
-        byRoom.forEach((v, id) => { if (!order.includes(id)) order.push(id); });
-        const titled = _rooms.length > 1;
-        return order.map(id => {
-            const room = _rooms.find(r => r.roomId === id) || { name: tr('HOME') };
-            return (titled ? `<div class="cfg-tiles-title">${escHtml(room.name)}<span>${byRoom.get(id).length}</span></div>` : '') + byRoom.get(id).join('');
-        }).join('');
-    }
-
-    cfgSortMode(kind) {
-        let mode = null;
-        try { mode = localStorage.getItem('cfgSort.' + kind); } catch (e) { mode = null; }
-        const modes = kind === 'schedule' ? ['time', 'target'] : ['room', 'az'];
-        return modes.includes(mode) ? mode : (kind === 'group' ? 'az' : modes[0]);
-    }
-    setCfgSort(kind, mode) {
-        try { localStorage.setItem('cfgSort.' + kind, mode); } catch (e) { }
-        if (kind === 'schedule') this.setScheduleList(this.schedules);
-        else this.renderCfgList(kind);
-    }
-    syncCfgSort(kind, count) {
-        const mode = this.cfgSortMode(kind);
-        document.querySelectorAll(`.cfg-sort[data-kind="${kind}"]`).forEach(seg => {
-            seg.style.display = count > 1 ? '' : 'none';
-            seg.querySelectorAll('button').forEach(b => {
-                const on = b.dataset.sort === mode;
-                b.classList.toggle('on', on);
-                b.setAttribute('aria-pressed', on ? 'true' : 'false');
-            });
-        });
-        return mode;
-    }
-    renderCfgList(kind) {
-        const isShade = kind === 'shade';
-        const items = (isShade ? this.shades : this.groups) || [];
-        const html = isShade ? (it => this.shadeTileHtml(it)) : (it => this.groupTileHtml(it));
-        const mode = this.cfgSortMode(kind);
-        const list = get(isShade ? 'divShadeList' : 'divGroupList');
-        const body = mode === 'az'
-            ? items.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base', numeric: true })).map(html).join('')
-            : this.cfgTilesByRoom(items, html);
-        list.innerHTML = this.cfgAddTileHtml(kind) + body;
-        list.classList.toggle('cfg-sort-az', mode === 'az');
-        this.syncCfgSort(kind, items.length);
-        this.setCfgCount(kind, items.length);
-    }
-    setCfgCount(kind, n) {
-        const el = get({ shade: 'spanShadeCount', group: 'spanGroupCount', room: 'spanRoomCount' }[kind]);
-        if (!el) return;
-        const max = { shade: this.maxShades, group: this.maxGroups, room: this.maxRooms }[kind];
-        el.textContent = max ? `${n}/${max - 2}` : `${n}`;
-    }
-    cfgAddTileHtml(kind) {
+    cfgAddTileHtml(kind, full) {
         const conf = {
-            shade: ['shadeSetup.open();', `<span tr="BT_ADD_DEVICE">${tr('BT_ADD_DEVICE')}</span>`],
-            group: ['groupSetup.open();', `<span tr="BT_ADD_GROUP">${tr('BT_ADD_GROUP')}</span>`],
-            room: ['somfy.openEditRoom();', `<span tr="BT_ADD_ROOM">${tr('BT_ADD_ROOM')}</span>`]
+            shade: ['shadeSetup.open();', `<span tr="BT_ADD_DEVICE">${tr('BT_ADD_DEVICE')}</span><small tr="LIST_ADD_DEVICE_DESC">${tr('LIST_ADD_DEVICE_DESC')}</small>`],
+            group: ['groupSetup.open();', `<span tr="BT_ADD_GROUP">${tr('BT_ADD_GROUP')}</span><small tr="LIST_ADD_GROUP_DESC">${tr('LIST_ADD_GROUP_DESC')}</small>`],
+            room: ['somfy.openEditRoom();', `<span tr="BT_ADD_ROOM">${tr('BT_ADD_ROOM')}</span><small tr="LIST_ADD_ROOM_DESC">${tr('LIST_ADD_ROOM_DESC')}</small>`],
+            schedule: ['somfy.openEditScheduleGroup();', `<span tr="SCHEDULE_ADD">${tr('SCHEDULE_ADD')}</span><small tr="LIST_ADD_SCHEDULE_DESC">${tr('LIST_ADD_SCHEDULE_DESC')}</small>`]
         }[kind];
-        return `<button type="button" class="cfg-tile cfg-tile-add" onclick="${conf[0]}"><span class="cfg-tile-plus"><svg><use href="#svg-add"></use></svg></span>${conf[1]}</button>`;
+        return `<button type="button" class="cfg-tile cfg-tile-add" onclick="${conf[0]}"${full ? ' disabled' : ''}><svg><use href="#svg-add"></use></svg>${conf[1]}</button>`;
     }
     cfgTileRoomHtml(roomId) {
-        const room = _rooms.find(r => r.roomId === roomId) || { name: tr('HOME') };
-        return `<span class="cfg-tile-room"><svg><use href="#svg-navRoom"></use></svg>${escHtml(room.name)}</span>`;
+        return `<span class="cfg-tile-room">${escHtml(this._cfgRoomName(roomId))}</span>`;
     }
 
     setRoomsList(rooms) {
         if (this.dashEditing) { this._dashPending.rooms = rooms; return; }
-        let divCfg = '';
         const homeName = tr('HOME');
         const slider = get('divRoomSelector');
         let divPills = `<div class="room-pill active" data-roomid="0" onclick="somfy.selectRoom(0)"><span>${homeName}</span><span class="room-count">0</span></div>`;
@@ -3924,13 +4041,6 @@ class Somfy {
         rooms.sort((a, b) => a.sortOrder - b.sortOrder);
         rooms.forEach(room => {
             divPills += `<div class="room-pill animScale" data-roomid="${room.roomId}" onclick="somfy.selectRoom(${room.roomId})"><span>${escHtml(room.name)}</span><span class="room-count">0</span></div>`;
-
-            divCfg += `<div class="cfg-tile" data-roomid="${room.roomId}" onclick="somfy.openEditRoom(${room.roomId});">
-            <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#svg-navRoom"></use></svg></span>${this.cfgTileMenu(`somfy.openEditRoom(${room.roomId})`, `somfy.deleteRoom(${room.roomId})`)}</div>
-            <div class="cfg-tile-name"><span class="name-text">${escHtml(room.name)}</span></div>
-            <div class="cfg-tile-foot"><span class="cfg-tile-stat" data-kind="shade"><b>0</b> ${tr('SUBTAB_DEVICES')}</span><span class="cfg-tile-stat" data-kind="group"><b>0</b> ${tr('SUBTAB_GROUPS')}</span></div>
-            </div>`;
-
             divOpts += `<option value="${room.roomId}">${escHtml(room.name)}</option>`;
             _rooms.push(room);
         });
@@ -3941,8 +4051,6 @@ class Somfy {
         const navContainer = document.querySelector('.room-nav-container');
         if(navContainer) navContainer.style.display = rooms.length === 0 ? 'none' : 'flex';
 
-        get('divRoomList').innerHTML = this.cfgAddTileHtml('room') + divCfg;
-        this.setCfgCount('room', rooms.length);
         get('selShadeRoom').innerHTML = divOpts;
         get('selGroupRoom').innerHTML = divOpts;
 
@@ -4403,7 +4511,7 @@ class Somfy {
             divCtl += byRoom.get(id).join('');
         });
         this.syncVRLayout();
-        this.renderCfgList('shade');
+        this.renderCfgPage('shade');
         let shadeControls = get('divShadeControls');
         shadeControls.innerHTML = divCtl;
         this.checkEmptyState();
@@ -5273,6 +5381,7 @@ class Somfy {
             btn.style.display = state.sunSensor ? '' : 'none';
             btn.dataset.on = (state.flags & 0x01) === 0x01;
         });
+        document.querySelectorAll(`#divShadeList .cfg-tile[data-shadeid="${sId}"] .cfg-tile-state`).forEach(el => { el.textContent = this.shadeTileState(cached || state); });
         document.querySelectorAll(`.somfyShadeCtl[data-shadeid="${sId}"], .card-sheet[data-shadeid="${sId}"]`).forEach(d => {
             Object.assign(d.dataset, {
                 direction: state.direction,
@@ -5937,7 +6046,7 @@ class Somfy {
             }
         }
         this.syncVRLayout();
-        this.renderCfgList('group');
+        this.renderCfgPage('group');
         let groupControls = get('divGroupControls');
         groupControls.innerHTML = divCtl;
         this.checkEmptyState();

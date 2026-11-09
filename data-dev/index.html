@@ -1341,26 +1341,28 @@
                         <span data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES"></span></div>
 
                     <div id="divSomfyMotors" class="subtab-content" style="display:none;">
-                        <div id="divShadeListContainer">
-                            <div class="cfg-page-head">
-                                <div class="cfg-page-intro">
-                                    <h1 class="cfg-page-title" tr="SUBTAB_DEVICES"></h1>
-                                    <p class="cfg-page-desc"><span tr="PAGE_DEVICES_DESC">Les volets, stores et portes pilotés par ce boîtier. Ouvrez une tuile pour régler un équipement.</span> <span tr="DRAG_SORT"></span></p>
+                        <div id="divShadeListContainer" class="gen-layout cfg-list" data-kind="shade">
+                            <section class="gen-hero">
+                                <svg class="gen-hero-icon"><use href="#svg-indicShutter"></use></svg>
+                                <div class="gen-hero-text">
+                                    <h2 class="gen-hero-title" tr="SUBTAB_DEVICES"></h2>
+                                    <p class="gen-hero-desc" tr="PAGE_DEVICES_DESC"></p>
                                 </div>
-                                <div class="cfg-page-tools">
-                                    <span id="spanShadeCount" class="cfg-page-count"></span>
+                                <button type="button" class="gen-hero-menu" onclick="somfy.toggleCfgTools('shade');" tr="LIST_SEARCH_SORT" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
+                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                <nav class="gen-filters"><h3 class="gen-filters-title" tr="SUBTAB_ROOMS"></h3><div class="gen-filters-list"></div></nav>
+                                <p class="gen-hero-note"><span tr="DRAG_SORT"></span><button type="button" class="gen-btn" onclick="somfy.cfgNoteAction('shade');" tr="BT_REORDER_DASH"></button></p>
+                            </section>
+                            <div class="gen-body">
+                                <div class="gen-tools">
+                                    <label class="gen-search"><svg><use href="#svg-search"></use></svg><input type="search" class="gen-search-input" oninput="somfy.setCfgSearch('shade', this.value);" tr="LIST_SEARCH_DEVICES"></label>
+                                    <span class="gen-tools-label" tr="LIST_SORT"></span>
                                     <div class="cfg-sort" data-kind="shade" role="group">
-                                        <button type="button" data-sort="room" aria-pressed="false" onclick="somfy.setCfgSort('shade', 'room');" tr="SORT_BY_ROOM">Par pièce</button>
-                                        <button type="button" data-sort="az" aria-pressed="false" onclick="somfy.setCfgSort('shade', 'az');" tr="SORT_AZ">A → Z</button>
+                                        <button type="button" data-sort="az" aria-pressed="false" onclick="somfy.setCfgSort('shade', 'az');" tr="SORT_AZ"></button>
+                                        <button type="button" data-sort="room" aria-pressed="false" onclick="somfy.setCfgSort('shade', 'room');" tr="SORT_BY_ROOM"></button>
                                     </div>
                                 </div>
-                            </div>
-                            <div id="divShadeEmptyState" class="empty-state" style="display:none;">
-                                <svg class="empty-icon"><use href="#svg-shutter"></use></svg>
-                                <p tr="EMPTY_DEVICE_TITLE"></p>
-                                <p class="empty-subtext" tr="EMPTY_DEVICE_DESC"></p>
-                            </div>
-                            <div id="divShadeListContent">
+                                <div class="cfg-empty"><h3 class="cfg-empty-title" tr="EMPTY_DEVICE_TITLE"></h3><p class="cfg-empty-desc" tr="EMPTY_DEVICE_DESC"></p></div>
                                 <div id="divShadeList" class="cfg-tiles"></div>
                             </div>
                         </div>
@@ -1831,27 +1833,28 @@
                     </div>
 
                     <div id="divSomfyGroups" class="subtab-content" style="display:none;">
-                        <div id="divGroupListContainer">
-                            <div class="cfg-page-head">
-                                <div class="cfg-page-intro">
-                                    <h1 class="cfg-page-title" tr="SUBTAB_GROUPS"></h1>
-                                    <p class="cfg-page-desc"><span tr="PAGE_GROUPS_DESC">Un groupe commande plusieurs équipements d’un seul geste, avec sa propre adresse radio.</span> <span tr="DRAG_SORT"></span></p>
+                        <div id="divGroupListContainer" class="gen-layout cfg-list" data-kind="group">
+                            <section class="gen-hero">
+                                <svg class="gen-hero-icon"><use href="#svg-group"></use></svg>
+                                <div class="gen-hero-text">
+                                    <h2 class="gen-hero-title" tr="SUBTAB_GROUPS"></h2>
+                                    <p class="gen-hero-desc" tr="PAGE_GROUPS_DESC"></p>
                                 </div>
-                                <div class="cfg-page-tools">
-                                    <span id="spanGroupCount" class="cfg-page-count"></span>
+                                <button type="button" class="gen-hero-menu" onclick="somfy.toggleCfgTools('group');" tr="LIST_SEARCH_SORT" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
+                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                <nav class="gen-filters"><h3 class="gen-filters-title" tr="SUBTAB_ROOMS"></h3><div class="gen-filters-list"></div></nav>
+                                <p class="gen-hero-note"><span tr="DRAG_SORT"></span><button type="button" class="gen-btn" onclick="somfy.cfgNoteAction('group');" tr="BT_REORDER_DASH"></button></p>
+                            </section>
+                            <div class="gen-body">
+                                <div class="gen-tools">
+                                    <label class="gen-search"><svg><use href="#svg-search"></use></svg><input type="search" class="gen-search-input" oninput="somfy.setCfgSearch('group', this.value);" tr="LIST_SEARCH_GROUPS"></label>
+                                    <span class="gen-tools-label" tr="LIST_SORT"></span>
                                     <div class="cfg-sort" data-kind="group" role="group">
-                                        <button type="button" data-sort="room" aria-pressed="false" onclick="somfy.setCfgSort('group', 'room');" tr="SORT_BY_ROOM">Par pièce</button>
-                                        <button type="button" data-sort="az" aria-pressed="false" onclick="somfy.setCfgSort('group', 'az');" tr="SORT_AZ">A → Z</button>
+                                        <button type="button" data-sort="az" aria-pressed="false" onclick="somfy.setCfgSort('group', 'az');" tr="SORT_AZ"></button>
+                                        <button type="button" data-sort="room" aria-pressed="false" onclick="somfy.setCfgSort('group', 'room');" tr="SORT_BY_ROOM"></button>
                                     </div>
                                 </div>
-                            </div>
-                            <div id="divGroupEmptyState" class="empty-state" style="display:none;">
-                                <svg class="empty-icon"><use href="#svg-group"></use></svg>
-                                <p tr="EMPTY_GROUP_TITLE"></p>
-                                <p class="empty-subtext" tr="EMPTY_GROUP_DESC"></p>
-                            </div>
-
-                            <div id="divGroupListContent">
+                                <div class="cfg-empty"><h3 class="cfg-empty-title" tr="EMPTY_GROUP_TITLE"></h3><p class="cfg-empty-desc" tr="EMPTY_GROUP_DESC"></p></div>
                                 <div id="divGroupList" class="cfg-tiles"></div>
                             </div>
                         </div>
@@ -2055,50 +2058,51 @@
                     </div>
 
                     <div id="divSomfyRooms" class="subtab-content">
-                        <div id="divRoomListContainer">
-                            <div class="cfg-page-head">
-                                <div class="cfg-page-intro">
-                                    <h1 class="cfg-page-title" tr="SUBTAB_ROOMS"></h1>
-                                    <p class="cfg-page-desc"><span tr="PAGE_ROOMS_DESC">Les pièces rangent équipements et groupes en sections sur le tableau de bord.</span> <span tr="DRAG_SORT"></span></p>
+                        <div id="divRoomListContainer" class="gen-layout cfg-list" data-kind="room">
+                            <section class="gen-hero">
+                                <svg class="gen-hero-icon"><use href="#svg-navRoom"></use></svg>
+                                <div class="gen-hero-text">
+                                    <h2 class="gen-hero-title" tr="SUBTAB_ROOMS"></h2>
+                                    <p class="gen-hero-desc" tr="PAGE_ROOMS_DESC"></p>
                                 </div>
-                                <div class="cfg-page-tools">
-                                    <span id="spanRoomCount" class="cfg-page-count"></span>
+                                <button type="button" class="gen-hero-menu" onclick="somfy.toggleCfgTools('room');" tr="LIST_SEARCH_SORT" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
+                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                <nav class="gen-filters"><h3 class="gen-filters-title" tr="LIST_FILTER_CONTENT"></h3><div class="gen-filters-list"></div></nav>
+                                <p class="gen-hero-note"><span tr="LIST_ROOMS_NOTE"></span><button type="button" class="gen-btn" onclick="somfy.cfgNoteAction('room');" tr="BT_REORDER_DASH"></button></p>
+                            </section>
+                            <div class="gen-body">
+                                <div class="gen-tools">
+                                    <label class="gen-search"><svg><use href="#svg-search"></use></svg><input type="search" class="gen-search-input" oninput="somfy.setCfgSearch('room', this.value);" tr="LIST_SEARCH_ROOMS"></label>
                                 </div>
-                            </div>
-                            <div id="divRoomEmptyState" class="empty-state" style="display:none;">
-                                <svg class="empty-icon"><use href="#svg-emptyRoom"></use></svg>
-                                <p tr="EMPTY_ROOM_TITLE"></p>
-                                <p class="empty-subtext" tr="EMPTY_ROOM_DESC"></p>
-                            </div>
-
-                            <div id="divRoomListContent">
+                                <div class="cfg-empty"><h3 class="cfg-empty-title" tr="EMPTY_ROOM_TITLE"></h3><p class="cfg-empty-desc" tr="EMPTY_ROOM_DESC"></p></div>
                                 <div id="divRoomList" class="cfg-tiles"></div>
                             </div>
                         </div>
                     </div>
 
                     <div id="divSomfySchedules" style="display:none;" class="subtab-content">
-                        <div id="divScheduleListContainer">
-                            <div class="cfg-page-head">
-                                <div class="cfg-page-intro">
-                                    <h1 class="cfg-page-title" tr="SUBTAB_SCHEDULES"></h1>
-                                    <p class="cfg-page-desc"><span tr="PAGE_SCHEDULES_DESC">Les commandes que le boîtier envoie seul, à heure fixe ou au lever et au coucher du soleil.</span></p>
+                        <div id="divScheduleListContainer" class="gen-layout cfg-list" data-kind="schedule">
+                            <section class="gen-hero">
+                                <svg class="gen-hero-icon"><use href="#svg-navSchedule"></use></svg>
+                                <div class="gen-hero-text">
+                                    <h2 class="gen-hero-title" tr="SUBTAB_SCHEDULES"></h2>
+                                    <p class="gen-hero-desc" tr="PAGE_SCHEDULES_DESC"></p>
                                 </div>
-                                <div class="cfg-page-tools">
-                                    <span id="spanScheduleCount" class="cfg-page-count"></span>
+                                <button type="button" class="gen-hero-menu" onclick="somfy.toggleCfgTools('schedule');" tr="LIST_SEARCH_SORT" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
+                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                <nav class="gen-filters"><h3 class="gen-filters-title" tr="LIST_FILTER_TRIGGER"></h3><div class="gen-filters-list"></div></nav>
+                                <p class="gen-hero-note"><span tr="LIST_GEO_NOTE"></span><button type="button" class="gen-btn" onclick="somfy.cfgNoteAction('schedule');" tr="GENERAL_GEO_TITLE"></button></p>
+                            </section>
+                            <div class="gen-body">
+                                <div class="gen-tools">
+                                    <label class="gen-search"><svg><use href="#svg-search"></use></svg><input type="search" class="gen-search-input" oninput="somfy.setCfgSearch('schedule', this.value);" tr="LIST_SEARCH_SCHEDULES"></label>
+                                    <span class="gen-tools-label" tr="LIST_SORT"></span>
                                     <div class="cfg-sort" data-kind="schedule" role="group">
-                                        <button type="button" data-sort="time" aria-pressed="false" onclick="somfy.setCfgSort('schedule', 'time');" tr="SORT_BY_TIME">Par heure</button>
-                                        <button type="button" data-sort="target" aria-pressed="false" onclick="somfy.setCfgSort('schedule', 'target');" tr="SORT_BY_TARGET">Par cible</button>
+                                        <button type="button" data-sort="az" aria-pressed="false" onclick="somfy.setCfgSort('schedule', 'az');" tr="SORT_AZ"></button>
+                                        <button type="button" data-sort="time" aria-pressed="false" onclick="somfy.setCfgSort('schedule', 'time');" tr="SORT_BY_TIME"></button>
                                     </div>
                                 </div>
-                            </div>
-                            <div id="divScheduleEmptyState" class="empty-state" style="display:none;">
-                                <svg class="empty-icon"><use href="#svg-emptySchedule"></use></svg>
-                                <p tr="EMPTY_SCHEDULE_TITLE"></p>
-                                <p class="empty-subtext" tr="EMPTY_SCHEDULE_DESC"></p>
-                            </div>
-
-                            <div id="divScheduleListContent">
+                                <div class="cfg-empty"><h3 class="cfg-empty-title" tr="EMPTY_SCHEDULE_TITLE"></h3><p class="cfg-empty-desc" tr="EMPTY_SCHEDULE_DESC"></p></div>
                                 <div id="divScheduleList" class="cfg-tiles sched-tiles"></div>
                             </div>
                         </div>
