@@ -1810,9 +1810,15 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 16px;
 }
-/* nth-of-type et non nth-child : le titre de section (<header>, mobile seulement) ne compte pas. */
-.gen-grid > div:last-child:nth-of-type(odd) {
-    grid-column: 1 / -1;
+.gen-panels {
+    container-type: inline-size;
+}
+/* Dernier bloc impair étiré sur deux colonnes seulement : dès trois (3 × 340 + 2 × 16 px), il
+   reste dans la rangée. nth-of-type : le titre de section (<header>, mobile) ne compte pas. */
+@container (max-width: 1051px) {
+    .gen-grid > div:last-child:nth-of-type(odd) {
+        grid-column: 1 / -1;
+    }
 }
 .gen-tile {
     display: flex;
