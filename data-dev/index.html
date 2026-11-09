@@ -406,14 +406,22 @@
                                         </div>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="GENERAL_TILE_SERVICES"></h3>
-                                            <label class="gen-row dirty-target">
+                                            <div class="gen-row dirty-target">
                                                 <span class="gen-row-text"><b tr="GENERAL_UPNP"></b><span tr="GENERAL_UPNP_DESC"></span></span>
-                                                <span class="switch"><input id="cbSsdpBroadcast" name="ssdpBroadcast" type="checkbox" data-bind="general.ssdpBroadcast"><div></div></span>
-                                            </label>
-                                            <label class="gen-row dirty-target" for="cbCheckForUpdate">
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbSsdpBroadcast" name="ssdpBroadcast" type="checkbox" data-bind="general.ssdpBroadcast">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
+                                                </span>
+                                            </div>
+                                            <div class="gen-row dirty-target">
                                                 <span class="gen-row-text"><b tr="GENERAL_UPDATES"></b><span tr="GENERAL_UPDATES_DESC"></span></span>
-                                                <span class="switch"><input id="cbCheckForUpdate" type="checkbox" data-bind="general.checkForUpdate"><div></div></span>
-                                            </label>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbCheckForUpdate" type="checkbox" data-bind="general.checkForUpdate">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -514,14 +522,22 @@
                                                     <label><input type="radio" name="genFbUi" value="off"><span tr="NONE"></span></label>
                                                 </span>
                                             </div>
-                                            <label class="gen-row dirty-target" for="cbFeedbackForms">
+                                            <div class="gen-row dirty-target">
                                                 <span class="gen-row-text"><b tr="FEEDBACK_VISUAL_FORMS"></b><span tr="FEEDBACK_VISUAL_FORMS_DESC"></span></span>
-                                                <span class="switch"><input id="cbFeedbackForms" type="checkbox"><div></div></span>
-                                            </label>
-                                            <label class="gen-row dirty-target" for="cbFeedbackHaptic">
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbFeedbackForms" type="checkbox">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
+                                                </span>
+                                            </div>
+                                            <div class="gen-row dirty-target">
                                                 <span class="gen-row-text"><b tr="FEEDBACK_HAPTIC_TOGGLE"></b><span id="genHapticDesc" tr="FEEDBACK_HAPTIC_TOGGLE_DESC"></span></span>
-                                                <span class="switch"><input id="cbFeedbackHaptic" type="checkbox"><div></div></span>
-                                            </label>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbFeedbackHaptic" type="checkbox">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1745,7 +1761,7 @@
                                                         <div class="uniLeft">
                                                             <div class="uniblocSvg-S"><svg><use href="#svg-commandInverse"></use></svg></div>
                                                             <div class="uniText">
-                                                                <div class="uniLabel" tr="RADIO_COMMAND"></div>
+                                                                <div class="uniLabel" tr="DEVICE_FLIP_COMMANDS"></div>
                                                                 <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
                                                             </div>
                                                         </div>
@@ -1762,7 +1778,7 @@
                                                         <div class="uniLeft">
                                                             <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
                                                             <div class="uniText">
-                                                                <div class="uniLabel" tr="IS_POSITION"></div>
+                                                                <div class="uniLabel" tr="DEVICE_FLIP_POSITION"></div>
                                                                 <div class="uniStatus" tr="DEVICE_POSITION_DESC"></div>
                                                             </div>
                                                         </div>
@@ -2066,7 +2082,7 @@
                                                     <div class="uniLeft">
                                                         <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
                                                         <div class="uniText">
-                                                            <div class="uniLabel" tr="RADIO_COMMAND"></div>
+                                                            <div class="uniLabel" tr="DEVICE_FLIP_COMMANDS"></div>
                                                             <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
                                                         </div>
                                                     </div>

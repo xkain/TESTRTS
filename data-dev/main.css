@@ -2004,6 +2004,46 @@ label.gen-row {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
 }
+/* Variante booléenne de .gen-seg : une seule case à cocher -- le data-bind et l'UIBinder restent
+   inchangés, lui ne sait pas lire un groupe de radios -- rendue en deux moitiés Oui/Non. La moitié
+   active capte le clic sans rien faire, l'inactive le laisse passer jusqu'à la case : cliquer
+   « Oui » quand c'est déjà oui n'inverse pas l'état, contrairement à une bascule. */
+.gen-seg-bool {
+    position: relative;
+}
+.gen-seg-bool input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.gen-seg-bool span {
+    position: relative;
+    pointer-events: none;
+}
+.gen-seg-bool input:checked ~ .gen-seg-yes,
+.gen-seg-bool input:not(:checked) ~ .gen-seg-no {
+    background: var(--on-fill);
+    color: var(--on-fill-text);
+    pointer-events: auto;
+}
+.gen-seg-bool input:focus-visible + span {
+    outline: none;
+}
+.gen-seg-bool:has(input:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+/* Même patron que .switch:has(input:disabled) dans base.css : l'interrupteur haptique est
+   désactivé sur un appareil sans écran tactile (general._renderFeedback). */
+.gen-seg-bool:has(input:disabled) {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
 .gen-swatches {
     display: flex;
     flex-wrap: wrap;

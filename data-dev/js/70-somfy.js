@@ -5452,7 +5452,7 @@ class Somfy {
         const fp = g('divFlipPosition');
         if (fp) {
             const isDry = this.dryContactShadeTypes.includes(type);
-            [['.uniLabel', isDry ? 'IS_STATE' : 'IS_POSITION'],
+            [['.uniLabel', isDry ? 'DEVICE_FLIP_STATE' : 'DEVICE_FLIP_POSITION'],
              ['.uniStatus', isDry ? 'DEVICE_STATE_DESC' : 'DEVICE_POSITION_DESC']].forEach(([sel, cle]) => {
                 const el = fp.querySelector(sel);
                 if (el) { el.setAttribute('tr', cle); el.innerText = tr(cle); }

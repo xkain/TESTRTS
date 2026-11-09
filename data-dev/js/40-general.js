@@ -2105,10 +2105,14 @@ class General {
         <p id="secPasswordHint" class="gen-tile-desc"></p>
         </div>
 
-        <label id="genSecConfigOnly" class="gen-row dirty-target" for="cbSecureConfigOnly">
+        <div id="genSecConfigOnly" class="gen-row dirty-target">
         <span class="gen-row-text"><b>${tr('SECURITY_SECURE_CONFIG_ONLY')}</b><span>${tr('SECURITY_SECURE_CONFIG_DESC')}</span></span>
-        <span class="switch"><input id="cbSecureConfigOnly" name="hardwired" type="checkbox" data-bind="security.permissions.configOnly"><div></div></span>
-        </label>`;
+        <span class="gen-seg gen-seg-bool">
+        <input id="cbSecureConfigOnly" name="hardwired" type="checkbox" data-bind="security.permissions.configOnly">
+        <span class="gen-seg-yes">${tr('BT_YES')}</span>
+        <span class="gen-seg-no">${tr('BT_NO')}</span>
+        </span>
+        </div>`;
 
         ui.toElement(body, { security: this._securityData || { username: '', permissions: { configOnly: false } } });
         initSecretPinGroup(body.querySelectorAll('#divPopupPin .pin-digit'), this._hasPin);
