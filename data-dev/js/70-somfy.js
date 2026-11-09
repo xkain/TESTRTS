@@ -1286,37 +1286,45 @@ class Somfy {
     }
 
     updateWelcomeSteps() {
-        const root = get('divEmptyHome');
+        const root = get('divGetStarted');
         if (!root) return;
         const net = typeof wifi !== 'undefined' ? wifi : {};
-        const hotspot = !!net.isHotspot;
+        const netOk = !net.isHotspot;
         const eth = net._netType === 'lan' || net._netType === 'poe';
-        const radioOn = !!this._radioApplied?.radioInit;
-        const steps = [
-            ['Net', hotspot ? 'todo' : 'done', hotspot ? 'WELCOME_ST_TODO' : 'WELCOME_ST_NET_OK', hotspot ? '' : (eth ? 'Ethernet' : (net._wifiSsid || ''))],
-            ['Radio', radioOn ? 'done' : 'warn', radioOn ? 'WELCOME_ST_RAD_OK' : 'WELCOME_ST_RAD_OFF', ''],
-            ['Device', radioOn ? 'todo' : 'wait', radioOn ? 'WELCOME_ST_READY' : 'WELCOME_ST_WAIT', '']
-        ];
-        const icons = { done: 'svg-succes', warn: 'svg-warning', todo: 'svg-arrowRight', wait: 'svg-lock' };
-        const current = (steps.find(s => s[1] !== 'done') || steps[2])[0];
-        for (const [id, state, key, extra] of steps) {
-            const card = get('divWelcome' + id);
-            const dot = root.querySelector(`.welcome-dot[data-step="${id}"]`);
-            if (dot) {
-                dot.classList.toggle('is-done', state === 'done');
-                dot.classList.toggle('is-current', id === current);
-            }
+        const radioOn = this._isRadioOn();
+        const stage = !netOk ? 'net' : (radioOn ? 'ready' : 'radio');
+        root.dataset.stage = stage;
+        const setKey = (el, key) => { if (el) { el.setAttribute('tr', key); el.textContent = tr(key); } };
+        const [kick, lead, cta] = {
+            net: ['WELCOME_KICK_NET', 'WELCOME_LEAD_NET', 'BT_SETUP_NETWORK'],
+            radio: ['WELCOME_KICK_RADIO', 'WELCOME_LEAD_RADIO', 'BT_SETUP_RADIO'],
+            ready: ['WELCOME_KICK_READY', 'WELCOME_LEAD_READY', 'BT_ADD_FIRST_DEVICE']
+        }[stage];
+        setKey(get('spanWelcomeKick'), kick);
+        setKey(get('pWelcomeLead'), lead);
+        setKey(get('btnWelcomeCta').firstElementChild, cta);
+        const steps = {
+            Net: [netOk ? 'done' : 'current', netOk ? (eth ? 'WELCOME_NET_DONE_ETH' : 'WELCOME_NET_DONE_WIFI') : 'WELCOME_NET_DESC'],
+            Radio: [radioOn ? 'done' : (netOk ? 'current' : 'waiting'), radioOn ? 'WELCOME_RAD_DONE' : 'WELCOME_RAD_DESC'],
+            Device: [stage === 'ready' ? 'current' : 'waiting', 'WELCOME_ADD_DEVICE_DESC']
+        };
+        for (const [id, [state, key]] of Object.entries(steps)) {
+            const card = root.querySelector(`.home-step-card[data-step="${id}"]`);
             if (!card) continue;
             card.dataset.state = state;
-            card.classList.toggle('is-current', id === current);
-            const chip = card.querySelector('.welcome-state');
-            if (!chip) continue;
-            chip.querySelector('use').setAttribute('href', '#' + icons[state]);
-            const label = chip.children[1];
-            label.setAttribute('tr', key);
-            label.textContent = tr(key);
-            chip.children[2].textContent = extra;
+            setKey(card.querySelector('.home-step-desc > span'), key);
         }
+        const ssid = root.querySelector('.home-step-ssid');
+        if (ssid) ssid.textContent = netOk && !eth ? (net._wifiSsid || '') : '';
+    }
+    // Lu au clic, pas depuis data-stage : la radio peut s'allumer après le dernier rendu de l'accueil.
+    welcomeNextStep() {
+        if (get('divGetStarted')?.dataset.stage === 'net') ui.showNetworkConfig();
+        else if (this._isRadioOn()) ui.showShadeConfig();
+        else ui.showRadioConfig();
+    }
+    _isRadioOn() {
+        return !!(this._radioApplied?.radioInit ?? this.transceiver?.config?.radioInit);
     }
     checkEmptyState() {
         // #divGetStarted est un SIBLING de #divAuthenticated dans le DOM (pas un descendant) --
@@ -1391,6 +1399,7 @@ class Somfy {
             if (divShadeControls) divShadeControls.style.display = isConfigOpen ? 'none' : '';
             if (divGroupControls) divGroupControls.style.display = isConfigOpen ? 'none' : '';
         }
+        document.body.classList.toggle('is-home-welcome', isEmptyState && !isConfigOpen);
 
         // Colonne Groupes masquée / Équipements pleine largeur + centrée si aucun groupe n'est
         // visible dans la room active (couvre à la fois "0 groupe globalement" et "0 groupe dans

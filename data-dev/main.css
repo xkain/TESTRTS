@@ -799,28 +799,486 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     gap: 15px;
 }
 /* =======================================================================
- *  PAGE D'ACCUEIL - PREMIÈRE CONFIGURATION (Welcome / GetStarted)
+ *  PAGE D'ACCUEIL - PREMIÈRE CONFIGURATION (#divGetStarted, maquette A2)
  *  ======================================================================= */
 
+body.is-home-welcome .top-bar {
+    display: none;
+}
+body.is-home-welcome .container {
+    margin-top: 0;
+}
+/* Le ciel passe au sombre avec le thème, la maison reste claire (illustration non déclinée). */
 #divGetStarted {
+    --home-sky: linear-gradient(180deg, #cfe2f6 0%, #e6eef8 38%, #f6f1e9 64%, #efe9df 100%);
+    --home-ground: linear-gradient(180deg, #d9cfbf, #efe9df);
+    --home-glass: color-mix(in srgb, var(--surface), transparent 25%);
+    --home-shadow: 0 12px 30px rgba(40, 34, 24, .08);
+    position: relative;
     display: none;
     flex-direction: column;
-    flex: 1;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 0 20px 0 20px;
-    animation: slideUpFade 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) ;
-    min-height: calc(100vh - 102px);
+    min-height: 100vh;
+    overflow: hidden;
+    background: var(--home-sky);
+    color: var(--text);
 }
-.welcome-container {
+:root[data-theme="dark"] #divGetStarted {
+    --home-sky: linear-gradient(180deg, #16243a 0%, #131b27 45%, var(--bg) 100%);
+    --home-ground: linear-gradient(180deg, #2a2f38, var(--bg));
+    --home-shadow: 0 12px 30px rgba(0, 0, 0, .35);
+}
+.home-ico {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.home-sun {
+    position: absolute;
+    top: -120px;
+    right: 8%;
+    width: 420px;
+    height: 420px;
+    border-radius: var(--r-pill);
+    background: radial-gradient(circle, rgba(255, 224, 160, .9) 0%, rgba(255, 224, 160, .35) 38%, rgba(255, 224, 160, 0) 70%);
+    pointer-events: none;
+}
+:root[data-theme="dark"] .home-sun {
+    display: none;
+}
+.home-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.2fr);
+    align-items: end;
+    gap: clamp(24px, 3vw, 56px);
+    flex: 1 0 auto;
+    min-height: 420px;
+    padding: clamp(28px, 5vh, 64px) clamp(28px, 5vw, 96px) 0;
+}
+.home-hero-text {
+    align-self: center;
+    max-width: 620px;
+    padding-bottom: 32px;
+}
+.home-kick-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px 7px 10px;
+    border-radius: var(--r-pill);
+    background: var(--home-glass);
+    color: var(--ok);
+    font-size: 14px;
+    font-weight: 700;
+}
+.home-kick-badge i {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--r-pill);
+    background: #2e7d32;
+    box-shadow: 0 0 0 4px rgba(46, 125, 50, .18);
+}
+#divGetStarted[data-stage="net"] .home-kick-badge {
+    color: var(--warn);
+}
+#divGetStarted[data-stage="net"] .home-kick-badge i {
+    background: #f69300;
+    box-shadow: 0 0 0 4px rgba(246, 147, 0, .18);
+}
+.home-title {
+    margin: 16px 0 0;
+    font-size: clamp(36px, 3.5vw, 60px);
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: 1.02;
+    text-align: left;
+    color: var(--text);
+}
+.home-title-accent {
+    color: var(--accent);
+}
+.home-lead {
+    max-width: 540px;
+    margin: 18px 0 0;
+    font-size: clamp(17px, 1.25vw, 20px);
+    line-height: 1.55;
+    color: var(--text-2);
+}
+.home-cta-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 30px;
+}
+.home-cta-btn,
+.home-guide-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+    min-height: 56px;
+    border: 0;
+    border-radius: var(--r-pill);
+    font-family: inherit;
+    text-transform: none;
+    cursor: pointer;
+}
+.home-cta-btn {
+    padding: 0 28px;
+    background: #1a5fb4;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 800;
+    box-shadow: 0 10px 24px rgba(26, 95, 180, .32);
+    transition: transform .15s, box-shadow .15s;
+}
+.home-cta-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(26, 95, 180, .38);
+}
+.home-cta-btn .home-ico,
+.home-guide-btn .home-ico {
+    stroke-width: 2.2;
+}
+.home-guide-btn {
+    gap: 8px;
+    padding: 0 24px;
+    background: var(--home-glass);
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 700;
+}
+.home-alt-text {
+    margin: 22px 0 0;
+    font-size: 14.5px;
+    color: var(--text-3);
+}
+.home-alt-text a {
+    color: var(--accent);
+    font-weight: 700;
+    text-decoration: none;
+}
+.home-alt-text a:hover {
+    text-decoration: underline;
+}
+.home-art {
+    position: relative;
+    align-self: end;
+    justify-self: center;
+    width: 100%;
+    max-width: 760px;
+}
+.home-house-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+.home-wave-group {
+    display: none;
+    fill: none;
+    stroke: #1a5fb4;
+    stroke-width: 5;
+    stroke-linecap: round;
+}
+#divGetStarted[data-stage="ready"] .home-wave-group {
+    display: inline;
+}
+.home-ground {
+    flex: none;
+    height: 20px;
+    background: var(--home-ground);
+}
+.home-steps {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-top: -6px;
+    padding: 0 clamp(28px, 5vw, 96px);
+}
+.home-step-card {
+    position: relative;
     display: flex;
     flex-direction: column;
-    width: 100%;
-    max-width: 600px;
-    justify-content: space-between;
-    gap: 35px;
+    gap: 10px;
+    padding: 20px 22px;
+    border: 2px solid transparent;
+    border-radius: var(--r-5);
+    background: var(--surface);
+    box-shadow: var(--home-shadow);
 }
+.home-step-card[data-state="current"] {
+    border-color: #1a5fb4;
+    box-shadow: 0 16px 40px rgba(26, 95, 180, .18);
+}
+.home-step-card[data-state="waiting"] {
+    background: color-mix(in srgb, var(--surface), transparent 40%);
+    box-shadow: none;
+}
+.home-step-card[data-state="waiting"] :is(.home-step-icon, .home-step-title, .home-step-desc) {
+    opacity: .55;
+}
+.home-step-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.home-step-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--r-4);
+    background: var(--warn-bg);
+    color: var(--warn);
+}
+.home-step-icon .home-ico,
+.home-step-svg {
+    width: 28px;
+    height: 28px;
+}
+.home-step-icon .home-ico {
+    stroke-width: 1.8;
+}
+.home-step-card--device .home-step-icon {
+    background: var(--info-bg);
+    color: var(--accent);
+}
+.home-step-card[data-state="done"] .home-step-icon {
+    background: var(--ok-bg);
+    color: var(--ok);
+}
+.home-step-num {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--text-3);
+}
+.home-step-done {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--ok);
+}
+.home-step-done .home-ico {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.6;
+}
+.home-step-card[data-state="done"] .home-step-num {
+    display: none;
+}
+.home-step-card[data-state="done"] .home-step-done {
+    display: inline-flex;
+}
+.home-step-title {
+    margin: 4px 0 0;
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    text-align: left;
+    color: var(--text);
+}
+.home-step-desc {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text-3);
+}
+.home-step-ssid {
+    color: var(--text-2);
+}
+.home-step-btn {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    width: auto;
+    min-height: 44px;
+    margin-top: auto;
+    padding: 0 18px;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: #1a5fb4;
+    color: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    text-transform: none;
+    cursor: pointer;
+}
+.home-step-btn .home-ico {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.2;
+}
+.home-step-card[data-state="current"] .home-step-btn {
+    display: inline-flex;
+}
+.home-next {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 22px clamp(28px, 5vw, 96px) 26px;
+}
+.home-next-title {
+    margin-right: 4px;
+    font-size: 15px;
+    font-weight: 800;
+}
+.home-idea-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px 10px 10px;
+    border-radius: var(--r-pill);
+    background: var(--home-glass);
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--text-2);
+}
+.home-idea-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--r-pill);
+    background: var(--surface);
+}
+.home-idea-icon .home-ico {
+    width: 18px;
+    height: 18px;
+}
+.home-idea-icon--sun { color: var(--warn); }
+.home-idea-icon--group { color: var(--accent); }
+.home-idea-icon--ha { color: var(--ok); }
+@media (max-width: 1199px) {
+    .home-hero {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+        min-height: 0;
+        padding: 30px 48px 0;
+    }
+    .home-hero-text {
+        max-width: 640px;
+        padding-bottom: 0;
+    }
+    .home-lead {
+        max-width: 640px;
+    }
+    .home-cta-group {
+        margin-top: 24px;
+    }
+    .home-art {
+        max-width: 380px;
+    }
+    .home-sun {
+        top: -110px;
+        right: 2%;
+        width: 340px;
+        height: 340px;
+    }
+    .home-steps {
+        gap: 14px;
+        padding: 0 48px;
+    }
+    .home-next {
+        gap: 10px 12px;
+        padding: 20px 48px 28px;
+    }
+    .home-next-title {
+        width: 100%;
+    }
+}
+@media (max-width: 767px) {
+    #divGetStarted {
+        min-height: calc(100vh - var(--mobile-header-height));
+    }
+    .home-hero {
+        flex: none;
+        gap: 36px;
+        padding: 28px 16px 0;
+    }
+    .home-kick-badge {
+        font-size: 13px;
+    }
+    .home-title {
+        margin-top: 14px;
+        font-size: 36px;
+    }
+    .home-lead {
+        margin-top: 14px;
+        font-size: 16px;
+    }
+    .home-cta-group {
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 22px;
+    }
+    .home-cta-btn,
+    .home-guide-btn {
+        justify-content: center;
+        width: 100%;
+        padding: 0 20px;
+        font-size: 16px;
+    }
+    .home-alt-text {
+        margin-top: 16px;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    .home-sun {
+        top: -100px;
+        right: -60px;
+        width: 260px;
+        height: 260px;
+    }
+    .home-steps {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+        padding: 0 16px;
+    }
+    .home-step-card {
+        padding: 18px;
+    }
+    .home-step-title {
+        font-size: 19px;
+    }
+    .home-step-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: var(--r-3);
+    }
+    .home-step-btn {
+        align-self: stretch;
+        justify-content: center;
+        min-height: 48px;
+    }
+    .home-next {
+        padding: 22px 16px 32px;
+    }
+    .home-idea-chip {
+        width: 100%;
+    }
+}
+
+/* =======================================================================
+ *  LOGO ET CARTES D'ACCUEIL PARTAGÉS (page de connexion, assistant de
+ *  premier démarrage)
+ *  ======================================================================= */
+
 .welcomeTop {
     display: flex;
     flex-direction: column;
@@ -836,27 +1294,6 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     margin-top: 0;
     font-size: large;
     font-weight: bold;
-}
-/* Titre à deux couleurs : l'accroche en couleur de texte normale, le nom du produit et ce qui le
- * suit à l'accent. Le découpage est fait à la traduction, pas ici (attribut tr-accent sur le h1,
- * cf. translator.translateAccented dans 10-core-utils.js) : aucune clé de langue n'est scindée.
- * Si la sous-chaîne venait à manquer d'une traduction, le span n'est pas créé et le titre entier
- * hérite simplement de --color-text-main -- dégradé lisible, jamais cassé. */
-.welcomeMiddle H1 {
-    color: var(--color-text-main);
-    max-width: 235px;
-    margin: auto;
-    padding-bottom: 12px;
-}
-.welcomeMiddle H1 .tr-accent {
-    color: var(--color-accent);
-}
-.welcomeMiddle p {
-    font-size: 1.2em;
-    line-height: 1.6;
-    text-align: center;
-    max-width: 440px;
-    margin: 15px auto 0 auto;
 }
 .setup-guide {
     display: flex;
@@ -888,9 +1325,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     transform: translateY(0);
     background: var(--color-bg-switch-track);
 }
-/* Filigrane d'angle. Sélecteur d'enfant DIRECT depuis l'arrivée de .welcomeCard-badge et
- * .welcomeCard-go, qui portent eux aussi un <svg> : en descendant libre, cette règle les
- * envoyait tous les deux en position:absolute dans le coin de la carte. */
+/* Filigrane d'angle. */
 .welcomeCard > svg {
     position: absolute;
     right: -15px;
@@ -919,86 +1354,6 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
 .welcomeCard-content p {
     font-size: 13px;
     color: var(--color-text-secondary);
-}
-.welcomeBottom-desc {
-    font-size: 0.8em;
-    line-height: 1.6;
-    text-align: center;
-    max-width: 331px;
-    margin: 15px auto 0 auto;
-    font-style: italic;
-}
-/* --- Écran d'accueil : dominante, pastille d'icône et flèche par carte ------------------------
- * Tout est porté par #divGetStarted : .welcomeCard et .setup-guide sont PARTAGÉS avec l'assistant
- * de premier démarrage (cf. Onboarding._modeChoicePanel(), 60-onboarding.js), qui garde son rendu
- * neutre -- une carte de choix n'est pas un raccourci de configuration, et la teinte n'y voudrait
- * rien dire.
- * Chaque carte ne déclare que sa dominante dans --card-hue ; filigrane, pastille et flèche en
- * découlent tous les trois. Une seule valeur à changer par carte. */
-#divGetStarted .welcomeCard {
-    --card-hue: var(--color-accent);
-    padding: 18px;
-    min-height: 150px;
-    gap: 14px;
-}
-#divGetStarted .welcomeCard > svg {
-    color: var(--card-hue);
-}
-/* Même spécificité que la règle générique ci-dessus (1 id + 1 classe) et déclarées après :
-   c'est l'ordre qui tranche. Sans le préfixe #divGetStarted, --card-hue: var(--color-accent)
-   l'emporterait sur chacune d'elles et les quatre cartes resteraient bleues. */
-#divGetStarted .welcomeCard--radio  { --card-hue: var(--color-accent); }
-#divGetStarted .welcomeCard--system { --card-hue: var(--color-success); }
-#divGetStarted .welcomeCard--device { --card-hue: var(--color-violet); }
-/* --color-warning est ici une simple TEINTE, pas un signal d'état : ne pas exporter ce raccourci
-   hors de cette grille (une seule ligne ambre au milieu de lignes neutres crierait l'alerte). */
-#divGetStarted .welcomeCard--net    { --card-hue: var(--color-warning); }
-.welcomeCard-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    box-sizing: border-box;
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-lg);
-    background: color-mix(in srgb, var(--card-hue), transparent 80%);
-    border: 1px solid color-mix(in srgb, var(--card-hue), transparent 62%);
-}
-.welcomeCard-badge svg {
-    width: 22px;
-    height: 22px;
-    color: var(--card-hue);
-}
-.welcomeCard-go {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    width: 34px;
-    height: 34px;
-    margin-top: auto;
-    border-radius: var(--radius-icon-badge);
-    background: color-mix(in srgb, var(--card-hue), transparent 84%);
-    color: var(--card-hue);
-    transition: transform 0.2s ease, background 0.2s ease;
-}
-.welcomeCard-go svg {
-    width: 18px;
-    height: 18px;
-    color: inherit;
-}
-.welcomeCard:hover .welcomeCard-go {
-    background: color-mix(in srgb, var(--card-hue), transparent 70%);
-    transform: translateX(3px);
-}
-/* Portée à #divGetStarted : la règle générique .welcomeCard > svg (80px) reste celle de
- * l'assistant de premier démarrage, dont les cartes sont bien plus étroites. */
-#divGetStarted .welcomeCard > svg {
-    right: -42px;
-    bottom: -26px;
-    width: 180px;
-    height: 180px;
 }
 #divConfigPnl {
     margin: auto;
@@ -4849,17 +5204,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     .top-bar {
         justify-content: flex-start;
     }
-    .welcome-container .welcomeTop{
-        display: none;
-    }
-    /* --- Hero de l'écran d'accueil, à partir de 768px --- */
-    .welcome-container {
-        max-width: 1000px;
-    }
-    .welcomeMiddle H1 {
-        max-width: 300px;
-        font-size: 34px;
-    }
 }
 
 @media screen and (max-width: 767px) {
@@ -5132,16 +5476,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     #divRadioSettings {
         padding-bottom: 65px;
     }
-    .welcome-container {
-        gap: 25px;
-    }
-    .welcomeMiddle H1 {
-        font-size: 28px;
-    }
-    .welcomeMiddle p {
-        max-width: 331px;
-        font-size: 1em;
-    }
     .welcomeCard-content H1 {
         font-size: .9rem;
         margin-bottom: 6px;
@@ -5149,49 +5483,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     .welcomeCard-content p {
         font-size: 0.75rem;
         margin: 0;
-    }
-    #divGetStarted .welcomeCard {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        align-items: center;
-        column-gap: 12px;
-        row-gap: 6px;
-        min-height: 0;
-        border-radius: var(--radius-block);
-        padding: 12px;
-    }
-    .welcomeCard-badge {
-        border-radius: var(--radius-md);
-        width: 28px;
-        height: 28px;
-    }
-    .welcomeCard-badge svg {
-        width: 18px;
-        height: 18px;
-    }
-    #divGetStarted .welcomeCard > svg {
-        width: 120px;
-        height: 120px;
-    }
-    #divGetStarted .welcomeCard-content {
-        display: contents;
-    }
-    #divGetStarted .welcomeCard-content h1,
-    #divGetStarted .welcomeCard-content p {
-        position: relative;
-    }
-    #divGetStarted .welcomeCard-content h1 {
-        grid-column: 2;
-        margin: 0;
-    }
-    #divGetStarted .welcomeCard-content p {
-        grid-column: 1 / -1;
-    }
-    #divGetStarted .welcomeCard-go {
-        display: none;
-    }
-    .welcomeBottom-desc {
-        margin: 0px auto 0 auto;
     }
     /* --- TEST navigation sticky mobile : .tab-container ET le .subtab-container de la section
        active partagent maintenant UN SEUL bloc sticky (#divMobileStickyNav, voir index.html/
@@ -6015,55 +6306,6 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divNetAda
     :is(#divListener, #divRepeater) .tile-side > * { flex: none; }
     :is(#divListener, #divRepeater) .tile-cols { grid-area: cols; }
     :is(#divListener, #divRepeater) .tile-tip { display: flex; flex-direction: column; }
-}
-#divGetStarted .welcome-flow { display: flex; flex-direction: column; gap: 14px; width: 100%; }
-#divGetStarted .welcome-bar { display: flex; align-items: center; padding: 0 12%; }
-#divGetStarted .welcome-bar > i { flex: 1 1 auto; height: 2px; margin: 0 8px; background: var(--color-border); }
-#divGetStarted .welcome-dot > span { display: grid; place-items: center; width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--color-border); background: var(--color-bg-card); color: var(--color-text-secondary); font-size: 13px; }
-#divGetStarted .welcome-dot svg { display: none; width: 16px; height: 16px; fill: currentColor; }
-#divGetStarted .welcome-dot.is-done > span { border-color: var(--color-success); background: var(--color-success); color: #fff; }
-#divGetStarted .welcome-dot.is-done b { display: none; }
-#divGetStarted .welcome-dot.is-done svg { display: block; }
-#divGetStarted .welcome-dot.is-current > span { border-color: var(--color-accent); color: var(--color-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent), transparent 82%); }
-#divGetStarted .welcome-steps { display: flex; flex-direction: column; gap: 12px; }
-#divGetStarted .welcomeCard.welcome-step { flex-direction: row; align-items: center; min-height: 0; padding: 16px 18px; gap: 16px; }
-#divGetStarted .welcome-step > svg { width: 120px; height: 120px; right: -30px; bottom: -40px; }
-#divGetStarted .welcome-step .welcomeCard-badge { position: relative; }
-#divGetStarted .welcome-num { position: absolute; top: -7px; left: -7px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--card-hue); color: #fff; font-size: 11px; font-weight: 700; }
-#divGetStarted .welcome-step .welcomeCard-content { flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; }
-#divGetStarted .welcome-step .welcomeCard-content p { margin: 0; line-height: 1.45; }
-#divGetStarted .welcome-step .welcomeCard-go { flex: none; margin: 0; }
-#divGetStarted .welcome-state { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; padding: 2px 9px 2px 6px; border-radius: 999px; font-size: 11.5px; font-weight: 600; color: var(--color-text-secondary); background: var(--color-bg-row); }
-#divGetStarted .welcome-state:empty, #divGetStarted .welcome-step:not([data-state]) .welcome-state { display: none; }
-#divGetStarted .welcome-state svg { width: 13px; height: 13px; fill: currentColor; }
-#divGetStarted .welcome-state-extra:not(:empty)::before { content: " · "; }
-#divGetStarted .welcome-step[data-state="done"] .welcome-state { color: var(--color-success); background: color-mix(in srgb, var(--color-success), transparent 86%); }
-#divGetStarted .welcome-step[data-state="warn"] .welcome-state { color: var(--color-warning); background: color-mix(in srgb, var(--color-warning), transparent 86%); }
-#divGetStarted .welcome-step[data-state="todo"] .welcome-state { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent), transparent 86%); }
-#divGetStarted .welcome-step[data-state="done"] { opacity: .72; }
-#divGetStarted .welcome-step[data-state="done"]:hover { opacity: 1; }
-#divGetStarted .welcome-step[data-state="wait"] .welcomeCard-badge, #divGetStarted .welcome-step[data-state="wait"] .welcomeCard-go { filter: grayscale(.8); opacity: .6; }
-#divGetStarted .welcome-step.is-current { border-color: color-mix(in srgb, var(--card-hue), transparent 35%); box-shadow: 0 0 0 3px color-mix(in srgb, var(--card-hue), transparent 85%), var(--shadow-card); }
-#divGetStarted .welcomeCard.welcome-later { flex-direction: row; align-items: center; align-self: center; width: 100%; max-width: 480px; min-height: 0; padding: 12px 16px; gap: 14px; background: transparent; border-style: dashed; box-shadow: none; }
-#divGetStarted .welcome-later .welcomeCard-badge { width: 36px; height: 36px; }
-#divGetStarted .welcome-later .welcomeCard-badge svg { width: 18px; height: 18px; }
-#divGetStarted .welcome-later .welcomeCard-content { flex: 1 1 auto; display: flex; flex-direction: column; }
-#divGetStarted .welcome-later .welcomeCard-content h1 { margin: 0; font-size: 14px; }
-#divGetStarted .welcome-later .welcomeCard-content p { margin: 2px 0 0; font-size: 12.5px; }
-#divGetStarted .welcome-later .welcomeCard-go { margin: 0; width: 30px; height: 30px; }
-@media (max-width: 767px) {
-    #divGetStarted .welcome-bar { padding: 0 6%; }
-    #divGetStarted .welcomeCard.welcome-step, #divGetStarted .welcomeCard.welcome-later { display: flex; padding: 12px 14px; gap: 12px; }
-    #divGetStarted .welcome-step .welcomeCard-content, #divGetStarted .welcome-later .welcomeCard-content { display: flex; flex-direction: column; gap: 3px; flex: 1 1 auto; }
-    #divGetStarted .welcome-step .welcomeCard-badge { width: 36px; height: 36px; }
-    #divGetStarted .welcome-later .welcomeCard-content h1 { font-size: 13px; }
-    #divGetStarted .welcome-later .welcomeCard-content p { font-size: 12px; }
-}
-@media (min-width: 1000px) {
-    #divGetStarted .welcome-container { max-width: 860px; }
-    #divGetStarted .welcome-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-    #divGetStarted .welcomeCard.welcome-step { flex-direction: column; align-items: flex-start; padding: 18px; min-height: 210px; }
-    #divGetStarted .welcome-step .welcomeCard-go { margin-top: auto; }
 }
 /* Lames du store vénitien (svg-window-blind) : chacune s'aplatit sur son propre axe, de la tranche
    (inclinaison 0) à la pleine largeur (100). Même --shade-tilt que la carte, rien à changer en JS. */
