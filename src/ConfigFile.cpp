@@ -843,7 +843,6 @@ bool ShadeConfigFile::readTransRecord(transceiver_config_t &cfg) {
 }
 bool ShadeConfigFile::readSettingsRecord() {
   if(this->header.settingsRecordSize > 0) {
-    uint32_t startPos = this->file.position();
     DBG_PRINTLN("Reading settings from file...");
     char ver[24];
     this->readVarString(ver, sizeof(ver));
@@ -904,7 +903,9 @@ bool ShadeConfigFile::readSettingsRecord() {
         if(ok) strlcpy(settings.iconPack, pack, sizeof(settings.iconPack));
       }
     }
-    if(this->file.position() != startPos + this->header.settingsRecordSize) {
+    // Taille annoncée trop courte de v2.5.1 à v2.6.1 : ne drainer que si la fin de ligne n'est
+    // pas déjà lue, sinon l'enregistrement réseau est avalé et la radio jamais relue.
+    if(!this->atRecordEnd()) {
       DBG_PRINTLN("Reading to end of settings record");
       this->seekChar(CFG_REC_END);
     }
