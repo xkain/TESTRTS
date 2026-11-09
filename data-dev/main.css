@@ -1788,12 +1788,12 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     flex: none;
     width: auto;
     min-height: 44px;
-    padding: 10px 18px;
+    padding: 8px 12px;
     border: 0;
     border-radius: var(--r-pill);
     background: transparent;
     color: var(--text-3);
-    font-size: var(--fs-4);
+    font-size: var(--fs-3);
     font-weight: 600;
     text-transform: none;
     white-space: nowrap;
