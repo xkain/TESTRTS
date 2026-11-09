@@ -1543,34 +1543,37 @@ class General {
 
         const div = document.createElement('div');
         div.id = 'divLangManagerOverlay';
-        div.className = 'modal-overlay';
+        // genmod-overlay : ancre la fenêtre sous la barre du haut, sur la page (overlays.css).
+        div.className = 'modal-overlay genmod-overlay';
         div.innerHTML = `
-        <div class="message-content icon-pack-content">
-        ${modalHeader('GENERAL_LANGUAGE', 'svg-language', {
-            subtitle: 'LANG_MODAL_TITLE_DESC',
-        })}
-        <div class="icon-pack-body">
+        <div class="message-content genmod-window">
+        ${genModalShell({
+            id: 'lang',
+            icon: 'svg-language',
+            titleKey: 'GENERAL_LANGUAGE',
+            descKey: 'LANG_MODAL_TITLE_DESC',
+            sectionKey: 'LANG_MODAL_SECTION',
+            stateKey: tr('LANG_MODAL_STATE_ACTIVE'),
+            stateValue: langLabel(document.documentElement.lang || window.__defaultLangCode || 'en'),
+            stateNote: document.documentElement.lang || '',
+            hintKey: 'LANG_MODAL_HINT',
+            footId: 'langFoot',
+            bodyHtml: `
             <div class="icon-pack-label"><span id="langCount"></span>
                 <label for="fileLangGlobalImport" class="icon-pack-import"><svg><use href="#svg-upload"></use></svg>${tr('FILE_PICK_LANG')}</label></div>
             <p id="langNotice" class="lang-catalog-manual-import-info margin0" style="display:none"></p>
-            <div class="icon-pack-grid-wrap"><div class="icon-pack-grid" id="langCatalog"></div></div>
+            <div class="icon-pack-grid" id="langCatalog"></div>
             <div id="langSelInfo"></div>
             <div class="icon-pack-drop">${fileDropZone('fileLangGlobalImport', 'FILE_PICK_LANG')}</div>
             <input id="fileLangGlobalImport" type="file" accept="application/json,.json,application/gzip,.gz" style="display:none"
-            onchange="general.handleGlobalLangUpload(this)"/>
-        </div>
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal"><div class="button-content-modal" id="langFoot">
-            <button id="btnLangManagerClose" line type="button">${tr('BT_CLOSE')}</button>
-        </div></div>
+            onchange="general.handleGlobalLangUpload(this)"/>`,
+        })}
         </div>`;
 
         shOverlay(div);
 
         div.onclick = (e) => {
-            if (e.target.id === 'btnLangManagerClose' || e.target.closest('#btnLangManagerClose')) {
-                requestCloseOverlay(div);
-            }
+            if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div);
         };
 
         this.loadLangCatalog();
@@ -1726,7 +1729,17 @@ class General {
         }
         get('langSelInfo').innerHTML = info;
 
-        // Pied : les actions possibles sur la langue choisie, à côté de Fermer.
+        // Colonne de gauche : la langue active tant qu'on n'a rien choisi d'autre, sinon la
+        // langue sur laquelle porte le pied -- l'utilisateur doit pouvoir lire les deux.
+        const stateEl = get('langState');
+        if (stateEl) {
+            stateEl.innerHTML = sel === activeLang
+                ? genModalState(tr('LANG_MODAL_STATE_ACTIVE'), langLabel(activeLang), activeLang)
+                : genModalState(tr('LANG_MODAL_STATE_PICKED'), langLabel(sel), sel);
+        }
+
+        // Pied : les actions possibles sur la langue choisie. Plus de « Fermer » : la croix
+        // de l'en-tête le remplace.
         let actions = '';
         if (sel !== activeLang && !info) {
             if (entry.installed) {
@@ -1734,14 +1747,14 @@ class General {
                 // fr sur BOX, en sinon) reste le filet de sécurité universel côté backend
                 // (handleLang) -- jamais supprimable.
                 if (sel !== window.__defaultLangCode) {
-                    actions += `<button type="button" lineRed onclick="general.deleteLang('${sel}')">${tr('LANG_MODAL_DELETE_LANG')}</button>`;
+                    actions += `<button type="button" class="gen-btn genmod-btn-danger" onclick="general.deleteLang('${sel}')">${tr('LANG_MODAL_DELETE_LANG')}</button>`;
                 }
-                actions += `<button type="button" onclick="general.useLang('${sel}')">${tr('LANG_MODAL_USE_LANG')}</button>`;
+                actions += `<button type="button" class="gen-btn gen-btn-primary" onclick="general.useLang('${sel}')">${tr('LANG_MODAL_USE_LANG')}</button>`;
             } else if (entry.downloadable && !full) {
-                actions = `<button type="button" onclick="general.downloadLang('${sel}')">${tr('LANG_MODAL_DOWNLOAD')}</button>`;
+                actions = `<button type="button" class="gen-btn gen-btn-primary" onclick="general.downloadLang('${sel}')">${tr('LANG_MODAL_DOWNLOAD')}</button>`;
             }
         }
-        get('langFoot').innerHTML = `<button id="btnLangManagerClose" line type="button">${tr('BT_CLOSE')}</button>${actions}`;
+        get('langFoot').innerHTML = actions;
     }
     // Ignorée pendant un téléchargement : redessiner la grille effacerait sa barre de progression.
     selectLang(code) {
@@ -1877,15 +1890,25 @@ class General {
         })
         .catch(err => logger.error('Failed to delete language:', err));
     }
-    // Affiche la barre de progression d'une tuile du catalogue et retire les actions du pied
-    // (Fermer excepté), au déclenchement du téléchargement. La sélection reste figée jusqu'au
-    // prochain rendu du catalogue (cf. selectLang).
+    // Affiche la barre de progression d'une tuile du catalogue et vide le pied, au
+    // déclenchement du téléchargement. La sélection reste figée jusqu'au prochain rendu du
+    // catalogue (cf. selectLang). La colonne de gauche dit ce qui est en train de se passer,
+    // et la croix cesse de répondre : c'est le verrou posé par relayLangDownload, rendu visible.
     showLangProgress(code) {
         const prog = get(`langProgress_${code}`);
         if (!prog) return;
         prog.classList.add('active');
         this._langBusy = true;
-        get('langFoot').querySelectorAll('button:not(#btnLangManagerClose)').forEach(b => b.remove());
+        get('langFoot').innerHTML = '';
+        const stateEl = get('langState'), hintEl = get('langHint');
+        if (stateEl) stateEl.innerHTML = genModalState(tr('LANG_MODAL_STATE_DOWNLOAD'), langLabel(code), code);
+        if (hintEl) hintEl.textContent = tr('LANG_MODAL_HINT_BUSY');
+    }
+    // Fin du téléchargement, abouti ou non : le verrou lève lui-même l'état occupé, il ne
+    // reste que la phrase du pied à remettre.
+    clearLangProgress() {
+        const hintEl = get('langHint');
+        if (hintEl) hintEl.textContent = tr('LANG_MODAL_HINT');
     }
     procLangDownloadProgress(prog) {
         const block = get(`langProgress_${prog.code}`);
@@ -1900,6 +1923,7 @@ class General {
     procLangDownloadComplete(msg) {
         // no-op si le catalogue n'est pas ouvert (déclenché depuis un toast, cf. acceptLangPrompt).
         clearOverlayLock(get('divLangManagerOverlay'));
+        this.clearLangProgress();
         const toast = get('langPromptToast');
         if (toast) toast.remove();
         const missingToast = get('langMissingToast');

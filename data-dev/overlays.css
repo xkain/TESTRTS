@@ -2964,6 +2964,429 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
 
 
 /* =======================================================================
+ *  FENÊTRES LANGUES ET PACKS D'ICÔNES (page Système › Général)
+ *
+ *  Déplacé de base.css : ce sont deux modales injectées en JS, leur place est ici.
+ *
+ *  Catalogue des langues (Phase 2 i18n) : grille construite par
+ *  general.openLangManager() et peuplée par renderLangCatalog() (40-general.js). La mise en
+ *  page reprend les classes icon-pack-* ; seuls le code de langue, les badges, la progression
+ *  et l'import manuel sont propres ici.
+ *  ======================================================================= */
+/* --- Coque commune aux deux fenêtres (genmod-) -------------------------------
+   La fenêtre est cadrée sur .gen-layout et reprend le MÊME gabarit de colonnes que la
+   page (main.css). L'overlay, lui, reste celui de toutes les autres fenêtres : même voile
+   flouté plein écran, même fermeture au clic dehors (gestionnaire de clic de 20-shell.js).
+   Le menu latéral et la barre du haut restent donc lisibles derrière, et toute cette
+   surface sert de cible de sortie -- pas seulement un liseré de 16 px. */
+.modal-overlay.genmod-overlay { align-items: stretch; }
+/* Le voile ne floute QUE la page : le menu latéral et la barre du haut restent nets, on
+   continue de lire où l'on est. L'overlay, lui, couvre toujours tout l'écran et reste donc
+   cliquable partout pour sortir -- le flou est porté par cette couche, pas par lui.
+   position:absolute et non fixed : l'overlay porte un transform pendant son entrée, ce qui
+   ferait de lui le bloc conteneur d'un enfant fixed et mettrait le voile à l'échelle. */
+.modal-overlay.genmod-overlay,
+.modal-overlay.genmod-overlay.overlay-entered { backdrop-filter: none; }
+.genmod-overlay::before {
+    content: '';
+    position: absolute;
+    inset: var(--topbar-height) 0 0 var(--sidebar-width);
+    background: transparent;
+    backdrop-filter: blur(0px);
+    transition: backdrop-filter 0.4s ease-out, background-color 0.4s ease-out;
+    pointer-events: none;
+}
+.genmod-overlay.overlay-entered::before {
+    background: var(--scrim-page);
+    backdrop-filter: blur(5px);
+}
+.message-content.genmod-window {
+    /* 16 px comme le conteneur de la page migrée : sans ça les --fs-* en em
+       tomberaient sur les 14 px de <html>. */
+    font-size: 16px;
+    flex: 1;
+    width: auto;
+    max-width: none;
+    max-height: none;
+    /* Cadrée sur .gen-layout : sous la barre du haut, à droite du menu latéral. */
+    margin: calc(var(--topbar-height) + 16px) 16px 16px calc(var(--sidebar-width) + 16px);
+    display: grid;
+    grid-template-columns: minmax(300px, 32fr) minmax(0, 68fr);
+    border: 0;
+    border-radius: var(--r-5);
+    /* L'ombre n'est pas un ornement : la fenêtre recouvre un panneau de la même couleur
+       qu'elle (la colonne d'identité de la page), c'est elle qui l'en détache. */
+    box-shadow: var(--shadow-window);
+    background: var(--panel);
+    color: var(--text);
+    text-align: left;
+}
+
+/* Colonne d'identité : ce que fait l'appareil, pas ce qu'on lui demande. */
+.genmod-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    min-height: 0;
+    padding: clamp(20px, 3vh, 40px) clamp(20px, 2.5vw, 40px);
+    overflow: hidden;
+    text-align: center;
+    border-radius: var(--r-5) 0 0 var(--r-5);
+}
+.genmod-side-icon {
+    width: clamp(72px, min(7vw, 13vh), 120px);
+    height: clamp(72px, min(7vw, 13vh), 120px);
+    flex: none;
+    fill: currentColor;
+    color: var(--color-accent);
+}
+.genmod-side-title {
+    margin: 0;
+    font-size: clamp(22px, 1.9vw, 30px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+}
+.genmod-side-desc {
+    margin: 8px 0 0;
+    max-width: 34ch;
+    font-size: var(--fs-3);
+    line-height: 1.45;
+    color: var(--text-3);
+}
+.genmod-state {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    max-width: 320px;
+    padding: 14px 16px;
+    border-radius: var(--r-4);
+    background: var(--surface);
+}
+.genmod-state-key {
+    font-size: var(--fs-1);
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+}
+.genmod-state-val {
+    font-size: var(--fs-6);
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+.genmod-state-val small {
+    margin-left: 6px;
+    font-size: var(--fs-2);
+    font-weight: 700;
+    color: var(--text-3);
+}
+
+/* Colonne de configuration. Les rangées du corps et du pied sont posées à la main :
+   quand le bandeau de section est masqué (mobile) il sort du flux, et le placement
+   automatique donnerait la rangée 1 au corps et le 1fr au pied, réduit à zéro. */
+.genmod-main {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    min-width: 0;
+    min-height: 0;
+    background: var(--surface);
+    border-radius: 0 var(--r-5) var(--r-5) 0;
+}
+.genmod-head {
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--divider);
+}
+.genmod-head-title {
+    font-size: var(--fs-3);
+    font-weight: 700;
+    color: var(--text-2);
+}
+.genmod-close {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    margin-left: auto;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: var(--r-2);
+    background: var(--surface-2);
+    color: var(--text-2);
+}
+.genmod-close svg { width: 18px; height: 18px; fill: currentColor; }
+.genmod-close[disabled] { opacity: .45; cursor: default; }
+/* La croix du bandeau d'identité ne sert qu'en tablette (cf. plus bas). */
+.genmod-side .genmod-close { display: none; }
+.genmod-body {
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px 22px 16px;
+}
+.genmod-body > * { flex: none; }
+/* Tuiles aux mesures de la maquette A2 (ListPage) hors mobile : la page Général et ces deux
+   fenêtres servent de gabarit à la nouvelle interface, elles doivent donc porter les mêmes
+   chiffres que les pages-listes à venir. Sous 768 px la valeur de base reprend la main, sans
+   quoi la feuille retomberait à une seule colonne. */
+@media (min-width: 768px) {
+    .genmod-body .icon-pack-grid {
+        grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
+        gap: var(--tile-gap);
+    }
+    .genmod-body .icon-pack-tile {
+        gap: 10px;
+        min-height: var(--tile-minh);
+        padding: var(--tile-pad);
+        border-radius: var(--r-5);
+    }
+    /* L'aperçu prend la place libre au lieu d'un rapport fixe : il grandit avec la tuile. */
+    .genmod-body .icon-pack-thumb { aspect-ratio: auto; flex: 1 1 auto; min-height: 0; }
+    .genmod-body .icon-pack-name { margin-top: auto; font-size: 1.0625em; font-weight: 800; }
+    .genmod-body .icon-pack-meta { font-size: var(--fs-2); font-weight: 500; }
+    /* Une langue n'a pas de vignette : son code tient lieu d'icône, dans la pastille d'A2
+       (48 px, --r-3, plaque neutre et contenu à la couleur d'accent). */
+    .genmod-body .lang-catalog-code {
+        width: var(--tile-icon);
+        height: var(--tile-icon);
+        margin-bottom: 0;
+        border-radius: var(--r-3);
+        background: var(--surface-2);
+        font-size: 1.0625em;
+    }
+}
+.genmod-foot {
+    grid-row: 3;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 22px;
+    border-top: 1px solid var(--divider);
+}
+.genmod-foot-hint {
+    flex: 1 1 180px;
+    min-width: 0;
+    font-size: var(--fs-2);
+    color: var(--text-3);
+}
+.genmod-foot-btns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-left: auto;
+}
+/* Les boutons sont ceux de la page migrée (.gen-btn, main.css) : rien de neuf ici,
+   sauf la variante destructrice, qui n'existait pas. */
+.genmod-foot-btns .gen-btn { align-self: auto; }
+.genmod-btn-danger, .genmod-btn-danger:hover {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+/* Tablette : une seule colonne, fenêtre à la hauteur de son contenu plutôt
+   qu'étirée sur toute la page, et l'identité devient l'en-tête de la fenêtre. */
+@media (max-width: 999px) {
+    .message-content.genmod-window {
+        align-self: center;
+        flex: 0 1 auto;
+        height: auto;
+        max-height: calc(100% - var(--topbar-height) - 32px);
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, auto);
+    }
+    .genmod-side {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        justify-items: start;
+        gap: 12px 18px;
+        padding: 20px 24px 18px;
+        text-align: left;
+        border-radius: var(--r-5) var(--r-5) 0 0;
+    }
+    .genmod-side-icon { width: 72px; height: 72px; }
+    .genmod-side-title { font-size: 26px; }
+    .genmod-side-desc { max-width: none; }
+    .genmod-state {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 10px;
+        max-width: none;
+        padding: 10px 14px;
+    }
+    .genmod-state-val { font-size: var(--fs-5); }
+    .genmod-side .genmod-close { display: flex; align-self: start; justify-self: end; }
+    .genmod-main {
+        grid-template-rows: auto minmax(0, auto) auto;
+        border-radius: 0 0 var(--r-5) var(--r-5);
+    }
+    .genmod-head .genmod-close { display: none; }
+}
+
+/* Mobile : la feuille montante de .message-content fait déjà le gros du travail
+   (slideUp, 90vh, coins hauts, poignée) -- on n'écrit que les écarts. */
+@media (max-width: 767px) {
+    .genmod-overlay::before { inset: var(--mobile-header-height) 0 0 0; }
+    .message-content.genmod-window {
+        margin: 0;
+        align-self: flex-end;
+        width: 100%;
+        max-height: 90vh;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        border-radius: var(--r-5) var(--r-5) 0 0;
+    }
+    .genmod-side {
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+        padding: 0 16px 14px;
+        text-align: center;
+        border-radius: var(--r-5) var(--r-5) 0 0;
+    }
+    .genmod-side-icon { width: 56px; height: 56px; }
+    .genmod-side-title { font-size: var(--fs-7); }
+    .genmod-side-desc { font-size: var(--fs-2); }
+    .genmod-state {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: center;
+        gap: 8px;
+        max-width: none;
+        padding: 8px 12px;
+    }
+    .genmod-state-val { font-size: var(--fs-4); }
+    .genmod-side .genmod-close { display: none; }
+    .genmod-head { display: none; }
+    .genmod-body { padding: 12px 16px 14px; }
+    /* nowrap : hérité en colonne, le flex-wrap du pied d'ordinateur l'écrase. */
+    .genmod-foot {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        gap: 8px;
+        padding: 12px 16px;
+    }
+    .genmod-foot-hint { flex: none; }
+    .genmod-foot-btns {
+        flex-direction: column-reverse;
+        flex-wrap: nowrap;
+        margin-left: 0;
+        gap: 8px;
+    }
+    .genmod-foot-btns .gen-btn { width: 100%; justify-content: center; }
+}
+
+.lang-catalog-code {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 30px;
+    margin-bottom: 2px;
+    font-size: 0.9em;
+    border-radius: var(--radius-md);
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    background: color-mix(in srgb, var(--color-accent) 16%, var(--color-bg-input));
+    color: var(--color-accent);
+}
+.lang-catalog-badge {
+    flex-shrink: 0;
+    font-size: 0.75em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--color-accent-transp-80);
+    color: var(--color-accent);
+}
+.lang-catalog-badge.active {
+    background: var(--color-accent);
+    color: #ffffff;
+}
+.lang-catalog-progress {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    --progress-bar-height: 6px;
+}
+.lang-catalog-progress.active {
+    display: flex;
+}
+.lang-catalog-progress .progress-bar-value {
+    font-size: 0.8em;
+    min-width: 34px;
+    text-align: right;
+}
+/* Sous la grille, pour la langue choisie : import manuel quand le relais navigateur a confirmé
+ * qu'aucune route Internet n'existe depuis cet appareil, ou rappel d'une mise en attente. */
+.lang-catalog-manual-import {
+    padding: 10px 12px;
+    background: var(--color-bg-surface-2);
+    border-radius: var(--radius-row);
+    border: 1px dashed var(--color-border);
+}
+#langSelInfo:empty { display: none; }
+.lang-catalog-manual-import-info {
+    margin: 0 0 8px;
+    font-size: 0.85em;
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+}
+
+/* Scène au repos à 75 % fermé ; à chaque tuile choisie, un seul cycle ouverture puis retour
+   (.is-animating). --icon-pos est déclarée par @property pour pouvoir être animée. */
+@property --icon-pos { syntax: '<number>'; inherits: true; initial-value: 75; }
+@keyframes icon-pack-demo { 0% { --icon-pos: 75; } 45% { --icon-pos: 0; } 100% { --icon-pos: 75; } }
+.icon-pack-scene { width: 100%; padding: 12px 14px; border-radius: var(--r-4); background: var(--surface); --icon-pos: 75; --shade-position: var(--icon-pos); --fpos: calc(var(--icon-pos) * 1%); --shade-tilt: 60; }
+.icon-pack-scene.is-animating { animation: icon-pack-demo 1.6s ease-in-out; }
+.icon-pack-scene.is-animating * { transition: none; }
+@media (prefers-reduced-motion: reduce) { .icon-pack-scene.is-animating { animation: none; } }
+.icon-pack-scene-icons { display: flex; justify-content: space-between; gap: 2px; }
+.icon-pack-scene-icons svg { width: 15%; max-width: 58px; aspect-ratio: 1; height: auto; }
+.icon-pack-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.75em; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-secondary); }
+.icon-pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); gap: 8px; }
+.icon-pack-tile { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 8px; border-radius: var(--radius-lg); border: 1.5px solid var(--color-border); background: var(--color-bg-card); cursor: pointer; }
+.icon-pack-tile:hover { border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border)); }
+.icon-pack-tile.selected { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent) inset; }
+.icon-pack-tile.is-broken, .icon-pack-tile.is-disabled { opacity: .5; }
+.icon-pack-tile.is-disabled { pointer-events: none; }
+.icon-pack-thumb { display: flex; justify-content: space-between; padding: 4px; border-radius: var(--radius-md); background: var(--color-bg-input); aspect-ratio: 3.2; --shade-position: 60; --fpos: 100%; --shade-tilt: 60; }
+.icon-pack-thumb svg { width: 32%; aspect-ratio: 1; height: auto; }
+.icon-pack-name { font-weight: 700; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-pack-meta { font-size: 0.75em; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-pack-tag { position: absolute; top: 6px; right: 6px; }
+/* Pointillés : la tuile par défaut des packs d'icônes, ou une langue pas encore sur le boîtier. */
+.icon-pack-tile.is-default, .icon-pack-tile.is-remote { border-style: dashed; }
+.icon-pack-tile.is-default.selected, .icon-pack-tile.is-remote.selected { border-style: solid; }
+/* Sur écran tactile, aucun fichier ne peut être glissé dans la page : la grande zone de dépôt
+   n'y serait qu'un bouton haut de 100 px, remplacé par ce lien à droite du compteur. */
+.icon-pack-import { display: none; align-items: center; gap: 4px; color: var(--color-accent); font-weight: 600; text-transform: none; letter-spacing: 0; cursor: pointer; }
+.icon-pack-import svg { width: 14px; height: 14px; }
+@media (hover: none) and (pointer: coarse) {
+    .icon-pack-import { display: inline-flex; }
+    .icon-pack-drop { display: none; }
+}
+@media (max-width: 520px) {
+    .icon-pack-scene-icons svg { width: 15%; max-width: 40px; }
+}
+
+/* =======================================================================
  *  MEDIA QUERIES RESPONSIVE (toutes modales/overlays)
  *  ======================================================================= */
 

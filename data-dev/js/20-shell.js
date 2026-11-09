@@ -741,6 +741,7 @@ class SaveBar {
 //    où laisser croire à l'utilisateur qu'il a annulé serait trompeur et sans retour possible.
 function setOverlayLock(div, mode, opts = {}) {
     if (!div) return;
+    genModalBusy(div, true);
     div.dataset.lockMode = mode;
     div.dataset.lockTitleKey = opts.titleKey || 'PROMPT_ACTION_IN_PROGRESS_TITLE';
     div.dataset.lockMsgKey = opts.msgKey || 'PROMPT_ACTION_IN_PROGRESS_MSG';
@@ -748,6 +749,7 @@ function setOverlayLock(div, mode, opts = {}) {
 }
 function clearOverlayLock(div) {
     if (!div) return;
+    genModalBusy(div, false);
     delete div.dataset.lockMode;
     delete div.dataset.lockTitleKey;
     delete div.dataset.lockMsgKey;
@@ -1461,6 +1463,50 @@ function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
 
     <div class="modalHeader-right">${rightContent}</div>
     </div>`;
+}
+
+// --- Coque des fenêtres de la page Général (classes genmod-, overlays.css) ---------------
+// Deux colonnes : à gauche ce que fait l'appareil (icône, titre, état courant), à droite ce
+// qu'on lui demande. Partagée par le gestionnaire de langues et celui des packs d'icônes :
+// un seul gabarit en mémoire plutôt que deux chaînes jumelles.
+// `id` sert de préfixe aux parties que le JS réécrit ensuite : <id>State, <id>Chips, <id>Hint.
+function genModalState(keyLabel, value, note = '') {
+    return `<span class="genmod-state-key">${keyLabel}</span>
+    <span class="genmod-state-val">${value}${note ? `<small>${note}</small>` : ''}</span>`;
+}
+function genModalShell(o) {
+    const close = () => `<button type="button" class="genmod-close" data-genmod-close
+    aria-label="${tr('BT_CLOSE')}"><svg><use href="#svg-close"></use></svg></button>`;
+    return `
+    <section class="genmod-side">
+    <div class="modalHeader-handle" onclick="handleMobileDismiss(this)"></div>
+    <svg class="genmod-side-icon"><use href="#${o.icon}"></use></svg>
+    <div>
+    <h2 class="genmod-side-title">${tr(o.titleKey)}</h2>
+    <p class="genmod-side-desc">${tr(o.descKey)}</p>
+    </div>
+    ${/* Placée ici et pas en fin de section : en tablette la grille l'attend en 3e colonne
+         de la 1re rangée, et l'état qui suit s'étale sur toute la largeur. */ ''}
+    ${close()}
+    <div class="genmod-state" id="${o.id}State">${genModalState(o.stateKey, o.stateValue, o.stateNote)}</div>
+    ${o.sideExtra || ''}
+    </section>
+    <div class="genmod-main">
+    <div class="genmod-head"><span class="genmod-head-title">${tr(o.sectionKey)}</span>${close()}</div>
+    <div class="genmod-body">${o.bodyHtml}</div>
+    <div class="genmod-foot">
+    <span class="genmod-foot-hint" id="${o.id}Hint">${tr(o.hintKey)}</span>
+    <div class="genmod-foot-btns" id="${o.footId}"></div>
+    </div>
+    </div>`;
+}
+// Verrou en vol : la croix et les moyens d'import cessent de répondre. Appelée par
+// setOverlayLock / clearOverlayLock, donc tout chemin qui pose ou lève un verrou est couvert
+// sans avoir à y penser. Sans effet hors des fenêtres genmod-.
+function genModalBusy(div, busy) {
+    if (!div || !div.querySelector('.genmod-window')) return;
+    div.querySelectorAll('.genmod-close').forEach(b => { b.disabled = !!busy; });
+    div.querySelectorAll('.icon-pack-import, .file-drop').forEach(e => { e.style.display = busy ? 'none' : ''; });
 }
 
 function fileDropZone(inputId, titleKey, titleId = '') {
