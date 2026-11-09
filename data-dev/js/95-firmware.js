@@ -20,6 +20,43 @@ class Firmware {
         // toutes plutôt qu'à l'ouverture de l'overlay -- il n'a pas de cible à traiter en dehors
         // de sa durée de vie, et il n'y a ainsi rien à retirer quand l'overlay est détruit.
         window.addEventListener('resize', () => this.fitFileName());
+        const page = get('divFirmware');
+        this._tabs = bindGenTabs(page, { tabs: 'fwTabs', panels: 'fwPanels', pager: 'fwPager', prev: 'btnFwPrev', next: 'btnFwNext' });
+        // Rien à enregistrer sur cette page : chaque réglage part tout de suite (setOption), il ne
+        // doit donc pas marquer la page « modifiée » auprès de watchDirty (#divSystemSettings).
+        page.addEventListener('change', (e) => e.stopPropagation());
+    }
+    // Réglage appliqué à la volée : seul ce champ est envoyé (la route lit les clés présentes),
+    // jamais le formulaire Général qui peut contenir des saisies non enregistrées.
+    setOption(key, el) {
+        const val = el.checked;
+        putJSONSync('/setgeneral', { [key]: val }, (err) => {
+            if (err) {
+                el.checked = !val;
+                return ui.serviceError(err);
+            }
+            if (general._lastSettings) general._lastSettings[key] = val;
+            if (key === 'enableDebugLogs') logger.setDebugEnabled(val);
+            if (key === 'checkForUpdate') {
+                if (this.fwInfo) this.fwInfo.checkForUpdate = val;
+                this.refreshUpdateBadge();
+            }
+            ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+        });
+    }
+    checkNow() {
+        this._catalog = null;
+        this.refreshUpdateBadge(true);
+    }
+    // Un build de développement porte le sha après la version (v3.0.0-6e58fe6, cf. build.yaml) ;
+    // un build local garde FW_VERSION nu et passe donc pour stable.
+    renderVersion(name) {
+        if (!name) return;
+        const dev = /^v?\d+\.\d+\.\d+-/.test(name);
+        get('spanFwVersion').innerText = name;
+        document.querySelectorAll('.fw-version').forEach(el => { el.textContent = name; });
+        get('fwChannelTile').setAttribute('data-channel', dev ? 'dev' : 'stable');
+        document.querySelectorAll('.fw-channel-short').forEach(el => { el.textContent = tr(dev ? 'CHANNEL_DEV' : 'CHANNEL_STABLE'); });
     }
     isMobile() {
         return /Android|iPhone|iPad|iPod|BlackBerry|BB|PlayBook|IEMobile|Windows Phone|Kindle|Silk|Opera Mini/i.test(navigator.userAgent);
@@ -97,8 +134,6 @@ class Firmware {
     }
 
     restore() {
-        let div = this.createFileUploader('/restore');
-        let instContent = div.querySelector('.instructions-content');
         //[id, bind, texte, checked]
         const opts = [
             ['cbRestoreShades', 'shades', 'RESTORE_DEVICES_GROUPS', 1],
@@ -109,26 +144,22 @@ class Firmware {
             ['cbRestoreMQTT', 'mqtt', 'RESTORE_MQTT_SETTINGS', 0],
             ['cbRestoreTransceiver', 'transceiver', 'RESTORE_RADIO_SETTINGS', 0]
         ];
-
-        let html = opts.map(o => `
-        <label class="uniRow dirty-target">
-        <div class="uniLabel">${tr(o[2])}</div>
-        <div class="uniRight">
-        <span class="switch">
-        <input id="${o[0]}" type="checkbox" data-bind="${o[1]}" ${o[3]?'checked':''}>
-        <div></div>
-        </span>
-        </div>
-        </label>`).join('');
-
-        let divInstText = div.querySelector('#divInstText');
-        if (divInstText) {
-            divInstText.innerHTML = `
-            <div class="uniblocStep"><div>${tr('RESTORE_SELECT_FILE')}</div></div>
-            <div id="jsUniRestore" class="uniblocCol">${html}</div>`;
-        }
-        instContent.insertAdjacentHTML('afterbegin', overlayHeader('RESTORE_TITLE', 'RESTORE_DESC', 'svg-restore', { subtitle: 'RESTORE_DESC' }));
-
+        const checks = opts.map(o => `
+        <label class="genmod-check"><input id="${o[0]}" type="checkbox" data-bind="${o[1]}" ${o[3] ? 'checked' : ''}><span>${tr(o[2])}</span></label>`).join('');
+        const div = this.createFileUploader('/restore', {
+            titleKey: 'RESTORE_TITLE', descKey: 'RESTORE_DESC', icon: 'svg-restore',
+            stateKey: tr('RESTORE_STATE_FILE'), stateValue: '—',
+            sectionKey: 'RESTORE_SECTION', hintKey: 'RESTORE_CONFIRM_SUB',
+            afterDrop: `
+            <div class="icon-pack-label"><span>${tr('RESTORE_WHAT')}</span><span id="restoreCount"></span></div>
+            <div class="genmod-checks" id="jsUniRestore">${checks}</div>`
+        });
+        const count = () => {
+            const all = div.querySelectorAll('#jsUniRestore input');
+            div.querySelector('#restoreCount').textContent = tr('RESTORE_COUNT').replace('%1', [...all].filter(c => c.checked).length).replace('%2', all.length);
+        };
+        div.querySelector('#jsUniRestore').addEventListener('change', count);
+        count();
         shOverlay(div);
     }
 
@@ -176,6 +207,7 @@ class Firmware {
         </div>
         </div>
         <div class="fw-id-name"><span class="fw-lit">ESPSomfyRTS_</span><span class="fw-ver">${tr('FIRMWARE_MA_FILE_TOK_VERSION')}</span><span class="fw-lit">${p.middle}</span>${device}<span class="fw-lit">.bin</span></div>
+        <ul class="fw-id-help">${tips.map(k => `<li>${tr(k)}</li>`).join('')}</ul>
         </div>`;
     }
 
@@ -201,98 +233,69 @@ class Firmware {
         el.style.fontSize = Math.max(8, Math.floor(base * (avail - 1) / natural * 10) / 10) + 'px';
     }
 
-    createFileUploader(service) {
-        const isRestore = service === '/restore', isMob = this.isMobile(), div = document.createElement('div');
+    // Ligne de sauvegarde : pied de la fenêtre GitHub, 3e étape du téléversement.
+    backupRow() {
+        return `<button type="button" id="btnBackupCfg" class="genmod-backup backup-row" onclick="firmware.backup()">
+        <span class="genmod-backup-ico"><svg><use href="#svg-save"></use></svg></span>
+        <span class="gen-row-text"><b>${tr('FIRMWARE_MT_SAVE_BACKUP')}</b><span>${tr(this.isMobile() ? 'FIRMWARE_MT_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_MT_SAVE_BACKUP_DESC')}</span></span>
+        <svg class="genmod-backup-go"><use href="#svg-download"></use></svg>
+        </button>`;
+    }
+    // Fenêtre de tâche (GitHub, téléversement, restauration) : la coque genmod- de la page
+    // migrée, mais plein écran sur mobile comme l'ancien .inst-overlay (genmod-task, overlays.css).
+    taskWindow(id, o, extraClass = '') {
+        const div = document.createElement('div');
+        div.id = id;
+        div.className = `modal-overlay genmod-overlay genmod-task ${extraClass}`.trim();
+        div.innerHTML = `<div class="message-content genmod-window">${genModalShell(o)}</div>`;
+        div.onclick = (e) => { if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div); };
+        return div;
+    }
+    createFileUploader(service, o) {
+        const isRestore = service === '/restore';
         const pickKey = isRestore ? 'FILE_PICK_BACKUP' : 'FILE_PICK_FIRMWARE';
-        div.id = 'divUploadFile';
-        // no-feedback : pas d'animation/retour souhaité pendant un flux d'upload/restauration
-        // firmware -- un enfoncement/flash sur les boutons pendant cette opération sensible
-        // serait plus distrayant qu'utile.
-        div.className = 'inst-overlay no-feedback';
-
-        const step = (n, content, hide = false) => hide ? '' : `
-        <div class="v-step-item">
-        <div class="v-step-left"><div class="step-counter">${n}</div><div class="v-step-line"></div></div>
-        <div class="v-step-right"><div>${content}</div></div>
+        const step = (n, content) => `
+        <div class="genmod-step">
+        <div class="genmod-step-rail"><span class="genmod-step-num">${n}</span><span class="genmod-step-line"></span></div>
+        <div class="genmod-step-body">${content}</div>
         </div>`;
-
-        div.innerHTML = `
-        <div class="instructions-content UploadFile-content">
-        <div class="overlay-scroll-content">
-        <form method="POST" action="#" enctype="multipart/form-data" id="frmUploadApp">
-        <div id="divInstText"></div>
-        <div class="vertical-steps-container">
-        ${step(1, `
-        <div>${tr('FIRMWARE_MA_UPDATE_GET_FILE')}</div>
-        <a href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link" style="display:block; margin-top:5px;">${tr('FIRMWARE_MA_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
-        `, isRestore)}
-        <div class="v-step-item ${isRestore ? '' : 'has-extra-content'}" style="${isRestore ? 'height:auto;margin:0' : ''}">
-        <div class="v-step-left" style="${isRestore ? 'display:none' : ''}">
-        <div class="step-counter">2</div><div class="v-step-line"></div>
-        </div>
-        <div class="v-step-right" style="${isRestore ? 'padding-left:0;height:auto' : ''}">
+        const drop = `
         <input id="fileName" type="file" name="updateFS" style="display:none"
         onchange="const f=this.files[0];if(f){get('span-selected-file').innerText=f.name;firmware.checkBackupVersion(f)}"/>
-        ${fileDropZone('fileName', pickKey, 'span-selected-file')}
-        </div>
-        </div>
-        <div class="v-step-item" style="${isRestore ? 'display:none' : ''}">
-        <div class="v-step-left"><div class="step-counter">3</div></div>
-        <div class="v-step-right"><div>${tr('FIRMWARE_MA_UPDATE_VERIFY_0')} <svg class="svgInText"><use href="#svg-save"></use></svg> ${tr('FIRMWARE_MA_UPDATE_VERIFY_1')}</div></div>
-        </div>
-        </div>
-
-        <div class="warning" style="${isRestore ? 'margin-top:0' : 'display:none'}">
-        <div class="warning-header">
-        <svg><use href="#svg-warning"></use></svg>
-        <b>${tr('MSG_ALERT')}</b>
-        </div>
-        <div class="information-text">
-        <span>${tr('RESTORE_NETWORK_WARNING')}</span>
-        </div>
-        </div>
-
-        <div id="divFileUploadProgress" style="display:none;margin:15px 0">
-        <div class="progress-bar-header"><span class="progress-bar-label"></span><span class="progress-bar-value" id="progFileUpload-value">0%</span></div>
-        <div class="progress-bar" id="progFileUpload"><div class="progress-bar-fill"></div></div>
-        </div>
-        </div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="button-container-overlay"><div class="footer-sticky-content">
-        <div class="uniRow backup-row" style="${isRestore ? 'display:none' : ''}">
-        <div class="uniText">
-        <span class="uniLabel">${tr('FIRMWARE_MT_SAVE_BACKUP')}</span>
-        <span class="uniStatus">${tr(isMob ? 'FIRMWARE_MT_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_MT_SAVE_BACKUP_DESC')}</span>
-        </div>
-        <div id="btnBackupCfg" class="gitBackup" onclick="firmware.backup()"><svg><use href="#svg-save"></use></svg></div>
-        </div>
-        <!-- Remplace la ligne de sauvegarde ci-dessus une fois le transfert lancé (cf.
-             firmware.uploadFile()) : le verrou 'hard' posé sur l'overlay à cet instant empêche déjà
-             toute fermeture réelle (requestCloseOverlay() ne fait plus qu'un flash visuel), inutile
-             donc de laisser "Annuler" affiché -- ce texte réutilise les mêmes clés que le message de
-             ce verrou (setOverlayLock plus bas), déjà pensées pour prévenir de ne pas fermer la page
-             ni débrancher l'appareil pendant une installation/restauration OTA. -->
-        <div id="divUploadInProgressNotice" class="warning" style="display:none">
-        <div class="warning-header">
-        <svg><use href="#svg-warning"></use></svg>
-        <b>${tr(isRestore ? 'PROMPT_RESTORE_IN_PROGRESS_TITLE' : 'PROMPT_UPDATE_IN_PROGRESS_TITLE')}</b>
-        </div>
-        <div class="information-text">
-        <span>${tr(isRestore ? 'PROMPT_RESTORE_IN_PROGRESS_MSG' : 'PROMPT_UPDATE_IN_PROGRESS_MSG')}</span>
-        </div>
-        </div>
-        <div class="button-container-row">
-        <button id="btnClose" line type="button" onclick="requestCloseOverlay(get('divUploadFile'))">${tr('BT_CANCEL_1')}</button>
-        <button id="btnUploadFile" type="button" onclick="firmware.uploadFile('${service}',get('divUploadFile'),ui.fromElement(get('divUploadFile')))">${tr('BT_UPLOAD_FILE')}</button>
-        </div>
-        </div></div>
-        </form>
-        </div>
-        </div>`;
-
+        ${fileDropZone('fileName', pickKey, 'span-selected-file')}`;
+        const inProgress = (titleKey, msgKey) => `
+        <p id="divUploadInProgressNotice" class="gen-tile-desc is-warning" style="display:none"><b>${tr(titleKey)}</b><br>${tr(msgKey)}</p>`;
+        // no-feedback : pas d'enfoncement ni de flash sur les boutons pendant ce flux sensible.
+        const div = this.taskWindow('divUploadFile', Object.assign({
+            id: 'upload', footId: 'uploadFoot',
+            bodyHtml: `
+            <form method="POST" action="#" enctype="multipart/form-data" id="frmUploadApp" class="genmod-form">
+            <div id="divInstText"></div>
+            ${isRestore ? drop : `
+            <div class="vertical-steps-container">
+            ${step(1, `<div><b>${tr('FIRMWARE_MA_UPDATE_GET_FILE')}</b>
+            <a href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link genmod-link">${tr('FIRMWARE_MA_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
+            ${this.fileIdCard()}</div>`)}
+            ${step(2, drop)}
+            ${step(3, this.backupRow())}
+            </div>`}
+            ${o.afterDrop || ''}
+            ${isRestore ? `<p class="gen-tile-desc is-warning">${tr('RESTORE_NETWORK_WARNING')}</p>` : ''}
+            <div id="divFileUploadProgress" style="display:none">
+            <div class="progress-bar-header"><span class="progress-bar-label"></span><span class="progress-bar-value" id="progFileUpload-value">0%</span></div>
+            <div class="progress-bar" id="progFileUpload"><div class="progress-bar-fill"></div></div>
+            </div>
+            ${inProgress(isRestore ? 'PROMPT_RESTORE_IN_PROGRESS_TITLE' : 'PROMPT_UPDATE_IN_PROGRESS_TITLE', isRestore ? 'PROMPT_RESTORE_IN_PROGRESS_MSG' : 'PROMPT_UPDATE_IN_PROGRESS_MSG')}
+            </form>`
+        }, o), 'no-feedback');
+        div.querySelector('#uploadFoot').innerHTML = `
+        <button id="btnClose" type="button" class="gen-btn" data-genmod-close>${tr('BT_CANCEL_1')}</button>
+        <button id="btnUploadFile" type="button" class="gen-btn gen-btn-primary" onclick="firmware.uploadFile('${service}',get('divUploadFile'),ui.fromElement(get('divUploadFile')))">${tr('BT_UPLOAD_FILE')}</button>`;
         return div;
     }
     checkBackupVersion(file) {
+        const val = document.querySelector('#uploadState .genmod-state-val');
+        if (val && get('jsUniRestore')) val.textContent = file.name;
         const reader = new FileReader();
         reader.onload = (e) => {
             const lines = e.target.result.split('\n');
@@ -322,23 +325,15 @@ class Firmware {
         // kilo-octets sont ce qu'on veut lire sur cette carte -- les octets exacts restent
         // disponibles sur /discovery pour un diagnostic fin.
         const ko = (v) => (typeof v === 'number' ? (v / 1024).fmt('#,##0.0') : '--');
-        let sp = get('spanFreeMemory');
-        if (sp) sp.innerHTML = ko(mem.free) + ' ';
-        sp = get('spanMaxMemory');
-        if (sp) sp.innerHTML = ko(mem.max) + ' ';
-        sp = get('spanMinMemory');
-        if (sp) sp.innerHTML = ko(mem.min) + ' ';
-
-        // --- MISE À JOUR DU CERCLE RAM VIA BACKGROUND DIRECT ---
+        const set = (id, v) => { const sp = get(id); if (sp) sp.textContent = v; };
+        set('spanFreeMemory', ko(mem.free));
+        set('spanMaxMemory', ko(mem.max));
+        set('spanMinMemory', ko(mem.min));
+        document.querySelectorAll('.fw-free-mem').forEach(el => { el.textContent = ko(mem.free); });
         if (mem && mem.free) {
             const totalRam = mem.total ? mem.total : 265672;
-            const ramUsedPct = Math.min(100, Math.max(0, Math.round(((totalRam - mem.free) / totalRam) * 100)));
-
-            const cRam = get('circle-ram');
-            if (cRam) {
-                cRam.style.background = `conic-gradient(#3b82f6 ${ramUsedPct}%, var(--color-circle-indicator) 0%)`;
-                cRam.innerHTML = `<span>${ramUsedPct}%</span>`;
-            }
+            const usedPct = Math.min(100, Math.max(0, Math.round(((totalRam - mem.free) / totalRam) * 100)));
+            get('fwRamBar')?.style.setProperty('--progress', `${usedPct}%`);
         }
     }
 
@@ -360,7 +355,7 @@ class Firmware {
 
     // Badge « mise à jour disponible » : version stable la plus haute du catalogue pour CETTE carte
     // et CETTE table de partitions, comparée à la version installée.
-    async refreshUpdateBadge() {
+    async refreshUpdateBadge(force) {
         const info = this.fwInfo || {};
         const divsGlobal = document.querySelectorAll('.firmware-message');
         const blk = get('divFwUpd');
@@ -370,10 +365,10 @@ class Firmware {
         });
         document.body.classList.remove('fw-update');
         if (blk) {
-            if (info.fwVersion?.name) get('spanFwVersion').innerText = info.fwVersion.name;
+            this.renderVersion(info.fwVersion?.name);
             get('spanFwFileDesc').innerText = tr('FW_UPDATE_FILE_DESC').replace('%1', this.boardKey() || 'esp32');
         }
-        if (info.checkForUpdate === false) return this.setUpdateState('off');
+        if (info.checkForUpdate === false && !force) return this.setUpdateState('off');
         let latest = null;
         try {
             const rel = await this.loadReleases(false);
@@ -400,12 +395,16 @@ class Firmware {
         const blk = get('divFwUpd');
         if (!blk) return;
         blk.setAttribute('data-state', state);
+        get('fwHero').setAttribute('data-state', state);
         if (this._checkedTimer) { clearInterval(this._checkedTimer); this._checkedTimer = null; }
         if (state === 'new') {
             this._latestTag = latest.version.name;
             get('spanFwLatest').innerText = latest.version.name;
-            get('spanFwInstalled').innerText = tr('FW_UPDATE_INSTALLED_VER').replace('%1', get('spanFwVersion').innerText);
+            get('spanFwInstall').innerText = tr('FW_INSTALL_VER').replace('%1', latest.version.name);
         }
+        get('fwHeroBadge').innerText = state === 'new' ? tr('FW_BADGE_NEW').replace('%1', latest.version.name)
+            : tr({ idle: 'FW_BADGE_UPTODATE', off: 'FW_BADGE_OFF', error: 'FW_UPDATE_CHECK_FAIL' }[state]);
+        get('fwHero').querySelector('.fw-badge use').setAttribute('href', { idle: '#svg-check', new: '#svg-download', off: '#svg-info', error: '#svg-warning' }[state]);
         const title = get('gitUpdateDesc'), sub = get('gitUpdateChecked');
         title.innerText = tr({ new: 'FW_UPDATE_AVAILABLE', idle: 'FW_UPDATE_UPTODATE', off: 'FW_UPDATE_CHECK_OFF', error: 'FW_UPDATE_CHECK_FAIL' }[state]);
         if (state === 'error') { sub.innerText = tr('FW_UPDATE_CHECK_FAIL_DESC'); return; }
@@ -418,11 +417,18 @@ class Firmware {
     async showReleaseNotes() {
         if (!this._latestTag) return;
         const r = await this.getReleaseInfo(this._latestTag);
-        const div = ui.infoMessage(tr('FW_UPDATE_NOTES_TITLE').replace('%1', this._latestTag), '');
-        div.querySelector('.modalHeader-badge use')?.setAttribute('href', '#svg-doc');
-        div.querySelector('.sub-message').innerHTML = r?.info?.body
-            ? `<div class="release-notes-preview">${this.parseMarkdown(r.info.body)}</div>`
-            : `<p>${tr('ERR_GIT_NOTE')}</p>`;
+        this.notesModal(this._latestTag, r?.info?.body ? this.parseMarkdown(r.info.body) : `<p>${tr('ERR_GIT_NOTE')}</p>`);
+    }
+    // Modale ordinaire (fermeture au clic dehors et par la poignée) : ui.infoMessage() est une
+    // alerte critique, exclue de cette fermeture.
+    notesModal(tag, html) {
+        const m = document.createElement('div');
+        m.className = 'modal-overlay';
+        m.innerHTML = `<div class="message-content">
+        ${modalHeader(tr('FW_UPDATE_NOTES_TITLE').replace('%1', escHtml(tag)), 'svg-doc')}
+        <div class="overlay-scroll-content release-notes-preview">${html}</div>
+        </div>`;
+        shOverlay(m);
     }
 
     // Barre de progression de l'écran d'installation (cf. renderGitInstallProgress).
@@ -486,7 +492,7 @@ class Firmware {
         // posée par shOverlay() lors de l'ouverture initiale (écran de sélection de version) --
         // l'écraser ferait recalculer l'élément à opacity:0 (état de départ commun aux deux
         // classes) puisque plus rien ne redéclencherait la transition d'entrée.
-        div.classList.remove('inst-overlay');
+        div.classList.remove('inst-overlay', 'genmod-overlay', 'genmod-task');
         div.classList.add('modal-overlay');
         // shOverlay() ne pose body.modal-open qu'à l'ouverture initiale (alors encore
         // .inst-overlay, donc ignoré) -- le reposer ici manuellement ; son retrait reste géré par
@@ -768,7 +774,13 @@ class Firmware {
     // Production, l'accès à la version de dev reste un geste volontaire.
     setGitMode(el, mode) {
         const div = el.closest('#divGitInstall');
-        if (!div || !div.setGitMode || div.getAttribute('data-mode') === mode) return;
+        if (!div || !div.setGitMode) return;
+        // Le bouton radio reste sur le mode réel tant que applyMode() ne l'a pas changé : un refus
+        // de la confirmation Développeur ne doit pas laisser « Développeur » coché.
+        const cur = div.getAttribute('data-mode');
+        div.querySelectorAll('input[name="gitMode"]').forEach(r => { r.checked = r.value === cur; });
+        div.querySelectorAll('.genmod-mode-select').forEach(m => { m.value = cur; });
+        if (cur === mode) return;
         if (mode !== 'dev') return div.setGitMode(mode);
         const prompt = ui.promptMessage(get('divContainer'), tr('FIRMWARE_DEV_CONFIRM_TITLE'), () => div.setGitMode('dev'), true, 'svg-warning');
         prompt.querySelector('.sub-message').innerHTML = `<p>${tr('FIRMWARE_DEV_CONFIRM')}</p>`;
@@ -784,9 +796,6 @@ class Firmware {
                 return ui.serviceError(err);
             }
 
-            const div = document.createElement('div'), isMob = this.isMobile();
-            div.id = 'divGitInstall';
-            div.className = 'inst-overlay';
 
             rel.releases.sort((a, b) => a.preRelease === b.preRelease && b.draft === a.draft ? 0 : a.preRelease ? 1 : -1);
 
@@ -801,8 +810,6 @@ class Firmware {
             const verNum = v => ((v?.major || 0) * 1000000) + ((v?.minor || 0) * 1000) + (v?.build || 0);
             const currentVerNum = verNum(rel.appVersion);
 
-            // --- INJECTION DE LA VERSION COURANTE DE L'ESP (numérique, cf. commentaire ci-dessus) ---
-            div.setAttribute('data-currentvernum', currentVerNum);
 
             // --- FILTRAGE DES OPTIONS DU SÉLECTEUR ---
             // La version de dev (r.main, case réservée côté firmware) n'est servie qu'avec ?dev=1 et
@@ -829,72 +836,50 @@ class Firmware {
             }).join('');
             };
             const optsHtml = buildOpts(rel);
+            const div = this.taskWindow('divGitInstall', {
+                id: 'git', icon: 'svg-cloudDownload', footId: 'gitFoot',
+                titleKey: 'FIRMWARE_OTA_TITLE', descKey: 'FIRMWARE_OTA_TITLE_DESC',
+                stateKey: tr('FIRMWARE_MT_INSTALLED'), stateValue: `v${escHtml(rel.appVersion.name || '')}`,
+                sideExtra: `
+                <div class="genmod-state">
+                <span class="genmod-state-key">${tr('CHANNEL')}</span>
+                <span class="gen-seg genmod-seg">
+                <label><input type="radio" name="gitMode" value="prod" checked onchange="firmware.setGitMode(this, 'prod')"><span>${tr('FIRMWARE_MODE_PROD')}</span></label>
+                <label><input type="radio" name="gitMode" value="dev" onchange="firmware.setGitMode(this, 'dev')"><span>${tr('FIRMWARE_MODE_DEV')}</span></label>
+                </span>
+                <span class="genmod-state-note">${tr('FIRMWARE_OTA_CHANNEL_NOTE')}</span>
+                ${/* Mobile : le même choix en sélecteur compact, pour rendre la hauteur aux notes. */ ''}
+                <select class="genmod-mode-select" aria-label="${tr('CHANNEL')}" onchange="firmware.setGitMode(this, this.value)">
+                <option value="prod">${tr('FIRMWARE_MODE_PROD')}</option>
+                <option value="dev">${tr('FIRMWARE_MODE_DEV')}</option>
+                </select>
+                </div>`,
+                sectionKey: 'FIRMWARE_OTA_SECTION', hintKey: 'FIRMWARE_MT_SAVE_BACKUP',
+                bodyHtml: `
+                <div class="icon-pack-label"><span id="gitCount"></span>
+                ${/* Page des releases comme valeur de départ, jamais "#" (résolu contre la page
+                     courante) : updateNotes() l'affine sur la version choisie. */ ''}
+                <a id="lnkGithubRelease" href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link genmod-link">${tr('FIRMWARE_OTA_NOTE_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a></div>
+                <select id="selVersion" data-bind="version" hidden>${optsHtml}</select>
+                <div class="icon-pack-grid" id="gitVersions"></div>
+                <p id="divPrereleaseWarning" class="gen-tile-desc is-warning" style="display:none"><span id="spanUpdateWarning"></span></p>
+                <div class="genmod-notes-wrap">
+                <div id="notesPreview" class="release-notes-preview genmod-notes">
+                <div class="wifiConnectScan">
+                <svg class="wait-spinner" viewBox="25 25 50 50"><circle class="wait-spinner-track" cx="50" cy="50" r="20" fill="none" stroke-width="3"/><circle class="wait-spinner-arc" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/></svg>
+                </div>
+                </div>
+                <button type="button" class="genmod-notes-open"><svg><use href="#svg-doc"></use></svg>${tr('FIRMWARE_OTA_NOTES_OPEN')}</button>
+                </div>
+                <p class="gen-tile-desc">${tr('FIRMWARE_MT_CACHE')}</p>`
+            });
+            div.setAttribute('data-currentvernum', currentVerNum);
             div.setAttribute('data-mode', 'prod');
             div._rel = rel;
-
-            div.innerHTML = `
-            <div class="instructions-content github-content">
-            ${overlayHeader('FIRMWARE_OTA_TITLE', 'FIRMWARE_OTA_TITLE_DESC', 'svg-cloudDownload', { subtitle: 'FIRMWARE_OTA_TITLE_DESC', menu: [
-                { id: 'prod', label: tr('FIRMWARE_MODE_PROD'), active: true, action: "firmware.setGitMode(this, 'prod')" },
-                { id: 'dev', label: tr('FIRMWARE_MODE_DEV'), action: "firmware.setGitMode(this, 'dev')" }
-            ] })}
-
-            <div class="overlay-static-content">
-            <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_MT_INSTALLED')}</span><span class="labelgrey">v${rel.appVersion.name}</span></div>
-            <div class="baseFlexRow">
-            <span class="uniLabel">${tr('FIRMWARE_OTA_AVAILABLE')}</span>
-            <select id="selVersion" class="selectCompac" data-bind="version">${optsHtml}</select>
-            </div>
-            <!-- Page des releases du dépôt comme valeur de départ, et non "#" : le href n'était
-                 renseigné que par updateNotes() en cas de succès (r.info.html_url). Dès que la note
-                 ne se chargeait pas -- sélecteur vide, ou GitHub injoignable depuis le NAVIGATEUR,
-                 qui va le chercher lui-même -- le lien gardait "#", que le navigateur résout contre
-                 la page courante : il pointait donc sur http://espsomfyrts.local/#, c'est-à-dire sur
-                 lui-même. updateNotes() l'affine ensuite sur la version sélectionnée. -->
-            <a id="lnkGithubRelease" href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link">${tr('FIRMWARE_OTA_NOTE_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
-
-
-            </div>
-
-            <!-- Bandeau d'alerte, à la même place que la carte du fichier de divUploadFile (cf.
-                 .fw-band, overlays.css) : sous le bloc statique et HORS de la zone défilante, où
-                 il partait auparavant avec les notes de version dès qu'on les faisait défiler.
-                 Quand il est visible, sa bordure basse remplace le filet ci-dessous. -->
-            <div id="divPrereleaseWarning" class="error fw-band" style="display:none;">
-            <div class="error-header">
-            <svg><use href="#svg-error"></use></svg>
-            <b>${tr('MSG_ALERT')}</b>
-            </div>
-            <div class="information-text">
-            <span id="spanUpdateWarning"></span>
-            </div>
-            </div>
-            <div class="hrModal"></div>
-
-            <div class="overlay-scroll-content">
-            <div class="warningText"><svg><use href="#svg-warning"></use></svg><span>${tr('FIRMWARE_MT_CACHE')}</span></div>
-
-            <div id="notesPreview" class="release-notes-preview">
-            <div class="wifiConnectScan">
-            <svg class="wait-spinner" viewBox="25 25 50 50"><circle class="wait-spinner-track" cx="50" cy="50" r="20" fill="none" stroke-width="3"/><circle class="wait-spinner-arc" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/></svg>
-            </div>
-            </div>
-            </div>
-
-            <div class="hrDivFooter-Instruc"></div>
-            <div class="button-container-overlay">
-            <div class="footer-sticky-content">
-            <div class="uniRow">
-            <div class="uniText"><span class="uniLabel">${tr('FIRMWARE_MT_SAVE_BACKUP')}</span><span class="uniStatus">${tr(isMob ? 'FIRMWARE_MT_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_MT_SAVE_BACKUP_DESC')}</span></div>
-            <div id="btnBackupCfg" class="gitBackup" onclick="firmware.backup()"><svg><use href="#svg-save"></use></svg></div>
-            </div>
-            <div class="button-container-row">
-            <button id="btnClose" line type="button" onclick="requestCloseOverlay(get('divGitInstall'))">${tr('BT_CANCEL_1')}</button>
-            <button id="btnUpdate" type="button" class="btn-main" onclick="firmware.confirmInstallGitRelease(get('divGitInstall'))">${tr('BT_UPDATE')}</button>
-            </div>
-            </div>
-            </div>
-            </div>`;
+            div.querySelector('#gitHint').innerHTML = this.backupRow();
+            div.querySelector('#gitFoot').innerHTML = `
+            <button id="btnClose" type="button" class="gen-btn" data-genmod-close>${tr('BT_CANCEL_1')}</button>
+            <button id="btnUpdate" type="button" class="gen-btn gen-btn-primary" onclick="firmware.confirmInstallGitRelease(get('divGitInstall'))">${tr('BT_UPDATE')}</button>`;
 
             shOverlay(div);
             const sel = div.querySelector('#selVersion');
@@ -940,14 +925,28 @@ class Firmware {
                 }
             };
             sel.addEventListener('change', () => { this.gitReleaseSelected(div); updateNotes(); });
+            div.querySelector('#gitVersions').addEventListener('click', (e) => {
+                const t = e.target.closest('[data-ver]');
+                if (!t || sel.value === t.dataset.ver) return;
+                sel.value = t.dataset.ver;
+                sel.dispatchEvent(new Event('change'));
+            });
+            // Mobile : les notes se lisent en grand dans une modale ; ailleurs elles ont la place.
+            div.querySelector('.genmod-notes-wrap').addEventListener('click', () => {
+                if (!window.matchMedia('(max-width: 767px)').matches) return;
+                this.notesModal(sel.value, div.querySelector('#notesPreview').innerHTML);
+            });
+            this.renderGitTiles(div);
             this.gitReleaseSelected(div);
             updateNotes();
 
             const applyMode = (mode, list) => {
                 div.setAttribute('data-mode', mode);
                 div._rel = list;
-                div.querySelectorAll('.overlayHeader-dropdown-menu [data-menu]').forEach(m => m.classList.toggle('active', m.getAttribute('data-menu') === mode));
+                div.querySelectorAll('input[name="gitMode"]').forEach(r => { r.checked = r.value === mode; });
+                div.querySelectorAll('.genmod-mode-select').forEach(m => { m.value = mode; });
                 sel.innerHTML = buildOpts(list);
+                this.renderGitTiles(div);
                 this.gitReleaseSelected(div);
                 updateNotes();
             };
@@ -963,11 +962,33 @@ class Firmware {
             };
         });
     }
+    // Les versions en tuiles (gabarit des packs d'icônes) ; le <select> caché reste la source
+    // de vérité pour gitReleaseSelected(), confirmInstallGitRelease() et ui.fromElement().
+    renderGitTiles(div) {
+        const sel = div.querySelector('#selVersion'), cur = div.getAttribute('data-currentvernum');
+        const opts = [...sel.options];
+        const stable = opts.filter(o => o.getAttribute('data-prerelease') !== 'true').map(o => Number(o.getAttribute('data-vernum')));
+        const latest = stable.length ? Math.max(...stable) : null;
+        get('gitCount').textContent = tr('FIRMWARE_OTA_COUNT').replace('%1', opts.length);
+        div.querySelector('#gitVersions').innerHTML = opts.map(o => {
+            const dev = o.getAttribute('data-devbuild') === 'true', pre = o.getAttribute('data-prerelease') === 'true';
+            const vn = Number(o.getAttribute('data-vernum'));
+            const m = /^v?(\d+)\.(\d+)/.exec(o.value);
+            const badge = String(vn) === cur ? `<span class="lang-catalog-badge active">${tr('INSTALLED')}</span>`
+                : vn === latest ? `<span class="lang-catalog-badge">${tr('FIRMWARE_OTA_TAG_LATEST')}</span>` : '';
+            return `<div class="icon-pack-tile${String(vn) === cur ? ' is-default' : ''}" data-ver="${escAttr(o.value)}">
+            <span class="lang-catalog-code">${dev ? 'dev' : m ? `${m[1]}.${m[2]}` : '?'}</span>
+            <div class="icon-pack-name">${escHtml(o.value)}</div>
+            <div class="icon-pack-meta">${tr(dev ? 'CHANNEL_DEV' : pre ? 'FIRMWARE_OTA_TAG_PRE' : 'CHANNEL_STABLE')}</div>
+            <span class="icon-pack-tag">${badge}</span></div>`;
+        }).join('');
+    }
     gitReleaseSelected(div) {
         const sel = div.querySelector('#selVersion');
         if (!sel || sel.selectedIndex === -1) return;
 
         const opt = sel.options[sel.selectedIndex];
+        div.querySelectorAll('#gitVersions [data-ver]').forEach(t => t.classList.toggle('selected', t.dataset.ver === sel.value));
         const isPre = opt.getAttribute('data-prerelease') === "true";
         const divPre = div.querySelector('#divPrereleaseWarning');
         const spanWarning = div.querySelector('#spanUpdateWarning');
@@ -988,7 +1009,7 @@ class Firmware {
         if (divPre) {
             if (isPre) {
                 if (spanWarning) spanWarning.innerHTML = opt.getAttribute('data-devbuild') === 'true' ? tr('FIRMWARE_OTA_RELEASE_DEV') : tr('FIRMWARE_OTA_RELEASE_BETA');
-                divPre.style.display = 'flex';
+                divPre.style.display = '';
             } else {
                 divPre.style.display = 'none';
             }
@@ -1080,39 +1101,15 @@ class Firmware {
     // Envoi manuel d'un firmware. L'interface est compilée dedans : plus d'image de filesystem à
     // envoyer à part, ni de /updateApplication.
     updateManual() {
-        const service = '/updateFirmware';
-        const div = this.createFileUploader(service);
-        const currentVer = get('spanFwVersion').innerText || '?.?.?';
-
-        let instContent = div.querySelector('.instructions-content');
-        const updateDescKey = 'FIRMWARE_MA_FIRMWARE_DESC';
-        instContent.insertAdjacentHTML('afterbegin', overlayHeader('FIRMWARE_MA_UPDATE_TITLE', updateDescKey, 'svg-upload', { subtitle: updateDescKey }));
-
-        div.querySelector('#divInstText').innerHTML = `
-
-
-
-        <div class="overlay-static-content">
-        <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_MT_INSTALLED')}</span><span class="labelgrey">${currentVer}</span></div>
-        <div class="warningText"><span>${tr('FIRMWARE_MT_CACHE')}</span></div></div>
-        ${this.fileIdCard()}
-
-
-
-        </div>`;
-
-        div.className += ' mode-firm-update';
+        const div = this.createFileUploader('/updateFirmware', {
+            titleKey: 'FIRMWARE_MA_UPDATE_TITLE', descKey: 'FIRMWARE_MA_FIRMWARE_DESC', icon: 'svg-upload',
+            stateKey: tr('FIRMWARE_MT_INSTALLED'), stateValue: get('spanFwVersion').innerText || '?.?.?',
+            sectionKey: 'FW_UPDATE_FILE', hintKey: 'FIRMWARE_MA_HINT'
+        });
         shOverlay(div);
         // Après shOverlay() : la mesure demande que le bloc soit dans le document et sa largeur
-        // arrêtée. La transition d'entrée ne gêne pas, elle porte sur une transformation et une
-        // opacité, dont clientWidth/scrollWidth ne dépendent pas.
+        // arrêtée.
         this.fitFileName(div);
-
-        const btnB = div.querySelector('#btnBackupCfg');
-        if (btnB) {
-            btnB.style.display = 'flex';
-            btnB.onclick = () => firmware.backup();
-        }
     }
     async uploadFile(service, el, data) {
         let field = el.querySelector('input[type="file"]'),
@@ -1223,7 +1220,7 @@ class Firmware {
         prog = el.querySelector('#progFileUpload'),
         progVal = el.querySelector('#progFileUpload-value'),
         btnCancel = el.querySelector('#btnClose'),
-        backupRow = el.querySelector('.uniRow.backup-row'),
+        backupRow = el.querySelector('.backup-row'),
         inProgressNotice = el.querySelector('#divUploadInProgressNotice');
         progWrap.style.display = '';
 

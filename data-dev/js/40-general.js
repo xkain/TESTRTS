@@ -41,21 +41,7 @@ class General {
     // =====================================================================
     _bindGeneralPage() {
         const page = get('divSystemOptions');
-        get('genTabs').addEventListener('click', (e) => {
-            const tab = e.target.closest('.gen-tab');
-            if (tab) this.showGeneralTab(parseInt(tab.dataset.tab, 10));
-        });
-        ['btnGenPrev', 'btnGenNext'].forEach(id => get(id).addEventListener('click', (e) => {
-            this.showGeneralTab(parseInt(e.currentTarget.dataset.tab, 10));
-            // Ramène la barre d'onglets en haut de l'écran : le nouvel onglet se lit depuis son début.
-            const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            get('genTabs').scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
-        }));
-        // Les boutons dépendent de la hauteur de l'onglet affiché : elle change au chargement, à
-        // l'affichage de la page, au choix d'un mode de protection, à la rotation de l'écran.
-        if (window.ResizeObserver) new ResizeObserver(() => this._updatePager()).observe(get('genPanels'));
-        window.addEventListener('resize', () => this._updatePager());
-        this._bindGenSections();
+        this._tabs = bindGenTabs(page, { tabs: 'genTabs', panels: 'genPanels', pager: 'genPager', prev: 'btnGenPrev', next: 'btnGenNext' });
         page.querySelectorAll('input[name="genTheme"]').forEach(r => r.addEventListener('change', () => {
             const sel = get('selThemeMode');
             sel.value = r.value;
@@ -79,57 +65,7 @@ class General {
         this.renderSecurityTile();
     }
     showGeneralTab(i) {
-        if (i < 0 || i > 3) return;
-        this._generalTab = i;
-        document.querySelectorAll('#genTabs .gen-tab').forEach(t => {
-            const on = parseInt(t.dataset.tab, 10) === i;
-            t.classList.toggle('selected', on);
-            t.setAttribute('aria-selected', on ? 'true' : 'false');
-            // Bande défilante (mobile) : on ne bouge qu'elle, jamais la page.
-            const strip = t.parentElement;
-            if (on && strip.scrollWidth > strip.clientWidth) strip.scrollLeft = t.offsetLeft - strip.offsetLeft - (strip.clientWidth - t.offsetWidth) / 2;
-        });
-        document.querySelectorAll('#genPanels > [data-tab]').forEach(p => { p.hidden = parseInt(p.dataset.tab, 10) !== i; });
-        this._updatePager();
-    }
-    // Mobile : les onglets s'empilent en sections dont le titre se colle sous la navigation.
-    // Le filet ne se pose que sur le titre effectivement collé, d'où ce calcul au défilement.
-    _bindGenSections() {
-        const mq = window.matchMedia('(max-width: 767px)');
-        const page = get('divSystemOptions');
-        let raf = 0;
-        const update = () => {
-            raf = 0;
-            const heads = page.querySelectorAll('.gen-sec-head');
-            if (!mq.matches || !page.offsetParent) return heads.forEach(h => h.classList.remove('is-stuck'));
-            const top = Math.max(0, ...['appHeader', 'divMobileBreadcrumbSlot', 'divMobileStickyNav'].map(id => get(id)).filter(Boolean)
-                .map(e => e.getBoundingClientRect().bottom));
-            page.style.setProperty('--gen-stick-top', top + 'px');
-            heads.forEach(h => {
-                const r = h.getBoundingClientRect(), p = h.parentElement.getBoundingClientRect();
-                h.classList.toggle('is-stuck', r.top <= top + 1 && r.bottom > top && p.top + 9 < r.top);
-            });
-        };
-        this._updateGenSections = () => { if (!raf) raf = requestAnimationFrame(update); };
-        window.addEventListener('scroll', this._updateGenSections, { passive: true });
-        window.addEventListener('resize', this._updateGenSections);
-    }
-    // Onglet précédent et suivant en bas de l'onglet affiché, seulement quand il dépasse de
-    // l'écran : sur un onglet court, la barre d'onglets est déjà sous les yeux.
-    _updatePager() {
-        const pager = get('genPager'), panels = get('genPanels');
-        if (!pager || !panels.offsetParent) return;
-        if (this._updateGenSections) this._updateGenSections();
-        const i = this._generalTab || 0;
-        const tabs = document.querySelectorAll('#genTabs .gen-tab');
-        [['btnGenPrev', i - 1], ['btnGenNext', i + 1]].forEach(([id, n]) => {
-            const btn = get(id);
-            btn.hidden = n < 0 || n >= tabs.length;
-            if (btn.hidden) return;
-            btn.dataset.tab = n;
-            btn.querySelector('span').textContent = tabs[n].textContent;
-        });
-        pager.hidden = panels.getBoundingClientRect().bottom + window.scrollY <= window.innerHeight;
+        this._tabs.show(i);
     }
     // La protection de l'interface s'enregistre à part (bouton de sa tuile, cf. saveSecurity) :
     // elle n'entre pas dans la barre d'enregistrement.
@@ -154,7 +90,6 @@ class General {
             field('GENERAL_HOSTNAME', [get('fldHostname')], s.hostname || '', get('fldHostname').value),
             field('GENERAL_NTP_SERVER', [get('fldNtptimesever')], s.ntpServer || '', get('fldNtptimesever').value),
             field('GENERAL_UPNP', [get('cbSsdpBroadcast')], !!s.ssdpBroadcast, get('cbSsdpBroadcast').checked, yesNo),
-            field('GENERAL_UPDATES', [get('cbCheckForUpdate')], !!s.checkForUpdate, get('cbCheckForUpdate').checked, yesNo),
             field('GENERAL_TIMEZONE', [tz], s.posixZone || '', tz.value, tzText),
             field('GEO_LAT', [get('inputGeoLat')], geoSet ? geo.geoLat.toFixed(2) : '', get('inputGeoLat').value.trim(), undefined, (a, b) => num(a) === num(b)),
             field('GEO_LON', [get('inputGeoLon')], geoSet ? geo.geoLon.toFixed(2) : '', get('inputGeoLon').value.trim(), undefined, (a, b) => num(a) === num(b)),
@@ -475,8 +410,8 @@ class General {
         "Pacific/Norfolk|<+11>-11<+12>,M10.1.0,M4.1.0/3"
     ];
     loadGeneral() {
-        // divSystemSettings englobe les deux sous-onglets (Général + Firmware) : certains
-        // champs "general.*" (ex: enableDebugLogs) vivent dans Firmware, pas Général.
+        // divSystemSettings englobe les deux sous-onglets (Général + Appareil) : checkForUpdate et
+        // enableDebugLogs vivent dans Appareil, qui les enregistre à part (firmware.setOption).
         const pnl = get('divSystemSettings');
 
         getJSONSync('/modulesettings', (err, settings) => {
@@ -487,7 +422,7 @@ class General {
             logger.setDebugEnabled(settings.enableDebugLogs);
             logger.debug('General settings loaded:', settings);
 
-            get('spanFwVersion').innerText = settings.fwVersion;
+            firmware.renderVersion(settings.fwVersion);
             get('spanHwVersion').innerText = settings.chipModel.length > 0 ? '-' + settings.chipModel : '';
             get('divContainer').setAttribute('data-chipmodel', settings.chipModel);
 
@@ -1678,7 +1613,7 @@ class General {
 
             let badge = '';
             if (entry.code === activeLang) badge = `<span class="lang-catalog-badge active">${tr('LANG_MODAL_ACTIVE')}</span>`;
-            else if (entry.installed) badge = `<span class="lang-catalog-badge">${tr('LANG_MODAL_INSTALLED')}</span>`;
+            else if (entry.installed) badge = `<span class="lang-catalog-badge">${tr('INSTALLED')}</span>`;
             else if (isPending) badge = `<span class="lang-catalog-badge">${tr('LANG_PENDING_BADGE')}</span>`;
 
             // Boîtier plein : une langue en ligne ne peut plus être choisie, sauf celle déjà mise

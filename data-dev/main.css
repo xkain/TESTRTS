@@ -2013,8 +2013,9 @@ body.is-home-welcome .container {
  *  PAGE SYSTÈME - GÉNÉRAL & FIRMWARE
  *  ======================================================================= */
 
-/* --- Page Général (#divSystemOptions, maquette A2) : colonne d'identité, onglets, tuiles --- */
-#divSystemOptions.subtab-content {
+/* --- Pages Général et Appareil (#divSystemOptions, #divFirmware, maquette A2) : colonne d'identité, onglets, tuiles --- */
+#divSystemOptions.subtab-content,
+#divFirmware.subtab-content {
     max-width: none;
     margin: 0;
     padding: 0;
@@ -2024,11 +2025,13 @@ body.is-home-welcome .container {
     /* Seul ancrage en px de la page : html est à 14 px pour l'ancienne interface. */
     font-size: 16px;
 }
-#divSystemOptions [hidden] {
+#divSystemOptions [hidden],
+#divFirmware [hidden] {
     display: none;
 }
 /* Sans ça, le fond s'arrête sous la dernière tuile quand l'onglet affiché est court (mobile). */
-.container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divSystemOptions:not([style*="none"])) {
+.container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divSystemOptions:not([style*="none"])),
+.container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divFirmware:not([style*="none"])) {
     background: var(--bg);
 }
 .gen-layout {
@@ -2574,7 +2577,8 @@ label.gen-row {
         gap: 0;
         padding: 0 16px 140px;
     }
-    #divSystemOptions .gen-grid[hidden] {
+    #divSystemOptions .gen-grid[hidden],
+    #divFirmware .gen-grid[hidden] {
         display: grid;
     }
     .gen-grid {
@@ -2632,6 +2636,305 @@ label.gen-row {
     }
 }
 
+/* --- Page Appareil (#divFirmware, maquette A2) : même gabarit que Général, rien à enregistrer --- */
+.fw-hero {
+    --fw-led: var(--ok);
+}
+.fw-hero[data-state="new"] {
+    --fw-led: var(--color-accent);
+}
+.fw-hero[data-state="off"] {
+    --fw-led: var(--text-3);
+}
+.fw-hero[data-state="error"] {
+    --fw-led: var(--warn);
+}
+.fw-hero-vis {
+    width: clamp(140px, min(14vw, 26vh), 260px);
+    height: auto;
+    flex: none;
+}
+.fw-hero-eyebrow {
+    display: block;
+    margin-bottom: 6px;
+    font-size: var(--fs-1);
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+}
+.fw-hero .fw-version {
+    font-size: clamp(2.125em, 3.4vw, 3.5em);
+    line-height: 1;
+}
+.fw-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 6px 12px;
+    border-radius: var(--r-pill);
+    background: var(--ok-bg);
+    color: var(--ok);
+    font-size: var(--fs-2);
+    font-weight: 700;
+}
+.fw-hero[data-state="new"] .fw-badge {
+    background: var(--info-bg);
+    color: var(--info);
+}
+.fw-hero[data-state="off"] .fw-badge {
+    background: var(--surface-2);
+    color: var(--text-3);
+}
+.fw-hero[data-state="error"] .fw-badge {
+    background: var(--warn-bg);
+    color: var(--warn);
+}
+.fw-badge svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    fill: currentColor;
+}
+.fw-facts {
+    width: 100%;
+    margin: 0;
+    text-align: left;
+}
+.fw-hero .fw-facts {
+    max-width: 340px;
+}
+.fw-fact {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-top: 1px solid var(--divider);
+    font-size: var(--fs-3);
+}
+.fw-fact:first-child {
+    border-top: 0;
+}
+.fw-fact dt {
+    color: var(--text-3);
+}
+.fw-fact dd {
+    margin: 0;
+    font-weight: 700;
+    text-align: right;
+    color: var(--text);
+}
+.fw-hero .fw-check-btn {
+    align-self: center;
+}
+#divFirmware .link {
+    font-size: inherit;
+}
+.fw-tip {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 10px;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: var(--r-3);
+    background: var(--info-bg);
+    color: var(--info);
+    font-size: var(--fs-3);
+    line-height: 1.5;
+}
+.fw-tip svg {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    fill: currentColor;
+}
+.fw-upd-line,
+.fw-big-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 12px;
+}
+.fw-big {
+    font-size: 1.75em;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text);
+}
+.fw-upd:not([data-state="new"]) .fw-upd-new {
+    display: none;
+}
+span.fw-upd-new {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.75em;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--color-accent);
+}
+span.fw-upd-new svg {
+    width: .7em;
+    height: .7em;
+    fill: currentColor;
+    color: var(--text-3);
+}
+.fw-upd[data-state="new"] #spanFwVersion {
+    color: var(--text-3);
+}
+.fw-tile-foot {
+    margin-top: auto;
+}
+.fw-channel[data-channel="stable"] .fw-channel-dev,
+.fw-channel[data-channel="dev"] .fw-channel-stable {
+    display: none;
+}
+.fw-channel-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.fw-channel-ico {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: var(--r-3);
+    background: var(--ok-bg);
+    color: var(--ok);
+}
+.fw-channel[data-channel="dev"] .fw-channel-ico {
+    background: var(--warn-bg);
+    color: var(--warn);
+}
+.fw-channel-ico svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+}
+.fw-acts {
+    display: flex;
+    flex-direction: column;
+}
+button.fw-act,
+button.fw-act:hover,
+button.fw-act:active {
+    justify-content: flex-start;
+    gap: 14px;
+    padding: 12px 0;
+    border: 0;
+    border-top: 1px solid var(--divider);
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    text-transform: none;
+    transform: none;
+    opacity: 1;
+}
+button.fw-act:first-child {
+    border-top: 0;
+}
+.fw-act-ico {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: var(--r-2);
+    background: var(--surface-2);
+}
+button.fw-act svg {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    fill: currentColor;
+}
+button.fw-act .fw-act-chev {
+    width: 18px;
+    height: 18px;
+    color: var(--text-3);
+    transition: transform .2s ease;
+}
+button.fw-act:hover .fw-act-chev {
+    transform: translateX(3px);
+}
+.fw-issue-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.fw-issue-label .help-svg {
+    width: 20px;
+    height: 20px;
+    color: var(--color-accent);
+}
+.fw-meter {
+    --progress-bar-height: 10px;
+    border-radius: var(--r-pill);
+}
+.fw-meter-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 12px;
+    font-size: var(--fs-2);
+    color: var(--text-3);
+}
+.fw-meter-legend .status-detail {
+    font-size: inherit;
+    font-weight: 700;
+    color: var(--text-2);
+}
+.fw-contributors {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px 10px;
+}
+.fw-danger {
+    background: var(--danger-bg);
+}
+.fw-danger .gen-tile-title {
+    color: var(--danger);
+}
+.gen-btn.fw-danger-btn,
+.gen-btn.fw-danger-btn:hover {
+    margin-top: auto;
+    background: var(--surface);
+    color: var(--danger);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 40%, transparent);
+}
+@media (max-width: 999px) {
+    .fw-hero-vis {
+        width: 84px;
+    }
+    .fw-hero .fw-facts {
+        grid-column: 1 / -1;
+        max-width: none;
+    }
+    .fw-hero .fw-check-btn {
+        grid-column: 1 / -1;
+        align-self: start;
+    }
+}
+@media (max-width: 767px) {
+    .fw-hero-vis,
+    .fw-hero .fw-facts,
+    .fw-hero .fw-check-btn,
+    #fwPager {
+        display: none;
+    }
+    .fw-hero .fw-version {
+        font-size: 2em;
+    }
+}
+
 .accent-swatch {
     position: relative;
     display: block;
@@ -2677,77 +2980,10 @@ label.gen-row {
     box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(128, 128, 128, 0.45);
 }
 /* Security **/
-/*
- *Firmware **/
-
+/* Boutons-lignes de l'ancienne interface, encore utilisés par l'assistant et les fenêtres. */
 .status-detail {
     font-size: 12px;
     color: var(--color-text-secondary);
-}
-
-.firmware-issue-label {
-    display: flex;
-    align-items: center;
-}
-.firmware-issue-label .help-svg {
-    width: 26px;
-    height: 22px;
-    color: var(--color-accent);
-}
-
-#spanFreeMemory { color: var(--color-text-secondary) !important; }
-
-.firmware-ramflash-block {
-    display:flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    position:relative;
-    width:100%;
-    padding: 20px;
-    gap: 15px;
-    border-radius: var(--radius-row);
-    clear:both;
-    background: var(--color-bg-surface-2);
-    border:1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-}
-
-.firmware-ramflash-status {
-    font-size: 0.82em;
-    margin-top: 4px;
-    opacity: 0.7;
-}
-
-/* gauges */
-.progress-circle {
-    width: 50px;
-    height: 50px;
-    border-radius:var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.85em;
-    font-weight: bold;
-    color: var(--color-text-secondary);
-    position: relative;
-    flex-shrink: 0;
-    margin-left: 15px;
-}
-
-.progress-circle::before {
-    content: "";
-    position: absolute;
-    width: 38px;
-    height: 38px;
-    border-radius:var(--radius-full);
-    background: var(--color-bg-card);
-}
-.progress-circle > * {
-    position: relative;
-}
-.minMax550{
-    display: none;
 }
 #svg-clear{fill: var(--color-text-main) ;}
 
@@ -2757,93 +2993,6 @@ label.gen-row {
     text-align:left;
     flex-grow: 1;
     gap: 4px;
-}
-.fw-upd[data-state="new"] .fw-upd-when-idle,
-.fw-upd:not([data-state="new"]) .fw-upd-when-new,
-.fw-upd .fw-upd-ico-new,
-.fw-upd .fw-upd-ico-off,
-.fw-upd .fw-upd-ico-error,
-.fw-upd:not([data-state="idle"]) .fw-upd-ico-ok {
-    display: none !important;
-}
-.fw-upd[data-state="new"] .fw-upd-ico-new,
-.fw-upd[data-state="off"] .fw-upd-ico-off,
-.fw-upd[data-state="error"] .fw-upd-ico-error {
-    display: block !important;
-}
-.fw-upd-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-}
-.fw-upd-number {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-shrink: 0;
-    font-size: 1.6em;
-    line-height: 1;
-    font-weight: 600;
-}
-.fw-upd-number svg {
-    width: 0.7em;
-    height: 0.7em;
-}
-.fw-upd[data-state="new"] .fw-upd-cur {
-    color: var(--color-text-secondary);
-}
-@media (max-width: 767px) {
-    .fw-upd[data-state="new"] .fw-upd-cur { display: none; }
-}
-.fw-upd .link {
-    font-size: inherit;
-}
-#spanFwLatest {
-    color: var(--color-accent-light);
-}
-.fw-upd-status {
-    width: auto;
-    min-width: 0;
-}
-.fw-upd-status .uniblocSvg-F {
-    background: var(--color-success-tint-bg);
-    border-color: var(--color-success-tint-border);
-    color: var(--color-success);
-}
-.fw-upd[data-state="off"] .fw-upd-status .uniblocSvg-F {
-    background: var(--color-bg-badge);
-    border-color: var(--color-border);
-    color: var(--color-svg-interface);
-}
-.fw-upd[data-state="error"] .fw-upd-status .uniblocSvg-F {
-    background: var(--color-warning-tint-bg);
-    border-color: var(--color-warning-tint-border);
-    color: var(--color-warning);
-}
-.fw-upd[data-state="new"] .fw-upd-status .uniblocSvg-F,
-.fw-upd[data-state="new"] .fw-upd-primary .uniblocSvg-F {
-    background: var(--color-danger-tint-bg);
-    border-color: var(--color-danger-tint-border);
-    color: var(--color-danger);
-}
-.fw-upd-primary {
-    flex: 2;
-    border-color: var(--color-accent-transp-70);
-    background: var(--color-accent-transp-94);
-}
-.fw-upd[data-state="new"] .fw-upd-primary {
-    border-color: var(--color-danger-tint-border);
-    background: var(--color-danger-tint-bg);
-}
-.fw-upd[data-state="new"] .fw-upd-primary .btnArrowRight {
-    color: var(--color-danger);
-    opacity: 1;
-}
-.fw-upd-secondary {
-    border-style: dashed;
-    background: transparent;
-    box-shadow: none;
 }
 .buttonUpdate svg,
 .unibutton svg {
@@ -2863,47 +3012,6 @@ label.gen-row {
     opacity:0.6;
     padding: 0;
     transition: transform 0.2s ease;
-}
-
-.firmware-credits-zone {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    background: var(--color-bg-surface-1);
-    padding: 16px;
-    border-radius: var(--radius-row);
-    border: 1px solid var(--color-border);
-}
-
-.firmware-credits-title {
-    font-size: 0.85em;
-    letter-spacing: 0.5px;
-    color: var(--color-text-secondary);
-    font-weight: 600;
-}
-.firmware-credits-btn {
-    flex: 1;
-    text-transform: none;
-    font-weight: initial;
-}
-.firmware-contributors-title {
-    color: var(--color-text-secondary);
-}
-
-.firmware-credit-contributor  {
-    cursor: pointer;
-    margin-top: 12px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    width: 100%;
-}
-.firmware-credit-contributor .version-badge {
-    margin-left: 0;
-}
-.firmware-credit-contributor .version-badge:hover {
-    transition: all 0.4s ease;
-    opacity: 1.8;
 }
 
 /* =======================================================================
@@ -5976,32 +6084,6 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divNetAda
 #gpMembersBlock .gp-sep { border: 0; border-top: 1px solid var(--color-border); margin: 0 -20px; width: calc(100% + 40px); align-self: flex-start; height: 0; flex: none; box-sizing: border-box; }
 #gpMembersBlock .gp-cards { display: flex; flex-direction: column; gap: 8px; }
 #gpMembersBlock.gp-empty .gp-sep { display: none; }
-#divFirmware .tile-wrap .unibloc-container { margin: 0; }
-#divFirmware .tile-tip { display: none; }
-#divFirmware .fw-grid > .unibloc-container > .uniRow { flex: none; }
-#divFirmware .fw-sys { display: flex; flex-direction: column; gap: 10px; }
-#divFirmware .fw-sys .firmware-ramflash-block { flex: none; }
-#divFirmware .fw-sys .fw-uptime, #divFirmware .fw-sys .fw-reset { width: 100%; }
-#divFirmware .fw-sys .fw-uptime { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
-#divFirmware .fw-sys .fw-uptime > .uniColumn { align-items: stretch !important; }
-#divFirmware .fw-sys .fw-uptime > .uniColumn > div { display: flex; justify-content: space-between; gap: 10px; }
-#divFirmware .fw-maint .row-To-Col-Mobile { flex-direction: column; }
-@media (min-width: 1000px) {
-    .subtab-content#divFirmware { max-width: 1440px; }
-    #divFirmware .tile-side { flex-direction: row; }
-    #divFirmware .tile-side > * { flex: 1 1 0; }
-    #divFirmware .fw-sys { display: grid; grid-template-columns: 1fr 1fr; }
-    #divFirmware .fw-sys > .tile-title { grid-column: 1 / -1; }
-    #divFirmware .tile-cols.fw-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
-    #divFirmware .fw-grid > .fw-upd, #divFirmware .fw-grid > .fw-help { grid-column: 1 / -1; }
-}
-@media (min-width: 1600px) {
-    #divFirmware .tile-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; grid-template-areas: "cols side"; }
-    #divFirmware .tile-side { grid-area: side; flex-direction: column; }
-    #divFirmware .tile-cols { grid-area: cols; }
-    #divFirmware .fw-sys { display: flex; }
-    #divFirmware .tile-tip { display: flex; flex-direction: column; }
-}
 #divNetAdapter .tile-wrap .unibloc-container { margin: 0; }
 #divNetAdapter .tile-tip { display: none; }
 #divNetAdapter .net-iface, #divNetAdapter .net-iface > .baseFlexCol { display: flex; flex-direction: column; gap: 15px; min-width: 0; }

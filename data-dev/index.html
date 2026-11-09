@@ -233,7 +233,7 @@
             <div class="nav-section" data-section="divSystemSettings">
                 <div class="nav-section-title"><span class="nav-section-label" tr="TAB_SYSTEM">Système</span></div>
                 <a class="sub-nav-item" data-grpid="divSystemOptions"><svg class="nav-icon"><use href="#svg-tabSystem"></use></svg><span tr="SUBTAB_GENERAL">Général</span></a>
-                <a class="sub-nav-item" data-grpid="divFirmware"><svg class="nav-icon"><use href="#svg-navFirmware"></use></svg><span tr="IS_FIRMWARE">Firmware</span></a>
+                <a class="sub-nav-item" data-grpid="divFirmware"><svg class="nav-icon"><use href="#svg-navFirmware"></use></svg><span tr="SUBTAB_DEVICE">Appareil</span></a>
             </div>
         </nav>
         <div class="sidebar-footer">
@@ -324,7 +324,7 @@
                     <div class="settings-sec" tr="TAB_SYSTEM"></div>
                     <div class="settings-list">
                         <a class="settings-row" data-grpid="divSystemOptions"><span class="uniblocSvg-F"><svg><use href="#svg-tabSystem"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_GENERAL"></b><span class="settings-row-desc" tr="SETTINGS_DESC_GENERAL"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divFirmware"><span class="uniblocSvg-F"><svg><use href="#svg-navFirmware"></use></svg></span><span class="settings-row-text"><b tr="IS_FIRMWARE"></b><span class="settings-row-desc" tr="SETTINGS_DESC_FIRMWARE"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" data-grpid="divFirmware"><span class="uniblocSvg-F"><svg><use href="#svg-navFirmware"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_DEVICE"></b><span class="settings-row-desc" tr="SETTINGS_DESC_FIRMWARE"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
                     </div>
                     <div class="button-container-footerHtml">
                         <button type="button" line onclick="general.rebootDevice();"><svg><use href="#svg-restart"></use></svg><span tr="BT_REBOOT">Redémarrer</span></button>
@@ -352,7 +352,7 @@
                 </div>
 
                 <div id="divSystemSettings">
-                    <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL"></span><span data-grpid="divFirmware" tr="IS_FIRMWARE"></span></div>
+                    <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL"></span><span data-grpid="divFirmware" tr="SUBTAB_DEVICE"></span></div>
                     <div id="divSystemOptions" class="subtab-content">
                         <div class="gen-layout">
                             <section class="gen-hero">
@@ -410,14 +410,6 @@
                                                 <span class="gen-row-text"><b tr="GENERAL_UPNP"></b><span tr="GENERAL_UPNP_DESC"></span></span>
                                                 <span class="gen-seg gen-seg-bool">
                                                     <input id="cbSsdpBroadcast" name="ssdpBroadcast" type="checkbox" data-bind="general.ssdpBroadcast">
-                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
-                                                    <span class="gen-seg-no" tr="BT_NO"></span>
-                                                </span>
-                                            </div>
-                                            <div class="gen-row dirty-target">
-                                                <span class="gen-row-text"><b tr="GENERAL_UPDATES"></b><span tr="GENERAL_UPDATES_DESC"></span></span>
-                                                <span class="gen-seg gen-seg-bool">
-                                                    <input id="cbCheckForUpdate" type="checkbox" data-bind="general.checkForUpdate">
                                                     <span class="gen-seg-yes" tr="BT_YES"></span>
                                                     <span class="gen-seg-no" tr="BT_NO"></span>
                                                 </span>
@@ -569,310 +561,205 @@
                         </div>
                     </div>
                     <div id="divFirmware" class="subtab-content" style="display:none;">
-                        <div class="main-header">
-                            <div class="main-headerBlock">
-                                <h2 class="main-headerTitle" tr="FW_TITLE"></h2>
-                                <p class="main-headerDesc" tr="FW_DESC"></p>
-                            </div>
-                            <div class="main-headerAmbient">
-                                <svg><use href="#svg-firmware"></use></svg>
-                            </div>
-                        </div>
-                        <div class="tile-wrap">
-                            <div class="tile-side">
-                                <div class="unibloc-container fw-sys">
-                                    <h3 class="unibloc-title tile-title"><span tr="FW_TITLE_SYSTEM"></span></h3>
-                                    <div class="firmware-ramflash-block flex1">
-                                        <div class="uniText">
-                                            <div class="uniLabel" tr="FW_RAM"></div>
-                                            <div class="uniStatus">
-                                                <span id="spanFreeMemory" class="status-detail">--</span><span tr="FW_AVAILABLE"></span>
-                                            </div>
-                                            <div class="firmware-ramflash-status">
-                                                <span class="minMax550" tr="FW_MIN"></span><span id="spanMinMemory">--</span><span tr="UNIT_KO">Ko</span> |
-                                                <span class="minMax550" tr="FW_MAX"></span><span id="spanMaxMemory">--</span><span tr="UNIT_KO">Ko</span>
-                                            </div>
-                                        </div>
-                                        <div id="circle-ram" class="progress-circle">0%</div>
-                                    </div>
-                                    <div class="firmware-ramflash-block flex1">
-                                        <div class="uniText">
-                                            <div class="uniLabel" tr="FW_STORAGE"></div>
-                                            <div class="uniStatus" id="info-flash">--</div>
-                                            <div class="firmware-ramflash-status">
-                                                <span id="info-fs-status">--</span>
-                                            </div>
-                                        </div>
-                                        <div id="circle-flash" class="progress-circle">0%</div>
-                                    </div>
-                                    <div class="uniRow fw-uptime">
-                                        <div class="uniText">
-                                            <div class="uniLabel" tr="TOPBAR_UPTIME"></div>
-                                        </div>
-                                        <div class="uniColumn" style="align-items: flex-end; font-size: 0.9em; gap: 4px;">
-                                            <div>
-                                                <span tr="TOPBAR_DEVICE" style="opacity: 0.6; margin-right: 5px;"></span>
-                                                <span class="uptime-display status-detail" style="font-weight: 500;"> --j --h --m --s</span>
-                                            </div>
-                                            <div>
-                                                <span class="net-uptime-label" tr="CONNEXION_WIFI_NETWORK" style="opacity: 0.6; margin-right: 5px;"></span>
-                                                <span class="net-display status-detail" style="font-weight: 500;"> --j --h --m --s</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="uniRow fw-reset">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-reboot"></use></svg></div>
-                                        <div class="unifield-content">
-                                            <span class="label" tr="FW_DIAG_RESET"></span>
-                                            <span class="uniValue" id="info-reset">---</span>
-                                        </div>
-                                    </div>
+                        <div class="gen-layout">
+                            <section id="fwHero" class="gen-hero fw-hero" data-state="idle">
+                                <svg class="fw-hero-vis" viewBox="0 0 120 120" aria-hidden="true"><use href="#svg-fwDevice"></use></svg>
+                                <div class="gen-hero-text">
+                                    <span class="fw-hero-eyebrow">ESPSomfy-RTS</span>
+                                    <h2 class="gen-hero-title fw-version">v-.--</h2>
+                                    <span class="fw-badge"><svg><use href="#svg-check"></use></svg><span id="fwHeroBadge"></span></span>
                                 </div>
-                                <div class="unibloc-container tile-tip">
-                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
-                                    <p class="tile-tip-text" tr="FW_TIP_BACKUP"></p>
-                                </div>
-                            </div>
-                            <div class="tile-cols fw-grid">
-                                <div class="unibloc-container fw-upd" id="divFwUpd" data-state="idle">
-                                    <h3 class="unibloc-title tile-title"><span tr="FW_UPDATE_GIT"></span></h3>
-                                    <div class="fw-upd-head">
-                                        <div class="uniLeft fw-upd-status">
-                                            <div class="uniblocSvg-F">
-                                                <svg class="fw-upd-ico-ok"><use href="#svg-check"></use></svg>
-                                                <svg class="fw-upd-ico-new"><use href="#svg-download"></use></svg>
-                                                <svg class="fw-upd-ico-off"><use href="#svg-pauseCircle"></use></svg>
-                                                <svg class="fw-upd-ico-error"><use href="#svg-warning"></use></svg>
+                                <dl class="fw-facts">
+                                    <div class="fw-fact"><dt tr="CHANNEL"></dt><dd class="fw-channel-short"></dd></div>
+                                    <div class="fw-fact"><dt tr="FW_UPTIME_SINCE"></dt><dd class="uptime-display">--</dd></div>
+                                    <div class="fw-fact"><dt tr="FW_DIAG_RESET"></dt><dd class="info-reset">---</dd></div>
+                                    <div class="fw-fact"><dt tr="FW_FREE_MEM"></dt><dd><span class="fw-free-mem">--</span> <span tr="UNIT_KO"></span></dd></div>
+                                </dl>
+                                <button type="button" class="gen-btn gen-btn-primary fw-check-btn" onclick="firmware.checkNow();"><svg><use href="#svg-refresh"></use></svg><span tr="FW_CHECK_NOW"></span></button>
+                            </section>
+
+                            <div class="gen-body">
+                                <nav id="fwTabs" class="gen-tabs" role="tablist">
+                                    <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="FW_UPDATE_GIT"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="1" tr="FW_TAB_STATUS"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="2" tr="FW_TITLE_MAINTAIN"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="3" tr="FW_TAB_ABOUT"></button>
+                                </nav>
+                                <div id="fwPanels" class="gen-panels">
+                                    <div class="gen-grid" role="tabpanel" data-tab="0">
+                                        <header class="gen-sec-head"><h2 tr="FW_UPDATE_GIT"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></span></header>
+                                        <p class="fw-tip"><svg><use href="#svg-info"></use></svg><span><b tr="SETUP_TIP_TITLE"></b> · <span tr="FW_TIP_BACKUP"></span></span></p>
+                                        <div id="divFwUpd" class="gen-tile fw-upd" data-state="idle">
+                                            <h3 class="gen-tile-title" tr="FIRMWARE_MT_INSTALLED"></h3>
+                                            <div class="fw-upd-line">
+                                                <span id="spanFwVersion" class="fw-big">v-.--</span>
+                                                <span class="fw-upd-new"><svg><use href="#svg-arrowRight"></use></svg><span id="spanFwLatest"></span></span>
+                                                <a class="link fw-upd-new" onclick="firmware.showReleaseNotes();" tr="FW_UPDATE_NOTES"></a>
                                             </div>
-                                            <div class="uniText">
-                                                <span id="gitUpdateDesc" class="uniLabel" tr="FW_UPDATE_UPTODATE"></span>
-                                                <span id="gitUpdateChecked" class="uniStatus fw-upd-when-idle"></span>
-                                                <span class="uniStatus fw-upd-when-new">
-                                                    <span id="spanFwInstalled"></span> ·
-                                                    <a class="link" onclick="firmware.showReleaseNotes();" tr="FW_UPDATE_NOTES"></a>
+                                            <p class="gen-tile-desc"><b id="gitUpdateDesc" tr="FW_UPDATE_UPTODATE"></b> <span id="gitUpdateChecked"></span></p>
+                                            <div class="gen-btn-row fw-tile-foot">
+                                                <button type="button" class="gen-btn gen-btn-primary fw-upd-new" onclick="firmware.updateGithub();"><svg><use href="#svg-cloudDownload"></use></svg><span id="spanFwInstall"></span></button>
+                                                <button type="button" class="gen-btn" onclick="firmware.checkNow();"><svg><use href="#svg-refresh"></use></svg><span tr="FW_CHECK_NOW"></span></button>
+                                            </div>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="FW_TILE_AUTOCHECK"></h3>
+                                            <div class="gen-row">
+                                                <span class="gen-row-text"><b tr="FW_AUTOCHECK"></b><span tr="FW_AUTOCHECK_DESC"></span></span>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbCheckForUpdate" type="checkbox" data-bind="general.checkForUpdate" onchange="firmware.setOption('checkForUpdate', this);">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
                                                 </span>
                                             </div>
                                         </div>
-                                        <div class="fw-upd-number">
-                                            <span id="spanFwVersion" class="fw-upd-cur">v-.--</span>
-                                            <svg class="fw-upd-when-new fw-upd-cur"><use href="#svg-arrowRight"></use></svg>
-                                            <span id="spanFwLatest" class="fw-upd-when-new"></span>
+                                        <div id="fwChannelTile" class="gen-tile fw-channel" data-channel="stable">
+                                            <h3 class="gen-tile-title" tr="CHANNEL"></h3>
+                                            <div class="fw-channel-head">
+                                                <span class="fw-channel-ico"><svg class="fw-channel-stable"><use href="#svg-check"></use></svg><svg class="fw-channel-dev"><use href="#svg-warning"></use></svg></span>
+                                                <b class="gen-tile-value fw-channel-stable" tr="FW_CHANNEL_STABLE"></b>
+                                                <b class="gen-tile-value fw-channel-dev" tr="FW_CHANNEL_DEV"></b>
+                                            </div>
+                                            <p class="gen-tile-desc fw-channel-stable" tr="FW_CHANNEL_STABLE_DESC"></p>
+                                            <p class="gen-tile-desc is-warning fw-channel-dev" tr="FW_CHANNEL_DEV_DESC"></p>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="FW_TILE_OTHER"></h3>
+                                            <div class="fw-acts">
+                                                <button type="button" class="fw-act" onclick="firmware.updateGithub();">
+                                                    <span class="fw-act-ico"><svg><use href="#svg-cloudDownload"></use></svg></span>
+                                                    <span class="gen-row-text"><b tr="FW_OTHER_VERSION"></b><span tr="FW_OTHER_VERSION_DESC"></span></span>
+                                                    <svg class="fw-act-chev"><use href="#svg-arrowRight"></use></svg>
+                                                </button>
+                                                <button type="button" class="fw-act" onclick="firmware.updateManual();">
+                                                    <span class="fw-act-ico"><svg><use href="#svg-upload"></use></svg></span>
+                                                    <span class="gen-row-text"><b tr="FW_UPDATE_FILE"></b><span id="spanFwFileDesc"></span></span>
+                                                    <svg class="fw-act-chev"><use href="#svg-arrowRight"></use></svg>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="uniblocRow">
-                                        <div class="uniRow feedback-card fw-upd-primary">
-                                            <button id="btnUpdateGithub" type="button" class="buttonUpdate unibuttonPad" onclick="firmware.updateGithub();">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-F"><svg><use href="#svg-cloudDownload"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div class="uniLabel" tr="FW_UPDATE_ONLINE"></div>
-                                                        <div class="uniStatus fw-upd-when-idle" tr="FW_UPDATE_ONLINE_DESC"></div>
-                                                        <div class="uniStatus fw-upd-when-new" tr="FW_UPDATE_ONLINE_DESC_NEW"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight"><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></div>
-                                            </button>
+
+                                    <div class="gen-grid" role="tabpanel" data-tab="1" hidden>
+                                        <header class="gen-sec-head"><h2 tr="FW_TAB_STATUS"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i></span></header>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="FW_RAM"></h3>
+                                            <div class="fw-big-line"><span id="spanFreeMemory" class="fw-big">--</span><span class="gen-tile-desc" tr="FW_AVAILABLE"></span></div>
+                                            <div id="fwRamBar" class="progress-bar is-static fw-meter"><div class="progress-bar-fill"></div></div>
+                                            <div class="fw-meter-legend">
+                                                <span><span tr="FW_RAM_MIN"></span> <span id="spanMinMemory">--</span> <span tr="UNIT_KO"></span></span>
+                                                <span><span tr="FW_RAM_MAX"></span> <span id="spanMaxMemory">--</span> <span tr="UNIT_KO"></span></span>
+                                            </div>
                                         </div>
-                                        <div class="uniRow feedback-card fw-upd-secondary">
-                                            <button id="btnUpdateFile" type="button" class="buttonUpdate unibuttonPad" onclick="firmware.updateManual();">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-upload"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div class="uniLabel" tr="FW_UPDATE_FILE"></div>
-                                                        <div id="spanFwFileDesc" class="uniStatus"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight"><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></div>
-                                            </button>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="FW_STORAGE"></h3>
+                                            <div class="fw-big-line"><span id="spanFsPct" class="fw-big">--</span><span class="gen-tile-desc" tr="FW_FS_USED"></span></div>
+                                            <div id="fwFsBar" class="progress-bar is-static fw-meter"><div class="progress-bar-fill"></div></div>
+                                            <div class="fw-meter-legend">
+                                                <span id="info-fs-status">--</span>
+                                                <span id="info-flash">--</span>
+                                            </div>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="FW_TILE_RUNTIME"></h3>
+                                            <dl class="fw-facts">
+                                                <div class="fw-fact"><dt tr="TOPBAR_DEVICE"></dt><dd class="uptime-display">--</dd></div>
+                                                <div class="fw-fact"><dt class="net-uptime-label" tr="CONNEXION_WIFI_NETWORK"></dt><dd class="net-display">--</dd></div>
+                                                <div class="fw-fact"><dt tr="FW_DIAG_RESET"></dt><dd class="info-reset">---</dd></div>
+                                            </dl>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="FW_TITLE_INFO"></h3>
+                                            <dl class="fw-facts">
+                                                <div class="fw-fact"><dt tr="FW_CHIP"></dt><dd>ESP32<span id="spanHwVersion"></span></dd></div>
+                                                <div class="fw-fact"><dt tr="FW_CPU"></dt><dd id="info-cpu">---</dd></div>
+                                                <div class="fw-fact"><dt tr="FW_HW_PROFILE"></dt><dd id="info-hwprofile">------</dd></div>
+                                            </dl>
+                                            <div class="fw-acts">
+                                                <button type="button" class="fw-act" onclick="general.LedOverlay();">
+                                                    <span class="fw-act-ico"><svg><use href="#svg-led"></use></svg></span>
+                                                    <span class="gen-row-text"><b tr="FW_LED_TITLE"></b><span tr="FW_LED_TITLE_DESC"></span><span id="badgeLedState" class="status-simple state-disabled"></span></span>
+                                                    <svg class="fw-act-chev"><use href="#svg-arrowRight"></use></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
+                                        <header class="gen-sec-head"><h2 tr="FW_TITLE_MAINTAIN"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i><i></i></span></header>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="FIRMWARE_MT_SAVE_BACKUP"></h3>
+                                            <p class="gen-tile-desc" tr="FW_BACKUP_DESC"></p>
+                                            <button type="button" class="gen-btn gen-btn-primary" onclick="firmware.backup();"><svg><use href="#svg-download"></use></svg><span tr="FW_BACKUP"></span></button>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="RESTORE_TITLE"></h3>
+                                            <p class="gen-tile-desc" tr="FW_RESTORE_DESC"></p>
+                                            <button type="button" class="gen-btn" onclick="firmware.restore();"><svg><use href="#svg-upload"></use></svg><span tr="FW_RESTORE"></span></button>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="FW_TILE_TROUBLESHOOT"></h3>
+                                            <div class="gen-row">
+                                                <span class="gen-row-text"><b tr="FW_DEBUG_LOGS"></b><span tr="FW_DEBUG_LOGS_DESC"></span></span>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbEnableDebugLogs" type="checkbox" data-bind="general.enableDebugLogs" onchange="firmware.setOption('enableDebugLogs', this);">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
+                                                </span>
+                                            </div>
+                                            <div class="fw-acts">
+                                                <button type="button" class="fw-act" onclick="general.reload();">
+                                                    <span class="fw-act-ico"><svg><use href="#svg-clear"></use></svg></span>
+                                                    <span class="gen-row-text"><b tr="FW_REFRESH_CACHE"></b><span tr="FW_REFRESH_CACHE_DESC"></span></span>
+                                                    <svg class="fw-act-chev"><use href="#svg-arrowRight"></use></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="gen-tile fw-danger">
+                                            <h3 class="gen-tile-title" tr="FW_TILE_REBOOT"></h3>
+                                            <p class="gen-tile-desc" tr="FW_REBOOT_DESC"></p>
+                                            <button type="button" class="gen-btn fw-danger-btn" onclick="general.rebootDevice();"><svg><use href="#svg-reboot"></use></svg><span tr="BT_REBOOT"></span></button>
+                                        </div>
+                                    </div>
+
+                                    <div class="gen-grid" role="tabpanel" data-tab="3" hidden>
+                                        <header class="gen-sec-head"><h2 tr="FW_TAB_ABOUT"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i></span></header>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="FW_TILE_HELP"></h3>
+                                            <div class="fw-acts">
+                                                <button type="button" class="fw-act" onclick="window.open('https://github.com/xkain/ESPSomfy-RTS/wiki', '_blank')">
+                                                    <span class="fw-act-ico"><svg><use href="#svg-doc"></use></svg></span>
+                                                    <span class="gen-row-text"><b tr="FW_CREDITS_DOC"></b><span tr="FW_CREDITS_DOC_DESC"></span></span>
+                                                    <svg class="fw-act-chev"><use href="#svg-linkOut"></use></svg>
+                                                </button>
+                                                <button type="button" class="fw-act" onclick="window.open('https://github.com/xkain/ESPSomfy-RTS/issues/new?template=BUG-REPORT.yaml', '_blank')">
+                                                    <span class="fw-act-ico"><svg><use href="#svg-issue"></use></svg></span>
+                                                    <span class="gen-row-text"><b class="fw-issue-label"><span tr="FW_CREDITS_BUG"></span>
+                                                        <span class="help-container" data-tooltip-tr="FW_CREDITS_BUG_TOOLTIP_0,FW_CREDITS_BUG_TOOLTIP_1" data-tooltip-title-tr="FW_CREDITS_BUG_TOOLTIP_TITLE" data-tooltip-href="https://github.com/xkain/ESPSomfy-RTS/discussions" data-tooltip-href-tr="FW_CREDITS_BUG_TOOLTIP_LINK" onclick="event.stopPropagation(); if (appTooltipTrigger === this) hideAppTooltip(); else showAppTooltip(this);"><svg class="help-svg"><use href="#icon-question"></use></svg></span>
+                                                    </b><span tr="FW_CREDITS_BUG_DESC"></span></span>
+                                                    <svg class="fw-act-chev"><use href="#svg-linkOut"></use></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="FW_TITLE_CREDITS"></h3>
+                                            <dl class="fw-facts">
+                                                <div class="fw-fact"><dt tr="FW_CREDITS_ORIGIN"></dt><dd><a class="link" href="https://github.com/rstrouse/ESPSomfy-RTS" target="_blank" rel="noopener">rstrouse</a></dd></div>
+                                                <div class="fw-fact"><dt tr="FW_CREDITS_FORK"></dt><dd><a class="link" href="https://github.com/xkain/ESPSomfy-RTS" target="_blank" rel="noopener">xkain</a></dd></div>
+                                                <div class="fw-fact"><dt tr="FW_CREDITS_CONTRIBUTORS"></dt><dd class="fw-contributors">
+                                                    <a class="link" href="https://github.com/glich34" target="_blank" rel="noopener">glich34</a>
+                                                    <a class="link" href="https://github.com/dirstel" target="_blank" rel="noopener">dirstel</a>
+                                                    <a class="link" href="https://github.com/Peethiplatsch" target="_blank" rel="noopener">Peethiplatsch</a>
+                                                </dd></div>
+                                            </dl>
+                                            <p class="gen-tile-desc">© 2023 Robert Strouse · © 2026 xkain · <a class="link" href="https://github.com/xkain/ESPSomfy-RTS/blob/v3.0.0/LICENSE" target="_blank" rel="noopener">AGPL-3.0-or-later</a><br><span tr="FW_CREDITS_LICENSE_DESC"></span></p>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="unibloc-container fw-hw">
-                                    <h3 class="unibloc-title tile-title"><span tr="FW_TITLE_INFO"></span></h3>
-                                    <div class="uniRow">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-chip"></use></svg></div>
-                                        <div class="unifield-content">
-                                            <span class="label" tr="FW_CHIP">Puce</span>
-                                            <span class="uniValue">ESP32<span id="spanHwVersion"></span></span>
-                                        </div>
-                                    </div>
-                                    <div class="uniRow">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-cpu"></use></svg></div>
-                                        <div class="unifield-content">
-                                            <span class="label" tr="FW_CPU"></span>
-                                            <span class="uniValue" id="info-cpu">---</span>
-                                        </div>
-                                    </div>
-                                    <div class="uniRow">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-profil"></use></svg></div>
-                                        <div class="unifield-content">
-                                            <span class="label" tr="FW_HW_PROFILE"></span>
-                                            <span class="uniValue" id="info-hwprofile">------</span>
-                                        </div>
-                                    </div>
-                                    <div class="uniRow feedback-card">
-                                        <button onclick="general.LedOverlay();" class="buttonUpdate unibuttonPad" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="FW_LED_TITLE"></div>
-                                                    <div id="badgeLedState" class="status-simple state-disabled"></div>
-                                                    <div class="uniStatus" tr="FW_LED_TITLE_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="unibloc-container fw-maint">
-                                    <h3 class="unibloc-title tile-title"><span tr="FW_TITLE_MAINTAIN"></span></h3>
-                                    <div class="row-To-Col-Mobile">
-                                        <div class="uniRow flex1 feedback-card">
-                                            <button id="btnBackupConfig" onclick="firmware.backup();" class="buttonUpdate unibuttonPad" type="button" style="height: 100%;">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-backup"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div tr="FW_BACKUP"></div>
-                                                        <div class="uniStatus" tr="FW_BACKUP_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <svg class="btnArrowRight"><use href="#svg-save"></use></svg>
-                                                </div>
-                                            </button>
-                                        </div>
-                                        <div class="uniRow flex1 feedback-card">
-                                            <button id="btnRestoreConfig" onclick="firmware.restore();" class="buttonUpdate unibuttonPad" type="button" style="height: 100%;">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-restore"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div tr="FW_RESTORE"></div>
-                                                        <div class="uniStatus" tr="FW_RESTORE_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                                </div>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="uniRow feedback-card">
-                                        <button id="btnReloadApplication" onclick="general.reload();" class="buttonUpdate unibuttonPad" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-clear"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="FW_REFRESH_CACHE"></div>
-                                                    <div class="uniStatus" tr="FW_REFRESH_CACHE_DESC"></div>
-                                                </div>
-                                            </div>
-                                        </button>
-                                    </div>
-                                    <label class="uniRow dirty-target" for="cbEnableDebugLogs">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-doc"></use></svg></div>
-                                            <div class="uniText">
-                                                <div class="uniLabel" tr="FW_DEBUG_LOGS"></div>
-                                                <div class="uniStatus" tr="FW_DEBUG_LOGS_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <span class="switch">
-                                                <input id="cbEnableDebugLogs" type="checkbox" data-bind="general.enableDebugLogs" onchange="general.setGeneral();">
-                                                <div></div>
-                                            </span>
-                                        </div>
-                                    </label>
-                                </div>
-                                <div class="unibloc-container fw-help">
-                                    <h3 class="unibloc-title tile-title"><span tr="FW_TITLE_HELP"></span></h3>
-                                    <div class="row-To-Col-Mobile">
-                                        <div class="uniRow flex1 feedback-card">
-                                            <button onclick="window.open('https://github.com/xkain/ESPSomfy-RTS/wiki', '_blank')" class="buttonUpdate unibuttonPad" type="button">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-doc"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div tr="FW_CREDITS_DOC"></div>
-                                                        <div class="uniStatus" tr="FW_CREDITS_DOC_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <svg class="btnArrowRight"><use href="#svg-linkOut"></use></svg>
-                                            </button>
-                                        </div>
-                                        <div class="uniRow flex1 feedback-card">
-                                            <button onclick="window.open('https://github.com/xkain/ESPSomfy-RTS/issues/new?template=BUG-REPORT.yaml', '_blank')" class="buttonUpdate unibuttonPad" type="button">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-issue"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div class="uniLabel firmware-issue-label">
-                                                            <span tr="FW_CREDITS_BUG"></span>
-                                                            <div class="help-container" data-tooltip-tr="FW_CREDITS_BUG_TOOLTIP_0,FW_CREDITS_BUG_TOOLTIP_1" data-tooltip-title-tr="FW_CREDITS_BUG_TOOLTIP_TITLE" data-tooltip-href="https://github.com/xkain/ESPSomfy-RTS/discussions" data-tooltip-href-tr="FW_CREDITS_BUG_TOOLTIP_LINK" onclick="event.stopPropagation(); if (appTooltipTrigger === this) hideAppTooltip(); else showAppTooltip(this);">
-                                                                <svg class="help-svg"><use href="#icon-question"></use></svg>
-                                                            </div>
-                                                        </div>
-                                                        <div class="uniStatus" tr="FW_CREDITS_BUG_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <svg class="btnArrowRight"><use href="#svg-linkOut"></use></svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="firmware-credits-zone">
-                                        <div class="firmware-credits-title" tr="FW_TITLE_CREDITS"></div>
-                                        <div class="uniblocRow">
-                                            <button onclick="window.open('https://github.com/rstrouse/ESPSomfy-RTS', '_blank')" class="editDevice-btn-pair firmware-credits-btn" type="button">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-rstrouse"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div tr="FW_CREDITS_ORIGIN"></div>
-                                                        <div class="uniStatus" tr="FW_CREDITS_ORIGIN_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <span class="credit-name">rstrouse</span>
-                                                </div>
-                                            </button>
-                                            <button onclick="window.open('https://github.com/xkain/ESPSomfy-RTS', '_blank')" class="editDevice-btn-pair firmware-credits-btn" type="button">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-autor"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div tr="FW_CREDITS_FORK"></div>
-                                                        <div class="uniStatus" tr="FW_CREDITS_FORK_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <span class="credit-name">xkain</span>
-                                                </div>
-                                            </button>
-                                        </div>
-                                        <div class="uniRow">
-                                            <div class="uniText">
-                                                <div class="uniLabel firmware-contributors-title" tr="FW_CREDITS_CONTRIBUTORS"></div>
-                                                <div class="uniStatus firmware-credit-contributor">
-                                                    <span class="version-badge animScale" onclick="window.open('https://github.com/glich34', '_blank')">glich34</span>
-                                                    <span class="version-badge animScale" onclick="window.open('https://github.com/dirstel', '_blank')">dirstel</span>
-                                                    <span class="version-badge animScale" onclick="window.open('https://github.com/Peethiplatsch', '_blank')">Peethiplatsch</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="uniblocRow">
-                                            <button onclick="window.open('https://github.com/xkain/ESPSomfy-RTS/blob/v3.0.0/LICENSE', '_blank')" class="editDevice-btn-pair firmware-credits-btn firmware-legal-btn" type="button">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-doc"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div>© 2023 Robert Strouse · © 2026 xkain</div>
-                                                        <div class="uniStatus firmware-legal-licence">AGPL-3.0-or-later</div>
-                                                        <div class="uniStatus" tr="FW_CREDITS_LICENSE_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <svg class="btnArrowRight"><use href="#svg-linkOut"></use></svg>
-                                                </div>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <nav id="fwPager" class="gen-pager" hidden>
+                                    <button type="button" id="btnFwPrev" class="gen-btn gen-pager-btn"><svg><use href="#svg-arrowLeft"></use></svg><span></span></button>
+                                    <button type="button" id="btnFwNext" class="gen-btn gen-pager-btn gen-pager-next"><span></span><svg><use href="#svg-arrowRight"></use></svg></button>
+                                </nav>
                             </div>
                         </div>
                     </div>
@@ -3374,22 +3261,20 @@
             <path fill="currentColor" d="M5 21h14a2 2 0 0 0 2-2V8a1 1 0 0 0-.29-.71l-4-4A1 1 0 0 0 16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2m10-2H9v-5h6zM13 7h-2V5h2zM5 5h2v4h8V5h.59L19 8.41V19h-2v-5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v5H5z" />
         </symbol>
 
-        <!-- SYSTEME > FIRMWARE -->
-        <symbol id="svg-firmware" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M3.825 12L6.7 14.875q.275.3.288.713T6.7 16.3t-.7.3t-.7-.3l-3.6-3.6q-.3-.3-.3-.7t.3-.7l3.6-3.6q.3-.3.7-.3t.7.3t.3.713t-.3.712zm5.088 7.513q-.188-.363-.063-.763l4.4-14.1q.125-.4.488-.588T14.5 4t.588.488t.062.762l-4.4 14.1q-.125.4-.488.588T9.5 20t-.587-.488M20.175 12L17.3 9.125q-.3-.3-.3-.712t.3-.713t.7-.3t.7.3l3.6 3.6q.3.3.3.7t-.3.7l-3.6 3.6q-.3.3-.7.3t-.7-.3t-.3-.712t.3-.713z" />
+        <!-- SYSTEME > APPAREIL -->
+        <symbol id="svg-refresh" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>
         </symbol>
-        <symbol id="svg-chip" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M6 4h12v1h3v2h-3v2h3v2h-3v2h3v2h-3v2h3v2h-3v1H6v-1H3v-2h3v-2H3v-2h3v-2H3V9h3V7H3V5h3zm5 11v3h1v-3zm2 0v3h1v-3zm2 0v3h1v-3z" />
-        </symbol>
-        <symbol id="svg-cpu" viewBox="0 0 24 24">
-            <g fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M7 10c0-1.414 0-2.121.44-2.56C7.878 7 8.585 7 10 7h4c1.414 0 2.121 0 2.56.44c.44.439.44 1.146.44 2.56v4c0 1.414 0 2.121-.44 2.56c-.439.44-1.146.44-2.56.44h-4c-1.414 0-2.121 0-2.56-.44C7 16.122 7 15.415 7 14z" opacity=".5" />
-                <path d="M4 12c0-3.771 0-5.657 1.172-6.828S8.229 4 12 4s5.657 0 6.828 1.172S20 8.229 20 12s0 5.657-1.172 6.828S15.771 20 12 20s-5.657 0-6.828-1.172S4 15.771 4 12Z" />
-                <path stroke-linecap="round" d="M4 12H2m20 0h-2M4 9H2m20 0h-2M4 15H2m20 0h-2m-8 5v2m0-20v2M9 20v2M9 2v2m6 16v2m0-20v2" opacity=".5" />
-            </g>
-        </symbol>
-        <symbol id="svg-profil" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M9.5 21h5v-5h-5zm6.5 0h1.75A3.25 3.25 0 0 0 21 17.75V16h-5zm5-6.5v-5h-5v5zM21 8V6.25A3.25 3.25 0 0 0 17.75 3H16v5zm-6.5-5h-5v5h5zM3 9.5v5h5v-5zM3 16v1.75A3.25 3.25 0 0 0 6.25 21H8v-5zm11.5-6.5v5h-5v-5z" />
+        <symbol id="svg-fwDevice" viewBox="0 0 120 120">
+            <defs><linearGradient id="fwDeviceBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color: var(--fw-dev-top)"/><stop offset="1" style="stop-color: var(--fw-dev-bottom)"/></linearGradient></defs>
+            <rect x="22" y="14" width="6" height="26" rx="3" style="fill: var(--fw-dev-ink)"/>
+            <rect x="14" y="34" width="92" height="66" rx="14" fill="url(#fwDeviceBody)" style="stroke: var(--fw-dev-edge)"/>
+            <path d="M14.58 44A14 14 0 0 1 28 34h64a14 14 0 0 1 13.42 10z" style="fill: var(--fw-dev-gloss)"/>
+            <circle cx="92" cy="50" r="7" style="fill: var(--fw-led); opacity: .25"/>
+            <circle cx="92" cy="50" r="3.2" style="fill: var(--fw-led)"/>
+            <path d="M36 64l12-9 12 9M40 63v13h16V63" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="stroke: var(--fw-dev-ink)"/>
+            <rect x="66" y="66" width="28" height="4" rx="2" style="fill: var(--fw-dev-line)"/>
+            <rect x="66" y="74" width="20" height="4" rx="2" style="fill: var(--fw-dev-line)"/>
         </symbol>
         <symbol id="svg-reboot" viewBox="0 0 24 24">
             <path fill="currentColor" d="m16.56 5.44l-1.45 1.45A5.97 5.97 0 0 1 18 12a6 6 0 0 1-6 6a6 6 0 0 1-6-6c0-2.17 1.16-4.06 2.88-5.12L7.44 5.44A7.96 7.96 0 0 0 4 12a8 8 0 0 0 8 8a8 8 0 0 0 8-8c0-2.72-1.36-5.12-3.44-6.56M13 3h-2v10h2" />
@@ -3399,14 +3284,6 @@
         </symbol>
         <symbol id="svg-led" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 3a4 4 0 0 0-4 4v6H6v2h3v6h2v-6h2v6h2v-6h3v-2h-2V7a4 4 0 0 0-4-4" />
-        </symbol>
-        <symbol id="svg-backup" viewBox="0 0 24 24">
-            <g fill="none" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" d="M11 15c-4.418 0-8-1.343-8-3" />
-                <path stroke-linecap="round" d="M19 5v6.5M3 5v14c0 1.657 3.582 3 8 3q.252 0 .5-.006" />
-                <ellipse cx="11" cy="5" rx="8" ry="3" />
-                <path stroke-linecap="round" d="M7 8v2m0 5v2m10-.333V18m0 0v1.333M17 18h1.333M17 18h-1.333M21 18a4 4 0 1 1-8 0a4 4 0 0 1 8 0Z" />
-            </g>
         </symbol>
         <symbol id="svg-restore" viewBox="0 0 24 24">
             <g fill="none" stroke="currentColor" stroke-width="1.5">
@@ -3436,13 +3313,6 @@
         </symbol>
         <symbol id="icon-question" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16m0-11.25c-.69 0-1.25.56-1.25 1.25v.1a.75.75 0 1 1-1.5 0V10A2.75 2.75 0 0 1 12 7.25h.1a2.6 2.6 0 0 1 1.7 4.6l-.8.7a.9.9 0 0 0-.3.7v.5a.75.75 0 0 1-1.5 0v-.5c0-.7.3-1.4.8-1.8l.8-.7a1.1 1.1 0 0 0-.7-2zM13 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
-        </symbol>
-        <symbol id="svg-rstrouse" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M4 20h16v2H4zM21 5a1 1 0 0 0-1 1a.9.9 0 0 0 .064.332a1.1 1.1 0 0 0 .167.283l-2.12 1.692L15.994 10L14.24 6.927l-1.752-3.072a1.05 1.05 0 0 0 .369-.353A.95.95 0 0 0 13 3a1 1 0 1 0-2 0a.95.95 0 0 0 .143.502a1.05 1.05 0 0 0 .369.353L9.757 6.927L8.002 10L5.886 8.308L3.769 6.615a1.1 1.1 0 0 0 .167-.283A.9.9 0 0 0 4 6a1 1 0 1 0-1 1a.2.2 0 0 0 .041-.007a.2.2 0 0 1 .041-.01l.459 5.509L4 18h16l.459-5.508l.459-5.509a.2.2 0 0 1 .04.01A.2.2 0 0 0 21 7a1 1 0 1 0 0-2" />
-        </symbol>
-        <symbol id="svg-autor" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M8.176 14.569a.75.75 0 0 1 1.054.12A3.53 3.53 0 0 0 12 16.024a3.53 3.53 0 0 0 2.77-1.337a.75.75 0 0 1 1.173.935A5.03 5.03 0 0 1 12 17.525a5.03 5.03 0 0 1-3.943-1.902a.75.75 0 0 1 .12-1.054M6.953 8.157a.75.75 0 0 0-.75.75v1.954c0 .773.628 1.4 1.402 1.4h1.784a1.4 1.4 0 0 0 1.401-1.4V9.657h2.42v1.204a1.4 1.4 0 0 0 1.401 1.4h1.784c.774 0 1.402-.627 1.402-1.4V8.907a.75.75 0 0 0-.75-.75z" />
-            <path fill="currentColor" fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12m10-8.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 0 0 0-17" clip-rule="evenodd" />
         </symbol>
 
         <!-- RESEAU > CONNEXION -->
@@ -3664,9 +3534,6 @@
         </symbol>
         <symbol id="svg-download" viewBox="0 0 24 24">
             <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m-5-5 5 5 5-5" /><path d="M5 20h14" /></g>
-        </symbol>
-        <symbol id="svg-pauseCircle" viewBox="0 0 24 24">
-            <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><path d="M10 9v6m4-6v6" /></g>
         </symbol>
         <symbol id="svg-check" viewBox="0 0 24 24">
             <path fill="currentColor" d="m9.55 15.15l8.475-8.475q.3-.3.7-.3t.7.3t.3.713t-.3.712l-9.175 9.2q-.3.3-.7.3t-.7-.3L4.55 13q-.3-.3-.288-.712t.313-.713t.713-.3t.712.3z" />

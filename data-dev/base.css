@@ -92,7 +92,6 @@
     --color-bg-badge:color-mix(in srgb, var(--color-accent) 14%, #fff);
     --color-bg-icon: color-mix(in srgb, var(--color-accent) 4%, #fff);
 
-    --color-circle-indicator:  #dcdcdd;
 
     --color-icon-border: color-mix(in srgb, var(--color-accent) 16%, #fff);
 
@@ -199,7 +198,6 @@
 
     --color-bg-badge: color-mix(in srgb, var(--color-accent) 8%, #000000);
 
-    --color-circle-indicator:  #3a3a3c;
 
     --color-bg-icon: color-mix(in srgb, var(--color-accent) 4%, #000000);
 
@@ -324,6 +322,13 @@
     --danger: #b3261e;
     --ok-bg: #e3f3e5;
     --ok: #1f6b24;
+    /* Illustration de l'appareil, page Appareil (svg-fwDevice). */
+    --fw-dev-top: #ffffff;
+    --fw-dev-bottom: #d5d9dd;
+    --fw-dev-edge: rgba(0, 0, 0, .16);
+    --fw-dev-gloss: rgba(255, 255, 255, .6);
+    --fw-dev-ink: #878d95;
+    --fw-dev-line: #bcc1c8;
     /* Ombre des fenêtres (JETONS A2) : c'est elle qui détache une fenêtre du panneau de même
        couleur qu'elle recouvre -- sans quoi la colonne d'identité de la fenêtre se confond
        avec celle de la page. */
@@ -355,6 +360,12 @@
     --danger: #ff8a80;
     --ok-bg: #16301a;
     --ok: #7bd17f;
+    --fw-dev-top: #3a4049;
+    --fw-dev-bottom: #262b33;
+    --fw-dev-edge: rgba(255, 255, 255, .12);
+    --fw-dev-gloss: rgba(255, 255, 255, .08);
+    --fw-dev-ink: #8d949e;
+    --fw-dev-line: #4a515c;
     --shadow-window: 0 14px 34px rgba(0, 0, 0, .6);
     --scrim-page: rgba(0, 0, 0, .35);
 }
@@ -1371,13 +1382,6 @@ input[type="radio"]:hover {
     letter-spacing: 0.5px;
 }
 
-.credit-name {
-    font-size: 0.8em;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
 .status-badge.state-success {
     background: var(--color-success-tint-bg);
     color: var(--color-success);
@@ -2120,6 +2124,10 @@ button:disabled:active {
     transform:translateX(-100%);
     animation:progress-bar-halo 2s infinite ease-in-out;
     z-index:1;
+}
+/* Jauge figée (mémoire, stockage) : le balayage dirait « en cours » là où rien ne bouge. */
+.progress-bar.is-static::before {
+    display: none;
 }
 .progress-bar-fill {
     height:100%;

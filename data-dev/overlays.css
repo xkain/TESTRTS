@@ -3293,6 +3293,194 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     .genmod-foot-btns .gen-btn { width: 100%; justify-content: center; }
 }
 
+
+/* --- Fenêtres de tâche de la page Appareil (genmod-task) : GitHub, téléversement, restauration.
+   Même coque que les fenêtres de Général ; seuls leurs éléments propres et le mobile changent. */
+.genmod-state-note { font-size: var(--fs-2); line-height: 1.4; color: var(--text-3); }
+.genmod-seg { display: grid; grid-template-columns: 1fr 1fr; align-self: stretch; }
+.genmod-seg span { text-align: center; }
+.genmod-link { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-2); font-weight: 700; text-transform: none; letter-spacing: 0; }
+.genmod-notes { max-height: none; padding: 14px 16px; border-radius: var(--r-4); background: var(--panel); font-size: var(--fs-3); }
+/* La ligne entière déclenche la sauvegarde (bouton), dans l'étape 3 comme dans le pied GitHub. */
+button.genmod-backup,
+button.genmod-backup:hover,
+button.genmod-backup:active {
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-4);
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    text-transform: none;
+    transform: none;
+    opacity: 1;
+}
+button.genmod-backup:hover { border-color: var(--color-accent); }
+.genmod-backup-ico {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: var(--r-2);
+    background: var(--surface);
+    color: var(--color-accent);
+}
+button.genmod-backup svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
+.genmod-backup .gen-row-text { flex: 1 1 auto; }
+.genmod-backup .gen-row-text > span { font-size: var(--fs-2); }
+button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3); }
+.genmod-foot-hint:has(.genmod-backup) { display: flex; flex: 1 1 320px; }
+@media (max-width: 767px) {
+    .genmod-foot-hint:has(.genmod-backup) { flex: none; }
+}
+.genmod-form { display: flex; flex-direction: column; gap: 12px; }
+.genmod-checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.genmod-check { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: var(--r-3); background: var(--panel); font-size: var(--fs-3); cursor: pointer; }
+.genmod-check input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--color-accent); }
+.genmod-body .fw-band { margin: 8px 0 0; border-radius: var(--r-3); border: 1px solid var(--border); background: var(--surface-2); }
+.genmod-body .fw-band-label { color: var(--text-2); }
+.genmod-body .fw-id-name .fw-lit,
+.genmod-body .fw-id-name .fw-ver { color: var(--text-2); }
+/* Zone de dépôt aux couleurs A2 : le mélange d'accent à 97 % de l'ancienne interface
+   disparaissait sur le fond sombre de la fenêtre. */
+.genmod-body .file-drop {
+    border-color: color-mix(in srgb, var(--color-accent) 65%, var(--border));
+    border-radius: var(--r-3);
+    background: var(--surface-2);
+    color: var(--text-2);
+}
+.genmod-body .file-drop:hover,
+.genmod-body .file-drop.is-over { background: color-mix(in srgb, var(--color-accent) 14%, var(--surface-2)); }
+.genmod-body .file-drop-title { color: var(--text); }
+/* Sélecteur de canal compact et bouton d'ouverture des notes : mobile seulement. */
+.genmod-mode-select,
+.genmod-notes-open { display: none; }
+/* Étapes : un rail par étape (pastille, puis trait qui remplit la hauteur de l'étape) plutôt
+   qu'un trait posé en absolu, qui se décalait dès que le contenu changeait de hauteur. */
+.genmod-step { display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 14px; }
+.genmod-step-rail { display: flex; flex-direction: column; align-items: center; }
+.genmod-step-num {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: var(--r-pill);
+    background: var(--color-accent);
+    color: var(--color-text-on-accent);
+    font-size: var(--fs-3);
+    font-weight: 800;
+}
+.genmod-step-line { flex: 1; width: 2px; min-height: 10px; margin: 4px 0; border-radius: var(--r-pill); background: color-mix(in srgb, var(--color-accent) 45%, var(--border)); }
+.genmod-step:last-child .genmod-step-line { display: none; }
+.genmod-step-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 6px 0 16px; font-size: var(--fs-3); }
+.genmod-step:last-child .genmod-step-body { padding-bottom: 0; }
+/* La zone de dépôt et la ligne de sauvegarde ne portent pas de texte en tête : collées au haut
+   de la pastille plutôt qu'à la ligne de texte. */
+.genmod-step-body:has(> .file-drop:first-of-type, > .genmod-backup) { padding-top: 0; }
+/* L'aide du nom de fichier s'affiche en clair dès qu'il y a la place (tablette et plus) ;
+   en dessous, elle reste dans l'infobulle du « ? ». */
+.fw-id-help { display: none; }
+@media (min-width: 768px) {
+    .genmod-body .fw-id-help {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin: 10px 0 0;
+        padding: 10px 0 0 18px;
+        border-top: 1px solid var(--divider);
+        font-size: var(--fs-2);
+        line-height: 1.45;
+        color: var(--text-3);
+    }
+    .genmod-body .fw-id .help-container { display: none; }
+}
+/* Mode Développeur validé : la colonne d'identité se teinte, on ne l'oublie pas en cours de route. */
+#divGitInstall[data-mode="dev"] .genmod-side { background: color-mix(in srgb, var(--danger) 9%, var(--panel)); }
+#divGitInstall[data-mode="dev"] .genmod-side-icon,
+#divGitInstall[data-mode="dev"] .genmod-state-note { color: var(--danger); }
+#divGitInstall[data-mode="dev"] .genmod-seg input:checked + span { background: var(--danger); color: var(--danger-bg); }
+/* Tablette et mobile : l'état passe en ligne ; celui du canal garde le sélecteur et sa note
+   sous le titre au lieu de les serrer côte à côte. */
+@media (max-width: 999px) {
+    .genmod-state:has(.genmod-seg) { flex-wrap: wrap; align-items: center; }
+    .genmod-state:has(.genmod-seg) .genmod-state-note { flex-basis: 100%; }
+    .genmod-seg { align-self: auto; }
+}
+/* Mobile : plein écran comme l'ancien .inst-overlay, sans feuille, poignée ni montée. */
+@media (max-width: 767px) {
+    .genmod-task::before { inset: 0; }
+    .genmod-task .message-content.genmod-window {
+        align-self: stretch;
+        height: 100%;
+        max-height: none;
+        border-radius: 0;
+        /* La feuille mobile part de translateY(100%) et monte par l'animation : sans elle, il
+           faut aussi annuler le décalage, sinon la fenêtre reste sous l'écran. */
+        animation: none;
+        transform: none;
+        box-shadow: none;
+    }
+    .genmod-task .genmod-side { border-radius: 0; padding-top: 14px; }
+    .genmod-task .modalHeader-handle { display: none; }
+    .genmod-task .genmod-side .genmod-close { display: flex; position: absolute; top: 12px; right: 12px; }
+    .genmod-task .genmod-backup { flex: none; }
+    /* Pied compact : boutons côte à côte, et plus de coins arrondis en bas d'un plein écran. */
+    .genmod-task .genmod-main { border-radius: 0; }
+    .genmod-task .genmod-foot-btns { flex-direction: row; }
+    .genmod-task .genmod-foot-btns .gen-btn { flex: 1 1 0; }
+    .genmod-task button.genmod-backup { padding: 8px 12px; }
+    /* GitHub : le choix du canal quitte le bloc d'état pour un sélecteur compact posé en haut à
+       gauche, en face de la croix ; le reste de l'en-tête ne bouge pas. */
+    #divGitInstall .genmod-state:has(.genmod-seg) {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        width: auto;
+        padding: 0;
+        background: none;
+    }
+    #divGitInstall .genmod-state:has(.genmod-seg) > :not(.genmod-mode-select) { display: none; }
+    #divGitInstall .genmod-mode-select {
+        display: block;
+        padding: 8px 28px 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--r-pill);
+        background: var(--surface) url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+        color: var(--text);
+        font: inherit;
+        font-size: var(--fs-2);
+        font-weight: 700;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    #divGitInstall[data-mode="dev"] .genmod-mode-select { border-color: var(--danger); color: var(--danger); }
+    /* Les notes prennent la hauteur restante et s'ouvrent en grand au toucher. */
+    #divGitInstall .genmod-notes-wrap { position: relative; display: flex; flex-direction: column; flex: 1 0 200px; min-height: 200px; cursor: pointer; }
+    #divGitInstall .genmod-notes { flex: 1; min-height: 0; overflow: hidden; }
+    #divGitInstall .genmod-notes-open {
+        display: inline-flex;
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+        gap: 6px;
+        padding: 8px 12px;
+        border: 0;
+        border-radius: var(--r-pill);
+        background: var(--on-fill);
+        color: var(--on-fill-text);
+        font-size: var(--fs-2);
+        text-transform: none;
+    }
+    #divGitInstall .genmod-notes-open svg { width: 16px; height: 16px; fill: currentColor; }
+}
 .lang-catalog-code {
     display: grid;
     place-items: center;

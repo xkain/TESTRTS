@@ -143,7 +143,7 @@ class Security {
                     }, 1000);
 
                     if (ctx.cpuFreq) get('info-cpu').textContent = `${ctx.cores > 1 ? 'Dual' : 'Single'}-Core @ ${ctx.cpuFreq} ${tr('UNIT_MHZ')}`;
-                    if (ctx.resetReason) get('info-reset').textContent = trOr(`FW_RESET_${ctx.resetReason}`, tr('FW_RESET_UNKNOWN'));
+                    if (ctx.resetReason) document.querySelectorAll('.info-reset').forEach(el => { el.textContent = trOr(`FW_RESET_${ctx.resetReason}`, tr('FW_RESET_UNKNOWN')); });
                     if (ctx.flashSize) {
                         get('info-flash').innerHTML = `<span>${tr('FW_TOTAL')}: </span><span class="status-detail">${ctx.flashSize}</span> ${tr('UNIT_MO')} (<span class="hide550">${tr('FW_SPEED')}: </span><span class="status-detail">${ctx.flashSpeed}</span> ${tr('UNIT_MHZ')})`;
                     }
@@ -151,14 +151,9 @@ class Security {
                         const free = ctx.fsTotal - ctx.fsUsed, pct = Math.round((ctx.fsUsed / ctx.fsTotal) * 100);
                         const el = get('info-fs-status');
                         if (el) el.innerHTML = `<span class="status-detail">${free}</span> ${tr('UNIT_KO')} ${tr('FW_FREE_SUFFIX')}<span class="hide550"> ${tr('FW_ON')} <span class="status-detail">${ctx.fsTotal}</span></span>`;
-
-
-                        // --- MISE À JOUR DU CERCLE FLASH VIA BACKGROUND DIRECT ---
-                        const cFlash = get('circle-flash');
-                        if (cFlash) {
-                            cFlash.style.background = `conic-gradient(#12b17c ${pct}%, var(--color-circle-indicator) 0%)`;
-                            cFlash.innerHTML = `<span>${pct}%</span>`;
-                        }
+                        const pctEl = get('spanFsPct');
+                        if (pctEl) pctEl.textContent = `${pct} %`;
+                        get('fwFsBar')?.style.setProperty('--progress', `${pct}%`);
                     }
                     if (ctx.mac) document.querySelectorAll('.spanMacAddress').forEach(el => el.textContent = ctx.mac);
 

@@ -1465,6 +1465,70 @@ function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
     </div>`;
 }
 
+// --- Onglets d'une page migrée (Général, Appareil : classes gen-, main.css) ---------------
+// Sous 768 px les onglets deviennent des sections empilées dont le titre se colle sous la
+// navigation : le filet ne se pose que sur le titre effectivement collé, d'où le calcul au
+// défilement. L'onglet précédent/suivant n'apparaît que si l'onglet affiché dépasse de l'écran.
+function bindGenTabs(page, ids) {
+    const strip = get(ids.tabs), panels = get(ids.panels), pager = get(ids.pager);
+    const mq = window.matchMedia('(max-width: 767px)');
+    const tabs = () => strip.querySelectorAll('.gen-tab');
+    let current = 0, raf = 0;
+    const stick = () => {
+        raf = 0;
+        const heads = page.querySelectorAll('.gen-sec-head');
+        if (!mq.matches || !page.offsetParent) return heads.forEach(h => h.classList.remove('is-stuck'));
+        const top = Math.max(0, ...['appHeader', 'divMobileBreadcrumbSlot', 'divMobileStickyNav'].map(id => get(id)).filter(Boolean)
+            .map(e => e.getBoundingClientRect().bottom));
+        page.style.setProperty('--gen-stick-top', top + 'px');
+        heads.forEach(h => {
+            const r = h.getBoundingClientRect(), p = h.parentElement.getBoundingClientRect();
+            h.classList.toggle('is-stuck', r.top <= top + 1 && r.bottom > top && p.top + 9 < r.top);
+        });
+    };
+    const sections = () => { if (!raf) raf = requestAnimationFrame(stick); };
+    const update = () => {
+        if (!panels.offsetParent) return;
+        sections();
+        const list = tabs();
+        [[ids.prev, current - 1], [ids.next, current + 1]].forEach(([id, n]) => {
+            const btn = get(id);
+            btn.hidden = n < 0 || n >= list.length;
+            if (btn.hidden) return;
+            btn.dataset.tab = n;
+            btn.querySelector('span').textContent = list[n].textContent;
+        });
+        pager.hidden = panels.getBoundingClientRect().bottom + window.scrollY <= window.innerHeight;
+    };
+    const show = (i) => {
+        if (i < 0 || i >= tabs().length) return;
+        current = i;
+        tabs().forEach(t => {
+            const on = parseInt(t.dataset.tab, 10) === i;
+            t.classList.toggle('selected', on);
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+            // Bande défilante : on ne bouge qu'elle, jamais la page.
+            if (on && strip.scrollWidth > strip.clientWidth) strip.scrollLeft = t.offsetLeft - strip.offsetLeft - (strip.clientWidth - t.offsetWidth) / 2;
+        });
+        panels.querySelectorAll(':scope > [data-tab]').forEach(p => { p.hidden = parseInt(p.dataset.tab, 10) !== i; });
+        update();
+    };
+    strip.addEventListener('click', (e) => {
+        const tab = e.target.closest('.gen-tab');
+        if (tab) show(parseInt(tab.dataset.tab, 10));
+    });
+    [ids.prev, ids.next].forEach(id => get(id).addEventListener('click', (e) => {
+        show(parseInt(e.currentTarget.dataset.tab, 10));
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        strip.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+    }));
+    // La hauteur de l'onglet change au chargement, à l'affichage de la page, à la rotation.
+    if (window.ResizeObserver) new ResizeObserver(update).observe(panels);
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', sections, { passive: true });
+    return { show, update };
+}
+
 // --- Coque des fenêtres de la page Général (classes genmod-, overlays.css) ---------------
 // Deux colonnes : à gauche ce que fait l'appareil (icône, titre, état courant), à droite ce
 // qu'on lui demande. Partagée par le gestionnaire de langues et celui des packs d'icônes :
