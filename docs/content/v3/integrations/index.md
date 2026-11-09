@@ -557,7 +557,7 @@ Les notes de version du firmware ne s'afficheront pas dans Home Assistant lorsqu
 !!! important "Important"
 
     **Pourquoi c'est critique ?** <br>
-    Depuis la **v3.0.0**, le firmware nécessite une [mise à jour manuelle](../firmware/mises-a-jour.md#mise-à-jour-manuelle-fichier-local) (deux fichiers distincts à téléverser). Sans les notes de version visibles, vous risquez de lancer une mise à jour automatique qui échouera.
+    Depuis la **v3.0.0**, le firmware nécessite une [mise à jour manuelle](../firmware/mises-a-jour.md#mise-a-jour-manuelle-fichier-local) (le fichier firmware à téléverser). Sans les notes de version visibles, vous risquez de lancer une mise à jour automatique qui échouera.
 
 !!! tip "Astuce"
 

@@ -52,8 +52,9 @@ Ce bloc donne des informations sur votre appareil :
     même avec beaucoup de libre au total.
 
 * **Mémoire Flash** : espace total et vitesse d'horloge de la puce flash, puis l'espace
-    libre sur le système de fichiers qui héberge l'interface web (la partition que
-    [Mise à jour Application/Filesystem](mises-a-jour.md) remplace).
+    libre sur le système de fichiers, qui héberge les packs de langue téléchargés et la
+    sauvegarde. Il n'est plus réécrit par une [mise à jour](mises-a-jour.md), l'interface web
+    étant désormais dans le firmware.
 
 * **Uptime** : durée de fonctionnement de l'appareil depuis son dernier démarrage, et
     séparément celle de sa connexion réseau actuelle (remise à zéro si le Wi-Fi ou l'Ethernet
@@ -62,10 +63,27 @@ Ce bloc donne des informations sur votre appareil :
 
 ## Mise à jour
 
-Un bandeau de statut indique l'état de votre version : il reste **vert** et dit que votre système
-est à jour, ou passe au **rouge** et annonce qu'une mise à jour est disponible, avec son numéro de
-version. Deux méthodes d'installation sont proposées : voir
-[Mises à jour du Firmware](mises-a-jour.md) pour l'explication détaillée.
+Le bloc **Mises à jour** indique l'état de votre version à côté du numéro installé : il reste
+**vert** et dit que votre système est à jour, ou passe au **rouge** et annonce qu'une mise à jour
+est disponible, avec le numéro de la version proposée et un lien vers ses **notes de version**.
+Deux états de plus existent : **Recherche automatique désactivée** (voir [Général](../general/index.md))
+et **Impossible de vérifier** quand le navigateur n'atteint pas la liste des versions publiées en ligne.
+
+Cette vérification est faite par **votre navigateur**, qui va chercher les versions publiées sur
+GitHub : c'est lui qui doit avoir accès à Internet, et non l'appareil.
+
+Deux actions sont proposées :
+
+* **Mise à jour en ligne** : télécharge la version choisie (mise à jour, réinstallation, retour en
+    arrière, mode Développeur) et l'installe, en trois étapes:
+    téléchargement -> installation -> redémarrage 
+* **Installer depuis un fichier** : envoie un fichier de firmware que vous avez déjà, pour une
+    installation sans accès à la liste en ligne.
+
+!!! note "Note"
+
+    Depuis la v3.0.0, il n'y a **plus qu'un seul fichier binaire** : l'interface web est intégrée au
+    firmware. Voir [Mises à jour du Firmware](mises-a-jour.md) pour l'explication détaillée.
 
 ## Témoin LED de statut
 
