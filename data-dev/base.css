@@ -1219,11 +1219,6 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
     text-transform: none;
 
 }
-.uniStatus.ledPinWarn {
-    color: var(--color-danger);
-    font-weight: 600;
-    margin-top: 4px;
-}
 
 .uniLabel {
     font-size:0.95em;

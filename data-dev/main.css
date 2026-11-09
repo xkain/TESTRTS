@@ -2212,6 +2212,12 @@ body.is-home-welcome .container {
     background: var(--warn-bg);
     color: var(--warn);
 }
+.gen-tile-desc.is-info {
+    padding: 10px 12px;
+    border-radius: var(--r-3);
+    background: var(--info-bg);
+    color: var(--info);
+}
 .gen-tile-value {
     font-size: var(--fs-6);
     font-weight: 700;

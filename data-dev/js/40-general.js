@@ -919,171 +919,110 @@ class General {
         // tous les profils de puce connus et n'est pas une broche de strapping.
         this._lastValidLedPin = (presetVal === String(MANUAL)) ? s.ledPin : 4;
 
+        const seg = (id, on, yesKey = 'BT_YES', noKey = 'BT_NO') => `
+        <span class="gen-seg gen-seg-bool">
+        <input id="${id}" type="checkbox" ${on ? 'checked' : ''}>
+        <span class="gen-seg-yes">${tr(yesKey)}</span>
+        <span class="gen-seg-no">${tr(noKey)}</span>
+        </span>`;
+        const row = (id, labelKey, descKey, control) => `
+        <div class="gen-row dirty-target"${id ? ` id="${id}"` : ''}>
+        <span class="gen-row-text"><b>${tr(labelKey)}</b>${descKey ? `<span>${tr(descKey)}</span>` : ''}</span>
+        ${control}
+        </div>`;
+        const color = s.ledColorActivity || '#ffffff';
+        const pinText = s.ledPin > 0 ? `GPIO ${s.ledPin} · ${tr(s.ledAddressable ? 'LED_MODAL_TYPE_RGB' : 'LED_MODAL_TYPE_PLAIN')}` : '';
+        const rfRow = row('', 'LED_MODAL_RF_BLINK', 'LED_MODAL_RF_BLINK_DESC', seg('cbLedRfBlink', s.ledRfBlink));
+
         const div = document.createElement('div');
         div.id = 'divLedOverlay';
-        div.className = 'modal-overlay';
+        // genmod-overlay : la fenêtre se cadre sur la page, comme celles de Général (overlays.css).
+        div.className = 'modal-overlay genmod-overlay';
         div.innerHTML = `
-        <div class="message-content ledOverlay-content" id="divLedPopupContent">
-        ${modalHeader('FW_LED_TITLE', 'svg-led', {
-            subtitle: 'LED_MODAL_DESC',
+        <div class="message-content genmod-window" id="divLedPopupContent">
+        ${genModalShell({
+            id: 'led', icon: 'svg-led', footId: 'ledFoot',
+            titleKey: 'FW_LED_TITLE', descKey: 'LED_MODAL_DESC',
+            stateKey: tr('LED_MODAL_LED'),
+            stateValue: tr(isGeneric ? (enabled ? 'ENABLED' : 'IS_DISABLED') : 'INTEGRATED'),
+            stateNote: isGeneric ? pinText : tr('LED_MODAL_STATE_BOARD').replace('%1', this._ledBoardLabel(profile)),
+            sideExtra: `
+            <span class="led-preview" id="ledPreview" style="--lc:${s.ledAddressable || !isGeneric ? color : 'var(--ok)'}" aria-hidden="true"><i></i></span>
+            <button id="btnLedTest" type="button" class="gen-btn"><svg><use href="#svg-led"></use></svg><span>${tr('LED_MODAL_TEST')}</span></button>`,
+            sectionKey: 'LED_MODAL_SECTION', hintKey: 'LED_MODAL_HINT',
+            bodyHtml: isGeneric ? `
+            <p class="genmod-error" id="ledPinError" style="display:none"></p>
+            <section class="genmod-sect">
+            <h3 class="gen-tile-title">${tr('LED_MODAL_LED')}</h3>
+            ${row('ledEnableSwitch', 'LED_MODAL_ENABLE', 'LED_MODAL_ENABLE_DESC', seg('cbLedEnabled', enabled))}
+            </section>
+            <section class="genmod-sect">
+            <h3 class="gen-tile-title">${tr('LED_MODAL_PIN_SECTION')}</h3>
+            <div class="gen-field dirty-target">
+            <label class="gen-field-label" for="selLedBoardPreset">${tr('LED_MODAL_BOARD_PRESET')}</label>
+            <div class="gen-input-box">
+            <select id="selLedBoardPreset" class="gen-input">
+            ${ledOpts.map(b => `<option value="${b.val}" ${b.placeholder ? 'disabled hidden' : ''} ${presetVal === String(b.val) ? 'selected' : ''}>${tr(b.label)}</option>`).join('')}
+            </select>
+            </div>
+            </div>
+            <div id="divLedManualBlock" class="led-manual" style="display:${presetVal === String(MANUAL) ? '' : 'none'};">
+            <div class="gen-field">
+            <label class="gen-field-label" for="inputLedPinManual">GPIO</label>
+            <div class="gen-input-box led-pin-box dirty-target" id="divLedPinCustom">
+            <input type="number" id="inputLedPinManual" class="gen-input" min="0" max="48" value="${this._lastValidLedPin}" autocomplete="new-password">
+            <span class="led-pin-steps">
+            <button type="button" id="btnLedPinMinus" aria-label="-1">−</button>
+            <button type="button" id="btnLedPinPlus" aria-label="+1">+</button>
+            </span>
+            </div>
+            </div>
+            <label class="genmod-check led-safety"><input id="cbLedManualSafety" type="checkbox"><span>${tr('RADIO_SAFETY_TEXT')}</span></label>
+            <p class="gen-tile-desc is-warning led-pin-warn" id="ledPinWarn" style="display:none"></p>
+            </div>
+            <p class="gen-tile-desc">${tr('LED_MODAL_PIN_DESC')}</p>
+            </section>
+            <section class="genmod-sect">
+            <h3 class="gen-tile-title">${tr('LED_MODAL_SECT_TYPE')}</h3>
+            <div class="gen-row dirty-target" id="ledTypeSwitch">
+            <span class="gen-row-text"><b>${tr('LED_MODAL_TYPE')}</b></span>
+            <span class="gen-seg">
+            <label><input type="radio" name="ledType" id="rbLedPlain" value="plain" ${!s.ledAddressable ? 'checked' : ''}><span>${tr('LED_MODAL_TYPE_PLAIN')}</span></label>
+            <label><input type="radio" name="ledType" id="rbLedRgb" value="rgb" ${s.ledAddressable ? 'checked' : ''}><span>${tr('LED_MODAL_TYPE_RGB')}</span></label>
+            </span>
+            </div>
+            ${row('rowLedActiveLow', 'LED_MODAL_ACTIVE_LOW', 'LED_MODAL_ACTIVE_LOW_DESC', seg('cbLedActiveLow', s.ledActiveLow))}
+            ${row('rowLedColorActivity', 'LED_MODAL_COLOR_ACTIVITY', 'LED_MODAL_COLOR_ACTIVITY_DESC', `
+            <label class="led-color">
+            <span class="accent-swatch led-swatch" id="swLedColorActivity" style="--led-swatch:${color}">
+            <input id="fldLedColorActivity" class="general-accent-color" type="color" value="${color}">
+            </span>
+            <code id="ledColorHex">${color}</code>
+            </label>`)}
+            ${/* Les vrais noms plutôt que Oui/Non ; RGB = case cochée, GRB affiché en premier (CSS). */ ''}
+            ${row('rowLedColorOrder', 'LED_MODAL_COLOR_ORDER', 'LED_MODAL_COLOR_ORDER_DESC', `
+            <span class="gen-seg gen-seg-bool led-order">
+            <input id="cbLedColorOrder" type="checkbox" ${s.ledColorOrder ? 'checked' : ''}>
+            <span class="gen-seg-yes">${tr('LED_MODAL_ORDER_RGB')}</span>
+            <span class="gen-seg-no">${tr('LED_MODAL_ORDER_GRB')}</span>
+            </span>`)}
+            </section>
+            <section class="genmod-sect">
+            <h3 class="gen-tile-title">${tr('LED_MODAL_SECT_RF')}</h3>
+            ${rfRow}
+            </section>` : `
+            <p class="genmod-error" id="ledPinError" style="display:none"></p>
+            <p class="gen-tile-desc is-info">${tr('LED_MODAL_BOARD_INFO')}</p>
+            <section class="genmod-sect">
+            <h3 class="gen-tile-title">${tr('LED_MODAL_SECT_RF')}</h3>
+            ${rfRow}
+            </section>`
         })}
-        <div class="overlay-scroll-content">
-
-        ${isGeneric ? `
-        <div class="SwitchBig marginB25" id="ledEnableSwitch">
-        <input id="cbLedEnabled" type="checkbox" ${enabled ? 'checked' : ''}>
-        <label for="cbLedEnabled" class="label-left">${tr('IS_DISABLED')}</label>
-        <label for="cbLedEnabled" class="label-right">${tr('ENABLED')}</label>
-        <div class="nav-pill"></div>
-        </div>
-
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('LED_MODAL_PIN_SECTION')}</h3>
-
-
-
-        <div class="uniStatus ledPinWarn" id="ledPinError" style="display:none"></div>
-
-
-
-
-
-
-        <div class="baseFlexCol ">
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="selLedBoardPreset">${tr('LED_MODAL_BOARD_PRESET')}</label>
-        <select id="selLedBoardPreset" class="inputAndSelect">
-        ${ledOpts.map(b => `<option value="${b.val}" ${b.placeholder ? 'disabled hidden' : ''} ${presetVal === String(b.val) ? 'selected' : ''}>${tr(b.label)}</option>`).join('')}
-        </select>
-        </div>
-        </div>
-
-
-
-
-
-
-
-        <div id="divLedManualBlock" style="display:${presetVal === String(MANUAL) ? 'block' : 'none'};">
-        <div class="gpio-main-wrapper">
-        <div class="gpio-group-block">
-        <div class="gpio-flex-container">
-        <div class="gpio-card">
-        <div class="input-number-custom dirty-target" id="divLedPinCustom">
-        <label class="input-label" for="inputLedPinManual">GPIO</label>
-        <input type="number" id="inputLedPinManual" class="inputAndSelect" min="0" max="48" value="${this._lastValidLedPin}" autocomplete="new-password">
-        <div class="step-buttons-warp">
-        <div class="step-buttons">
-        <button type="button" id="btnLedPinMinus">-</button>
-        <button type="button" id="btnLedPinPlus">+</button>
-        </div>
-        </div>
-        </div>
-        <div class="uniStatus ledPinWarn" id="ledPinWarn" style="display:none"></div>
-        </div>
-        </div>
-        </div>
-        </div>
-        <div class="manual-safety-block">
-        <label class="safety-label" for="cbLedManualSafety">
-        <span class="switch"><input id="cbLedManualSafety" type="checkbox"><div></div></span>
-        <span class="safety-text">${tr('RADIO_SAFETY_TEXT')}</span>
-        </label>
-        </div>
-        </div>
-        </div>
-
-        <div class="baseFlexCol">
-        <div class="uniStatus led-pin-help">${tr('LED_MODAL_PIN_DESC')}</div>
-        </div>
-
-        <div class="SwitchBig SwitchBig-2 dirty-target marginB25" id="ledTypeSwitch">
-        <input type="radio" name="ledType" id="rbLedPlain" value="plain" ${!s.ledAddressable ? 'checked' : ''}>
-        <label for="rbLedPlain">${tr('LED_MODAL_TYPE_PLAIN')}</label>
-        <input type="radio" name="ledType" id="rbLedRgb" value="rgb" ${s.ledAddressable ? 'checked' : ''}>
-        <label for="rbLedRgb">${tr('LED_MODAL_TYPE_RGB')}</label>
-        <div class="nav-pill"></div>
-        </div>
-
-        <label class="uniRow dirty-target" for="cbLedActiveLow" id="rowLedActiveLow">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-gpioUp"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('LED_MODAL_ACTIVE_LOW')}</div>
-        <div class="uniStatus">${tr('LED_MODAL_ACTIVE_LOW_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbLedActiveLow" type="checkbox" ${s.ledActiveLow ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
-
-        <label class="uniRow dirty-target" for="fldLedColorActivity" id="rowLedColorActivity">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('LED_MODAL_COLOR_ACTIVITY')}</div>
-        <div class="uniStatus">${tr('LED_MODAL_COLOR_ACTIVITY_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="accent-swatch led-swatch" id="swLedColorActivity" style="--led-swatch:${s.ledColorActivity || '#ffffff'}">
-        <input id="fldLedColorActivity" class="general-accent-color" type="color" value="${s.ledColorActivity || '#ffffff'}">
-        </span>
-        </div>
-        </label>
-
-        <label class="uniRow dirty-target" for="cbLedColorOrder" id="rowLedColorOrder">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-commandInverse"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('LED_MODAL_COLOR_SWAP')}</div>
-        <div class="uniStatus">${tr('LED_MODAL_COLOR_SWAP_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbLedColorOrder" type="checkbox" ${s.ledColorOrder ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
-
-        <div class="baseFlexCol" id="rowLedTest">
-        <button id="btnLedTest" line type="button"><svg><use href="#svg-led"></use></svg><span>${tr('LED_MODAL_TEST')}</span></button>
-        </div>
-
-        </div>
-        ` : ''}
-
-        <label class="uniRow dirty-target" for="cbLedRfBlink">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('LED_MODAL_RF_BLINK')}</div>
-        <div class="uniStatus">${tr('LED_MODAL_RF_BLINK_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbLedRfBlink" type="checkbox" ${s.ledRfBlink ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
-
-        ${!isGeneric ? `
-        <div class="baseFlexCol" id="rowLedTest">
-        <button id="btnLedTest" line type="button"><svg><use href="#svg-led"></use></svg><span>${tr('LED_MODAL_TEST')}</span></button>
-        </div>
-        ` : ''}
-        </div>
-
-
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnLedCancel" line type="button">${tr('BT_CANCEL')}</button>
-        <button id="btnLedApply" type="button" disabled><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
-        </div>
-        </div>
         </div>`;
+        div.querySelector('#ledFoot').innerHTML = `
+        <button id="btnLedCancel" type="button" class="gen-btn">${tr('BT_CANCEL')}</button>
+        <button id="btnLedApply" type="button" class="gen-btn gen-btn-primary" disabled><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>`;
+        div.onclick = (e) => { if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div); };
 
         get('divContainer').appendChild(div);
         shOverlay(div);
@@ -1142,7 +1081,15 @@ class General {
             // une préférence, elle reste donc offerte dès que la LED est adressable, préréglage ou
             // non. Tout est MASQUÉ plutôt que grisé -- il n'y a rien à lire dans un réglage qui ne
             // s'applique pas.
+            // Aperçu de la colonne de gauche : la couleur d'activité pour une LED adressable, le vert
+            // d'état pour une LED simple, éteint quand le témoin est désactivé.
+            const syncPreview = () => {
+                const p = get('ledPreview');
+                p.style.setProperty('--lc', !swEnabled.checked ? 'var(--sunken)'
+                    : get('rbLedRgb').checked ? get('fldLedColorActivity').value : 'var(--ok)');
+            };
             const syncAddressable = () => {
+                syncPreview();
                 const addr = get('rbLedRgb').checked;
                 const manuel = parseInt(presetSel.value, 10) === MANUAL;
                 const vis = (id, on) => { const row = get(id); if (row) row.style.display = on ? '' : 'none'; };
@@ -1150,6 +1097,11 @@ class General {
                 vis('rowLedActiveLow', manuel && !addr);
                 vis('rowLedColorOrder', manuel && addr);
                 vis('rowLedColorActivity', addr);
+                // Plus rien à régler (préréglage d'une LED simple) : le bloc entier disparaît avec
+                // ses lignes, sinon il ne resterait que son titre.
+                const sect = get('ledTypeSwitch').closest('.genmod-sect');
+                sect.style.display = ['ledTypeSwitch', 'rowLedActiveLow', 'rowLedColorActivity', 'rowLedColorOrder']
+                    .some(id => get(id).style.display !== 'none') ? '' : 'none';
             };
             syncAddressable();
 
@@ -1161,6 +1113,8 @@ class General {
                 if (!fld || !sw) return;
                 fld.addEventListener('input', () => {
                     sw.style.setProperty('--led-swatch', fld.value);
+                    get('ledColorHex').textContent = fld.value;
+                    syncPreview();
                     markDirty();
                 });
             };

@@ -18,7 +18,8 @@
 /* Même traitement pour le conteneur `.input-number-custom` (GPIO manuel de la LED de statut) :
  * la bordure rouge et la secousse portent sur le bloc entier (select/input + boutons +/-), pas
  * seulement sur le champ, pour que l'erreur saute aux yeux même sur un petit écran. */
-.input-number-custom.input-error {
+.input-number-custom.input-error,
+.led-pin-box.input-error {
     border-color: var(--color-danger) !important;
     animation: shake 0.5s ease-in-out;
 }
@@ -1157,9 +1158,6 @@ button[line].fw-sidebar-button:hover {
  *  Led Overlay
  *  ======================================================================= */
 
-.ledOverlay-content .uniRow {
- max-height: 88px;
- }
 
 
 .somfyRepeater {
@@ -1564,10 +1562,6 @@ button[line].fw-sidebar-button:hover {
 }
 #cbLedEnabled:not(:checked) ~ .nav-pill {
     background-color: var(--color-danger);
-}
-.led-pin-help {
-    margin-top: 4px;
-    line-height: 1.5;
 }
 /* =======================================================================
  *  ASSISTANT AVERTISSEMENT ETHERNET (inst-ethwarning)
@@ -3284,13 +3278,14 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
         padding: 12px 16px;
     }
     .genmod-foot-hint { flex: none; }
+    /* Boutons côte à côte, à parts égales, sur toutes les fenêtres genmod- (choix du user) :
+       empilés, ils mangeaient la hauteur utile du contenu. */
     .genmod-foot-btns {
-        flex-direction: column-reverse;
         flex-wrap: nowrap;
         margin-left: 0;
         gap: 8px;
     }
-    .genmod-foot-btns .gen-btn { width: 100%; justify-content: center; }
+    .genmod-foot-btns .gen-btn { flex: 1 1 0; justify-content: center; }
 }
 
 
@@ -3433,8 +3428,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .genmod-task .genmod-backup { flex: none; }
     /* Pied compact : boutons côte à côte, et plus de coins arrondis en bas d'un plein écran. */
     .genmod-task .genmod-main { border-radius: 0; }
-    .genmod-task .genmod-foot-btns { flex-direction: row; }
-    .genmod-task .genmod-foot-btns .gen-btn { flex: 1 1 0; }
     .genmod-task button.genmod-backup { padding: 8px 12px; }
     /* GitHub : le choix du canal quitte le bloc d'état pour un sélecteur compact posé en haut à
        gauche, en face de la croix ; le reste de l'en-tête ne bouge pas. */
@@ -3480,6 +3473,84 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
         text-transform: none;
     }
     #divGitInstall .genmod-notes-open svg { width: 16px; height: 16px; fill: currentColor; }
+}
+
+/* --- Fenêtre du témoin LED (#divLedOverlay) : coque genmod- de Général, blocs de réglages.
+   À gauche l'aperçu du voyant tient lieu d'icône ; à droite un bloc par sujet. */
+#divLedOverlay .genmod-side-icon { display: none; }
+#divLedOverlay .genmod-side > div:not([class]) { order: 0; }
+.led-preview {
+    order: 1;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 96px;
+    height: 96px;
+    flex: none;
+    border-radius: var(--r-pill);
+    background: radial-gradient(circle, var(--lc) 0, color-mix(in srgb, var(--lc) 30%, transparent) 45%, transparent 70%);
+}
+.led-preview i {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--r-pill);
+    background: var(--lc);
+    box-shadow: 0 0 0 4px var(--surface), 0 0 18px 4px color-mix(in srgb, var(--lc) 70%, transparent);
+}
+#divLedOverlay #btnLedTest { order: 2; align-self: center; }
+#divLedOverlay .genmod-state { order: 3; }
+.genmod-sect {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--r-4);
+    background: var(--panel);
+}
+.genmod-sect .gen-row { margin: 0 -8px; padding: 6px 8px; }
+.genmod-error {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: var(--r-3);
+    background: var(--danger-bg);
+    color: var(--danger);
+    font-size: var(--fs-3);
+}
+.led-manual { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.led-pin-steps { display: flex; gap: 6px; flex: none; }
+.led-pin-steps > button,
+.led-pin-steps > button:hover {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-2);
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-size: var(--fs-5);
+    font-weight: 700;
+}
+.led-safety { align-self: end; background: none; padding: 11px 0; }
+.led-pin-warn { grid-column: 1 / -1; }
+/* La moitié cochée doit suivre la case dans le HTML (.gen-seg input:checked + span) : GRB
+   passe devant par l'ordre d'affichage seulement. */
+.led-order .gen-seg-no { order: -1; }
+.led-color { display: inline-flex; align-items: center; gap: 10px; flex: none; cursor: pointer; }
+.led-color .accent-swatch {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--surface);
+    border-radius: var(--r-pill);
+    box-shadow: 0 0 0 1px var(--border);
+}
+.led-color code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--fs-2); color: var(--text-2); }
+@media (max-width: 999px) {
+    .led-preview { display: none; }
+    #divLedOverlay #btnLedTest { grid-column: 1 / -1; justify-self: start; }
+}
+@media (max-width: 767px) {
+    .led-manual { grid-template-columns: minmax(0, 1fr); }
+    #divLedOverlay #btnLedTest { align-self: stretch; justify-content: center; }
 }
 .lang-catalog-code {
     display: grid;
