@@ -3704,7 +3704,13 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .wiz-opt.on, .wiz-opt.on:hover { background: var(--on-fill); color: var(--on-fill-text); }
 .wiz-foot { grid-area: foot; display: flex; align-items: center; gap: 12px; padding: 12px clamp(24px, 3.4vw, 64px); border-top: 1px solid var(--border); background: var(--surface); }
 .wiz-foot .gen-btn { align-self: auto; }
-.wiz-foot .wiz-ghost, .wiz-foot .wiz-ghost:hover { background: transparent; color: var(--text-3); }
+/* Sortie : neutre mais bien visible (ce n'est pas une action destructrice), juste avant le bouton principal. */
+.wiz-foot .wiz-quit, .wiz-foot .wiz-quit:hover { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
+.wiz-add-room { align-self: flex-start; min-height: 40px; }
+.wiz-busy { gap: 10px; }
+/* aria-disabled et non disabled : button:disabled (base.css) le grise en !important. */
+.wiz-busy { pointer-events: none; cursor: progress; }
+.wiz-spin { width: 16px; height: 16px; flex: none; box-sizing: border-box; border: 2px solid currentColor; border-right-color: transparent; border-radius: var(--r-pill); animation: wait-spinner-rotate .8s linear infinite; }
 .wiz-foot-gap { flex: 1; }
 .wiz-foot-hint { font-size: var(--fs-3); color: var(--text-3); }
 .wiz-foot-hint:empty { display: none; }

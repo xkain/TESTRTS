@@ -343,7 +343,7 @@ class ShadeSetup {
             single: !!only, onDone,
             cur: 0, hist: {}, marks: {}, timer: null, t0: 0, sent: false, inter: null, err: '', flip: !!shade.flipCommands, dzManual: false,
             my: null, sun: null, myMode: null, myStep: null, myPos: 0, myEl: 0, myRaw: 0, myWarn: '', myTarget: 50,
-            myTilt: shade.myTiltPos >= 0 ? shade.myTiltPos : 50, posq: shade.flipPosition ? 'open' : 'closed', reach: (shade.repeats ?? 1) > 1 ? 'strong' : 'normal', led: shade.ledFeedback ? 'oui' : 'non'
+            myTilt: shade.myTiltPos >= 0 ? shade.myTiltPos : 50, posq: shade.flipPosition ? 'open' : 'closed', rep: shade.repeats ?? 1, led: shade.ledFeedback ? 'oui' : 'non'
         };
         const s = this.s, first = s.tasks.findIndex(T => T.state !== 'done');
         s.cur = first < 0 ? s.tasks.length : first;
@@ -1114,8 +1114,10 @@ class ShadeSetup {
             <div class="setup-chips">${chip('posq', 'closed', tr('IS_CLOSED'))}${chip('posq', 'open', tr('IS_OPEN'))}</div></div>`;
         h += `<div class="setup-optq"><div class="setup-q2">${tr('SETUP_REACH_Q')}</div>
             <p class="setup-p sub">${tr('SETUP_REACH_DESC')}</p>
-            <div class="setup-chips">${chip('reach', 'normal', tr('SETUP_REACH_NORMAL'))}${chip('reach', 'strong', tr('SETUP_REACH_STRONG'))}</div>
-            <p class="setup-p sub setup-why"><i>${tr('SETUP_REACH_HINT')}</i></p></div>`;
+            <div class="setup-chips"><div class="setup-chip${s.rep <= 1 ? ' sel' : ''}" onclick="shadeSetup.setRep(1)">${tr('SETUP_REACH_NORMAL')}</div><div class="setup-chip${s.rep > 1 ? ' sel' : ''}" onclick="shadeSetup.setRep(3)">${tr('SETUP_REACH_STRONG')}</div></div>
+            <p class="setup-p sub setup-why"><i>${tr('SETUP_REACH_HINT')}</i></p>
+            <details class="setup-adv"${s.rep === 1 || s.rep === 3 ? '' : ' open'}><summary>${tr('SETUP_REACH_CUSTOM')}</summary><div class="setup-adv-body">
+            <select class="inputAndSelect" aria-label="${escAttr(tr('REPEAT_COMMANDS'))}" onchange="shadeSetup.setRep(parseInt(this.value, 10))">${[0, 1, 2, 3, 4, 5, 6, 7].map(v => `<option value="${v}"${s.rep === v ? ' selected' : ''}>${tr(v ? `OPT_${v}TIME` : 'OPT_NO_REPEAT')}</option>`).join('')}</select></div></details></div>`;
         if (this.hasLed()) h += `<div class="setup-optq"><div class="setup-q2">${tr({ 'BOX-WIFI': 'SETUP_LED_Q_BOX_WIFI', 'BOX-ETH': 'SETUP_LED_Q_BOX_ETH' }[window.__hardwareProfile] || 'SETUP_LED_Q')}</div>
             <div class="setup-chips">${chip('led', 'oui', tr('BT_YES'))}${chip('led', 'non', tr('BT_NO'))}</div></div>`;
         const ready = myReady && sunReady;
@@ -1178,6 +1180,7 @@ class ShadeSetup {
             this.myDone(s.myTarget);
         }));
     }
+    setRep(v) { this.s.rep = v; this.render(); }
     optsDone() {
         const s = this.s, learnedMy = s.myStep === 'learned', fields = {};
         if (s.st.sun) fields.sunSensor = s.sun === 'oui';
@@ -1189,9 +1192,8 @@ class ShadeSetup {
         }
         if (s.st.sun) parts.push(tr(fields.sunSensor ? 'SETUP_S_SUN' : 'SETUP_S_NO_SUN'));
         if (!s.isToggle) fields.flipPosition = s.posq === 'open';
-        const rep = s.shade.repeats ?? 1;
-        fields.repeats = s.reach === 'strong' ? (rep > 1 ? rep : 3) : (rep > 1 ? 1 : rep);
-        if (s.reach === 'strong') parts.push(tr('SETUP_S_REACH_STRONG'));
+        fields.repeats = s.rep;
+        if (s.rep > 1) parts.push(tr('SETUP_S_REACH_STRONG'));
         if (this.hasLed()) {
             fields.ledFeedback = s.led === 'oui';
             if (fields.ledFeedback) parts.push(tr('SETUP_S_LED'));

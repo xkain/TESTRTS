@@ -4240,7 +4240,7 @@ class Somfy {
         const ctx = isEdit ? null : this._roomInlineReturnContext;
         const mode = isEdit ? 'edit' : ctx ? 'inline' : 'create';
         const rid = isEdit ? parseInt(roomId, 10) : 0;
-        const formName = ctx ? (get(ctx === 'group' ? 'fldGroupName' : 'fldShadeName')?.value || '') : '';
+        const formName = ctx === 'gsetup' ? (groupSetup.c?.name || '').trim() : ctx ? (get(ctx === 'group' ? 'fldGroupName' : 'fldShadeName')?.value || '') : '';
         const items = mode === 'inline' ? [] : [
             ...(this.shades || []).map(s => ({ kind: 'shade', id: s.shadeId, name: s.name, roomId: s.roomId, type: tr(this.shadeTypeKey(s.shadeType) || ''), icon: (this.shadeTypes.find(x => x.type === s.shadeType) || { indic: 'svg-indicRoller' }).indic })),
             ...(this.groups || []).map(g => ({ kind: 'group', id: g.groupId, name: g.name, roomId: g.roomId, type: tr('ROOM_WIN_GROUP'), icon: 'svg-group' }))
@@ -4352,6 +4352,8 @@ class Somfy {
                 if (ops.some(op => op.url === '/saveShade')) this.updateShadeList();
                 if (ops.some(op => op.url === '/saveGroup')) this.updateGroupList();
                 if (!ctx) return;
+                // Assistant « Créer un groupe » : il redessine son sélecteur depuis _rooms.
+                if (ctx === 'gsetup') { if (groupSetup.c) { groupSetup.c.roomId = roomId; groupSetup.renderWiz(); } return; }
                 // Création depuis une fiche : la nouvelle option doit exister avant d'être choisie.
                 const sel = get(ctx === 'group' ? 'selGroupRoom' : 'selShadeRoom');
                 if (!sel) return;
