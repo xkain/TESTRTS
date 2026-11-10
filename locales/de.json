@@ -188,6 +188,7 @@
     "DEVICE_CREATE_DESC": "Basisparameter speichern, um Ihr Gerät zu erstellen",
     "DEVICE_EDIT_TITLE": "Gerätekonfiguration",
     "DEVICE_TILE_IDENTITY": "Identität",
+    "DEVICE_TILE_SUMMARY": "Übersicht",
     "DEVICE_TYPE": "Typ",
     "DEVICE_SHUTTER": "Rollladen",
     "DEVICE_ROLLER": "Rollo",

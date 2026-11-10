@@ -188,6 +188,7 @@
     "DEVICE_CREATE_DESC": "Save basic parameters to create your device",
     "DEVICE_EDIT_TITLE": "Device configuration",
     "DEVICE_TILE_IDENTITY": "Identity",
+    "DEVICE_TILE_SUMMARY": "Summary",
     "DEVICE_TYPE": "Type",
     "DEVICE_SHUTTER": "Shutter",
     "DEVICE_ROLLER": "Roller shade",

@@ -188,6 +188,7 @@
     "DEVICE_CREATE_DESC": "Enregistrer les paramètres de base pour créer votre équipement",
     "DEVICE_EDIT_TITLE": "Configuration de l'équipement",
     "DEVICE_TILE_IDENTITY": "Identité",
+    "DEVICE_TILE_SUMMARY": "Récapitulatif",
     "DEVICE_TYPE": "Type",
     "DEVICE_SHUTTER": "Volet",
     "DEVICE_ROLLER": "Store enrouleur",

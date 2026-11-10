@@ -760,8 +760,8 @@ class ShadeSetup {
     paintActivity() {
         const a = this.act, box = get('divShadeActivity');
         if (!a || !box || box.style.display) return;
-        const W = this.words(a.shadeType);
-        const cmd = { Up: W.up, Down: W.down }[a.sentCmd] || a.sentCmd;
+        const sh = this.editShade && this.editShade.shadeId === a.shadeId ? this.editShade : { shadeId: a.shadeId, shadeType: a.shadeType };
+        const cmd = somfy.sentCommandLabel(sh, a.sentCmd);
         get('valShadeSent').textContent = a.sentAt ? `${this.agoText(a.sentAt)} · ${cmd}` : tr('SHADE_ACT_NEVER');
         get('dotShadeSent').classList.toggle('ok', !!a.sentAt);
         get('rowShadeHeard').style.display = a.remotes.length ? '' : 'none';

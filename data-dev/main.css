@@ -6349,7 +6349,11 @@ body:has(.inst-overlay, .modal-overlay) :is(#divNetAdapter, #divMQTT, #divTransc
 .ed-cmd:last-child { flex: 0 0 56px; }
 .ed-cmd svg { width: 26px; height: 26px; fill: currentColor; }
 #divSomfyGroupButtons.disabled { opacity: .5; pointer-events: none; }
-.ed-page.ed-new :is(#blocPairGroup, #blocShadeCmds, .gen-tabs, #grpPanels > [data-tab="1"], #grpPanels > [data-tab="2"], #shdPanels > :not([data-tab="0"]), #grpDangerTile) { display: none; }
+.ed-page.ed-new :is(#blocPairGroup, #blocShadeCmds, .gen-tabs, #grpPanels > [data-tab="1"], #grpPanels > [data-tab="2"], #shdPanels > :is([data-tab="1"], [data-tab="3"], [data-tab="4"]), #shdSummaryTile, #grpDangerTile) { display: none; }
+/* Fiche vierge : le protocole et l'ID, rangés dans Réglages, restent nécessaires pour créer. */
+.ed-page.ed-new #shdPanels > [data-tab="2"] { display: grid; }
+/* !important : onShadeTypeChanged pose un display en ligne sur ces tuiles. */
+.ed-page.ed-new #shdPanels > [data-tab="2"] > :not(#shdCommTile) { display: none !important; }
 .ed-add-room { align-self: flex-start; }
 .ed-roll { display: flex; gap: 8px; }
 .ed-roll .gen-input-box { flex: 1; min-width: 0; background: var(--surface); }

@@ -188,6 +188,7 @@
     "DEVICE_CREATE_DESC": "Guarde los parámetros básicos para crear su equipo",
     "DEVICE_EDIT_TITLE": "Configuración del equipo",
     "DEVICE_TILE_IDENTITY": "Identidad",
+    "DEVICE_TILE_SUMMARY": "Resumen",
     "DEVICE_TYPE": "Tipo",
     "DEVICE_SHUTTER": "Contraventana",
     "DEVICE_ROLLER": "Persiana enrollable",

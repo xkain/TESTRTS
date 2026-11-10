@@ -1441,53 +1441,9 @@
                                                 </div>
                                                 <button type="button" class="gen-btn ed-add-room" onclick="somfy.openAddRoomInline('shade');"><svg><use href="#svg-add"></use></svg><span tr="BT_ADD_ROOM"></span></button>
                                             </div>
-                                            <div class="gen-tile">
-                                                <h3 class="gen-tile-title" tr="COMMUNICATION"></h3>
-                                                <div class="gen-field-pair">
-                                                    <div class="gen-field">
-                                                        <label class="gen-field-label" for="selShadeProto" tr="PROTOCOL"></label>
-                                                        <div class="gen-input-box dirty-target"><select id="selShadeProto" class="gen-input" name="proto" data-bind="proto" data-datatype="int" onchange="somfy.onShadeProtoChanged(this);">
-                                                            <option value="0" tr="RTS"></option>
-                                                            <option value="1" tr="RTW"></option>
-                                                            <option value="2" tr="RTV"></option>
-                                                            <option value="8" tr="IO_RELAY"></option>
-                                                            <option value="9" tr="IO_REMOTE"></option>
-                                                        </select></div>
-                                                    </div>
-                                                    <div id="divShadeBitLength" class="gen-field">
-                                                        <label class="gen-field-label" for="selShadeBitLength" tr="BIT"></label>
-                                                        <div class="gen-input-box dirty-target"><select id="selShadeBitLength" class="gen-input" name="bitLength" data-bind="bitLength" data-datatype="int" onchange="somfy.onShadeBitLengthChanged(this);">
-                                                            <option value="56" tr="56BIT"></option>
-                                                            <option value="80" tr="80BIT"></option>
-                                                        </select></div>
-                                                    </div>
-                                                </div>
-                                                <div id="divShadeAddress" class="gen-field">
-                                                    <label class="gen-field-label" for="fldShadeAddress" tr="DEVICE_ID"></label>
-                                                    <div class="gen-input-box dirty-target"><input id="fldShadeAddress" class="gen-input" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADDRESS_PH" placeholder=" "></div>
-                                                </div>
-                                                <div id="divGPIOControl" class="gen-field-pair">
-                                                    <div id="divGPIOUp" class="gen-field">
-                                                        <label class="gen-field-label" for="selShadeGPIOUp" tr="DEVICE_GPIO_UP"></label>
-                                                        <div class="gen-input-box dirty-target"><select id="selShadeGPIOUp" class="gen-input" data-bind="gpioUp" data-datatype="int"></select></div>
-                                                    </div>
-                                                    <div id="divGPIOMy" class="gen-field">
-                                                        <label class="gen-field-label" for="selShadeGPIOMy" tr="DEVICE_GPIO_MY"></label>
-                                                        <div class="gen-input-box dirty-target"><select id="selShadeGPIOMy" class="gen-input" data-bind="gpioMy" data-datatype="int"></select></div>
-                                                    </div>
-                                                    <div id="divGPIODown" class="gen-field">
-                                                        <label class="gen-field-label" for="selShadeGPIODown" tr="DEVICE_GPIO_DOWN"></label>
-                                                        <div class="gen-input-box dirty-target"><select id="selShadeGPIODown" class="gen-input" data-bind="gpioDown" data-datatype="int"></select></div>
-                                                    </div>
-                                                </div>
-                                                <label id="divLLTrigger" class="gen-row dirty-target" for="cbLLTrigger">
-                                                    <span class="gen-row-text"><b tr="DEVICE_LL_TRIGGER"></b><span tr="DEVICE_LL_TRIGGER_DESC"></span></span>
-                                                    <span class="gen-seg gen-seg-bool">
-                                                        <input id="cbLLTrigger" name="hasLLTrigger" type="checkbox" data-bind="gpioLLTrigger">
-                                                        <span class="gen-seg-yes" tr="BT_YES"></span>
-                                                        <span class="gen-seg-no" tr="BT_NO"></span>
-                                                    </span>
-                                                </label>
+                                            <div id="shdSummaryTile" class="gen-tile">
+                                                <h3 class="gen-tile-title" tr="DEVICE_TILE_SUMMARY"></h3>
+                                                <div id="shdSummary" class="ed-ro-list"></div>
                                             </div>
                                             <div class="gen-tile">
                                                 <h3 class="gen-tile-title" tr="ACTIVITY"></h3>
@@ -1499,19 +1455,6 @@
                                                     <div class="ed-ro"><span tr="PAIRING"></span><b id="valShadePaired"></b></div>
                                                     <div class="ed-ro"><span tr="DEVICE_INTERNAL_ID"></span><b id="valShadeInternalId" class="ed-mono"></b></div>
                                                 </div>
-                                            </div>
-                                            <div id="shdDangerTile" class="gen-tile gen-tile-danger">
-                                                <h3 class="gen-tile-title" tr="TILE_DANGER"></h3>
-                                                <div class="gen-field">
-                                                    <label class="gen-field-label" for="fldShadeRollingCode" tr="ROLLING_CODE"></label>
-                                                    <div class="ed-roll">
-                                                        <div class="gen-input-box"><input id="fldShadeRollingCode" class="gen-input" type="number" min="0" max="65535" oninput="get('btnShadeRollingCode').disabled = this.value === '';"></div>
-                                                        <button type="button" id="btnShadeRollingCode" class="gen-btn gen-btn-danger" disabled onclick="somfy.askShadeRollingCode();" tr="ROLLING_SET"></button>
-                                                    </div>
-                                                </div>
-                                                <p class="gen-tile-desc"><span tr="ROLLING_LAST"></span> <b id="spanShadeRollingCode" class="ed-mono"></b>. <span tr="ROLLING_DESC"></span></p>
-                                                <p class="gen-tile-desc" tr="DEVICE_DELETE_DESC"></p>
-                                                <button type="button" class="gen-btn gen-btn-danger" onclick="somfy.deleteShade(parseInt(document.getElementById('spanShadeId').innerText, 10));"><svg><use href="#svg-trash"></use></svg><span tr="DEVICE_DELETE_BTN"></span></button>
                                             </div>
                                         </div>
                                         <div class="gen-grid" role="tabpanel" data-tab="1" hidden>
@@ -1695,6 +1638,67 @@
                                                     </span>
                                                 </label>
                                                 <button type="button" class="gen-btn" onclick="shadeSetup.fromEdit(parseInt(document.getElementById('spanShadeId').innerText, 10), 'opts');"><svg><use href="#svg-favori"></use></svg><span tr="DEVICE_MY_SET"></span></button>
+                                            </div>
+                                            <div id="shdCommTile" class="gen-tile">
+                                                <h3 class="gen-tile-title" tr="COMMUNICATION"></h3>
+                                                <div class="gen-field-pair">
+                                                    <div class="gen-field">
+                                                        <label class="gen-field-label" for="selShadeProto" tr="PROTOCOL"></label>
+                                                        <div class="gen-input-box dirty-target"><select id="selShadeProto" class="gen-input" name="proto" data-bind="proto" data-datatype="int" onchange="somfy.onShadeProtoChanged(this);">
+                                                            <option value="0" tr="RTS"></option>
+                                                            <option value="1" tr="RTW"></option>
+                                                            <option value="2" tr="RTV"></option>
+                                                            <option value="8" tr="IO_RELAY"></option>
+                                                            <option value="9" tr="IO_REMOTE"></option>
+                                                        </select></div>
+                                                    </div>
+                                                    <div id="divShadeBitLength" class="gen-field">
+                                                        <label class="gen-field-label" for="selShadeBitLength" tr="BIT"></label>
+                                                        <div class="gen-input-box dirty-target"><select id="selShadeBitLength" class="gen-input" name="bitLength" data-bind="bitLength" data-datatype="int" onchange="somfy.onShadeBitLengthChanged(this);">
+                                                            <option value="56" tr="56BIT"></option>
+                                                            <option value="80" tr="80BIT"></option>
+                                                        </select></div>
+                                                    </div>
+                                                </div>
+                                                <div id="divShadeAddress" class="gen-field">
+                                                    <label class="gen-field-label" for="fldShadeAddress" tr="DEVICE_ID"></label>
+                                                    <div class="gen-input-box dirty-target"><input id="fldShadeAddress" class="gen-input" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADDRESS_PH" placeholder=" "></div>
+                                                </div>
+                                                <div id="divGPIOControl" class="gen-field-pair">
+                                                    <div id="divGPIOUp" class="gen-field">
+                                                        <label class="gen-field-label" for="selShadeGPIOUp" tr="DEVICE_GPIO_UP"></label>
+                                                        <div class="gen-input-box dirty-target"><select id="selShadeGPIOUp" class="gen-input" data-bind="gpioUp" data-datatype="int"></select></div>
+                                                    </div>
+                                                    <div id="divGPIOMy" class="gen-field">
+                                                        <label class="gen-field-label" for="selShadeGPIOMy" tr="DEVICE_GPIO_MY"></label>
+                                                        <div class="gen-input-box dirty-target"><select id="selShadeGPIOMy" class="gen-input" data-bind="gpioMy" data-datatype="int"></select></div>
+                                                    </div>
+                                                    <div id="divGPIODown" class="gen-field">
+                                                        <label class="gen-field-label" for="selShadeGPIODown" tr="DEVICE_GPIO_DOWN"></label>
+                                                        <div class="gen-input-box dirty-target"><select id="selShadeGPIODown" class="gen-input" data-bind="gpioDown" data-datatype="int"></select></div>
+                                                    </div>
+                                                </div>
+                                                <label id="divLLTrigger" class="gen-row dirty-target" for="cbLLTrigger">
+                                                    <span class="gen-row-text"><b tr="DEVICE_LL_TRIGGER"></b><span tr="DEVICE_LL_TRIGGER_DESC"></span></span>
+                                                    <span class="gen-seg gen-seg-bool">
+                                                        <input id="cbLLTrigger" name="hasLLTrigger" type="checkbox" data-bind="gpioLLTrigger">
+                                                        <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                        <span class="gen-seg-no" tr="BT_NO"></span>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                            <div id="shdDangerTile" class="gen-tile gen-tile-danger">
+                                                <h3 class="gen-tile-title" tr="TILE_DANGER"></h3>
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="fldShadeRollingCode" tr="ROLLING_CODE"></label>
+                                                    <div class="ed-roll">
+                                                        <div class="gen-input-box"><input id="fldShadeRollingCode" class="gen-input" type="number" min="0" max="65535" oninput="get('btnShadeRollingCode').disabled = this.value === '';"></div>
+                                                        <button type="button" id="btnShadeRollingCode" class="gen-btn gen-btn-danger" disabled onclick="somfy.askShadeRollingCode();" tr="ROLLING_SET"></button>
+                                                    </div>
+                                                </div>
+                                                <p class="gen-tile-desc"><span tr="ROLLING_LAST"></span> <b id="spanShadeRollingCode" class="ed-mono"></b>. <span tr="ROLLING_DESC"></span></p>
+                                                <p class="gen-tile-desc" tr="DEVICE_DELETE_DESC"></p>
+                                                <button type="button" class="gen-btn gen-btn-danger" onclick="somfy.deleteShade(parseInt(document.getElementById('spanShadeId').innerText, 10));"><svg><use href="#svg-trash"></use></svg><span tr="DEVICE_DELETE_BTN"></span></button>
                                             </div>
                                         </div>
                                         <div class="gen-grid ed-wide" role="tabpanel" data-tab="3" hidden>

@@ -2591,6 +2591,37 @@ class Somfy {
         }
         return null;
     }
+    // Tuile Récapitulatif de Général : les réglages enregistrés, en lecture seule.
+    renderShadeSummary(shade) {
+        const box = get('shdSummary');
+        if (!box || !shade) return;
+        const type = shade.shadeType, st = this.shadeTypes.find(x => x.type === type) || {};
+        const tt = st.tilt ? (shade.tiltType || 0) : 0, isDry = this.dryContactShadeTypes.includes(type);
+        const setup = typeof shadeSetup !== 'undefined' ? shadeSetup : null;
+        const opt = (id, v) => Array.from(get(id).options).find(o => o.value === String(v))?.text ?? '';
+        const yn = (v) => tr(v ? 'BT_YES' : 'BT_NO'), sec = (ms) => `${(ms / 1000).toFixed(1)} s`;
+        const rows = [];
+        const add = (label, val) => rows.push(`<div class="ed-ro"><span>${escHtml(label)}</span><b>${escHtml(val)}</b></div>`);
+        add(tr('DEVICE_TYPE'), opt('selShadeType', type) + (tt ? ` · ${opt('selTiltType', tt)}` : ''));
+        add(tr('ROOM'), (_rooms.find(r => r.roomId === shade.roomId) || { name: tr('HOME') }).name);
+        this.renderShadeHero();
+        add(tr('PROTOCOL'), get('shdChipRadio').textContent);
+        if (setup) add(setup.titleFor(shade, 'dir'), setup.valueFor(shade, 'dir'));
+        if (st.lift && tt !== 3 && shade.upTime > 0) add(setup ? setup.titleFor(shade, 'cal') : '', `${sec(shade.upTime)} / ${sec(shade.downTime)}`);
+        if (tt > 0 && shade.tiltTimeUp > 0) add(setup ? setup.titleFor(shade, 'tilt') : '', `${sec(shade.tiltTimeUp)} / ${sec(shade.tiltTimeDown)}`);
+        if (this.shadeTypeSupportsMy(type) && setup) {
+            const my = shade.myPos >= 0 ? setup.t(shade.simMy ? 'SETUP_S_MY_SIM' : 'SETUP_S_MY', { pos: shade.myPos }) + (tt && shade.myTiltPos >= 0 ? ` · ${setup.t('SETUP_S_MY_TILT', { tilt: shade.myTiltPos })}` : '') : tr('CARD_MY_NONE');
+            add(tr('SETMYPOS_TITLE'), my);
+        }
+        if (isDry) add(tr('DEVICE_OUTPUT_MODE_DESC'), opt('selShadeOutputMode', shade.outputMode ?? 0));
+        if (st.fpos) add(tr(isDry ? 'DEVICE_FLIP_STATE' : 'DEVICE_FLIP_POSITION'), yn(shade.flipPosition));
+        if (st.sun) add(tr('DEVICE_SUN_SENSOR'), yn(shade.sunSensor));
+        add(tr('REPEAT_COMMANDS'), opt('selRepeatCommands', shade.repeats ?? 1));
+        if (typeof window.__ledPin === 'number' && window.__ledPin >= 0) add(tr('LED_FEEDBACK'), yn(shade.ledFeedback));
+        add(tr('SUBTAB_REMOTES'), `${(shade.linkedRemotes || []).length}/${this.maxLinkedRemotes || 15}`);
+        add(tr('SUBTAB_SCHEDULES'), String((this.schedules || []).filter(sc => sc.targetType === 'shade' && sc.targetId === shade.shadeId).length));
+        box.innerHTML = rows.join('');
+    }
     // Tuiles d'information de Piloter : prochain planning et mise en service ; la dernière commande
     // et les télécommandes suivent l'activité (cf. shadeSetup.paintActivity).
     renderShadeCtlInfo(shade) {
@@ -5059,14 +5090,22 @@ class Somfy {
             : `<div class="card-empty">${tr('EMPTY_SCHEDULE_TITLE')}</div>`;
         return `<div class="card-block"><div class="card-block-head"><span>${tr('SUBTAB_SCHEDULES')}</span><button type="button" class="card-link" onclick="somfy.closeCardSheet(); somfy.openAddScheduleInline('${kind}', ${id});">+ ${tr('BT_ADD')}</button></div><div class="card-sched sheet-list">${rows}</div></div>`;
     }
+    // Contact sec : Up pose la cible 0 (relais au repos), Down la cible 100 (cf. SomfyGpio::setGPIOs) ;
+    // on nomme donc l'état obtenu plutôt qu'un mouvement.
+    sentCommandLabel(shade, cmd) {
+        const type = this.shadeTypeOf(shade);
+        if (this.dryContactShadeTypes.includes(type) && (cmd === 'Up' || cmd === 'Down'))
+            return this.shadeStateLabel(cmd === 'Up' ? 0 : 100, shade.flipPosition, this.shadeVocabOf(shade));
+        const W = typeof shadeSetup !== 'undefined' ? shadeSetup.words(type) : {};
+        return { Up: W.up, Down: W.down }[cmd] || cmd || '';
+    }
     shadeSheetInfoHtml(shade) {
         const shadeId = shade.shadeId;
         const type = this.shadeTypeOf(shade);
         const kv = (k, v) => `<div class="card-kv"><span>${k}</span><b>${v}</b></div>`;
         const items = [];
         if (typeof shade.lastSentAgo === 'number') {
-            const W = typeof shadeSetup !== 'undefined' && shadeSetup.words ? shadeSetup.words(type) : {};
-            const cmd = { Up: W.up, Down: W.down }[shade.lastSentCmd] || shade.lastSentCmd || '';
+            const cmd = this.sentCommandLabel(shade, shade.lastSentCmd);
             if (typeof shade._sentAt !== 'number') shade._sentAt = shade.lastSentAgo >= 0 ? Date.now() - shade.lastSentAgo * 1000 : 0;
             items.push(kv(tr('SHADE_ACT_SENT'), shade._sentAt ? `${escHtml(cmd)} · <span class="card-ago" data-at="${shade._sentAt}">${this.cardAgoText(shade._sentAt)}</span>` : tr('SHADE_ACT_NEVER')));
         }
@@ -5840,7 +5879,7 @@ class Somfy {
                 this.setLinkedRemotesList(shade);
                 // Programmations rattachées à cet équipement (badges, bloc Options) : on recharge la
                 // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
-                this.updateScheduleList(() => { this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId); this.renderShadeCtlInfo(shade); });
+                this.updateScheduleList(() => { this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId); this.renderShadeCtlInfo(shade); this.renderShadeSummary(shade); });
             }
             if (typeof shadeSetup !== 'undefined') shadeSetup.renderEditPanel(isNew ? null : shade);
             this.setEditorMyValue(isNew ? null : shade);
@@ -5885,7 +5924,7 @@ class Somfy {
             g('btnShadeRollingCode').disabled = true;
             g('spanShadeRollingCode').textContent = shade.lastRollingCode ?? '';
             this.renderShadeHeroState(isNew ? null : shade);
-            if (!isNew) this.renderShadeCtlInfo(shade);
+            if (!isNew) { this.renderShadeCtlInfo(shade); this.renderShadeSummary(shade); }
             this._shdTabs.show(0);
             this.showEditShade(true);
             routeSetEditor('divSomfyMotors', isNew ? 'new' : shadeId, { label: isNew ? tr('DEVICE_CREATE_TITLE') : shade.name });

@@ -272,7 +272,7 @@ class _SomfySchedule {
             const shadeId = parseInt(get('spanShadeId').innerText, 10);
             if (!isNaN(shadeId)) {
                 this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId);
-                if (this._shdData && this._shdData.shadeId === shadeId) this.renderShadeCtlInfo(this._shdData);
+                if (this._shdData && this._shdData.shadeId === shadeId) { this.renderShadeCtlInfo(this._shdData); this.renderShadeSummary(this._shdData); }
             }
         }
         const groupForm = get('somfyGroup');
