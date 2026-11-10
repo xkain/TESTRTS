@@ -1289,7 +1289,7 @@ class _SomfySchedule {
             closeOverlay(overlayEl);
             return;
         }
-        const run = () => this._runScheduleOps(ops, (err) => {
+        const run = () => this._putSequence(ops, (err) => {
             if (err) {
                 // Arrêt en cours de route : une partie des règles est passée, l'autre non. On
                 // recharge avant de signaler, pour que l'écran montre l'état réel du firmware.
@@ -1320,12 +1320,12 @@ class _SomfySchedule {
                 .replace('{n}', existing.steps.length + model.steps.length)}</p>`;
         }
     }
-    // Enchaîne des requêtes de planning une par une, en s'arrêtant à la première erreur : une fiche
-    // porte N règles côté firmware (cf. _groupSchedules) et chaque appel écrit schedules.cfg, donc
-    // les lancer en parallèle exposerait le fichier à N écritures concurrentes. `done` reçoit
+    // Enchaîne des requêtes PUT une par une, en s'arrêtant à la première erreur (plannings, fenêtre
+    // pièce) : chaque appel écrit un fichier de config, les lancer en parallèle l'exposerait à des
+    // écritures concurrentes. `done` reçoit
     // l'erreur éventuelle, à charge de l'appelant de recharger la liste dans tous les cas : après
     // un arrêt en cours de route, l'écran ne reflète plus l'état réel du firmware.
-    _runScheduleOps(ops, done) {
+    _putSequence(ops, done) {
         const next = (i) => {
             if (i >= ops.length) return done(null);
             putJSONSync(ops[i].url, ops[i].body, (err) => {
@@ -1351,7 +1351,7 @@ class _SomfySchedule {
             .filter(({ sc }) => makeBool(sc.enabled) !== enabled)
             .map(({ sc }) => ({ url: '/saveSchedule', body: Object.assign({}, sc, { enabled: enabled }) }));
         if (ops.length === 0) return;
-        this._runScheduleOps(ops, (err) => {
+        this._putSequence(ops, (err) => {
             if (err) ui.serviceError(err);
             this.updateScheduleList(() => this.refreshOpenTargetScheduleBadges());
         });
@@ -1362,7 +1362,7 @@ class _SomfySchedule {
         const desc = `${this.scheduleGroupTimesText(group)} - ${this.scheduleTargetName(group)}`;
         let prompt = ui.promptMessage(tr('PROMPT_DELETE_SCHEDULE'), () => {
             const ops = group.steps.map(({ sc }) => ({ url: '/deleteSchedule', body: { id: sc.id } }));
-            this._runScheduleOps(ops, (err) => {
+            this._putSequence(ops, (err) => {
                 if (err) ui.serviceError(err);
                 this.updateScheduleList(() => this.refreshOpenTargetScheduleBadges());
                 prompt.remove();

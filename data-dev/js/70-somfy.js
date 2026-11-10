@@ -4227,137 +4227,147 @@ class Somfy {
         }
     }
 
+    // =====================================================================
+    // SECTION : FENÊTRE PIÈCE (créer, modifier, créer depuis une fiche)
+    // =====================================================================
+    // Une pièce n'a qu'un nom : son contenu, c'est le roomId de chaque équipement et groupe. La
+    // fenêtre les présente à cocher et enregistre ensuite chaque élément déplacé avec son seul
+    // roomId (fromJSON ne touche qu'aux champs présents). `inline` : appelée par le + d'une fiche,
+    // elle ne garde que le nom et resélectionne la pièce créée dans la fiche restée derrière.
     RoomOverlay(roomId, roomData) {
         if (get('divEditRoomOverlay')) return;
-
-        // Déduction automatique : si roomId est '*' ou falsy => Mode Ajout, sinon => Mode Édition
         const isEdit = roomId && roomId !== '*';
+        const ctx = isEdit ? null : this._roomInlineReturnContext;
+        const mode = isEdit ? 'edit' : ctx ? 'inline' : 'create';
+        const rid = isEdit ? parseInt(roomId, 10) : 0;
+        const formName = ctx ? (get(ctx === 'group' ? 'fldGroupName' : 'fldShadeName')?.value || '') : '';
+        const items = mode === 'inline' ? [] : [
+            ...(this.shades || []).map(s => ({ kind: 'shade', id: s.shadeId, name: s.name, roomId: s.roomId, type: tr(this.shadeTypeKey(s.shadeType) || ''), icon: (this.shadeTypes.find(x => x.type === s.shadeType) || { indic: 'svg-indicRoller' }).indic })),
+            ...(this.groups || []).map(g => ({ kind: 'group', id: g.groupId, name: g.name, roomId: g.roomId, type: tr('ROOM_WIN_GROUP'), icon: 'svg-group' }))
+        ].map(it => Object.assign(it, { on: isEdit && it.roomId === rid })).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base', numeric: true }));
+        const savedName = isEdit ? (roomData.name || '') : '';
+        const maxRooms = this.maxRooms ? this.maxRooms - 2 : 14;
+        const nRooms = _rooms.length - 1;
+        const presets = mode === 'edit' ? '' : `<div class="room-win-presets">${Array.from({ length: 8 }, (_, i) => `<button type="button" class="room-win-preset" data-preset>${tr(`ROOM_PRESET_${i}`)}</button>`).join('')}</div>`;
+        const content = mode === 'inline'
+            ? `<p class="room-win-info"><svg><use href="#svg-info"></use></svg><span id="roomWinInfo"></span></p>`
+            : `<div class="room-win-label"><b id="roomWinCount"></b><span>${tr('ROOM_WIN_CONTENT_HINT')}</span></div><div class="room-win-items" id="roomWinItems"></div>`;
 
-        const titleKey   = isEdit ? 'ROOM_TITLE_EDIT' : 'ROOM_TITLE_ADD';
-        const descKey     = isEdit ? 'ROOM_TITLE_EDIT_DESC' : 'ROOM_TITLE_ADD_DESC';
-        const buttonText = isEdit ? tr('BT_SAVE') : tr('BT_CREATE');
-        const iconHref   = isEdit ? '#svg-save' : '#svg-add';
-
-        let div = document.createElement('div');
+        const div = document.createElement('div');
         div.id = 'divEditRoomOverlay';
-        div.className = 'modal-overlay';
-        div.setAttribute('data-roomid', roomId);
+        div.className = 'modal-overlay genmod-overlay';
+        div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
+            id: 'roomWin',
+            icon: 'svg-navRoom',
+            titleKey: isEdit ? 'ROOM_TITLE_EDIT' : 'ROOM_TITLE_ADD',
+            descKey: isEdit ? 'ROOM_TITLE_EDIT_DESC' : 'ROOM_TITLE_ADD_DESC',
+            sectionKey: { edit: 'ROOM_WIN_SECTION_EDIT', create: 'ROOM_WIN_SECTION_ADD', inline: 'ROOM_WIN_SECTION_INLINE' }[mode],
+            stateKey: tr(isEdit ? 'ROOM_WIN_STATE_CONTENT' : ctx ? 'ROOM_WIN_STATE_FOR' : 'SUBTAB_ROOMS'),
+            stateValue: '',
+            hintKey: 'ROOM_WIN_HINT_NAME',
+            footId: 'roomWinFoot',
+            bodyHtml: `<div class="gen-field">
+            <label class="gen-field-label" for="fldRoomName">${tr('NAME')}</label>
+            <div class="gen-input-box dirty-target"><input id="fldRoomName" class="gen-input" type="text" maxlength="20" placeholder="${tr('ROOM_NAME_PHL')}"></div>
+            </div>${presets}${content}`
+        })}</div>`;
+        const foot = div.querySelector('#roomWinFoot');
+        foot.innerHTML = isEdit
+            ? `<button type="button" class="gen-btn genmod-btn-danger" id="btnRoomDelete">${tr('BT_DELETE')}</button><button type="button" class="gen-btn gen-btn-primary" id="btnSaveRoom">${tr('BT_SAVE')}</button>`
+            : `<button type="button" class="gen-btn" data-genmod-close>${tr('BT_CANCEL')}</button><button type="button" class="gen-btn gen-btn-primary" id="btnSaveRoom">${tr(ctx ? 'BT_CREATE_CHOOSE' : 'BT_CREATE')}</button>`;
+        const input = div.querySelector('#fldRoomName');
+        input.value = savedName;
 
-        const presetsHTML = Array.from({ length: 8 }, (_, i) =>
-        `<span class="preset-badge">${tr(`ROOM_PRESET_${i}`)}</span>`
-        ).join('');
-
-        div.innerHTML = `
-        <div class="message-content room-content">
-        ${modalHeader(titleKey, 'svg-navRoom', {
-            subtitle: descKey,
-            rightContent: `<div class="somfyMaxId"><span id="spanRoomId">${roomId}</span>/<span id="spanMaxRooms">${roomData.maxRooms || 14}</span></div>`
-        })}
-        <div class="overlay-scroll-content">
-        <div class="uniblocCol dirty-target">
-        <label class="label" for="fldRoomName">${tr('NAME')}</label>
-        <input id="fldRoomName" class="inputAndSelect" name="roomName" data-bind="name" type="text" length=20 placeholder="${tr('ROOM_NAME_PHL')}">
-        </div>
-        <div class="room-presets">
-        ${presetsHTML}
-        </div>
-        </div>
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnRoomGoBack" line type="button">${tr('BT_CLOSE')}</button>
-        <button id="btnSaveRoom" type="button">
-        <svg><use id="useSaveRoomIcon" href="${iconHref}"></use></svg>
-        <span id="btnSaveRoomText">${buttonText}</span>
-        </button>
-        </div>
-        </div>
-        </div>`;
+        // Textes : textContent seulement, noms saisis par l'utilisateur.
+        const render = () => {
+            const name = input.value.trim();
+            const inside = items.filter(it => it.on);
+            const moved = items.filter(it => it.on !== (isEdit && it.roomId === rid));
+            const changes = moved.length + (name !== savedName ? 1 : 0);
+            if (isEdit) div.querySelector('.genmod-side-title').textContent = name || tr('ROOM_TITLE_EDIT');
+            const nS = inside.filter(it => it.kind === 'shade').length;
+            const state = isEdit ? tr('LIST_ROOM_STATS').replace('{S}', nS).replace('{G}', inside.length - nS)
+                : ctx ? formName : `${nRooms} ${tr('LIST_CAP_OF').replace('{MAX}', maxRooms)}`;
+            div.querySelector('#roomWinState .genmod-state-val').textContent = state;
+            const count = div.querySelector('#roomWinCount');
+            if (count) count.textContent = tr('ROOM_WIN_CONTENT').replace('{N}', inside.length);
+            const info = div.querySelector('#roomWinInfo');
+            if (info) info.textContent = tr('ROOM_WIN_INLINE_INFO').replace('{NAME}', formName);
+            const list = div.querySelector('#roomWinItems');
+            if (list) {
+                list.innerHTML = items.map((it, i) => `<button type="button" class="room-win-item${it.on ? ' on' : ''}" data-item="${i}" aria-pressed="${it.on}">
+                <span class="room-win-item-icon"><svg><use href="#${it.icon}"></use></svg></span>
+                <span class="room-win-item-text"><b></b><small></small></span>
+                <span class="room-win-item-box"><svg><use href="#svg-check"></use></svg></span></button>`).join('');
+                items.forEach((it, i) => {
+                    const el = list.querySelector(`[data-item="${i}"]`);
+                    const home = this._cfgRoomName(0);
+                    const where = it.on
+                        ? (isEdit && it.roomId === rid ? tr('ROOM_WIN_HERE') : it.roomId ? tr('ROOM_WIN_LEAVES').replace('{ROOM}', this._cfgRoomName(it.roomId)) : tr('ROOM_WIN_COMES'))
+                        : (isEdit && it.roomId === rid ? tr('ROOM_WIN_BACK_HOME').replace('{ROOM}', home) : tr('ROOM_WIN_IN').replace('{ROOM}', this._cfgRoomName(it.roomId)));
+                    el.querySelector('b').textContent = it.name;
+                    el.querySelector('small').textContent = `${it.type} · ${where}`;
+                    el.querySelector('small').classList.toggle('is-move', moved.includes(it));
+                });
+            }
+            let hint;
+            if (!name) hint = tr('ROOM_WIN_HINT_NAME');
+            else if (isEdit) hint = changes ? tr('ROOM_WIN_HINT_CHANGES').replace('{N}', changes) : tr('ROOM_WIN_HINT_NONE');
+            else if (ctx) hint = tr('ROOM_WIN_HINT_INLINE').replace('{NAME}', formName);
+            else hint = inside.length ? tr('ROOM_WIN_HINT_FILL').replace('{N}', inside.length) : tr('ROOM_WIN_HINT_LATER');
+            div.querySelector('#roomWinHint').textContent = hint;
+            div.querySelector('#btnSaveRoom').disabled = !name || (isEdit && !changes);
+            // Le garde de sortie (requestCloseOverlay) lit .is-dirty dans la fenêtre.
+            div.querySelector('.gen-input-box').classList.toggle('is-dirty', changes > 0 || (!isEdit && !!name));
+        };
 
         shOverlay(div);
-        ui.toElement(div, roomData);
-        watchDirty(div);
-
+        render();
+        input.addEventListener('input', render);
         div.onclick = (e) => {
-            const target = e.target;
-
-            if (target.classList.contains('preset-badge')) {
-                const input = div.querySelector('#fldRoomName');
-                input.value = target.innerText;
-                // bubbles: meme raison qu'en stepValue -- watchDirty() ecoute sur `div`.
-                input.dispatchEvent(new Event('input', { bubbles: true }));
-                return;
-            }
-            if (target.id === 'btnRoomGoBack' || target.closest('#btnRoomGoBack')) {
-                confirmDiscardChanges(() => {
-                    this._roomInlineReturnContext = null;
-                    closeOverlay(div);
-                });
-                return;
-            }
-            if (target.id === 'btnSaveRoom' || target.closest('#btnSaveRoom')) {
-                this.saveRoom(div);
-                return;
-            }
+            const t = e.target;
+            if (t.closest('[data-genmod-close]')) { requestCloseOverlay(div, () => { this._roomInlineReturnContext = null; }); return; }
+            const preset = t.closest('[data-preset]');
+            if (preset) { input.value = preset.textContent; render(); return; }
+            const item = t.closest('[data-item]');
+            if (item) { const it = items[+item.dataset.item]; it.on = !it.on; render(); return; }
+            if (t.closest('#btnRoomDelete')) { closeOverlay(div); this.deleteRoom(rid); return; }
+            if (t.closest('#btnSaveRoom')) this.saveRoom(div, { isEdit, rid, ctx, items, name: input.value.trim(), nameChanged: input.value.trim() !== savedName });
         };
     }
-    saveRoom(overlayEl) {
-        if (!overlayEl) overlayEl = get('divEditRoomOverlay');
-        if (!overlayEl) return;
-
-        let roomId = parseInt(overlayEl.querySelector('#spanRoomId').innerText, 10);
-        let obj = ui.fromElement(overlayEl);
-        let valid = true;
-
-        if (valid && (typeof obj.name !== 'string' || obj.name === '' || obj.name.length > 20)) {
-            ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_NAME_INVALID'));
-            valid = false;
+    saveRoom(div, o) {
+        if (!o.name || o.name.length > 20) return ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_NAME_INVALID'));
+        const moves = (roomId) => o.items.filter(it => it.on !== (o.isEdit && it.roomId === o.rid)).map(it => ({
+            url: it.kind === 'shade' ? '/saveShade' : '/saveGroup',
+            body: Object.assign(it.kind === 'shade' ? { shadeId: it.id } : { groupId: it.id }, { roomId: it.on ? roomId : 0 })
+        }));
+        const finish = (roomId, ops) => this._putSequence(ops, (err) => {
+            if (err) ui.serviceError(err);
+            else ui.successMessage(tr(o.isEdit ? 'MSG_SAVE_SUCCESS' : 'MSG_ADD_SUCCESS'));
+            clearDirty(div);
+            closeOverlay(div);
+            const ctx = o.ctx;
+            this._roomInlineReturnContext = null;
+            this.updateRoomsList(() => {
+                if (ops.some(op => op.url === '/saveShade')) this.updateShadeList();
+                if (ops.some(op => op.url === '/saveGroup')) this.updateGroupList();
+                if (!ctx) return;
+                // Création depuis une fiche : la nouvelle option doit exister avant d'être choisie.
+                const sel = get(ctx === 'group' ? 'selGroupRoom' : 'selShadeRoom');
+                if (!sel) return;
+                sel.value = roomId;
+                sel.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        });
+        if (o.isEdit) {
+            const ops = (o.nameChanged ? [{ url: '/saveRoom', body: { roomId: o.rid, name: o.name } }] : []).concat(moves(o.rid));
+            finish(o.rid, ops);
+            return;
         }
-
-        if (valid) {
-            if (isNaN(roomId) || roomId === 0) {
-                putJSONSync('/addRoom', obj, (err, room) => {
-                    if (err) {
-                        ui.serviceError(err);
-                        logger.error('Failed to add room:', err);
-                    }
-                    else {
-                        logger.debug('Room added:', room);
-                        ui.successMessage(tr('MSG_ADD_SUCCESS'));
-                        clearDirty(overlayEl);
-                        // Création à la volée depuis un équipement/groupe : une fois les listes de
-                        // pièces rafraîchies (la nouvelle option doit exister avant qu'on puisse
-                        // la sélectionner), on resélectionne automatiquement la pièce créée dans
-                        // le formulaire d'origine, resté ouvert derrière cet overlay.
-                        const returnCtx = this._roomInlineReturnContext;
-                        this._roomInlineReturnContext = null;
-                        this.updateRoomsList(() => {
-                            if (!returnCtx) return;
-                            const sel = get(returnCtx === 'group' ? 'selGroupRoom' : 'selShadeRoom');
-                            if (!sel) return;
-                            sel.value = room.roomId;
-                            sel.dispatchEvent(new Event('change', { bubbles: true }));
-                        });
-                        closeOverlay(overlayEl);
-                    }
-                });
-            }
-            else {
-                obj.roomId = roomId;
-                putJSONSync('/saveRoom', obj, (err, room) => {
-                    if (err) {
-                        ui.serviceError(err);
-                        logger.error('Failed to save room:', err);
-                    } else {
-                        ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                        logger.debug('Room saved:', room);
-                        clearDirty(overlayEl);
-                        this.updateRoomsList();
-                        closeOverlay(overlayEl);
-                    }
-                });
-            }
-        }
+        putJSONSync('/addRoom', { name: o.name }, (err, room) => {
+            if (err) { ui.serviceError(err); return; }
+            finish(room.roomId, moves(room.roomId));
+        });
     }
     deleteRoom(roomId) {
         let valid = true;

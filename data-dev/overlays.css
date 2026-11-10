@@ -1589,35 +1589,6 @@ div.eth-setting-line label {
     text-align:right;
     color: var(--color-text-main);
 }
-/* -----------------------------------------------------------------------
- *  Modale édition pièce (modal-room)
- * ----------------------------------------------------------------------- */
-
-.room-presets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 30px 0;
-}
-.preset-badge {
-    font-size: 0.75rem;
-    background: var(--color-bg-radio-card);
-    border: 1px solid var(--color-border);
-    padding: 4px 10px;
-    border-radius: 20px;
-    cursor: pointer;
-    color: var(--color-text-secondary);
-    user-select: none;
-    transition: all 0.15s ease;
-}
-.preset-badge:hover {
-    filter:brightness(0.9);
-}
-.preset-badge:active {
-    transform: scale(0.95);
-    filter:brightness(0.8);
-}
-
 /* Le padding horizontal habituel de .overlay-scroll-content est retiré ICI : avec un carrousel
  * qui glisse en translateX(), ce padding forme un "sas" entre le bord du track et le bord de
  * clip d'overflow-x, assez large pour y laisser dépasser un filet de la page voisine. Le padding
@@ -3643,6 +3614,33 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 }
 @media (max-width: 520px) {
     .icon-pack-scene-icons svg { width: 15%; max-width: 40px; }
+}
+
+/* --- Fenêtre pièce (#divEditRoomOverlay) : coque genmod- de Général, nom puis contenu à cocher.
+   Une seule fenêtre pour créer, modifier et créer depuis la fiche d'un équipement ou d'un groupe. */
+#divEditRoomOverlay .gen-field { max-width: 460px; }
+.room-win-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.room-win-preset, .room-win-preset:hover { width: auto; min-height: 36px; margin: 0; padding: 0 14px; border: 0; border-radius: var(--r-pill); background: var(--surface-2); color: var(--text-2); font-size: var(--fs-3); font-weight: 600; text-transform: none; }
+.room-win-preset:hover { background: var(--sunken); }
+.room-win-label { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; margin-top: 6px; }
+.room-win-label b { font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.room-win-label span { font-size: var(--fs-2); color: var(--text-3); }
+.room-win-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(var(--tile-min), 100%), 1fr)); gap: 10px; }
+.room-win-item, .room-win-item:hover { display: flex; justify-content: flex-start; align-items: center; gap: 12px; width: auto; min-height: 64px; margin: 0; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--r-4); background: var(--surface); color: var(--text); text-align: left; text-transform: none; font-weight: 400; }
+.room-win-item.on, .room-win-item.on:hover { border-color: var(--on-fill); box-shadow: inset 0 0 0 1px var(--on-fill); }
+.room-win-item-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--r-2); background: var(--surface-2); color: var(--text-2); }
+.room-win-item-icon svg { width: 22px; height: 22px; }
+.room-win-item-text { display: flex; flex-direction: column; min-width: 0; }
+.room-win-item-text b { overflow: hidden; font-size: var(--fs-4); text-overflow: ellipsis; white-space: nowrap; }
+.room-win-item-text small { font-size: var(--fs-2); color: var(--text-3); }
+.room-win-item-text small.is-move { color: var(--warn); font-weight: 700; }
+.room-win-item-box { display: grid; place-items: center; flex: none; width: 24px; height: 24px; margin-left: auto; border: 2px solid var(--sunken); border-radius: 8px; color: transparent; }
+.room-win-item.on .room-win-item-box { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+.room-win-item-box svg { width: 14px; height: 14px; opacity: 1; }
+.room-win-info { display: flex; align-items: flex-start; gap: 12px; max-width: 520px; margin: 0; padding: 14px 16px; border-radius: var(--r-4); background: var(--surface-2); font-size: var(--fs-3); line-height: 1.45; color: var(--text-2); }
+.room-win-info svg { flex: none; width: 20px; height: 20px; fill: currentColor; color: var(--color-accent); }
+@media (max-width: 767px) {
+    .room-win-items { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* =======================================================================

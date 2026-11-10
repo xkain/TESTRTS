@@ -1047,7 +1047,6 @@ html[data-feedback-commands="off"] .vr-arrow-down:active {
 html[data-feedback-ui="off"] .animScale:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):not(.vr-cmd-btn):active,
 html[data-feedback-ui="off"] button:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):active,
 html[data-feedback-ui="off"] .welcomeCard:active,
-html[data-feedback-ui="off"] .preset-badge:active,
 html[data-feedback-ui="off"] .radioBtnPrec:active,
 html[data-feedback-ui="off"] [close]:active {
     transform: none !important;
@@ -1062,7 +1061,6 @@ html:not([data-feedback-commands="off"]):not([data-feedback-style-commands="flas
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .animScale:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):not(.vr-cmd-btn):active,
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) button:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):active,
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .welcomeCard:active,
-html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .preset-badge:active,
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .radioBtnPrec:active {
     filter: none !important;
 }
@@ -1088,7 +1086,6 @@ html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .animScale:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):not(.vr-cmd-btn):active,
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] button:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):active,
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .welcomeCard:active,
-html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .preset-badge:active,
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .radioBtnPrec:active {
     transform: none !important;
     filter: brightness(1.3) !important;
@@ -1130,7 +1127,6 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
 .no-feedback .btn-somfy-svg:active,
 .no-feedback .animScale:active,
 .no-feedback .welcomeCard:active,
-.no-feedback .preset-badge:active,
 .no-feedback .radioBtnPrec:active,
 .no-feedback [close]:active,
 .no-feedback .dirty-target:active,
@@ -1150,7 +1146,6 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
     .btn-somfy-svg:active,
     .animScale:active,
     .welcomeCard:active,
-    .preset-badge:active,
     .radioBtnPrec:active,
     [close]:active,
     button:active,

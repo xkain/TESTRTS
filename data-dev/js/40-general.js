@@ -246,7 +246,7 @@ class General {
         if (this._feedbackListenersBound) return;
         this._feedbackListenersBound = true;
 
-        const HAPTIC_PRESS_SELECTOR = '.btn-somfy-svg, .animScale, .welcomeCard, .preset-badge, .radioBtnPrec, [close], button';
+        const HAPTIC_PRESS_SELECTOR = '.btn-somfy-svg, .animScale, .welcomeCard, .radioBtnPrec, [close], button';
         const vibrate = () => {
             if (this.getFeedbackPrefs().haptic && navigator.vibrate) navigator.vibrate(15);
         };
