@@ -2027,7 +2027,8 @@ body.is-home-welcome .container {
 }
 #divSystemOptions [hidden],
 #divFirmware [hidden],
-#somfyGroup [hidden] {
+#somfyGroup [hidden],
+#somfyShade [hidden] {
     display: none;
 }
 /* Sans ça, le fond s'arrête sous la dernière tuile quand l'onglet affiché est court (mobile). */
@@ -2594,7 +2595,8 @@ label.gen-row {
     .gen-hero-chips,
     .gen-tabs,
     #genPager,
-    #grpPager {
+    #grpPager,
+    #shdPager {
         display: none;
     }
     .gen-hero-title {
@@ -2612,7 +2614,8 @@ label.gen-row {
     }
     #divSystemOptions .gen-grid[hidden],
     #divFirmware .gen-grid[hidden],
-    #somfyGroup .gen-grid[hidden] {
+    #somfyGroup .gen-grid[hidden],
+    #somfyShade .gen-grid[hidden] {
         display: grid;
     }
     .gen-grid {
@@ -3279,12 +3282,6 @@ div.signal {
 
 
 
-.divsomfyShade {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
 .somfyMaxId {
     display: flex;
     justify-content: flex-end;
@@ -3504,13 +3501,15 @@ font-weight: 700;
 }
 #somfyShade[data-proto="8"] #divGPIOControl,
 #somfyShade[data-proto="9"] #divGPIOControl {
-    display: flex;
-    width: 100%;
-    margin-top: 20px;
+    display: grid;
 }
 #somfyShade[data-proto="8"] #divShadeBitLength,
 #somfyShade[data-proto="9"] #divShadeBitLength {
     display: none;
+}
+#somfyShade[data-proto="8"] .gen-field-pair:has(> #divShadeBitLength),
+#somfyShade[data-proto="9"] .gen-field-pair:has(> #divShadeBitLength) {
+    grid-template-columns: minmax(0, 1fr);
 }
 #somfyShade #divLLTrigger {
     display:none;
@@ -5961,8 +5960,8 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 }
 #divShadeSetupTasks .setup-row-done .editDevice-pair-icon svg { color: var(--color-success); fill: var(--color-success); }
 #divShadeSetup .setup-remotes-list { display: flex; flex-direction: column; gap: 8px; }
-#divShadeSetupTasks .setup-signal { display: inline-flex; align-items: center; gap: 4px; }
-#divShadeSetupTasks .setup-signal svg { width: 14px; height: 14px; }
+:is(#divShadeSetupTasks, #divShadeRemotes) .setup-signal { display: inline-flex; align-items: center; gap: 4px; }
+:is(#divShadeSetupTasks, #divShadeRemotes) .setup-signal svg { width: 14px; height: 14px; }
 #divShadeSetupTasks .setup-row .editDevice-pair-icon { position: relative; }
 #divShadeSetup .setup-single .setup-task-b { padding: 14px; }
 :is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap, :is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-side, :is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-cols, :is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
@@ -6016,9 +6015,9 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 #somfyShade .tile-act-t { font-size: .78em; color: var(--color-text-secondary); }
 #somfyShade .tile-act-v { font-size: .88em; color: var(--color-text-main); }
 #divShadeSetupList { gap: 0; }
-#divShadeSetupList .setup-row { border-radius: 0; border-width: 0 0 1px 0; background: transparent; box-shadow: none; position: relative; }
-#divShadeSetupList .setup-row.setup-remote-row { border-width: 0; }
-#divShadeSetupList .setup-row:hover { background: color-mix(in srgb, var(--color-accent) 6%, transparent); }
+:is(#divShadeSetupList, #divShadeRemotes) .setup-row { border-radius: 0; border-width: 0 0 1px 0; background: transparent; box-shadow: none; position: relative; }
+:is(#divShadeSetupList, #divShadeRemotes) .setup-row.setup-remote-row { border-width: 0; }
+:is(#divShadeSetupList, #divShadeRemotes) .setup-row:hover { background: color-mix(in srgb, var(--color-accent) 6%, transparent); }
 #divShadeSetupList .setup-step:has(+ .setup-step)::before { content: ''; position: absolute; left: calc(10px + 13px); top: 50%; height: 100%; width: 2px; background: var(--color-border); z-index: 0; }
 #divShadeSetupList .setup-step-n { width: 32px; height: 32px; min-width: 32px; box-sizing: border-box; border-radius: 50%; border: 4px solid var(--color-bg-surface-0); display: grid; place-items: center; position: relative; z-index: 1; font-size: 13px; font-weight: 700; color: var(--color-text-secondary); background: var(--color-bg-surface-0); box-shadow: inset 0 0 0 2px var(--color-border); }
 #divShadeSetupList .setup-row-done .setup-step-n { background: var(--color-success); box-shadow: none; }
@@ -6027,9 +6026,9 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 #divShadeSetupList .setup-step-todo .uniStatus-Button { color: var(--color-warning); }
 #divShadeSetupList .setup-hint { opacity: .7; }
 #divShadeSetupList .setup-sep { border: 0; border-top: 1px solid var(--color-border); margin: 12px -20px; width: calc(100% + 40px); align-self: flex-start; height: 0; flex: none; box-sizing: border-box; }
-#divShadeSetupList .setup-add { width: 22px; height: 22px; fill: var(--color-accent); color: var(--color-accent); }
-#divShadeSetupList .setup-remotes { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 140px; max-height: 280px; padding: 4px 2px 2px; }
-#divShadeSetupList .setup-remotes > * { flex: none; }
+:is(#divShadeSetupList, #divShadeRemotes) .setup-add { width: 22px; height: 22px; fill: var(--color-accent); color: var(--color-accent); }
+:is(#divShadeSetupList, #divShadeRemotes) .setup-remotes { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 140px; max-height: 280px; padding: 4px 2px 2px; }
+:is(#divShadeSetupList, #divShadeRemotes) .setup-remotes > * { flex: none; }
 @media (min-width: 1000px) {
     .subtab-content:has(> #somfyShade:not([style*="none"])) { max-width: 1440px; }
     #somfyShade .tile-cols { flex-direction: row; align-items: stretch; }
@@ -6581,38 +6580,50 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #divNetAdapter, #divMQT
  *  filtres (ordinateur seulement), les outils (menu ⋮ sur mobile) et les tuiles.
  *  ======================================================================= */
 /* La fiche d'un équipement ou d'un groupe partage le sous-onglet : seule la liste prend le gabarit. */
-:is(#divSomfyMotors, #divSomfyGroups, #divSomfyRooms, #divSomfySchedules).subtab-content:has(> :is(.cfg-list, .grp-page):not([style*="none"])) { max-width: none; margin: 0; padding: 0; gap: 0; background: var(--bg); color: var(--text); font-size: 16px; }
-.container:has(#divConfigPnl:not([style*="none"]) > #divSomfySettings:not([style*="none"]) > .subtab-content:not([style*="none"]) > :is(.cfg-list, .grp-page):not([style*="none"])) { background: var(--bg); }
+:is(#divSomfyMotors, #divSomfyGroups, #divSomfyRooms, #divSomfySchedules).subtab-content:has(> :is(.cfg-list, .ed-page):not([style*="none"])) { max-width: none; margin: 0; padding: 0; gap: 0; background: var(--bg); color: var(--text); font-size: 16px; }
+.container:has(#divConfigPnl:not([style*="none"]) > #divSomfySettings:not([style*="none"]) > .subtab-content:not([style*="none"]) > :is(.cfg-list, .ed-page):not([style*="none"])) { background: var(--bg); }
 .cfg-list [hidden] { display: none; }
 
-/* --- Fiche groupe (#somfyGroup, gabarit de Général) : commandes du groupe dans la colonne
+/* --- Fiches équipement et groupe (classes ed-, gabarit de Général) : commandes dans la colonne
    d'identité, code tournant en zone rouge, membres et plannings en tuiles de pages-listes. --- */
-.grp-cmds { width: 100%; max-width: 420px; }
+.ed-cmds { width: 100%; max-width: 420px; }
 /* Comme la maquette : trois commandes qui se partagent la largeur, la télécommande en carré. */
-.grp-cmds-row { display: flex; gap: 10px; }
-.grp-cmd, .grp-cmd:hover { display: grid; place-items: center; flex: 1 1 0; min-width: 0; height: 56px; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: var(--r-3); background: var(--surface); color: var(--text); }
-.grp-cmd:hover { background: var(--surface-2); }
-.grp-cmd:last-child { flex: 0 0 56px; }
-.grp-cmd svg { width: 26px; height: 26px; fill: currentColor; }
+.ed-cmds-row { display: flex; gap: 10px; }
+.ed-cmd, .ed-cmd:hover { display: grid; place-items: center; flex: 1 1 0; min-width: 0; height: 56px; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: var(--r-3); background: var(--surface); color: var(--text); }
+.ed-cmd:hover { background: var(--surface-2); }
+.ed-cmd[hidden] { display: none; }
+/* L'icône animée d'équipement garde ses propres couleurs, pas l'accent des icônes d'en-tête. */
+.ed-page .gen-hero-icon.somfy-shade-icon { fill: inherit; color: inherit; }
+.ed-hero-state { margin: 8px 0 0; font-size: var(--fs-5); font-weight: 700; color: var(--text); }
+.ed-ro-list { display: flex; flex-direction: column; }
+.ed-ro { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 0; border-top: 1px solid var(--border); font-size: var(--fs-3); }
+.ed-ro-list > .ed-ro:first-child, .ed-ro-list > :first-child > .ed-ro:first-child { border-top: 0; padding-top: 0; }
+.ed-ro > span { color: var(--text-3); }
+.ed-ro > b { display: inline-flex; align-items: center; gap: 8px; text-align: right; color: var(--text); }
+.ed-ro > b.is-ok { color: var(--ok); }
+.ed-dot { flex: none; width: 8px; height: 8px; border-radius: var(--r-pill); background: var(--text-3); }
+.ed-dot.ok { background: var(--ok); }
+.ed-cmd:last-child { flex: 0 0 56px; }
+.ed-cmd svg { width: 26px; height: 26px; fill: currentColor; }
 #divSomfyGroupButtons.disabled { opacity: .5; pointer-events: none; }
-.grp-page.grp-new :is(#blocPairGroup, .gen-tabs, #grpPanels > [data-tab="1"], #grpPanels > [data-tab="2"], #grpDangerTile) { display: none; }
-.grp-add-room { align-self: flex-start; }
-.grp-roll { display: flex; gap: 8px; }
-.grp-roll .gen-input-box { flex: 1; min-width: 0; background: var(--surface); }
-.grp-roll .gen-btn { flex: none; align-self: stretch; }
-.grp-mono { font-family: monospace; }
-.grp-section { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 14px; }
-.grp-tip { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 14px 16px; border-radius: var(--r-4); background: var(--surface); font-size: var(--fs-3); line-height: 1.45; color: var(--text-2); }
-.grp-tip svg { flex: none; width: 20px; height: 20px; fill: currentColor; color: var(--color-accent); }
+.ed-page.ed-new :is(#blocPairGroup, #blocShadeCmds, .gen-tabs, #grpPanels > [data-tab="1"], #grpPanels > [data-tab="2"], #shdPanels > :not([data-tab="0"]), #grpDangerTile) { display: none; }
+.ed-add-room { align-self: flex-start; }
+.ed-roll { display: flex; gap: 8px; }
+.ed-roll .gen-input-box { flex: 1; min-width: 0; background: var(--surface); }
+.ed-roll .gen-btn { flex: none; align-self: stretch; }
+.ed-mono { font-family: monospace; }
+.ed-section { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 14px; }
+.ed-tip { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 14px 16px; border-radius: var(--r-4); background: var(--surface); font-size: var(--fs-3); line-height: 1.45; color: var(--text-2); }
+.ed-tip svg { flex: none; width: 20px; height: 20px; fill: currentColor; color: var(--color-accent); }
 .grp-paired { padding: 4px 10px; border-radius: var(--r-pill); background: var(--ok-bg); color: var(--ok); font-size: var(--fs-1); font-weight: 700; }
 /* Bandeau (tablette, mobile) : les commandes passent sous l'identité, sinon elles élargissent la
    colonne de l'icône et repoussent le titre. */
 @media (max-width: 999px) {
-    .grp-page .grp-cmds { grid-column: 1 / -1; justify-self: stretch; max-width: none; }
+    .ed-page .ed-cmds { grid-column: 1 / -1; justify-self: stretch; max-width: none; }
 }
 @media (max-width: 767px) {
-    .grp-cmd { height: 48px; }
-    .grp-cmd:last-child { flex-basis: 48px; }
+    .ed-cmd { height: 48px; }
+    .ed-cmd:last-child { flex-basis: 48px; }
 }
 /* Une longue liste de pièces dépasse la hauteur : on défile au lieu de couper le haut. */
 .cfg-list .gen-hero { justify-content: safe center; overflow-y: auto; }

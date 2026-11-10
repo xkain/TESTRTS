@@ -652,7 +652,7 @@ class ShadeSetup {
     titleFor(shade, id) {
         const st = somfy.shadeTypes.find(x => x.type === shade.shadeType) || {}, tt = st.tilt ? (shade.tiltType || 0) : 0;
         const toggle = somfy.toggleShadeTypes.includes(shade.shadeType) || somfy.dryContactShadeTypes.includes(shade.shadeType);
-        return tr({ pair: 'PAIR_TITLE', unpair: 'UNPAIR_TITLE', remote: 'REMOTESLIST_TITLE', dir: toggle ? 'SETUP_T_TEST' : tt === 3 ? 'SETUP_T_SLATS_DIR' : 'SETUP_T_DIR',
+        return tr({ pair: 'PAIRING', unpair: 'UNPAIR_TITLE', remote: 'REMOTESLIST_TITLE', dir: toggle ? 'SETUP_T_TEST' : tt === 3 ? 'SETUP_T_SLATS_DIR' : 'SETUP_T_DIR',
                     cal: 'SETUP_T_TRAVEL', tilt: 'SETUP_T_TILT', order: 'SETUP_T_ORDER', opts: 'OPTION' }[id]);
     }
     title(T) { return this.titleFor(this.s.shade, T.id); }
@@ -700,7 +700,7 @@ class ShadeSetup {
         this.editShade = shade;
         this.renderTip(shade);
         this.renderActivity(shade);
-        if (!shade) return;
+        if (!shade) { if (get('divShadeRemotes')) get('divShadeRemotes').innerHTML = ''; return; }
         const steps = shade.setupSteps || 0, legacy = !steps && shade.paired;
         const remotes = (shade.linkedRemotes || []).length;
         const pills = get('spanShadeSetupPills');
@@ -714,13 +714,15 @@ class ShadeSetup {
             <div class="editDevice-pair-btn-content"><div class="editDevice-pair-icon setup-step-n">${done && status ? '<svg><use href="#svg-check"></use></svg>' : `<span>${i + 1}</span>`}</div>
             <div class="uniText"><span class="editDevice-pair-title">${this.titleFor(shade, id)}</span>${status ? `<span class="uniStatus-Button">${status}</span>` : ''}</div></div>
             <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg></button>`;
-        }).join('')
-            + `<hr class="setup-sep">
+        }).join('');
+        // Onglet Télécommandes de la fiche.
+        const rbox = get('divShadeRemotes');
+        if (rbox) rbox.innerHTML = `<div class="unibloc-container"><div class="button-container-Colpair">
             <button type="button" class="editDevice-btn-pair setup-row setup-remote-row" onclick="shadeSetup.runTask(${shade.shadeId},'remote')">
             <div class="editDevice-pair-btn-content"><div class="editDevice-pair-icon"><svg><use href="#svg-linkRemot"></use></svg></div>
             <div class="uniText"><span class="editDevice-pair-title">${tr('REMOTESLIST_TITLE')}${remotes ? ` (${remotes}/${somfy.maxLinkedRemotes || 15})` : ''}</span><span id="spanShadeRemoteSignal" class="uniStatus-Button">${remotes ? this.remoteSignal(shade) : tr('BT_LINK_REMOTE_DESC')}</span></div></div>
             <svg class="editDevice-arrow-icon setup-add"><use href="#svg-add"></use></svg></button>`
-            + (remotes ? `<div class="setup-remotes">${somfy.modalRemotesListHtml(shade)}</div>` : '');
+            + (remotes ? `<div class="setup-remotes">${somfy.modalRemotesListHtml(shade)}</div>` : '') + '</div></div>';
     }
     renderActivity(shade) {
         const box = get('divShadeActivity');

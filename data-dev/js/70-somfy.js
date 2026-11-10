@@ -4174,8 +4174,6 @@ class Somfy {
     showEditRoom(bShow) {
         let el = get('divLinkRepeater');
         if (el) el.remove();
-        el = get('divRollingCode');
-        if (el) el.remove();
         // Pas d'équivalent de get('somfyShade')/get('somfyGroup') ici : contrairement à l'équipement et au
         // groupe, l'édition d'une pièce se fait dans une modale construite à la volée
         // (RoomOverlay -> #divEditRoomOverlay), pas dans un panneau en place qu'il faudrait
@@ -5376,6 +5374,8 @@ class Somfy {
         });
         if (g('spanShadeId')?.innerText == sId) {
             this.setEditorPosValue(this.shadeTypeOf(state), state.position, state.flipPosition, this.shadeVocabOf(state));
+            this.renderShadeHeroState(state);
+            this.refreshShadeRollingCode(sId);
             const ed = typeof shadeSetup !== 'undefined' && shadeSetup.editShade && shadeSetup.editShade.shadeId === sId ? shadeSetup.editShade : null;
             if (ed) {
                 ['myPos', 'myTiltPos'].forEach(k => { if (typeof state[k] !== 'undefined') ed[k] = state[k]; });
@@ -5527,14 +5527,12 @@ class Somfy {
                 use.setAttribute('xlink:href', href);
             }
         }
-        // Icône d'ambiance de l'en-tête : suit le type sélectionné immédiatement, sans attendre
-        // l'enregistrement -- même source que les cartes et les plannings (shadeTypes[].indic).
-        const hdrUse = g('useShadeHeaderIndic');
-        if (hdrUse) {
-            const href = '#' + (st.indic || 'svg-indicShutter');
-            hdrUse.setAttribute('href', href);
-            hdrUse.setAttribute('xlink:href', href);
-        }
+        // Commandes de l'en-tête : un seul bouton pour les types à bascule, pas de My sans position favorite.
+        const isToggle = this.toggleShadeTypes.includes(type), hasMy = this.shadeTypeSupportsMy(type);
+        g('divshowSomfyButtons')?.querySelectorAll('.ed-cmd[data-cmd]').forEach(b => {
+            const c = b.dataset.cmd;
+            b.hidden = c === 'toggle' ? !isToggle : c === 'my' ? !hasMy : isToggle;
+        });
         const hasLift = !!st.lift;
         const supportsMy = this.shadeTypeSupportsMy(type);
         const curTilt = st.tilt ? tilt : 0;
@@ -5598,6 +5596,7 @@ class Somfy {
             shadeSetup.renderEditPanel(preview);
             this.setEditorMyValue(preview);
         }
+        if (this._shdLoaded) this.renderShadeHero();
     }
     setEditorMyValue(shade) {
         const row = get('labelMyContainer'), tiltRow = get('labelMyTiltContainer');
@@ -5634,20 +5633,104 @@ class Somfy {
     showEditShade(bShow) {
         let el = get('divLinkRepeater');
         if (el) el.remove();
-        el = get('divRollingCode');
-        if (el) el.remove();
         el = get('somfyShade');
         if (el) el.style.display = bShow ? '' : 'none';
         el = get('divShadeListContainer');
         if (el) el.style.display = bShow ? 'none' : '';
         if (!bShow) {
             clearDirty();
+            if (this._shdSaveBar) this._shdSaveBar.update([]);
             routeSetEditor('divSomfyMotors', null);
         }
         if (bShow) {
             this.showEditGroup(false);
             this.showEditRoom(false);
         }
+    }
+
+    // =====================================================================
+    // SECTION : FICHE ÉQUIPEMENT (même gabarit que la fiche groupe)
+    // =====================================================================
+    _bindShadePage() {
+        if (this._shdTabs) return;
+        const page = get('somfyShade');
+        this._shdTabs = bindGenTabs(page, { tabs: 'shdTabs', panels: 'shdPanels', pager: 'shdPager', prev: 'btnShdPrev', next: 'btnShdNext' });
+        ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateShadeDirty(), 0)));
+        this._shdSaveBar = new SaveBar(page, { onSave: () => this.saveShade(), onRevert: () => this.revertShade() });
+    }
+    updateShadeDirty() {
+        const page = get('somfyShade');
+        if (!this._shdSaveBar || !this._shdLoaded || page.style.display === 'none') return;
+        const now = ui.fromElement(page), diffs = [];
+        const LB = { name: 'NAME', shadeType: 'DEVICE_TYPE', tiltType: 'DEVICE_TILT_TYPE', roomId: 'ROOM', proto: 'PROTOCOL', bitLength: 'BIT', remoteAddress: 'DEVICE_ID',
+            gpioUp: 'DEVICE_GPIO_UP', gpioMy: 'DEVICE_GPIO_MY', gpioDown: 'DEVICE_GPIO_DOWN', gpioLLTrigger: 'DEVICE_LL_TRIGGER', sunSensor: 'DEVICE_SUN_SENSOR',
+            flipCommands: 'DEVICE_FLIP_COMMANDS', flipPosition: 'DEVICE_FLIP_POSITION', simMy: 'DEVICE_FAVORITE_POSITION', outputMode: 'DEVICE_OUTPUT_MODE_DESC',
+            pulseTime: 'DEVICE_PULSE_TIME_DESC', stateVocab: 'DEVICE_STATE_VOCAB_DESC', repeats: 'REPEAT_COMMANDS', stepSize: 'DEVICE_STEP_SIZE_MIN', ledFeedback: 'LED_FEEDBACK' };
+        page.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+        Object.keys(LB).forEach(k => {
+            const el = page.querySelector(`[data-bind="${k}"]`);
+            if (!el || String(now[k]) === String(this._shdLoaded[k])) return;
+            el.classList.add('is-dirty');
+            const show = (v) => el.type === 'checkbox' ? tr(v ? 'BT_YES' : 'BT_NO')
+                : el.tagName === 'SELECT' ? (Array.from(el.options).find(o => o.value === String(v))?.text ?? v) : v;
+            diffs.push({ label: tr(LB[k]), from: show(this._shdLoaded[k]), to: show(now[k]) });
+        });
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        this._shdSaveBar.update(diffs);
+        this.renderShadeHero();
+    }
+    revertShade() {
+        if (!this._shdData) return;
+        const g = get;
+        ui.toElement(g('somfyShade'), this._shdData);
+        g('somfyShade').setAttribute('data-bitlength', g('selShadeBitLength').value);
+        this.onShadeProtoChanged(g('selShadeProto'));
+        this.onShadeTypeChanged(g('selShadeType'));
+        this.updateShadeDirty();
+    }
+    renderShadeHero() {
+        const g = get, isNew = g('spanShadeId').innerText === '*';
+        const name = g('fldShadeName').value.trim();
+        const room = g('selShadeRoom').selectedOptions[0]?.text || tr('HOME');
+        const type = g('selShadeType').selectedOptions[0]?.text || '';
+        const proto = parseInt(g('selShadeProto').value, 10), protoTxt = g('selShadeProto').selectedOptions[0]?.text || '';
+        g('somfyHeaderTitle').textContent = name || tr(isNew ? 'DEVICE_CREATE_TITLE' : 'DEVICE_EDIT_TITLE');
+        g('somfyHeaderDesc').textContent = isNew ? tr('DEVICE_CREATE_DESC') : `${type} · ${room}`;
+        g('shdChipRoom').textContent = room;
+        // Les relais IO n'ont ni longueur de trame ni adresse radio utile à afficher.
+        g('shdChipRadio').textContent = proto >= 8 ? protoTxt : `${protoTxt} · ${g('selShadeBitLength').value} bits · ID ${g('fldShadeAddress').value}`;
+    }
+    renderShadeHeroState(shade) {
+        const el = get('somfyHeaderState');
+        if (el) el.textContent = shade ? this.shadeStateText(shade) : '';
+    }
+    // Même relecture que refreshGroupRollingCode : l'état diffusé ne porte pas le compteur.
+    refreshShadeRollingCode(shadeId) {
+        const page = get('somfyShade');
+        if (!page || page.style.display === 'none' || get('spanShadeId').innerText !== String(shadeId)) return;
+        clearTimeout(this._shdRollTimer);
+        this._shdRollTimer = setTimeout(() => getJSON(`/shade?shadeId=${shadeId}`, (err, shade) => {
+            if (err || !shade || typeof shade.lastRollingCode !== 'number' || get('spanShadeId').innerText !== String(shadeId)) return;
+            get('spanShadeRollingCode').textContent = shade.lastRollingCode;
+            if (this._shdData) this._shdData.lastRollingCode = shade.lastRollingCode;
+        }), 800);
+    }
+    askShadeRollingCode() {
+        const shadeId = parseInt(get('spanShadeId').innerText, 10), input = get('fldShadeRollingCode');
+        const code = parseInt(input.value, 10);
+        if (isNaN(code) || code < 0 || code > 65535) return ui.errorMessage(tr('ERR_ROLLING_CODE_INVALID'));
+        const prompt = ui.promptMessage(tr('PROMPT_DEVICE_ROLLING'), () => {
+            putJSONSync('/setRollingCode', { shadeId, rollingCode: code }, (err, shade) => {
+                prompt.remove();
+                if (err) return ui.serviceError(err);
+                get('spanShadeRollingCode').textContent = shade && typeof shade.lastRollingCode === 'number' ? shade.lastRollingCode : code;
+                input.value = '';
+                get('btnShadeRollingCode').disabled = true;
+                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            });
+        });
+        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_DEVICE_ROLLING_CONFIRM').replace('{CODE}', code).replace('{OLD}', escHtml(get('spanShadeRollingCode').textContent))}</p>`;
     }
     // Point d'entrée réel d'ouverture d'un équipement (nouveau ou existant) : garde contre la perte de
     // modifications non enregistrées si un autre équipement/groupe/planning était en cours d'édition
@@ -5663,8 +5746,7 @@ class Somfy {
     _openEditShade(shadeId, opts) {
         const g = get,
         isNew = shadeId === undefined,
-        ico = g('icoShade'),
-        btns = ['btnSetRollingCode'];
+        ico = g('icoShade');
 
         if (isNew && this.shades?.length >= 30) {
             routeSetEditor('divSomfyMotors', null, { replace: true });
@@ -5672,6 +5754,7 @@ class Somfy {
         }
 
         const s = (id, d) => { const e = g(id); if(e) e.style.display = d; };
+        this._bindShadePage();
         this.applyLedFeedbackVisibility();
 
         // Si c'est un nouvel équipement, on cache TOUT le bloc. Sinon on l'affiche.
@@ -5680,7 +5763,6 @@ class Somfy {
         s('divScheduleSectionShade', isNew ? 'none' : 'flex');
 
         s('divshowSomfyButtons', 'flex');
-        btns.forEach(id => s(id, 'none'));
         s('labelPosContainer', 'none');
 
         getJSONSync(isNew ? '/getNextShade' : `/shade?shadeId=${shadeId}`, (err, shade) => {
@@ -5698,7 +5780,6 @@ class Somfy {
             }
             if (!isNew) {
                 s('labelPosContainer', 'flex');
-                s('btnSetRollingCode', 'flex');
 
                 this.setEditorPosValue(shade.shadeType, shade.position, shade.flipPosition, this.editorVocab(shade));
                 this.setLinkedRemotesList(shade);
@@ -5708,25 +5789,6 @@ class Somfy {
             }
             if (typeof shadeSetup !== 'undefined') shadeSetup.renderEditPanel(isNew ? null : shade);
             this.setEditorMyValue(isNew ? null : shade);
-
-            // --- Gestion dynamique du Titre, Description et Badge Capacity ---
-            const hTitle = g('somfyHeaderTitle'), hDesc = g('somfyHeaderDesc');
-
-            if (hTitle && hDesc) {
-                if (isNew) {
-                    // Mode Création : Phrase brute sans badge
-                    hTitle.innerText = tr('DEVICE_CREATE_TITLE');
-                    hDesc.innerText = tr('DEVICE_CREATE_DESC');
-                } else {
-                    // Mode Édition : Titre + Phrase avec le badge de capacité globale (ex: 2/30)
-                    hTitle.innerText = tr('DEVICE_EDIT_TITLE');
-
-                    const currentCount = this.shades ? this.shades.length : 0;
-                    const formattedCapacity = `<span class="desc-highlight">${currentCount}/30</span>`;
-
-                    hDesc.innerHTML = tr('DEVICE_EDIT_DESC').replace('%s', formattedCapacity);
-                }
-            }
 
             this.setEditorTiltValue(shade.tiltPosition || 0);
 
@@ -5742,9 +5804,9 @@ class Somfy {
                 st.setProperty('--tilt-position', tp + '%');
                 ico.setAttribute('data-shadeid', isNew ? '*' : shadeId);
             }
-            g('btnSaveShadeText').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
-            g('useSaveShadeIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-save');
             g('spanShadeId').innerText = isNew ? '*' : shadeId;
+            // Créer passe par l'assistant ; une fiche vierge reste joignable par l'URL (cf. .ed-new).
+            g('somfyShade').classList.toggle('ed-new', isNew);
 
             // Course, temps morts et lames n'ont plus de champ : leurs tâches de la zone « Mise en
             // service » les règlent.
@@ -5757,11 +5819,23 @@ class Somfy {
             // IO-relay sans enregistrer) -- divGPIOControl restait alors affiché à tort.
             this.onShadeProtoChanged(g('selShadeProto'));
             this.onShadeTypeChanged(g('selShadeType'));
+            this._shdData = shade;
+            this._shdLoaded = ui.fromElement(g('somfyShade'));
+            const paired = g('valShadePaired');
+            paired.textContent = tr(shade.paired ? 'SETUP_PILL_PAIRED' : 'DEVICE_NOT_PAIRED');
+            paired.classList.toggle('is-ok', !!shade.paired);
+            g('valShadeInternalId').textContent = isNew ? '' : shadeId;
+            g('fldShadeRollingCode').value = '';
+            g('btnShadeRollingCode').disabled = true;
+            g('spanShadeRollingCode').textContent = shade.lastRollingCode ?? '';
+            this.renderShadeHeroState(isNew ? null : shade);
+            this._shdTabs.show(0);
             this.showEditShade(true);
             routeSetEditor('divSomfyMotors', isNew ? 'new' : shadeId, { label: isNew ? tr('DEVICE_CREATE_TITLE') : shade.name });
             // Ne commence à suivre les modifications qu'une fois le formulaire rempli avec les
             // valeurs actuelles, pour ne pas marquer "modifié" ce remplissage programmatique.
             watchDirty(g('somfyShade'));
+            this.updateShadeDirty();
         });
     }
     // Doublé côté firmware (code -14) : ce contrôle n'existe que pour NOMMER le conflit. Domaine =
@@ -5821,6 +5895,7 @@ class Somfy {
             const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
             ui.successMessage(msg);
             clearDirty();
+            if (this._shdSaveBar) this._shdSaveBar.update([]);
             this.updateShadeList()
             if (typeof then === 'function') return then(shade);
             this.openEditShade(shade.shadeId);
@@ -5841,6 +5916,8 @@ class Somfy {
                     let prompt = ui.promptMessage(tr('PROMPT_DELETE_DEVICE'), () => {
                         ui.clearErrors();
                         putJSONSync('/deleteShade', { shadeId: shadeId }, (err, shade) => {
+                            if (err) ui.serviceError(err);
+                            else if (get('spanShadeId').innerText === String(shadeId)) this.showEditShade(false);
                             this.updateShadeList();
                             if (scheduleCount > 0) this.updateScheduleList();
                             prompt.remove();
@@ -5865,69 +5942,6 @@ class Somfy {
         });
     }
 
-    setRollingCode(shadeId, rollingCode) {
-        putJSONSync('/setRollingCode', { shadeId: shadeId, rollingCode: rollingCode }, (err, shade) => {
-            if (err) ui.serviceError(get('divSomfySettings'), err);
-            else {
-                let dlg = get('divRollingCode');
-                if (dlg) { clearDirty(dlg); dlg.remove(); }
-            }
-        });
-    }
-
-    openSetRollingCode(shadeId) {
-        let overlay = ui.waitMessage(get('divContainer'));
-        getJSON(`/shade?shadeId=${shadeId}`, (err, shade) => {
-            overlay.remove();
-            if (err) return ui.serviceError(err);
-
-            let div = document.createElement('div');
-            div.id = 'divRollingCode';
-            div.className = 'modal-overlay';
-
-            div.innerHTML = `
-            <div class="message-content">
-            ${modalHeader('ROLLING_CODE', 'svg-warning', {
-                subtitle: 'ROLLING_CODE_DESC',
-            })}
-            <div class="overlay-scroll-content">
-
-            <div class="error">
-            <div class="error-header">
-            <svg><use href="#svg-warning"></use></svg>
-            <b>${tr("MSG_DANGER")}</b>
-            </div>
-
-            <div class="information-text">
-            <span>${tr("ROLLING_CODE_WARNING_DESC_1")}</span>
-            </div>
-            </div>
-
-            <div class="uniblocStep">${tr("ROLLING_CODE_WARNING_DESC_2")}</div>
-            <div class="uniblocCol uniblocRollingCode dirty-target">
-            <label class="label" for="fldNewRollingCode">${tr("ROLLING_CODE")}</label>
-            <input id="fldNewRollingCode" class="inputAndSelect" min="0" max="65535" name="newRollingCode" type="number" value="${shade.lastRollingCode}">
-            </div>
-
-
-            </div>
-
-            <div class="hrModal margin0"></div>
-            <div class="button-container-modal">
-            <div class="button-content-modal">
-
-            <button id="btnChangeRollingCode" class="bouton-Danger" type="button" onclick="somfy.setRollingCode(${shadeId}, parseInt(get('fldNewRollingCode').value, 10));">${tr("BT_SET_ROLLING_CODE")}</button>
-            <button id="btnCancel" line type="button">${tr("BT_CANCEL_1")} </button>
-            </div>
-            </div>
-            </div>`;
-
-            shOverlay(div);
-            watchDirty(div);
-            div.querySelector('#btnCancel').onclick = () => requestCloseOverlay(div);
-            ui.setFocus(btnCancel, true, 'var(--color-success)');
-        });
-    }
     // Validation d'un slider du carrousel (position ou inclinaison) : envoie la cible au firmware,
     // puis REPLACE IMMÉDIATEMENT le curseur sur la dernière position réellement connue de l'équipement.
     //
@@ -5971,6 +5985,7 @@ class Somfy {
         }
         logger.debug('Sending shade command:', obj);
         putJSON('/shadeCommand', obj, (err, shade) => {
+            if (!err) this.refreshShadeRollingCode(shadeId);
             if (typeof cb === 'function') cb(err, shade);
         });
     }
@@ -6110,8 +6125,6 @@ class Somfy {
     showEditGroup(bShow) {
         let el = get('divLinkRepeater');
         if (el) el.remove();
-        el = get('divRollingCode');
-        if (el) el.remove();
         el = get('somfyGroup');
         if (el) el.style.display = bShow ? '' : 'none';
         el = get('divGroupListContainer');
@@ -6218,9 +6231,9 @@ class Somfy {
                 return (opts && opts.silentError) ? undefined : ui.serviceError(err);
             }
             // Créer passe par l'assistant ; une fiche vierge reste joignable par l'URL : sans groupe
-            // enregistré, rien à appairer ni à planifier (cf. .grp-new).
+            // enregistré, rien à appairer ni à planifier (cf. .ed-new).
             if (isNew) Object.assign(group, { name: '', flipCommands: false, shades: [], linkedShades: [] });
-            page.classList.toggle('grp-new', isNew);
+            page.classList.toggle('ed-new', isNew);
             g('spanGroupId').innerText = isNew ? '*' : groupId;
             ui.toElement(page, group);
             this._grpData = group;

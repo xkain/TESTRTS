@@ -1366,184 +1366,162 @@
                                 <div id="divShadeList" class="cfg-tiles"></div>
                             </div>
                         </div>
-                        <div id="somfyShade" class="divsomfyShade" style="display:none;" data-bitlength="56">
-                            <div class="main-header">
-                                <div class="main-headerBlock">
-                                    <h2 id="somfyHeaderTitle" class="main-headerTitle"></h2>
-                                    <p id="somfyHeaderDesc" class="main-headerDesc"></p>
-                                </div>
-                                <div class="main-headerRight">
-                                    <div class="main-headerAmbient">
-                                        <svg><use id="useShadeHeaderIndic" href="#svg-indicShutter"></use></svg>
+                            <div id="somfyShade" class="gen-layout ed-page" style="display:none;" data-bitlength="56">
+                                <span id="spanShadeId" hidden>*</span><span id="spanMaxShades" hidden>30</span>
+                                <section class="gen-hero">
+                                    <svg id="icoShade" class="gen-hero-icon somfy-shade-icon" data-shadeid="0"><use href="#svg-window-shade"></use></svg>
+                                    <div class="gen-hero-text">
+                                        <h2 id="somfyHeaderTitle" class="gen-hero-title"></h2>
+                                        <p id="somfyHeaderDesc" class="gen-hero-desc"></p>
+                                        <p id="somfyHeaderState" class="ed-hero-state"></p>
                                     </div>
-                                </div>
-                            </div>
-                            <span id="spanShadeId" style="display:none;">*</span><span id="spanMaxShades" style="display:none;">30</span>
-
-                            <div class="tile-wrap">
-                                <div class="unibloc-container marginB25">
-                                    <h3 class="unibloc-title tile-title"><span tr="GENERAL_INFO"></span></h3>
-                                    <div class="uniblocRow">
-                                        <div class="uniRow dirty-target">
-                                            <div class="unifield-content">
-                                                <label class="label" for="fldShadeName" tr="NAME">Nom</label>
-                                                <input id="fldShadeName" class="inputAndSelect" name="shadeName" data-bind="name" type="text" maxlength="20" tr="ENTER_NAME" placeholder=" ">
-                                            </div>
-                                        </div>
-                                        <div class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-type"></use></svg>
-                                            </div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selShadeType" tr="DEVICE_TYPE">Type</label>
-                                                <select id="selShadeType" class="inputAndSelect" name="shadeType" data-bind="shadeType" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
-                                                    <option value="4" tr="DEVICE_SHUTTER"></option>
-                                                    <option value="0" tr="DEVICE_ROLLER"></option>
-                                                    <option value="1" tr="DEVICE_BLIND"></option>
-                                                    <option value="2" tr="DEVICE_DRAPERY_LEFT"></option>
-                                                    <option value="8" tr="DEVICE_DRAPERY_CENTER"></option>
-                                                    <option value="7" tr="DEVICE_DRAPERY_RIGHT"></option>
-                                                    <option value="3" tr="DEVICE_AWNING"></option>
-                                                    <option value="5" tr="DEVICE_GARAGE_1BTN"></option>
-                                                    <option value="6" tr="DEVICE_GARAGE_3BTN"></option>
-                                                    <option value="9" tr="DEVICE_SWITCH_1BTN"></option>
-                                                    <option value="10" tr="DEVICE_SWITCH_2BTN"></option>
-                                                    <option value="11" tr="DEVICE_GATE_LEFT"></option>
-                                                    <option value="12" tr="DEVICE_GATE_CENTER"></option>
-                                                    <option value="13" tr="DEVICE_GATE_RIGHT"></option>
-                                                    <option value="14" tr="DEVICE_GATE_1BTN_LEFT"></option>
-                                                    <option value="15" tr="DEVICE_GATE_1BTN_CENTER"></option>
-                                                    <option value="16" tr="DEVICE_GATE_1BTN_RIGHT"></option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div id="divTiltSettings" class="uniRow dirty-target" style="display:none;">
-                                                            <div class="uniblocSvg-S">
-                                                                <svg><use href="#svg-tiltTime"></use></svg>
-                                                            </div>
-                                                            <div class="unifield-content">
-                                                                <label class="label" for="selTiltType" tr="DEVICE_TILT_TYPE"></label>
-                                                                <select class="inputAndSelect" id="selTiltType" name="tiltType" data-bind="tiltType" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
-                                                                    <option value="0" tr="NONE"></option>
-                                                                    <option value="1" tr="DEVICE_OPT_TILT_MOTOR"></option>
-                                                                    <option value="2" tr="INTEGRATED"></option>
-                                                                    <option value="3" tr="DEVICE_OPT_TILT_ONLY"></option>
-                                                                    <option value="4" tr="DEVICE_OPT_TILT_EURO"></option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                        <div class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-emptyRoom"></use></svg>
-                                            </div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selShadeRoom" tr="ROOM">Pièce</label>
-                                                <select id="selShadeRoom" class="inputAndSelect" data-bind="roomId" data-datatype="int"></select>
-                                            </div>
-                                            <div class="divEditDelete-svg" onclick="somfy.openAddRoomInline('shade');" tr="BT_ADD_ROOM" title=""><svg class="icon-svg"><use href="#svg-add"></use></svg></div>
+                                    <div id="blocShadeCmds" class="ed-cmds">
+                                        <div id="divshowSomfyButtons" class="ed-cmds-row">
+                                            <button type="button" class="ed-cmd animScale" data-cmd="up" tr="BT_OPEN" title="" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'up');"><svg><use href="#svg-up"></use></svg></button>
+                                            <button type="button" class="ed-cmd animScale" data-cmd="my" title="My" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'my');"><svg><use href="#svg-my"></use></svg></button>
+                                            <button type="button" class="ed-cmd animScale" data-cmd="down" tr="BT_CLOSE" title="" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'down');"><svg><use href="#svg-down"></use></svg></button>
+                                            <button type="button" class="ed-cmd animScale" data-cmd="toggle" tr="VR_TOGGLE" title="" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'toggle');"><svg><use href="#svg-toggle"></use></svg></button>
+                                            <button type="button" class="ed-cmd animScale" tr="SUBTAB_VIRTUAL_REMOTE_S" title="" onclick="somfy.openVirtualRemote('shade', parseInt(document.getElementById('spanShadeId').innerText, 10));"><svg><use href="#svg-remote"></use></svg></button>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="tile-side">
-                                    <div class="unibloc-container">
-                                        <h3 class="unibloc-title tile-title"><span tr="COMMUNICATION"></span></h3>
-                                        <div class="uniblocRow">
-                                            <div class="uniRow dirty-target">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-protocol"></use></svg>
+                                    <div class="gen-hero-chips"><span class="gen-chip"><svg><use href="#svg-navRoom"></use></svg><span id="shdChipRoom"></span></span><span class="gen-chip"><svg><use href="#svg-protocol"></use></svg><span id="shdChipRadio"></span></span></div>
+                                </section>
+                                <div class="gen-body">
+                                    <nav id="shdTabs" class="gen-tabs" role="tablist">
+                                        <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="SUBTAB_GENERAL"></button>
+                                        <button type="button" class="gen-tab" role="tab" data-tab="1" tr="SUBTAB_CONTROL"></button>
+                                        <button type="button" class="gen-tab" role="tab" data-tab="2" tr="SUBTAB_SETTINGS"></button>
+                                        <button type="button" class="gen-tab" role="tab" data-tab="3" tr="SUBTAB_REMOTES"></button>
+                                        <button type="button" class="gen-tab" role="tab" data-tab="4" tr="SUBTAB_SCHEDULES"></button>
+                                    </nav>
+                                    <div id="shdPanels" class="gen-panels">
+                                        <div class="gen-grid" role="tabpanel" data-tab="0">
+                                            <header class="gen-sec-head"><h2 tr="SUBTAB_GENERAL"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></span></header>
+                                            <div class="gen-tile">
+                                                <h3 class="gen-tile-title" tr="DEVICE_TILE_IDENTITY"></h3>
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="fldShadeName" tr="NAME"></label>
+                                                    <div class="gen-input-box dirty-target"><input id="fldShadeName" class="gen-input" name="shadeName" data-bind="name" type="text" maxlength="20" tr="ENTER_NAME" placeholder=" "></div>
                                                 </div>
-                                                <div class="unifield-content">
-                                                    <label class="label" for="selShadeProto" tr="PROTOCOL">Protocole</label>
-                                                    <select class="inputAndSelect" id="selShadeProto" name="proto" data-bind="proto" data-datatype="int" onchange="somfy.onShadeProtoChanged(this);">
-                                                        <option value="0" tr="RTS"></option>
-                                                        <option value="1" tr="RTW"></option>
-                                                        <option value="2" tr="RTV"></option>
-                                                        <option value="8" tr="IO_RELAY"></option>
-                                                        <option value="9" tr="IO_REMOTE"></option>
-                                                    </select>
-
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="selShadeType" tr="DEVICE_TYPE"></label>
+                                                    <div class="gen-input-box dirty-target"><select id="selShadeType" class="gen-input" name="shadeType" data-bind="shadeType" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
+                                                        <option value="4" tr="DEVICE_SHUTTER"></option>
+                                                        <option value="0" tr="DEVICE_ROLLER"></option>
+                                                        <option value="1" tr="DEVICE_BLIND"></option>
+                                                        <option value="2" tr="DEVICE_DRAPERY_LEFT"></option>
+                                                        <option value="8" tr="DEVICE_DRAPERY_CENTER"></option>
+                                                        <option value="7" tr="DEVICE_DRAPERY_RIGHT"></option>
+                                                        <option value="3" tr="DEVICE_AWNING"></option>
+                                                        <option value="5" tr="DEVICE_GARAGE_1BTN"></option>
+                                                        <option value="6" tr="DEVICE_GARAGE_3BTN"></option>
+                                                        <option value="9" tr="DEVICE_SWITCH_1BTN"></option>
+                                                        <option value="10" tr="DEVICE_SWITCH_2BTN"></option>
+                                                        <option value="11" tr="DEVICE_GATE_LEFT"></option>
+                                                        <option value="12" tr="DEVICE_GATE_CENTER"></option>
+                                                        <option value="13" tr="DEVICE_GATE_RIGHT"></option>
+                                                        <option value="14" tr="DEVICE_GATE_1BTN_LEFT"></option>
+                                                        <option value="15" tr="DEVICE_GATE_1BTN_CENTER"></option>
+                                                        <option value="16" tr="DEVICE_GATE_1BTN_RIGHT"></option>
+                                                    </select></div>
+                                                </div>
+                                                <div id="divTiltSettings" class="gen-field" style="display:none;">
+                                                    <label class="gen-field-label" for="selTiltType" tr="DEVICE_TILT_TYPE"></label>
+                                                    <div class="gen-input-box dirty-target"><select id="selTiltType" class="gen-input" name="tiltType" data-bind="tiltType" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
+                                                        <option value="0" tr="NONE"></option>
+                                                        <option value="1" tr="DEVICE_OPT_TILT_MOTOR"></option>
+                                                        <option value="2" tr="INTEGRATED"></option>
+                                                        <option value="3" tr="DEVICE_OPT_TILT_ONLY"></option>
+                                                        <option value="4" tr="DEVICE_OPT_TILT_EURO"></option>
+                                                    </select></div>
+                                                </div>
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="selShadeRoom" tr="ROOM"></label>
+                                                    <div class="gen-input-box dirty-target"><select id="selShadeRoom" class="gen-input" data-bind="roomId" data-datatype="int"></select></div>
+                                                </div>
+                                                <button type="button" class="gen-btn ed-add-room" onclick="somfy.openAddRoomInline('shade');"><svg><use href="#svg-add"></use></svg><span tr="BT_ADD_ROOM"></span></button>
+                                            </div>
+                                            <div class="gen-tile">
+                                                <h3 class="gen-tile-title" tr="COMMUNICATION"></h3>
+                                                <div class="gen-field-pair">
+                                                    <div class="gen-field">
+                                                        <label class="gen-field-label" for="selShadeProto" tr="PROTOCOL"></label>
+                                                        <div class="gen-input-box dirty-target"><select id="selShadeProto" class="gen-input" name="proto" data-bind="proto" data-datatype="int" onchange="somfy.onShadeProtoChanged(this);">
+                                                            <option value="0" tr="RTS"></option>
+                                                            <option value="1" tr="RTW"></option>
+                                                            <option value="2" tr="RTV"></option>
+                                                            <option value="8" tr="IO_RELAY"></option>
+                                                            <option value="9" tr="IO_REMOTE"></option>
+                                                        </select></div>
+                                                    </div>
+                                                    <div id="divShadeBitLength" class="gen-field">
+                                                        <label class="gen-field-label" for="selShadeBitLength" tr="BIT"></label>
+                                                        <div class="gen-input-box dirty-target"><select id="selShadeBitLength" class="gen-input" name="bitLength" data-bind="bitLength" data-datatype="int" onchange="somfy.onShadeBitLengthChanged(this);">
+                                                            <option value="56" tr="56BIT"></option>
+                                                            <option value="80" tr="80BIT"></option>
+                                                        </select></div>
+                                                    </div>
+                                                </div>
+                                                <div id="divShadeAddress" class="gen-field">
+                                                    <label class="gen-field-label" for="fldShadeAddress" tr="DEVICE_ID"></label>
+                                                    <div class="gen-input-box dirty-target"><input id="fldShadeAddress" class="gen-input" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADDRESS_PH" placeholder=" "></div>
+                                                </div>
+                                                <div id="divGPIOControl" class="gen-field-pair">
+                                                    <div id="divGPIOUp" class="gen-field">
+                                                        <label class="gen-field-label" for="selShadeGPIOUp" tr="DEVICE_GPIO_UP"></label>
+                                                        <div class="gen-input-box dirty-target"><select id="selShadeGPIOUp" class="gen-input" data-bind="gpioUp" data-datatype="int"></select></div>
+                                                    </div>
+                                                    <div id="divGPIOMy" class="gen-field">
+                                                        <label class="gen-field-label" for="selShadeGPIOMy" tr="DEVICE_GPIO_MY"></label>
+                                                        <div class="gen-input-box dirty-target"><select id="selShadeGPIOMy" class="gen-input" data-bind="gpioMy" data-datatype="int"></select></div>
+                                                    </div>
+                                                    <div id="divGPIODown" class="gen-field">
+                                                        <label class="gen-field-label" for="selShadeGPIODown" tr="DEVICE_GPIO_DOWN"></label>
+                                                        <div class="gen-input-box dirty-target"><select id="selShadeGPIODown" class="gen-input" data-bind="gpioDown" data-datatype="int"></select></div>
+                                                    </div>
+                                                </div>
+                                                <label id="divLLTrigger" class="gen-row dirty-target" for="cbLLTrigger">
+                                                    <span class="gen-row-text"><b tr="DEVICE_LL_TRIGGER"></b><span tr="DEVICE_LL_TRIGGER_DESC"></span></span>
+                                                    <span class="gen-seg gen-seg-bool">
+                                                        <input id="cbLLTrigger" name="hasLLTrigger" type="checkbox" data-bind="gpioLLTrigger">
+                                                        <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                        <span class="gen-seg-no" tr="BT_NO"></span>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                            <div class="gen-tile">
+                                                <h3 class="gen-tile-title" tr="ACTIVITY"></h3>
+                                                <div class="ed-ro-list">
+                                                    <div id="divShadeActivity" class="ed-ro-list">
+                                                        <div class="ed-ro"><span tr="SHADE_ACT_SENT"></span><b><i id="dotShadeSent" class="ed-dot"></i><span id="valShadeSent"></span></b></div>
+                                                        <div id="rowShadeHeard" class="ed-ro"><span tr="SHADE_ACT_HEARD"></span><b><i id="dotShadeHeard" class="ed-dot"></i><span id="valShadeHeard"></span></b></div>
+                                                    </div>
+                                                    <div class="ed-ro"><span tr="PAIRING"></span><b id="valShadePaired"></b></div>
+                                                    <div class="ed-ro"><span tr="DEVICE_INTERNAL_ID"></span><b id="valShadeInternalId" class="ed-mono"></b></div>
                                                 </div>
                                             </div>
-                                            <div id="divShadeBitLength" class="uniRow dirty-target">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-bit"></use></svg>
-                                                </div>
-                                                <div class="unifield-content">
-                                                    <label class="label" for="selShadeBitLength" tr="BIT">BIT</label>
-                                                    <select class="inputAndSelect" id="selShadeBitLength" name="bitLength" data-bind="bitLength" data-datatype="int" onchange="somfy.onShadeBitLengthChanged(this);" >
-                                                        <option value="56" tr="56BIT"></option>
-                                                        <option value="80" tr="80BIT"></option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="uniRow dirty-target">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-remoteID"></use></svg>
-                                                </div>
-                                                <div id="divShadeAddress" class="unifield-content">
-                                                    <label class="label" for="fldShadeAddress" tr="DEVICE_ID">ID Télécommande</label>
-                                                    <input id="fldShadeAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADDRESS_PH" placeholder=" ">
-                                                </div>
-                                            </div>
-                                            <div id="divGPIOControl" class="baseFlexCol">
-                                                <div id="divGPIOUp" class="uniRow dirty-target">
-                                                    <div class="uniblocSvg-S">
-                                                        <svg><use href="#svg-gpioUp"></use></svg>
-                                                    </div>
-                                                    <div class="unifield-content">
-                                                        <label class="label" for="selShadeGPIOUp" tr="DEVICE_GPIO_UP">Montée</label>
-                                                        <select id="selShadeGPIOUp" class="inputAndSelect" data-bind="gpioUp" data-datatype="int"></select>
+                                            <div id="shdDangerTile" class="gen-tile gen-tile-danger">
+                                                <h3 class="gen-tile-title" tr="TILE_DANGER"></h3>
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="fldShadeRollingCode" tr="ROLLING_CODE"></label>
+                                                    <div class="ed-roll">
+                                                        <div class="gen-input-box"><input id="fldShadeRollingCode" class="gen-input" type="number" min="0" max="65535" oninput="get('btnShadeRollingCode').disabled = this.value === '';"></div>
+                                                        <button type="button" id="btnShadeRollingCode" class="gen-btn gen-btn-danger" disabled onclick="somfy.askShadeRollingCode();" tr="ROLLING_SET"></button>
                                                     </div>
                                                 </div>
-                                                <div id="divGPIOMy" class="uniRow dirty-target">
-                                                    <div class="uniblocSvg-S">
-                                                        <svg><use href="#svg-gpioMy"></use></svg>
-                                                    </div>
-                                                    <div class="unifield-content">
-                                                        <label class="label" for="selShadeGPIOMy" tr="DEVICE_GPIO_MY">My</label>
-                                                        <select id="selShadeGPIOMy" class="inputAndSelect" data-bind="gpioMy" data-datatype="int"></select>
-                                                    </div>
-                                                </div>
-                                                <div id="divGPIODown" class="uniRow dirty-target">
-                                                    <div class="uniblocSvg-S">
-                                                        <svg><use href="#svg-gpioDown"></use></svg>
-                                                    </div>
-                                                    <div class="unifield-content">
-                                                        <label class="label" for="selShadeGPIODown" tr="DEVICE_GPIO_DOWN">Descente</label>
-                                                        <select id="selShadeGPIODown" class="inputAndSelect" data-bind="gpioDown" data-datatype="int"></select>
-                                                    </div>
-                                                </div>
+                                                <p class="gen-tile-desc"><span tr="ROLLING_LAST"></span> <b id="spanShadeRollingCode" class="ed-mono"></b>. <span tr="ROLLING_DESC"></span></p>
+                                                <p class="gen-tile-desc" tr="DEVICE_DELETE_DESC"></p>
+                                                <button type="button" class="gen-btn gen-btn-danger" onclick="somfy.deleteShade(parseInt(document.getElementById('spanShadeId').innerText, 10));"><svg><use href="#svg-trash"></use></svg><span tr="DEVICE_DELETE_BTN"></span></button>
                                             </div>
                                         </div>
-                                        <div id="divShadeActivity" class="tile-activity" style="display:none;">
-                                            <div class="tile-act-row"><span id="dotShadeSent" class="tile-dot"></span><div><div class="tile-act-t" tr="SHADE_ACT_SENT"></div><div id="valShadeSent" class="tile-act-v"></div></div></div>
-                                            <div id="rowShadeHeard" class="tile-act-row"><span id="dotShadeHeard" class="tile-dot"></span><div><div class="tile-act-t" tr="SHADE_ACT_HEARD"></div><div id="valShadeHeard" class="tile-act-v"></div></div></div>
-                                        </div>
-                                    </div>
-                                    <div id="divShadeTip" class="unibloc-container tile-tip">
-                                        <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
-                                        <p id="pShadeTip" class="tile-tip-text"></p>
-                                    </div>
-                                </div>
-                                <div class="tile-cols">
-                                    <div class="tile-col">
-                                        <div id="divShadeSetupTasks" class="unibloc-container" style="display:none;">
-                                            <h3 class="unibloc-title tile-title"><span tr="SETUP_RESUME_TITLE"></span><span id="spanShadeSetupPills" class="tile-pills"></span></h3>
-                                            <div id="divShadeSetupList" class="button-container-Colpair"></div>
-                                        </div>
-                                    </div>
-                                    <div class="tile-col">
+                                        <div class="gen-grid" role="tabpanel" data-tab="1" hidden>
+                                            <header class="gen-sec-head"><h2 tr="SUBTAB_CONTROL"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i><i></i></span></header>
                                         <div id="divControlContent" class="unibloc-container">
                                             <h3 class="unibloc-title tile-title"><span tr="DEVICE_CONTROL"></span></h3>
                                             <div class="row-To-Col-Mobile">
 
                                                 <div id="divSomfyButtons" class="editDevice-left-panel shadectl-buttons">
                                                     <div class="editDevice-visual-zone ctl-zone">
-                                                        <div class="editDevice-icon-wrapper">
-                                                            <svg id="icoShade" class="somfy-shade-icon" data-shadeid="0">
-                                                                <use href="#svg-window-shade"></use>
-                                                            </svg>
-                                                        </div>
                                                         <div class="ctl-meters">
                                                             <div id="labelPosContainer" class="editDevice-status-row ctl-meter">
                                                                 <div class="ctl-top">
@@ -1573,23 +1551,6 @@
                                                         </div>
                                                     </div>
 
-                                                    <div id="divshowSomfyButtons" class="editDevice-action-buttons-column">
-                                                        <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="up" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'up');">
-                                                            <svg><use href="#svg-up"></use></svg>
-                                                        </button>
-                                                        <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="my" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'my');">
-                                                            <svg><use href="#svg-my"></use></svg>
-                                                        </button>
-                                                        <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="down" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'down');">
-                                                            <svg><use href="#svg-down"></use></svg>
-                                                        </button>
-                                                        <button type="button" class="button-outline btn-somfy-svg-wide animScale" data-cmd="toggle" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'toggle');">
-                                                            <svg><use href="#svg-toggle"></use></svg>
-                                                        </button>
-                                                        <button type="button" class="button-outline btn-ctl-remote animScale" tr="SUBTAB_VIRTUAL_REMOTE_S" title="" onclick="somfy.openVirtualRemote('shade', parseInt(document.getElementById('spanShadeId').innerText, 10));">
-                                                            <svg><use href="#svg-remote"></use></svg>
-                                                        </button>
-                                                    </div>
                                                 </div>
                                             </div>
                                             <div id="divStepSettings" class="uniblocCol dirty-target">
@@ -1608,26 +1569,20 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        </div>
+                                        <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
+                                            <header class="gen-sec-head"><h2 tr="SUBTAB_SETTINGS"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i><i></i><i></i></span></header>
+                                            <div id="divShadeTip" class="unibloc-container tile-tip">
+                                                <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
+                                                <p id="pShadeTip" class="tile-tip-text"></p>
+                                            </div>
+                                        <div id="divShadeSetupTasks" class="unibloc-container" style="display:none;">
+                                            <h3 class="unibloc-title tile-title"><span tr="SETUP_RESUME_TITLE"></span><span id="spanShadeSetupPills" class="tile-pills"></span></h3>
+                                            <div id="divShadeSetupList" class="button-container-Colpair"></div>
+                                        </div>
                                         <div class="unibloc-container">
                                             <h3 class="unibloc-title tile-title"><span tr="OPTION"></span></h3>
                                             <div id="divShadeOptionsGrid" class="options-grid">
-                                                <div id="divLLTrigger">
-                                                    <label class="uniRow dirty-target" for="cbLLTrigger">
-                                                        <div class="uniLeft">
-                                                            <div class="uniblocSvg-S"><svg><use href="#svg-sensorlight"></use></svg></div>
-                                                            <div class="uniText">
-                                                                <div class="uniLabel" tr="DEVICE_LL_TRIGGER"></div>
-                                                                <div class="uniStatus" tr="DEVICE_LL_TRIGGER_DESC"></div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="uniRight">
-                                                            <span class="switch">
-                                                                <input id="cbLLTrigger" name="hasLLTrigger" type="checkbox" data-bind="gpioLLTrigger"/>
-                                                                <div></div>
-                                                            </span>
-                                                        </div>
-                                                    </label>
-                                                </div>
                                                 <div id="divSunSensor">
                                                     <label class="uniRow dirty-target" for="cbHasSunsensor">
                                                         <div class="uniLeft">
@@ -1764,20 +1719,6 @@
                                                         </select>
                                                     </div>
                                                 </div>
-                                                <div id="divBtnSecurity" class="uniRow dirty-target feedback-card">
-                                                    <button onclick="somfy.openSetRollingCode(parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
-                                                        <div class="uniLeft">
-                                                            <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
-                                                            <div class="devButtonUpdate">
-                                                                <div tr="BT_SET_ROLLING_CODE"></div>
-                                                                <div class="uniStatus" tr="DEVICE_ROLLING_CODE_DESC"></div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="uniRight">
-                                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                                        </div>
-                                                    </button>
-                                                </div>
                                             </div>
                                             <div id="divShadeLedFeedback" class="baseFlexCol ledFeedbackRow">
                                                 <label class="uniRow dirty-target" for="cbShadeLedFeedback">
@@ -1797,8 +1738,13 @@
                                                 </label>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
+                                        </div>
+                                        <div class="gen-grid ed-wide" role="tabpanel" data-tab="3" hidden>
+                                            <header class="gen-sec-head"><h2 tr="SUBTAB_REMOTES"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i><i></i></span></header>
+                                            <div id="divShadeRemotes" class="ed-section"></div>
+                                        </div>
+                                        <div class="gen-grid ed-wide" role="tabpanel" data-tab="4" hidden>
+                                            <header class="gen-sec-head"><h2 tr="SUBTAB_SCHEDULES"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i></i><i class="on"></i></span></header>
                                 <div id="divScheduleSectionShade" class="unibloc-container">
                                     <h3 class="unibloc-title tile-title"><span tr="SUBTAB_SCHEDULES"></span></h3>
 
@@ -1821,15 +1767,14 @@
                                     </div>
                                     <div id="divShadeScheduleBadges" class="schedule-card-list"></div>
                                 </div>
+                                        </div>
+                                    </div>
+                                    <nav id="shdPager" class="gen-pager" hidden>
+                                        <button type="button" id="btnShdPrev" class="gen-btn gen-pager-btn"><svg><use href="#svg-arrowLeft"></use></svg><span></span></button>
+                                        <button type="button" id="btnShdNext" class="gen-btn gen-pager-btn gen-pager-next"><span></span><svg><use href="#svg-arrowRight"></use></svg></button>
+                                    </nav>
+                                </div>
                             </div>
-                            <div class="button-container-footerHtml">
-                                <button id="btnBtnShadeGoBack" line type="button" onclick="somfy.showEditShade(false);" tr="BT_CLOSE"></button>
-                                <button id="btnSaveShade" type="button" onclick="somfy.saveShade();">
-                                    <svg><use id="useSaveShadeIcon" href="#svg-save"></use></svg>
-                                    <span id="btnSaveShadeText" tr="BT_SAVE"></span>
-                                </button>
-                            </div>
-                        </div>
                     </div>
 
                     <div id="divSomfyGroups" class="subtab-content" style="display:none;">
@@ -1859,7 +1804,7 @@
                             </div>
                         </div>
 
-                        <div id="somfyGroup" class="gen-layout grp-page" style="display:none;">
+                        <div id="somfyGroup" class="gen-layout ed-page" style="display:none;">
                             <span id="spanGroupId" hidden>*</span><span id="spanMaxGroups" hidden>14</span>
                             <section class="gen-hero">
                                 <svg class="gen-hero-icon"><use href="#svg-group"></use></svg>
@@ -1867,12 +1812,12 @@
                                     <h2 id="somfyGroupHeaderTitle" class="gen-hero-title"></h2>
                                     <p id="somfyGroupHeaderDesc" class="gen-hero-desc"></p>
                                 </div>
-                                <div id="blocPairGroup" class="grp-cmds">
-                                    <div id="divSomfyGroupButtons" class="grp-cmds-row">
-                                        <button type="button" class="grp-cmd animScale" data-cmd="up" tr="BT_OPEN" title="" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'up');"><svg><use href="#svg-up"></use></svg></button>
-                                        <button type="button" class="grp-cmd animScale" data-cmd="my" title="My" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'my');"><svg><use href="#svg-my"></use></svg></button>
-                                        <button type="button" class="grp-cmd animScale" data-cmd="down" tr="BT_CLOSE" title="" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'down');"><svg><use href="#svg-down"></use></svg></button>
-                                        <button type="button" class="grp-cmd animScale" tr="SUBTAB_VIRTUAL_REMOTE_S" title="" onclick="somfy.openVirtualRemote('group', parseInt(document.getElementById('spanGroupId').innerText, 10));"><svg><use href="#svg-remote"></use></svg></button>
+                                <div id="blocPairGroup" class="ed-cmds">
+                                    <div id="divSomfyGroupButtons" class="ed-cmds-row">
+                                        <button type="button" class="ed-cmd animScale" data-cmd="up" tr="BT_OPEN" title="" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'up');"><svg><use href="#svg-up"></use></svg></button>
+                                        <button type="button" class="ed-cmd animScale" data-cmd="my" title="My" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'my');"><svg><use href="#svg-my"></use></svg></button>
+                                        <button type="button" class="ed-cmd animScale" data-cmd="down" tr="BT_CLOSE" title="" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'down');"><svg><use href="#svg-down"></use></svg></button>
+                                        <button type="button" class="ed-cmd animScale" tr="SUBTAB_VIRTUAL_REMOTE_S" title="" onclick="somfy.openVirtualRemote('group', parseInt(document.getElementById('spanGroupId').innerText, 10));"><svg><use href="#svg-remote"></use></svg></button>
                                     </div>
                                 </div>
                                 <div class="gen-hero-chips"><span class="gen-chip"><svg><use href="#svg-navRoom"></use></svg><span id="grpChipRoom"></span></span><span class="gen-chip"><svg><use href="#svg-protocol"></use></svg><span id="grpChipRadio"></span></span></div>
@@ -1896,7 +1841,7 @@
                                                 <label class="gen-field-label" for="selGroupRoom" tr="ROOM"></label>
                                                 <div class="gen-input-box dirty-target"><select id="selGroupRoom" class="gen-input" data-bind="roomId" data-datatype="int"></select></div>
                                             </div>
-                                            <button type="button" class="gen-btn grp-add-room" onclick="somfy.openAddRoomInline('group');"><svg><use href="#svg-add"></use></svg><span tr="BT_ADD_ROOM"></span></button>
+                                            <button type="button" class="gen-btn ed-add-room" onclick="somfy.openAddRoomInline('group');"><svg><use href="#svg-add"></use></svg><span tr="BT_ADD_ROOM"></span></button>
                                         </div>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="GROUP_TILE_BEHAVIOUR"></h3>
@@ -1956,29 +1901,29 @@
                                             <p class="gen-tile-desc" tr="GROUP_ID_DESC"></p>
                                         </div>
                                         <div id="grpDangerTile" class="gen-tile gen-tile-danger">
-                                            <h3 class="gen-tile-title" tr="GROUP_TILE_DANGER"></h3>
+                                            <h3 class="gen-tile-title" tr="TILE_DANGER"></h3>
                                             <div class="gen-field">
                                                 <label class="gen-field-label" for="fldGroupRollingCode" tr="ROLLING_CODE"></label>
-                                                <div class="grp-roll">
+                                                <div class="ed-roll">
                                                     <div class="gen-input-box"><input id="fldGroupRollingCode" class="gen-input" type="number" min="0" max="65535" oninput="get('btnGroupRollingCode').disabled = this.value === '';"></div>
-                                                    <button type="button" id="btnGroupRollingCode" class="gen-btn gen-btn-danger" disabled onclick="somfy.askGroupRollingCode();" tr="GROUP_ROLLING_SET"></button>
+                                                    <button type="button" id="btnGroupRollingCode" class="gen-btn gen-btn-danger" disabled onclick="somfy.askGroupRollingCode();" tr="ROLLING_SET"></button>
                                                 </div>
                                             </div>
-                                            <p class="gen-tile-desc"><span tr="GROUP_ROLLING_LAST"></span> <b id="spanGroupRollingCode" class="grp-mono"></b>. <span tr="GROUP_ROLLING_DESC"></span></p>
+                                            <p class="gen-tile-desc"><span tr="ROLLING_LAST"></span> <b id="spanGroupRollingCode" class="ed-mono"></b>. <span tr="ROLLING_DESC"></span></p>
                                             <p class="gen-tile-desc" tr="GROUP_DELETE_DESC"></p>
                                             <button type="button" class="gen-btn gen-btn-danger" onclick="somfy.deleteGroup(parseInt(document.getElementById('spanGroupId').innerText, 10));"><svg><use href="#svg-trash"></use></svg><span tr="GROUP_DELETE_BTN"></span></button>
                                         </div>
                                     </div>
-                                    <div class="gen-grid grp-wide" role="tabpanel" data-tab="1" hidden>
+                                    <div class="gen-grid ed-wide" role="tabpanel" data-tab="1" hidden>
                                         <header class="gen-sec-head"><h2 tr="SUBTAB_DEVICES"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i></span></header>
-                                        <div id="gpMembersBlock" class="grp-section">
-                                            <p class="grp-tip"><svg><use href="#svg-info"></use></svg><span tr="GROUP_MEMBERS_TIP"></span></p>
+                                        <div id="gpMembersBlock" class="ed-section">
+                                            <p class="ed-tip"><svg><use href="#svg-info"></use></svg><span tr="GROUP_MEMBERS_TIP"></span></p>
                                             <div id="divGroupMembers" class="cfg-tiles"></div>
                                         </div>
                                     </div>
-                                    <div class="gen-grid grp-wide" role="tabpanel" data-tab="2" hidden>
+                                    <div class="gen-grid ed-wide" role="tabpanel" data-tab="2" hidden>
                                         <header class="gen-sec-head"><h2 tr="SUBTAB_SCHEDULES"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i></span></header>
-                                        <div id="divScheduleSectionGroup" class="grp-section">
+                                        <div id="divScheduleSectionGroup" class="ed-section">
                                             <div id="divGroupScheduleBadges" class="cfg-tiles sched-tiles"></div>
                                         </div>
                                     </div>
@@ -2521,7 +2466,7 @@
                         <div class="tile-wrap">
                             <div class="tile-side">
                                 <div class="unibloc-container">
-                                    <h3 class="unibloc-title tile-title"><span tr="LISTENER_ACTIVITY"></span></h3>
+                                    <h3 class="unibloc-title tile-title"><span tr="ACTIVITY"></span></h3>
                                     <div class="ls-metrics">
                                         <div class="ls-metric"><b><span id="spanListenerCount">0</span><small>/<span id="spanListenerMax">14</span></small></b><span tr="LISTENER_COUNT"></span></div>
                                         <div class="ls-metric"><b id="spanListenerPresses">0</b><span tr="LISTENER_PRESSES"></span></div>
