@@ -56,7 +56,7 @@ class GroupSetup {
             <aside class="wiz-side">
             <div class="wiz-side-head"><h2 class="wiz-title">${tr('GSETUP_TITLE')}</h2>
             <button type="button" class="wiz-close" data-wiz-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
-            <ol class="wiz-steps"></ol>
+            <ol class="wiz-steps"></ol><div class="wiz-pbar" aria-hidden="true"></div>
             <div class="wiz-sum"><span class="wiz-sum-icon"><svg><use href="#svg-group"></use></svg></span><span class="wiz-sum-text"><b></b><span></span></span></div>
             </aside>
             <section class="wiz-main"></section>
@@ -78,9 +78,9 @@ class GroupSetup {
             ['GSETUP_W_STEP_LINK', tr('GSETUP_W_LINKED').replace('{N}', linked).replace('{T}', n)],
             ['GSETUP_W_STEP_OPTS', tr('GSETUP_W_OPTS_DESC')]
         ];
-        this.$('.wiz-steps').innerHTML = steps.map(([k, d], i) => `<li class="wiz-step${i === step ? ' on' : i < step ? ' done' : ''}">
-            <span class="wiz-step-n">${i < step ? '<svg><use href="#svg-check"></use></svg>' : i + 1}</span>
-            <span class="wiz-step-text"><b>${tr(k)}</b><small>${escHtml(d)}</small></span></li>`).join('');
+        const bar = wizStepsHtml(steps.map(([k, d], i) => ({ title: tr(k), desc: d, state: i === step ? 'on' : i < step ? 'done' : '' })));
+        this.$('.wiz-steps').innerHTML = bar.steps;
+        this.$('.wiz-pbar').innerHTML = bar.bar;
         this.$('.wiz-sum-text b').textContent = name || tr('GSETUP_W_NEW');
         this.$('.wiz-sum-text span').textContent = tr('GSETUP_W_COUNT').replace('{N}', n);
         const kick = tr('GSETUP_W_KICK').replace('{N}', step + 1);
@@ -138,6 +138,7 @@ class GroupSetup {
                 <div class="gen-tile"><h3 class="gen-tile-title">${this.t('GSETUP_MEM_TITLE', { name: nm })}</h3>${memBody}</div>
                 <div class="gen-tile"><h3 class="gen-tile-title">${tr('GSETUP_GRP_TITLE')}</h3>${grpBody}</div>
                 ${progress}</div>`;
+                main.innerHTML += `<button type="button" class="wiz-link wiz-skip-in" onclick="groupSetup.skip()">${tr('SETUP_SKIP')}</button>`;
             } else main.innerHTML = `${head(tr('GSETUP_W_STEP_LINK'))}<div class="wiz-grid">${progress}</div>`;
             ok = !T;
             if (!ok) hint = tr('GSETUP_W_HINT_LINK');
@@ -159,11 +160,12 @@ class GroupSetup {
             ${led}</div>`;
         }
         const created = !!s;
+        if (!keepMain) wizScrollTop(this.w, main, `${step}:${s ? s.cur : ''}`);
         const btn = (cls, attrs, key) => `<button type="button" class="gen-btn${cls}" ${attrs}>${tr(key)}</button>`;
         // Retour à gauche ; à droite, la sortie juste avant l'action principale, là où on la cherche.
         this.$('.wiz-foot').innerHTML = `${step === 1 ? btn('', 'onclick="groupSetup.wizStep(0)"', 'BT_GO_BACK') : ''}
             <span class="wiz-foot-gap"></span><span class="wiz-foot-hint">${escHtml(hint)}</span>
-            ${step === 2 && s.tasks[s.cur] ? btn('', 'onclick="groupSetup.skip()"', 'SETUP_SKIP') : ''}
+            ${step === 2 && s.tasks[s.cur] ? btn(' wiz-skip', 'onclick="groupSetup.skip()"', 'SETUP_SKIP') : ''}
             ${btn(' wiz-quit', 'data-wiz-close', created ? 'SETUP_LATER' : 'BT_CANCEL')}
             ${btn(' gen-btn-primary', `onclick="groupSetup.wizNext()"${ok ? '' : ' disabled'}`, step === 3 ? 'SETUP_FINISH' : 'BT_CONTINUE')}`;
     }
