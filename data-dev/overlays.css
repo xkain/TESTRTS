@@ -3643,6 +3643,106 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .room-win-items { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* --- Assistants (coque wiz-) : créer un groupe. Collés aux bords de la zone de contenu, sans
+   les 16 px des fenêtres genmod- ; étapes à gauche, contenu à droite, pied sur toute la largeur. */
+.message-content.wiz-window { font-size: 16px; flex: 1; align-self: stretch; width: auto; max-width: none; max-height: none; margin: var(--topbar-height) 0 0 var(--sidebar-width); display: grid; grid-template-columns: minmax(280px, 26fr) minmax(0, 74fr); grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "side main" "foot foot"; border: 0; border-radius: 0; background: var(--bg); color: var(--text); text-align: left; }
+.wiz-side { grid-area: side; display: flex; flex-direction: column; gap: 22px; min-height: 0; overflow: auto; padding: clamp(24px, 4vh, 44px) clamp(20px, 2.2vw, 36px); background: var(--panel); }
+.wiz-side-head { display: flex; align-items: center; gap: 12px; }
+.wiz-title { margin: 0; font-size: clamp(24px, 2.2vw, 34px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+.wiz-close, .wiz-close:hover { display: none; flex: none; place-items: center; width: 40px; height: 40px; margin: 0 0 0 auto; padding: 0; border: 1px solid var(--border); border-radius: var(--r-2); background: var(--surface-2); color: var(--text-2); }
+.wiz-close svg { width: 18px; height: 18px; }
+.wiz-steps { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.wiz-step { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 10px 0; color: var(--text-3); }
+.wiz-step-n { display: grid; place-items: center; flex: none; width: 32px; height: 32px; box-sizing: border-box; border: 2px solid var(--sunken); border-radius: var(--r-pill); font-size: var(--fs-3); font-weight: 800; }
+.wiz-step-n svg { width: 16px; height: 16px; fill: currentColor; }
+.wiz-step-text { display: flex; flex-direction: column; min-width: 0; }
+.wiz-step-text b { font-size: var(--fs-4); }
+.wiz-step-text small { overflow: hidden; font-size: var(--fs-2); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.wiz-step.on { color: var(--text); }
+.wiz-step.on .wiz-step-n { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+.wiz-step.done { color: var(--text-2); }
+.wiz-step.done .wiz-step-n { border-color: var(--ok); background: var(--ok); color: var(--surface); }
+.wiz-sum { display: flex; align-items: center; gap: 12px; margin-top: auto; padding: 16px; border-radius: var(--r-4); background: var(--surface); }
+.wiz-sum-icon { display: grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: var(--r-3); background: var(--surface-2); color: var(--text-2); }
+.wiz-sum-icon svg { width: 30px; height: 30px; }
+.wiz-sum-text { display: flex; flex-direction: column; min-width: 0; }
+.wiz-sum-text b { overflow: hidden; font-size: var(--fs-4); text-overflow: ellipsis; white-space: nowrap; }
+.wiz-sum-text span { font-size: var(--fs-3); color: var(--text-3); }
+.wiz-main { grid-area: main; display: flex; flex-direction: column; gap: 20px; min-width: 0; min-height: 0; overflow: auto; padding: clamp(24px, 4vh, 48px) clamp(24px, 3.4vw, 64px); }
+.wiz-kick { font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.wiz-h { margin: 4px 0 0; font-size: clamp(24px, 2.3vw, 36px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; overflow-wrap: anywhere; }
+.wiz-lead { max-width: 760px; margin: 0; font-size: var(--fs-4); line-height: 1.5; color: var(--text-2); }
+.wiz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap: 16px; }
+.wiz-check, .wiz-check:hover { display: flex; justify-content: flex-start; align-items: center; gap: 12px; width: auto; min-height: 64px; margin: 0; padding: 12px 14px; border: 2px solid var(--surface-2); border-radius: var(--r-4); background: var(--surface); color: var(--text); text-align: left; text-transform: none; font-weight: 400; }
+.wiz-check.on, .wiz-check.on:hover { border-color: var(--on-fill); }
+.wiz-check:disabled, .wiz-check:disabled:hover { opacity: .5; }
+.wiz-check-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--r-2); background: var(--surface-2); color: var(--text-2); }
+.wiz-check-icon svg { width: 22px; height: 22px; }
+.wiz-check-text { display: flex; flex-direction: column; min-width: 0; }
+.wiz-check-text b { overflow: hidden; font-size: var(--fs-4); text-overflow: ellipsis; white-space: nowrap; }
+.wiz-check-text small { font-size: var(--fs-2); color: var(--text-3); }
+.wiz-check-box { display: grid; place-items: center; flex: none; width: 24px; height: 24px; margin-left: auto; box-sizing: border-box; border: 2px solid var(--sunken); border-radius: 7px; color: transparent; }
+.wiz-check.on .wiz-check-box { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+.wiz-check-box svg { width: 14px; height: 14px; fill: currentColor; opacity: 1; }
+.wiz-adv summary { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--fs-3); font-weight: 700; color: var(--color-accent); cursor: pointer; }
+.wiz-adv summary span { font-weight: 500; color: var(--text-3); }
+.wiz-adv .wiz-grid { margin-top: 12px; }
+.wiz-q { margin: 0; font-size: var(--fs-4); font-weight: 700; }
+.wiz-ok, .wiz-warn { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 14px 16px; border-radius: var(--r-4); font-size: var(--fs-3); line-height: 1.45; }
+.wiz-ok { background: var(--ok-bg); color: var(--ok); }
+.wiz-ok svg { flex: none; width: 18px; height: 18px; fill: currentColor; }
+.wiz-warn { background: var(--warn-bg); color: var(--warn); }
+.wiz-task { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--surface-2); font-size: var(--fs-3); }
+.wiz-task:first-of-type { border-top: 0; }
+.wiz-task b { flex: 1; min-width: 0; font-size: var(--fs-4); }
+.wiz-task > span:last-child { color: var(--text-3); }
+.wiz-task-n { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: var(--r-pill); background: var(--surface-2); font-weight: 800; }
+.wiz-task-n svg { width: 14px; height: 14px; fill: currentColor; }
+.wiz-task.done .wiz-task-n { background: var(--ok-bg); color: var(--ok); }
+.wiz-task.cur .wiz-task-n { background: var(--on-fill); color: var(--on-fill-text); }
+.wiz-opt, .wiz-opt:hover { width: auto; min-height: 36px; margin: 0; padding: 0 16px; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--text-3); font-size: var(--fs-3); font-weight: 600; text-transform: none; }
+.wiz-opt.on, .wiz-opt.on:hover { background: var(--on-fill); color: var(--on-fill-text); }
+.wiz-foot { grid-area: foot; display: flex; align-items: center; gap: 12px; padding: 12px clamp(24px, 3.4vw, 64px); border-top: 1px solid var(--border); background: var(--surface); }
+.wiz-foot .gen-btn { align-self: auto; }
+.wiz-foot .wiz-ghost, .wiz-foot .wiz-ghost:hover { background: transparent; color: var(--text-3); }
+.wiz-foot-gap { flex: 1; }
+.wiz-foot-hint { font-size: var(--fs-3); color: var(--text-3); }
+.wiz-foot-hint:empty { display: none; }
+/* Tablette : étapes en bandeau au-dessus du contenu, croix au bout de la ligne du titre. */
+@media (max-width: 999px) {
+    .message-content.wiz-window { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "side" "main" "foot"; }
+    .wiz-side { gap: 14px; padding: 18px 24px; overflow: visible; }
+    .wiz-title { font-size: var(--fs-7); }
+    .wiz-close, .wiz-close:hover { display: grid; }
+    .wiz-steps { flex-direction: row; gap: 8px; }
+    .wiz-step { flex: 1; gap: 8px; padding: 8px 10px; border-radius: var(--r-3); background: var(--surface); }
+    .wiz-step-text small { display: none; }
+    .wiz-sum { display: none; }
+    .wiz-main { padding: 24px; }
+    .wiz-foot { padding: 12px 24px; }
+}
+/* Mobile : plein écran comme les fenêtres de tâche ; étapes réduites à leur numéro sauf la
+   courante ; pied comme .genmod-foot, indication au-dessus et boutons en ligne à parts égales. */
+@media (max-width: 767px) {
+    .wiz-overlay::before { inset: 0; }
+    .message-content.wiz-window { height: 100%; margin: 0; border-top: 0; border-radius: 0; box-shadow: none; overflow: hidden; animation: none; transform: none; }
+    .wiz-side { gap: 10px; padding: 14px 16px 10px; }
+    .wiz-title { font-size: var(--fs-6); }
+    .wiz-step { flex: none; gap: 6px; padding: 0; background: none; }
+    .wiz-step-n { width: 28px; height: 28px; font-size: var(--fs-2); }
+    .wiz-step-text { display: none; }
+    .wiz-step.on { flex: 1; }
+    .wiz-step.on .wiz-step-text { display: flex; }
+    .wiz-step.on .wiz-step-text small { display: none; }
+    .wiz-main { gap: 16px; padding: 16px; }
+    .wiz-h { font-size: var(--fs-7); }
+    .wiz-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .wiz-foot { flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
+    .wiz-foot-gap { display: none; }
+    .wiz-foot-hint { order: -1; flex: 1 1 100%; font-size: var(--fs-2); }
+    .wiz-foot .gen-btn { flex: 1 1 0; justify-content: center; min-width: 0; padding: 0 10px; }
+}
+
 /* =======================================================================
  *  MEDIA QUERIES RESPONSIVE (toutes modales/overlays)
  *  ======================================================================= */

@@ -6088,13 +6088,6 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divNetAda
     :is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
     :is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
 }
-#divShadeSetup .gw-members { display: flex; flex-direction: column; gap: 8px; }
-#divShadeSetup .gw-member { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1.5px solid var(--color-border); border-radius: var(--radius-row); cursor: pointer; }
-#divShadeSetup .gw-member.sel { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 7%, transparent); }
-#divShadeSetup .gw-member input { width: 18px; height: 18px; accent-color: var(--color-accent); flex: none; }
-#divShadeSetup .gw-ico { width: 30px; height: 30px; flex: none; }
-#divShadeSetup .gw-name { display: flex; flex-direction: column; font-weight: 600; font-size: 14px; color: var(--color-text-main); }
-#divShadeSetup .gw-name small { font-weight: 400; font-size: 12px; color: var(--color-text-secondary); }
 #gpMembersBlock .gp-add { display: flex; align-items: center; gap: 12px; width: 100%; padding: 4px 10px; background: transparent; border: 0; box-shadow: none; color: var(--color-text-main); text-transform: none; font-size: 14px; font-weight: 600; cursor: pointer; }
 #gpMembersBlock .gp-add:hover { background: color-mix(in srgb, var(--color-accent) 6%, transparent); }
 #gpMembersBlock .gp-addico { width: 32px; height: 32px; flex: none; fill: var(--color-text-secondary); color: var(--color-text-secondary); }
