@@ -2026,7 +2026,8 @@ body.is-home-welcome .container {
     font-size: 16px;
 }
 #divSystemOptions [hidden],
-#divFirmware [hidden] {
+#divFirmware [hidden],
+#somfyGroup [hidden] {
     display: none;
 }
 /* Sans ça, le fond s'arrête sous la dernière tuile quand l'onglet affiché est court (mobile). */
@@ -2463,6 +2464,22 @@ label.gen-row {
     background: var(--color-accent);
     color: var(--color-text-on-accent);
 }
+/* Zone rouge (Appareil › Maintenance, fiche groupe) : ce qui supprime ou désynchronise. */
+.gen-tile-danger {
+    background: var(--danger-bg);
+}
+.gen-tile-danger .gen-tile-title {
+    color: var(--danger);
+}
+.gen-btn.gen-btn-danger,
+.gen-btn.gen-btn-danger:hover {
+    background: var(--surface);
+    color: var(--danger);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 40%, transparent);
+}
+.gen-tile-danger > .gen-btn-danger:last-child {
+    margin-top: auto;
+}
 .gen-swatch-other {
     position: relative;
 }
@@ -2576,7 +2593,8 @@ label.gen-row {
     .gen-hero-host,
     .gen-hero-chips,
     .gen-tabs,
-    #genPager {
+    #genPager,
+    #grpPager {
         display: none;
     }
     .gen-hero-title {
@@ -2593,7 +2611,8 @@ label.gen-row {
         padding: 0 16px 140px;
     }
     #divSystemOptions .gen-grid[hidden],
-    #divFirmware .gen-grid[hidden] {
+    #divFirmware .gen-grid[hidden],
+    #somfyGroup .gen-grid[hidden] {
         display: grid;
     }
     .gen-grid {
@@ -2911,19 +2930,6 @@ button.fw-act:hover .fw-act-chev {
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 4px 10px;
-}
-.fw-danger {
-    background: var(--danger-bg);
-}
-.fw-danger .gen-tile-title {
-    color: var(--danger);
-}
-.gen-btn.fw-danger-btn,
-.gen-btn.fw-danger-btn:hover {
-    margin-top: auto;
-    background: var(--surface);
-    color: var(--danger);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 40%, transparent);
 }
 @media (max-width: 999px) {
     .fw-hero-vis {
@@ -3273,8 +3279,7 @@ div.signal {
 
 
 
-.divsomfyShade,
-.divsomfyGroup {
+.divsomfyShade {
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -5986,11 +5991,11 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 #divShadeSetupTasks .setup-signal svg { width: 14px; height: 14px; }
 #divShadeSetupTasks .setup-row .editDevice-pair-icon { position: relative; }
 #divShadeSetup .setup-single .setup-task-b { padding: 14px; }
-:is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap, :is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-side, :is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-cols, :is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
-:is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
-:is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col:not(:has(> .unibloc-container:not([style*="none"]))) { display: none; }
-:is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title { display: flex; align-items: center; gap: 10px; }
-:is(#somfyShade, #somfyGroup, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
+:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap, :is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-side, :is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-cols, :is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
+:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col:not(:has(> .unibloc-container:not([style*="none"]))) { display: none; }
+:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title { display: flex; align-items: center; gap: 10px; }
+:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
 :is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
 :is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
 #somfyShade .tile-pills { margin-left: auto; display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
@@ -6053,48 +6058,37 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 #divShadeSetupList .setup-remotes > * { flex: none; }
 @media (min-width: 1000px) {
     .subtab-content:has(> #somfyShade:not([style*="none"])) { max-width: 1440px; }
-    .subtab-content:has(> #somfyGroup:not([style*="none"])) { max-width: 1440px; }
-    :is(#somfyShade, #somfyGroup) .tile-cols { flex-direction: row; align-items: stretch; }
-    :is(#somfyShade, #somfyGroup) .tile-col { flex: 1 1 0; }
+    #somfyShade .tile-cols { flex-direction: row; align-items: stretch; }
+    #somfyShade .tile-col { flex: 1 1 0; }
     #somfyShade #divShadeSetupTasks { flex: 1 1 auto; }
     #divShadeSetupList > * { flex: 0 0 auto; }
     #divShadeSetupList > .setup-remotes { flex: 1 1 0; max-height: none; }
     #somfyShade #divShadeOptionsGrid { grid-template-columns: repeat(auto-fit, minmax(225px, 1fr)); }
-    #somfyGroup .tile-col > .unibloc-container:last-child { flex: 1 1 auto; }
-    #somfyGroup #divGroupOptionsGrid { grid-template-columns: repeat(auto-fit, minmax(225px, 1fr)); }
 }
 @media (max-width: 1599px) {
     #somfyShade .tile-tip { display: none !important; }
 }
 @media (min-width: 1600px) {
-    :is(#somfyShade, #somfyGroup) .tile-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; grid-template-areas: "info side" "cols side" "sched side"; }
-    :is(#somfyShade, #somfyGroup) .tile-wrap > .marginB25 { grid-area: info; }
-    :is(#somfyShade, #somfyGroup) .tile-wrap > .tile-side { grid-area: side; }
-    :is(#somfyShade, #somfyGroup) .tile-wrap > .tile-cols { grid-area: cols; }
+    #somfyShade .tile-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; grid-template-areas: "info side" "cols side" "sched side"; }
+    #somfyShade .tile-wrap > .marginB25 { grid-area: info; }
+    #somfyShade .tile-wrap > .tile-side { grid-area: side; }
+    #somfyShade .tile-wrap > .tile-cols { grid-area: cols; }
     #somfyShade .tile-wrap > #divScheduleSectionShade { grid-area: sched; }
-    #somfyGroup .tile-wrap > #divScheduleSectionGroup { grid-area: sched; }
-    :is(#somfyShade, #somfyGroup) .tile-side .uniblocRow { flex-direction: column; }
-    :is(#somfyShade, #somfyGroup) .tile-side .uniRow { width: 100%; flex: none; }
-    :is(#somfyShade, #somfyGroup) .tile-col:first-child { flex: 0.8 1 0; }
+    #somfyShade .tile-side .uniblocRow { flex-direction: column; }
+    #somfyShade .tile-side .uniRow { width: 100%; flex: none; }
+    #somfyShade .tile-col:first-child { flex: 0.8 1 0; }
 }
-:is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
-:is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
-:is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) { padding-bottom: 70px; }
-body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { display: none; }
+:is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
+:is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
+:is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) { padding-bottom: 70px; }
+body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { display: none; }
 @media (min-width: 768px) {
-    :is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { left: var(--sidebar-width); }
+    :is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { left: var(--sidebar-width); }
 }
 @media (max-width: 767px) {
-    :is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
-    :is(#somfyShade, #somfyGroup, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
+    :is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
+    :is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
 }
-#gpMembersBlock .gp-add { display: flex; align-items: center; gap: 12px; width: 100%; padding: 4px 10px; background: transparent; border: 0; box-shadow: none; color: var(--color-text-main); text-transform: none; font-size: 14px; font-weight: 600; cursor: pointer; }
-#gpMembersBlock .gp-add:hover { background: color-mix(in srgb, var(--color-accent) 6%, transparent); }
-#gpMembersBlock .gp-addico { width: 32px; height: 32px; flex: none; fill: var(--color-text-secondary); color: var(--color-text-secondary); }
-#gpMembersBlock .gp-plus { width: 22px; height: 22px; margin-left: auto; fill: var(--color-accent); color: var(--color-accent); }
-#gpMembersBlock .gp-sep { border: 0; border-top: 1px solid var(--color-border); margin: 0 -20px; width: calc(100% + 40px); align-self: flex-start; height: 0; flex: none; box-sizing: border-box; }
-#gpMembersBlock .gp-cards { display: flex; flex-direction: column; gap: 8px; }
-#gpMembersBlock.gp-empty .gp-sep { display: none; }
 #divNetAdapter .tile-wrap .unibloc-container { margin: 0; }
 #divNetAdapter .tile-tip { display: none; }
 #divNetAdapter .net-iface, #divNetAdapter .net-iface > .baseFlexCol { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
@@ -6613,9 +6607,39 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divNetAda
  *  filtres (ordinateur seulement), les outils (menu ⋮ sur mobile) et les tuiles.
  *  ======================================================================= */
 /* La fiche d'un équipement ou d'un groupe partage le sous-onglet : seule la liste prend le gabarit. */
-:is(#divSomfyMotors, #divSomfyGroups, #divSomfyRooms, #divSomfySchedules).subtab-content:has(> .cfg-list:not([style*="none"])) { max-width: none; margin: 0; padding: 0; gap: 0; background: var(--bg); color: var(--text); font-size: 16px; }
-.container:has(#divConfigPnl:not([style*="none"]) > #divSomfySettings:not([style*="none"]) > .subtab-content:not([style*="none"]) > .cfg-list:not([style*="none"])) { background: var(--bg); }
+:is(#divSomfyMotors, #divSomfyGroups, #divSomfyRooms, #divSomfySchedules).subtab-content:has(> :is(.cfg-list, .grp-page):not([style*="none"])) { max-width: none; margin: 0; padding: 0; gap: 0; background: var(--bg); color: var(--text); font-size: 16px; }
+.container:has(#divConfigPnl:not([style*="none"]) > #divSomfySettings:not([style*="none"]) > .subtab-content:not([style*="none"]) > :is(.cfg-list, .grp-page):not([style*="none"])) { background: var(--bg); }
 .cfg-list [hidden] { display: none; }
+
+/* --- Fiche groupe (#somfyGroup, gabarit de Général) : commandes du groupe dans la colonne
+   d'identité, code tournant en zone rouge, membres et plannings en tuiles de pages-listes. --- */
+.grp-cmds { width: 100%; max-width: 420px; }
+/* Comme la maquette : trois commandes qui se partagent la largeur, la télécommande en carré. */
+.grp-cmds-row { display: flex; gap: 10px; }
+.grp-cmd, .grp-cmd:hover { display: grid; place-items: center; flex: 1 1 0; min-width: 0; height: 56px; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: var(--r-3); background: var(--surface); color: var(--text); }
+.grp-cmd:hover { background: var(--surface-2); }
+.grp-cmd:last-child { flex: 0 0 56px; }
+.grp-cmd svg { width: 26px; height: 26px; fill: currentColor; }
+#divSomfyGroupButtons.disabled { opacity: .5; pointer-events: none; }
+.grp-page.grp-new :is(#blocPairGroup, .gen-tabs, #grpPanels > [data-tab="1"], #grpPanels > [data-tab="2"], #grpDangerTile) { display: none; }
+.grp-add-room { align-self: flex-start; }
+.grp-roll { display: flex; gap: 8px; }
+.grp-roll .gen-input-box { flex: 1; min-width: 0; background: var(--surface); }
+.grp-roll .gen-btn { flex: none; align-self: stretch; }
+.grp-mono { font-family: monospace; }
+.grp-section { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 14px; }
+.grp-tip { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 14px 16px; border-radius: var(--r-4); background: var(--surface); font-size: var(--fs-3); line-height: 1.45; color: var(--text-2); }
+.grp-tip svg { flex: none; width: 20px; height: 20px; fill: currentColor; color: var(--color-accent); }
+.grp-paired { padding: 4px 10px; border-radius: var(--r-pill); background: var(--ok-bg); color: var(--ok); font-size: var(--fs-1); font-weight: 700; }
+/* Bandeau (tablette, mobile) : les commandes passent sous l'identité, sinon elles élargissent la
+   colonne de l'icône et repoussent le titre. */
+@media (max-width: 999px) {
+    .grp-page .grp-cmds { grid-column: 1 / -1; justify-self: stretch; max-width: none; }
+}
+@media (max-width: 767px) {
+    .grp-cmd { height: 48px; }
+    .grp-cmd:last-child { flex-basis: 48px; }
+}
 /* Une longue liste de pièces dépasse la hauteur : on défile au lieu de couper le haut. */
 .cfg-list .gen-hero { justify-content: safe center; overflow-y: auto; }
 .gen-hero-menu { display: none; position: absolute; top: 12px; right: 8px; place-items: center; width: 40px; height: 40px; margin: 0; padding: 0; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--text-2); }

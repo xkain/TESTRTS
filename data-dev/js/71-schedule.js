@@ -247,6 +247,13 @@ class _SomfySchedule {
         }
 
         const list = (this.schedules || []).filter(sc => sc.targetType === targetType && sc.targetId === targetId);
+        // Fiche groupe (nouvelle interface) : tuiles de la page Plannings, la tuile d'ajout en premier.
+        if (containerId === 'divGroupScheduleBadges') {
+            const max = this.maxSchedules || 30, left = Math.max(0, max - (this.schedules || []).length);
+            container.innerHTML = `<button type="button" class="cfg-tile cfg-tile-add" onclick="somfy.openAddScheduleInline('group', ${targetId});"${left ? '' : ' disabled'}><svg><use href="#svg-add"></use></svg><span>${tr('SCHEDULE_ADD')}</span><small id="spanScheduleSlotsGroup">${tr('SCHEDULE_SLOTS_REMAINING').replace('{n}', left)}</small></button>`
+                + this._groupSchedules(list).map(g => this.scheduleTileHtml(g, 'openEditScheduleGroupInline')).join('');
+            return;
+        }
         if (list.length === 0) {
             container.innerHTML = `<span class="schedule-badge-empty">${tr('EMPTY_SCHEDULE_TITLE')}</span>`;
             return;
@@ -291,7 +298,7 @@ class _SomfySchedule {
         this.renderCfgPage('schedule');
         this._syncScheduleIndicators();
     }
-    scheduleTileHtml(group) {
+    scheduleTileHtml(group, openFn = 'openEditScheduleGroup') {
         const key = group.key;
         const steps = group.steps.length > 2 ? group.steps.slice(0, 1) : group.steps;
         const hours = steps.map(({ sc, effectiveMinutes }) => {
@@ -308,7 +315,7 @@ class _SomfySchedule {
         const days = SCHEDULE_DAY_DEFS.map(d => `<span${(group.dayMask & d.bit) ? ' class="on"' : ''}>${tr(d.key).charAt(0)}</span>`).join('');
         const first = group.steps[0];
         const title = group.name || (first ? formatMinutesOfDay(first.effectiveMinutes).main : '');
-        return `<div class="cfg-tile sched-tile${group.enabled ? '' : ' is-off'}" data-groupkey="${key}" onclick="somfy.openEditScheduleGroup('${key}');">
+        return `<div class="cfg-tile sched-tile${group.enabled ? '' : ' is-off'}" data-groupkey="${key}" onclick="somfy.${openFn}('${key}');">
         <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="${this._scheduleTargetIcon(group)}"></use></svg></span>
         ${this.cfgTileMenu(`somfy.deleteScheduleGroup('${key}')`, `<div class="dropdown-item" onclick="this.parentElement.classList.remove('show'); somfy.toggleScheduleGroup('${key}', ${!group.enabled});"><svg><use href="#svg-${group.enabled ? 'stop' : 'play'}"></use></svg>${tr(group.enabled ? 'BT_PAUSE' : 'BT_RESUME')}</div>`)}</div>
         <div class="cfg-tile-name"><span class="name-text">${escHtml(title)}</span>

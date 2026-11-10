@@ -715,10 +715,10 @@
                                                 </button>
                                             </div>
                                         </div>
-                                        <div class="gen-tile fw-danger">
+                                        <div class="gen-tile gen-tile-danger">
                                             <h3 class="gen-tile-title" tr="FW_TILE_REBOOT"></h3>
                                             <p class="gen-tile-desc" tr="FW_REBOOT_DESC"></p>
-                                            <button type="button" class="gen-btn fw-danger-btn" onclick="general.rebootDevice();"><svg><use href="#svg-reboot"></use></svg><span tr="BT_REBOOT"></span></button>
+                                            <button type="button" class="gen-btn gen-btn-danger" onclick="general.rebootDevice();"><svg><use href="#svg-reboot"></use></svg><span tr="BT_REBOOT"></span></button>
                                         </div>
                                     </div>
 
@@ -1859,200 +1859,134 @@
                             </div>
                         </div>
 
-                        <div id="somfyGroup" class="divsomfyGroup" style="display:none;">
-                            <div class="main-header">
-                                <div class="main-headerBlock">
-                                    <h2 id="somfyGroupHeaderTitle" class="main-headerTitle"></h2>
-                                    <p id="somfyGroupHeaderDesc" class="main-headerDesc"></p>
+                        <div id="somfyGroup" class="gen-layout grp-page" style="display:none;">
+                            <span id="spanGroupId" hidden>*</span><span id="spanMaxGroups" hidden>14</span>
+                            <section class="gen-hero">
+                                <svg class="gen-hero-icon"><use href="#svg-group"></use></svg>
+                                <div class="gen-hero-text">
+                                    <h2 id="somfyGroupHeaderTitle" class="gen-hero-title"></h2>
+                                    <p id="somfyGroupHeaderDesc" class="gen-hero-desc"></p>
                                 </div>
-                                <div class="main-headerRight">
-                                    <div class="main-headerAmbient">
-                                        <svg><use href="#svg-group"></use></svg>
+                                <div id="blocPairGroup" class="grp-cmds">
+                                    <div id="divSomfyGroupButtons" class="grp-cmds-row">
+                                        <button type="button" class="grp-cmd animScale" data-cmd="up" tr="BT_OPEN" title="" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'up');"><svg><use href="#svg-up"></use></svg></button>
+                                        <button type="button" class="grp-cmd animScale" data-cmd="my" title="My" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'my');"><svg><use href="#svg-my"></use></svg></button>
+                                        <button type="button" class="grp-cmd animScale" data-cmd="down" tr="BT_CLOSE" title="" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'down');"><svg><use href="#svg-down"></use></svg></button>
+                                        <button type="button" class="grp-cmd animScale" tr="SUBTAB_VIRTUAL_REMOTE_S" title="" onclick="somfy.openVirtualRemote('group', parseInt(document.getElementById('spanGroupId').innerText, 10));"><svg><use href="#svg-remote"></use></svg></button>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="somfyMaxId" style="display:none;"><span id="spanGroupId">*</span>/<span id="spanMaxGroups">5</span></div>
-
-                            <div class="tile-wrap">
-                                <div class="unibloc-container marginB25">
-                                    <h3 class="unibloc-title tile-title"><span tr="GENERAL_INFO"></span></h3>
-                                    <div class="uniblocRow">
-                                        <div class="uniRow dirty-target">
-                                            <div class="unifield-content">
-                                                <label class="label" for="fldGroupName" tr="NAME">Nom</label>
-                                                <input id="fldGroupName" class="inputAndSelect" name="groupName" data-bind="name" type="text" maxlength="20"  tr="ENTER_NAME" placeholder="entrer un Nom">
+                                <div class="gen-hero-chips"><span class="gen-chip"><svg><use href="#svg-navRoom"></use></svg><span id="grpChipRoom"></span></span><span class="gen-chip"><svg><use href="#svg-protocol"></use></svg><span id="grpChipRadio"></span></span></div>
+                            </section>
+                            <div class="gen-body">
+                                <nav id="grpTabs" class="gen-tabs" role="tablist">
+                                    <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="SUBTAB_GENERAL"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="1" tr="SUBTAB_DEVICES"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="2" tr="SUBTAB_SCHEDULES"></button>
+                                </nav>
+                                <div id="grpPanels" class="gen-panels">
+                                    <div class="gen-grid" role="tabpanel" data-tab="0">
+                                        <header class="gen-sec-head"><h2 tr="SUBTAB_GENERAL"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i></span></header>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GSETUP_W_STEP_NAME"></h3>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="fldGroupName" tr="NAME"></label>
+                                                <div class="gen-input-box dirty-target"><input id="fldGroupName" class="gen-input" name="groupName" data-bind="name" type="text" maxlength="20" tr="ENTER_NAME" placeholder=" "></div>
+                                            </div>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="selGroupRoom" tr="ROOM"></label>
+                                                <div class="gen-input-box dirty-target"><select id="selGroupRoom" class="gen-input" data-bind="roomId" data-datatype="int"></select></div>
+                                            </div>
+                                            <button type="button" class="gen-btn grp-add-room" onclick="somfy.openAddRoomInline('group');"><svg><use href="#svg-add"></use></svg><span tr="BT_ADD_ROOM"></span></button>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GROUP_TILE_BEHAVIOUR"></h3>
+                                            <div class="gen-row dirty-target">
+                                                <span class="gen-row-text"><b tr="DEVICE_FLIP_COMMANDS"></b><span tr="FLIP_COMMAND_DESC"></span></span>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbFlipGrpCommands" name="flipCommands" type="checkbox" data-bind="flipCommands">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
+                                                </span>
+                                            </div>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="selGroupRepeatCommands" tr="REPEAT_COMMANDS"></label>
+                                                <div class="gen-input-box dirty-target"><select id="selGroupRepeatCommands" class="gen-input" data-bind="repeats" data-datatype="int">
+                                                    <option value="0" tr="OPT_NO_REPEAT"></option>
+                                                    <option value="1" tr="OPT_1TIME"></option>
+                                                    <option value="2" tr="OPT_2TIME"></option>
+                                                    <option value="3" tr="OPT_3TIME"></option>
+                                                    <option value="4" tr="OPT_4TIME"></option>
+                                                    <option value="5" tr="OPT_5TIME"></option>
+                                                    <option value="6" tr="OPT_6TIME"></option>
+                                                    <option value="7" tr="OPT_7TIME"></option>
+                                                </select></div>
+                                            </div>
+                                            <div id="divGroupLedFeedback" class="gen-row dirty-target ledFeedbackRow">
+                                                <span class="gen-row-text"><b tr="LED_FEEDBACK"></b><span tr="GROUP_LED_FEEDBACK_DESC"></span></span>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
+                                                </span>
                                             </div>
                                         </div>
-                                        <div class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-emptyRoom"></use></svg>
-                                            </div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selGroupRoom" tr="ROOM"></label>
-                                                <select id="selGroupRoom" class="inputAndSelect" data-bind="roomId" data-datatype="int"></select>
-                                            </div>
-                                            <div class="divEditDelete-svg" onclick="somfy.openAddRoomInline('group');" tr="BT_ADD_ROOM" title=""><svg class="icon-svg"><use href="#svg-add"></use></svg></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="tile-side">
-                                    <div class="unibloc-container">
-                                        <h3 class="unibloc-title tile-title"><span tr="COMMUNICATION"></span></h3>
-                                        <div class="uniblocRow">
-                                            <div class="uniRow dirty-target">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-protocol"></use></svg>
-                                                </div>
-                                                <div class="unifield-content">
-                                                    <label class="label" for="selGroupProto" tr="PROTOCOL">Protocole</label>
-                                                    <select id="selGroupProto" class="inputAndSelect" name="proto" data-bind="proto" data-datatype="int">
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="COMMUNICATION"></h3>
+                                            <div class="gen-field-pair">
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="selGroupProto" tr="PROTOCOL"></label>
+                                                    <div class="gen-input-box dirty-target"><select id="selGroupProto" class="gen-input" name="proto" data-bind="proto" data-datatype="int">
                                                         <option value="0" tr="RTS"></option>
                                                         <option value="1" tr="RTW"></option>
                                                         <option value="2" tr="RTV"></option>
-                                                    </select>
+                                                    </select></div>
                                                 </div>
-                                            </div>
-                                            <div id="divGroupBitLength" class="uniRow dirty-target">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-bit"></use></svg>
-                                                </div>
-                                                <div class="unifield-content">
-                                                    <label class="label" for="selGroupBitLength" tr="BIT">BIT</label>
-                                                    <select id="selGroupBitLength" class="inputAndSelect" name="bitLength" data-bind="bitLength" data-datatype="int">
+                                                <div id="divGroupBitLength" class="gen-field">
+                                                    <label class="gen-field-label" for="selGroupBitLength" tr="BIT"></label>
+                                                    <div class="gen-input-box dirty-target"><select id="selGroupBitLength" class="gen-input" name="bitLength" data-bind="bitLength" data-datatype="int">
                                                         <option value="56" tr="56BIT"></option>
                                                         <option value="80" tr="80BIT"></option>
-                                                    </select>
+                                                    </select></div>
                                                 </div>
                                             </div>
-                                            <div class="uniRow dirty-target">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-remoteID"></use></svg>
-                                                </div>
-                                                <div id="divGroupAddress" class="unifield-content">
-                                                    <label class="label" for="fldGroupAddress" tr="GROUP_ID">ID Groupe</label>
-                                                    <input id="fldGroupAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADDRESS_PH" placeholder=" ">
+                                            <div id="divGroupAddress" class="gen-field">
+                                                <label class="gen-field-label" for="fldGroupAddress" tr="GROUP_ID"></label>
+                                                <div class="gen-input-box dirty-target"><input id="fldGroupAddress" class="gen-input" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADDRESS_PH" placeholder=" "></div>
+                                            </div>
+                                            <p class="gen-tile-desc" tr="GROUP_ID_DESC"></p>
+                                        </div>
+                                        <div id="grpDangerTile" class="gen-tile gen-tile-danger">
+                                            <h3 class="gen-tile-title" tr="GROUP_TILE_DANGER"></h3>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="fldGroupRollingCode" tr="ROLLING_CODE"></label>
+                                                <div class="grp-roll">
+                                                    <div class="gen-input-box"><input id="fldGroupRollingCode" class="gen-input" type="number" min="0" max="65535" oninput="get('btnGroupRollingCode').disabled = this.value === '';"></div>
+                                                    <button type="button" id="btnGroupRollingCode" class="gen-btn gen-btn-danger" disabled onclick="somfy.askGroupRollingCode();" tr="GROUP_ROLLING_SET"></button>
                                                 </div>
                                             </div>
+                                            <p class="gen-tile-desc"><span tr="GROUP_ROLLING_LAST"></span> <b id="spanGroupRollingCode" class="grp-mono"></b>. <span tr="GROUP_ROLLING_DESC"></span></p>
+                                            <p class="gen-tile-desc" tr="GROUP_DELETE_DESC"></p>
+                                            <button type="button" class="gen-btn gen-btn-danger" onclick="somfy.deleteGroup(parseInt(document.getElementById('spanGroupId').innerText, 10));"><svg><use href="#svg-trash"></use></svg><span tr="GROUP_DELETE_BTN"></span></button>
+                                        </div>
+                                    </div>
+                                    <div class="gen-grid grp-wide" role="tabpanel" data-tab="1" hidden>
+                                        <header class="gen-sec-head"><h2 tr="SUBTAB_DEVICES"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i></span></header>
+                                        <div id="gpMembersBlock" class="grp-section">
+                                            <p class="grp-tip"><svg><use href="#svg-info"></use></svg><span tr="GROUP_MEMBERS_TIP"></span></p>
+                                            <div id="divGroupMembers" class="cfg-tiles"></div>
+                                        </div>
+                                    </div>
+                                    <div class="gen-grid grp-wide" role="tabpanel" data-tab="2" hidden>
+                                        <header class="gen-sec-head"><h2 tr="SUBTAB_SCHEDULES"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i></span></header>
+                                        <div id="divScheduleSectionGroup" class="grp-section">
+                                            <div id="divGroupScheduleBadges" class="cfg-tiles sched-tiles"></div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="tile-cols">
-                                    <div class="tile-col">
-                                        <div id="gpMembersBlock" class="unibloc-container">
-                                            <h3 class="unibloc-title tile-title"><span tr="GROUP_LINKED_S"></span></h3>
-                                            <button type="button" id="btnLinkShade" class="gp-add" onclick="groupSetup.runLink(parseInt(document.getElementById('spanGroupId').innerText, 10));">
-                                                <svg class="gp-addico"><use href="#svg-linkRemot"></use></svg><span tr="BT_LINK_DEVICE"></span><svg class="gp-plus"><use href="#svg-add"></use></svg>
-                                            </button>
-                                            <hr class="gp-sep">
-                                            <div id="divGroupMembers" class="gp-cards"></div>
-                                        </div>
-                                    </div>
-                                    <div class="tile-col">
-                                        <div id="blocPairGroup" class="unibloc-container">
-                                            <h3 class="unibloc-title tile-title"><span tr="GROUP_CONTROL"></span></h3>
-                                            <div id="divSomfyGroupButtons" class="editDevice-action-buttons-column">
-                                                <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="up" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'up');">
-                                                    <svg><use href="#svg-up"></use></svg>
-                                                </button>
-                                                <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="my" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'my');">
-                                                    <svg><use href="#svg-my"></use></svg>
-                                                </button>
-                                                <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="down" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'down');">
-                                                    <svg><use href="#svg-down"></use></svg>
-                                                </button>
-                                                <button type="button" class="button-outline btn-ctl-remote animScale" tr="SUBTAB_VIRTUAL_REMOTE_S" title="" onclick="somfy.openVirtualRemote('group', parseInt(document.getElementById('spanGroupId').innerText, 10));">
-                                                    <svg><use href="#svg-remote"></use></svg>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="unibloc-container">
-                                            <h3 class="unibloc-title tile-title"><span tr="OPTION"></span></h3>
-                                            <div id="divGroupOptionsGrid" class="options-grid">
-                                                <label id="divFlipGrpCommands" class="uniRow dirty-target" for="cbFlipGrpCommands">
-                                                    <div class="uniLeft">
-                                                        <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
-                                                        <div class="uniText">
-                                                            <div class="uniLabel" tr="DEVICE_FLIP_COMMANDS"></div>
-                                                            <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="uniRight">
-                                                        <span class="switch">
-                                                            <input id="cbFlipGrpCommands" name="flipCommands" type="checkbox" data-bind="flipCommands"/>
-                                                            <div></div>
-                                                        </span>
-                                                    </div>
-                                                </label>
-                                            <!-- Un seul éclat par commande de groupe, sans propagation aux
-                                                    équipements liés : 8 membres produiraient 8 éclats pour une action. -->
-                                                <div class="uniRow dirty-target">
-                                                    <div class="uniLeft">
-                                                        <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
-                                                        <div class="unifield-content">
-                                                            <label class="label" for="selGroupRepeatCommands" tr="REPEAT_COMMANDS"></label>
-                                                            <select id="selGroupRepeatCommands" class="inputAndSelect" data-bind="repeats" data-datatype="int">
-                                                                <option value="0" tr="OPT_NO_REPEAT"></option>
-                                                                <option value="1" tr="OPT_1TIME"></option>
-                                                                <option value="2" tr="OPT_2TIME"></option>
-                                                                <option value="3" tr="OPT_3TIME"></option>
-                                                                <option value="4" tr="OPT_4TIME"></option>
-                                                                <option value="5" tr="OPT_5TIME"></option>
-                                                                <option value="6" tr="OPT_6TIME"></option>
-                                                                <option value="7" tr="OPT_7TIME"></option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div id="divGroupLedFeedback" class="baseFlexCol ledFeedbackRow">
-                                                <label class="uniRow dirty-target" for="cbGroupLedFeedback">
-                                                    <div class="uniLeft">
-                                                        <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
-                                                        <div class="uniText">
-                                                            <div class="uniLabel" tr="LED_FEEDBACK"></div>
-                                                            <div class="uniStatus" tr="GROUP_LED_FEEDBACK_DESC"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="uniRight">
-                                                        <span class="switch">
-                                                            <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
-                                                            <div></div>
-                                                        </span>
-                                                    </div>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="divScheduleSectionGroup" class="unibloc-container">
-                                    <h3 class="unibloc-title tile-title"><span tr="SUBTAB_SCHEDULES"></span></h3>
-                                    <div id="divGroupScheduleBadges" class="schedule-card-list"></div>
-                                    <div class="uniRow feedback-card">
-                                        <button id="btnAddScheduleGroup" onclick="somfy.openAddScheduleInline('group', parseInt(document.getElementById('spanGroupId').innerText, 10));" class="buttonUpdate" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div class="schedule-add-title-row">
-                                                        <span tr="SCHEDULE_ADD"></span>
-                                                        <span id="spanScheduleSlotsGroup" class="desc-highlight"></span>
-                                                    </div>
-                                                    <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </div>
-
-                            </div>
-                            <div class="button-container-footerHtml">
-                                <button id="btnGroupGoBack" line type="button" onclick="somfy.showEditGroup(false);" tr="BT_CLOSE"></button>
-                                <button id="btnSaveGroup"  type="button" onclick="somfy.saveGroup();">
-                                    <svg><use id="useSaveGroupIcon" href="#svg-save"></use></svg>
-                                    <span id="btnSaveGroupText" tr="BT_SAVE"></span>
-                                </button>
+                                <nav id="grpPager" class="gen-pager" hidden>
+                                    <button type="button" id="btnGrpPrev" class="gen-btn gen-pager-btn"><svg><use href="#svg-arrowLeft"></use></svg><span></span></button>
+                                    <button type="button" id="btnGrpNext" class="gen-btn gen-pager-btn gen-pager-next"><span></span><svg><use href="#svg-arrowRight"></use></svg></button>
+                                </nav>
                             </div>
                         </div>
                     </div>

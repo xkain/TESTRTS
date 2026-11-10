@@ -336,15 +336,20 @@ class GroupSetup {
     done(note) { const T = this.task(); T.state = 'done'; T.note = note; this.s.cur++; this.render(); }
     skip() { this.task().state = 'skipped'; this.s.cur++; this.render(); }
     closeDone() { if (this.div) closeOverlay(this.div); }
+    // Fiche groupe : tuiles des pages-listes, la tuile d'ajout en premier.
     renderMembers(group) {
         const list = get('divGroupMembers');
         if (!list) return;
-        const shades = group.linkedShades || [];
-        list.innerHTML = shades.map(sh => `<div class="somfyLinkedRemote linkedRemoteCard" data-shadeid="${sh.shadeId}"><div class="remote-card-top">
-            <div class="linkedWrap"><svg class="icon-svg"><use href="#${this.icoOf(sh)}"></use></svg></div>
-            <div class="linkedContent"><div class="linkedRemote-title">${escHtml(sh.name)}</div>
-            <div class="linkedRemote-meta"><span>${tr('ADDR')} ${sh.remoteAddress}</span><span class="linkedRemote-sep">|</span><span>${sh.bitLength || 56} bits</span></div></div>
-            <div class="linkedRemote-btn-delete" title="${escAttr(tr('GSETUP_UNLINK_TIP'))}" onclick="groupSetup.runUnlink(${group.groupId}, ${sh.shadeId})"><svg><use href="#svg-unlink"></use></svg></div></div></div>`).join('');
+        const gid = group.groupId;
+        list.innerHTML = `<button type="button" id="btnLinkShade" class="cfg-tile cfg-tile-add" onclick="groupSetup.runLink(${gid})"><svg><use href="#svg-add"></use></svg><span>${tr('BT_LINK_DEVICE')}</span><small>${tr('GROUP_LINK_DESC')}</small></button>`
+            + (group.linkedShades || []).map(sh => {
+                const typeKey = somfy.shadeTypeKey(sh.shadeType);
+                return `<div class="cfg-tile" data-shadeid="${sh.shadeId}" onclick="somfy.openEditShade(${sh.shadeId})">
+            <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#${this.icoOf(sh)}"></use></svg></span>${somfy.cfgTileMenu(`groupSetup.runUnlink(${gid}, ${sh.shadeId})`, '', 'GSETUP_UNLINK_TIP')}</div>
+            <div class="cfg-tile-name"><span class="name-text">${escHtml(sh.name)}</span>${typeKey ? `<span class="cfg-tile-sub">${tr(typeKey)}</span>` : ''}</div>
+            <div class="cfg-tile-foot"><span class="grp-paired">${tr('GSETUP_S_LINKED')}</span><span class="cfg-tile-id">${sh.remoteAddress}</span></div>
+            </div>`;
+            }).join('');
     }
 }
 const groupSetup = new GroupSetup();

@@ -3962,12 +3962,12 @@ class Somfy {
         return mode;
     }
     // La tuile entière ouvre la fiche : le menu ne porte que ce qu'un clic sur la tuile ne fait pas.
-    cfgTileMenu(deleteJs, extraHtml = '') {
+    cfgTileMenu(deleteJs, extraHtml = '', deleteKey = 'BT_DELETE') {
         return `<div class="cfg-tile-menu overlayHeader-dropdown-container" onclick="event.stopPropagation();">
         <button type="button" class="cfg-tile-more" title="${tr('OPTION')}" onclick="somfy.toggleTileMenu(this);"><svg><use href="#svg-menuVertical"></use></svg></button>
         <div class="overlayHeader-dropdown-menu">
         ${extraHtml}
-        <div class="dropdown-item is-danger" onclick="this.parentElement.classList.remove('show'); ${deleteJs};"><svg><use href="#svg-trash"></use></svg>${tr('BT_DELETE')}</div>
+        <div class="dropdown-item is-danger" onclick="this.parentElement.classList.remove('show'); ${deleteJs};"><svg><use href="#svg-trash"></use></svg>${tr(deleteKey)}</div>
         </div>
         </div>`;
     }
@@ -6086,12 +6086,12 @@ class Somfy {
     setLinkedShadesList(group) {
         const hasShades = (group.linkedShades || []).length > 0;
         get('divSomfyGroupButtons')?.classList.toggle('disabled', !hasShades);
-        get('gpMembersBlock')?.classList.toggle('gp-empty', !hasShades);
-        ui.setFocus(get('btnLinkShade'), !hasShades);
         groupSetup.renderMembers(group);
+        ui.setFocus(get('btnLinkShade'), !hasShades);
     }
     procGroupState(state) {
         logger.debug('Group state update:', state);
+        this.refreshGroupRollingCode(state.groupId);
         if (this._vrTarget && this._vrTarget.type === 'group' && this._vrTarget.id === state.groupId) {
             this.setVRSunFlag(state.flags);
             this.setVRSunSensor(!!state.sunSensor);
@@ -6117,6 +6117,7 @@ class Somfy {
         if (el) el.style.display = bShow ? 'none' : '';
         if (!bShow) {
             clearDirty();
+            if (this._grpSaveBar) this._grpSaveBar.update([]);
             routeSetEditor('divSomfyGroups', null);
         }
         if (bShow) {
@@ -6125,86 +6126,116 @@ class Somfy {
         }
     }
 
+    // =====================================================================
+    // SECTION : FICHE GROUPE (gabarit de Général : onglets, barre d'enregistrement)
+    // =====================================================================
+    _bindGroupPage() {
+        if (this._grpTabs) return;
+        const page = get('somfyGroup');
+        this._grpTabs = bindGenTabs(page, { tabs: 'grpTabs', panels: 'grpPanels', pager: 'grpPager', prev: 'btnGrpPrev', next: 'btnGrpNext' });
+        // Après _markDirty (watchDirty), comme Général : différé d'un tour.
+        ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateGroupDirty(), 0)));
+        this._grpSaveBar = new SaveBar(page, { onSave: () => this.saveGroup(), onRevert: () => this.revertGroup() });
+    }
+    // Le code tournant n'entre pas dans la barre : il s'applique à part, après confirmation.
+    updateGroupDirty() {
+        const page = get('somfyGroup');
+        if (!this._grpSaveBar || !this._grpLoaded || page.style.display === 'none') return;
+        const now = ui.fromElement(page), diffs = [];
+        const LB = { name: 'NAME', roomId: 'ROOM', proto: 'PROTOCOL', bitLength: 'BIT', remoteAddress: 'GROUP_ID', flipCommands: 'DEVICE_FLIP_COMMANDS', repeats: 'REPEAT_COMMANDS', ledFeedback: 'LED_FEEDBACK' };
+        page.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+        Object.keys(LB).forEach(k => {
+            const el = page.querySelector(`[data-bind="${k}"]`);
+            if (!el || String(now[k]) === String(this._grpLoaded[k]) || el.closest('.ledFeedbackRow')?.style.display === 'none') return;
+            el.classList.add('is-dirty');
+            const show = (v) => el.type === 'checkbox' ? tr(v ? 'BT_YES' : 'BT_NO')
+                : el.tagName === 'SELECT' ? (Array.from(el.options).find(o => o.value === String(v))?.text ?? v) : v;
+            diffs.push({ label: tr(LB[k]), from: show(this._grpLoaded[k]), to: show(now[k]) });
+        });
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        this._grpSaveBar.update(diffs);
+        this.renderGroupHero();
+    }
+    revertGroup() {
+        if (this._grpData) ui.toElement(get('somfyGroup'), this._grpData);
+        this.updateGroupDirty();
+    }
+    renderGroupHero() {
+        const g = get, isNew = g('spanGroupId').innerText === '*';
+        const name = g('fldGroupName').value.trim();
+        const room = g('selGroupRoom').selectedOptions[0]?.text || tr('HOME');
+        const n = ((this._grpData && this._grpData.linkedShades) || []).length;
+        g('somfyGroupHeaderTitle').textContent = name || tr(isNew ? 'GROUP_CREATE_TITLE' : 'GROUP_EDIT_TITLE');
+        g('somfyGroupHeaderDesc').textContent = isNew ? tr('GROUP_CREATE_DESC') : `${room} · ${tr('GROUP_LINKED_COUNT').replace('{n}', n)}`;
+        g('grpChipRoom').textContent = room;
+        g('grpChipRadio').textContent = `${this.frameProtoLabel(parseInt(g('selGroupProto').value, 10))} · ${g('selGroupBitLength').value} bits · ID ${g('fldGroupAddress').value}`;
+    }
+    // Chaque trame du groupe avance son compteur. Le socket ne le diffuse pas (c'est ce qui permet
+    // de forger une trame) : on relit le groupe, regroupé, et seulement si sa fiche est affichée.
+    refreshGroupRollingCode(groupId) {
+        const page = get('somfyGroup');
+        if (!page || page.style.display === 'none' || get('spanGroupId').innerText !== String(groupId)) return;
+        clearTimeout(this._grpRollTimer);
+        this._grpRollTimer = setTimeout(() => getJSON(`/group?groupId=${groupId}`, (err, group) => {
+            if (err || !group || typeof group.lastRollingCode !== 'number' || get('spanGroupId').innerText !== String(groupId)) return;
+            get('spanGroupRollingCode').textContent = group.lastRollingCode;
+            if (this._grpData) this._grpData.lastRollingCode = group.lastRollingCode;
+        }), 800);
+    }
+    askGroupRollingCode() {
+        const groupId = parseInt(get('spanGroupId').innerText, 10), input = get('fldGroupRollingCode');
+        const code = parseInt(input.value, 10);
+        if (isNaN(code) || code < 0 || code > 65535) return ui.errorMessage(tr('ERR_ROLLING_CODE_INVALID'));
+        const prompt = ui.promptMessage(tr('PROMPT_GROUP_ROLLING'), () => {
+            putJSONSync('/setRollingCode', { groupId, rollingCode: code }, (err, group) => {
+                prompt.remove();
+                if (err) return ui.serviceError(err);
+                get('spanGroupRollingCode').textContent = group && typeof group.lastRollingCode === 'number' ? group.lastRollingCode : code;
+                input.value = '';
+                get('btnGroupRollingCode').disabled = true;
+                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            });
+        });
+        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_GROUP_ROLLING_CONFIRM').replace('{CODE}', code).replace('{OLD}', escHtml(get('spanGroupRollingCode').textContent))}</p>`;
+    }
+
     openEditGroup(groupId, opts) { confirmDiscardChanges(() => this._openEditGroup(groupId, opts)); }
     _openEditGroup(groupId, opts) {
-        const g = get,
-        isNew = groupId === undefined,
-        elGroup = g('somfyGroup'),
-        btnSave = g('btnSaveGroup'),
-        btnContainer = g('divSomfyGroupButtons'),
-        membersBlock = g('gpMembersBlock'),
-        blocPairParent = g('blocPairGroup');
-
+        const g = get, isNew = groupId === undefined, page = g('somfyGroup');
         if (isNew && this.groups?.length >= 14) {
             routeSetEditor('divSomfyGroups', null, { replace: true });
             return ui.errorMessage(g('divSomfySettings'), tr('ERR_GROUP_LIMIT_REACHED'));
         }
-
-        const s = (idOrElem, d) => { const e = (typeof idOrElem === 'string') ? g(idOrElem) : idOrElem; if(e) e.style.display = d; };
+        this._bindGroupPage();
         this.applyLedFeedbackVisibility();
-        this.relayoutOptionGrids();
-
-        const memberList = g('divGroupMembers');
-        if (memberList) memberList.innerHTML = '';
-
-        s(btnContainer, 'flex');
-        btnContainer?.classList.toggle('disabled', isNew);
-        s(btnSave, 'none');
-        s(blocPairParent, 'none');
-        s(membersBlock, 'none');
-        // Une programmation cible un groupId existant : impossible tant que le groupe n'est pas créé.
-        s('divScheduleSectionGroup', isNew ? 'none' : 'flex');
-
+        g('divGroupMembers').innerHTML = '';
+        g('divGroupScheduleBadges').innerHTML = '';
         getJSONSync(isNew ? '/getNextGroup' : `/group?groupId=${groupId}`, (err, group) => {
             if (err) {
                 routeSetEditor('divSomfyGroups', null, { replace: true });
                 return (opts && opts.silentError) ? undefined : ui.serviceError(err);
             }
-
-            if (isNew) {
-                Object.assign(group, {
-                    name: '', flipCommands: false, shades: []
-                });
-            }
+            // Créer passe par l'assistant ; une fiche vierge reste joignable par l'URL : sans groupe
+            // enregistré, rien à appairer ni à planifier (cf. .grp-new).
+            if (isNew) Object.assign(group, { name: '', flipCommands: false, shades: [], linkedShades: [] });
+            page.classList.toggle('grp-new', isNew);
+            g('spanGroupId').innerText = isNew ? '*' : groupId;
+            ui.toElement(page, group);
+            this._grpData = group;
+            this._grpLoaded = ui.fromElement(page);
+            g('fldGroupRollingCode').value = '';
+            g('btnGroupRollingCode').disabled = true;
+            g('spanGroupRollingCode').textContent = group.lastRollingCode ?? '';
             if (!isNew) {
-                s(blocPairParent, 'flex');
-                s(membersBlock, 'flex');
                 this.setLinkedShadesList(group);
-                // Programmations rattachées à ce groupe (badges, bloc Options) : on recharge la
-                // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
                 this.updateScheduleList(() => this.renderScheduleBadges('divGroupScheduleBadges', 'group', groupId));
             }
-
-
-            // --- Gestion dynamique du Titre et de la Description avec capacité (Style Badge) ---
-            const hTitle = g('somfyGroupHeaderTitle'), hDesc = g('somfyGroupHeaderDesc');
-
-            if (hTitle && hDesc) {
-                if (isNew) {
-                    // Mode Création : Phrase simple sans badge
-                    hTitle.innerText = tr('GROUP_CREATE_TITLE');
-                    hDesc.innerText = tr('GROUP_CREATE_DESC');
-                } else {
-                    // Mode Édition : Titre + Description agrémentée du badge de quota
-                    hTitle.innerText = tr('GROUP_EDIT_TITLE');
-
-                    const currentCount = this.groups ? this.groups.length : 0;
-                    const formattedCapacity = `<span class="desc-highlight">${currentCount}/14</span>`;
-
-                    hDesc.innerHTML = tr('GROUP_EDIT_DESC').replace('%s', formattedCapacity);
-                }
-            }
-
-            g('btnSaveGroupText').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
-            g('useSaveGroupIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-save');
-
-            s(btnSave, 'flex');
-            g('spanGroupId').innerText = isNew ? '*' : groupId;
-
-            ui.toElement(elGroup, group);
+            this._grpTabs.show(0);
             this.showEditGroup(true);
             routeSetEditor('divSomfyGroups', isNew ? 'new' : groupId, { label: isNew ? tr('GROUP_CREATE_TITLE') : group.name });
-            watchDirty(elGroup);
+            watchDirty(page);
+            this.updateGroupDirty();
         });
     }
     saveGroup() {
@@ -6227,29 +6258,12 @@ class Somfy {
 
         putJSONSync(isNew ? '/addGroup' : '/saveGroup', obj, (err, group) => {
             if (err) return ui.serviceError(err);
-
-            logger.debug("Group saved:", group);
-            const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
-            ui.successMessage(msg);
+            ui.successMessage(tr(isNew ? 'MSG_ADD_SUCCESS' : 'MSG_SAVE_SUCCESS'));
             clearDirty();
-
-            // SÉCURITÉ COMPTEUR : Si c'est un nouveau groupe, on l'ajoute temporairement au tableau local
-            // pour que openEditGroup() calcule tout de suite le bon nombre.
-            if (isNew) {
-                if (!this.groups) this.groups = [];
-                // On vérifie s'il n'est pas déjà dedans pour éviter les doublons
-                if (!this.groups.some(g => g.groupId === group.groupId)) {
-                    this.groups.push(group);
-                }
-            }
-
-            // On affiche instantanément tout le bloc de contrôle (ton comportement initial parfait)
+            this._grpSaveBar.update([]);
+            if (isNew && !(this.groups || []).some(x => x.groupId === group.groupId)) (this.groups = this.groups || []).push(group);
             this.openEditGroup(group.groupId);
-
-            // On rafraîchit proprement la liste en arrière-plan depuis le serveur
-            this.updateGroupList(() => {
-                this.openEditGroup(group.groupId);
-            });
+            this.updateGroupList();
         });
     }
     deleteGroup(groupId) {
@@ -6270,6 +6284,7 @@ class Somfy {
                         let prompt = ui.promptMessage(tr('PROMPT_DELETE_GROUP'), () => {
                             putJSONSync('/deleteGroup', { groupId: groupId }, (err, g) => {
                                 if (err) ui.serviceError(err);
+                                else if (get('spanGroupId').innerText === String(groupId)) this.showEditGroup(false);
                                 this.updateGroupList();
                                 if (scheduleCount > 0) this.updateScheduleList();
                                 prompt.remove();
@@ -6313,6 +6328,7 @@ class Somfy {
         if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
         if (typeof stepSize === 'number') obj.stepSize = parseInt(stepSize);
         putJSON('/groupCommand', obj, (err, group) => {
+            if (!err) this.refreshGroupRollingCode(groupId);
             if (typeof cb === 'function') cb(err, group);
         });
     }

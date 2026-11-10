@@ -516,6 +516,7 @@ namespace WebRadioCommands {
     WebRequestMethodComposite method = request->method();
     if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       uint8_t shadeId = 255;
+      uint8_t groupId = 255;
       uint16_t rollingCode = 0;
       if (asyncHasBody(request)) {
         // Its coming in the body.
@@ -528,12 +529,29 @@ namespace WebRadioCommands {
         else {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
+          if (obj.containsKey("groupId")) groupId = obj["groupId"];
           if(obj.containsKey("rollingCode")) rollingCode = obj["rollingCode"];
         }
       }
       else if (request->hasArg("shadeId")) {
         shadeId = atoi(request->arg("shadeId").c_str());
         rollingCode = atoi(request->arg("rollingCode").c_str());
+      }
+      // Un groupe émet aussi avec son propre compteur (NVS « ShadeCodes », clé de son adresse).
+      if (groupId != 255) {
+        SomfyGroup* group = somfy.getGroupById(groupId);
+        if (!group) {
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group not found to set rolling code\"}");
+          return;
+        }
+        group->setRollingCode(rollingCode);
+        JsonAsyncResponse resp;
+        resp.beginResponse(request);
+        resp.beginObject();
+        group->toJSON(resp);
+        resp.endObject();
+        resp.endResponse();
+        return;
       }
       SomfyShade* shade = nullptr;
       if (shadeId != 255) shade = somfy.getShadeById(shadeId);
