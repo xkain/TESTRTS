@@ -1389,14 +1389,13 @@
                                 <div class="gen-body">
                                     <nav id="shdTabs" class="gen-tabs" role="tablist">
                                         <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="SUBTAB_GENERAL"></button>
-                                        <button type="button" class="gen-tab" role="tab" data-tab="1" tr="SUBTAB_CONTROL"></button>
+                                        <button type="button" class="gen-tab" role="tab" data-tab="1" tr="SUBTAB_REMOTES"></button>
                                         <button type="button" class="gen-tab" role="tab" data-tab="2" tr="SUBTAB_SETTINGS"></button>
-                                        <button type="button" class="gen-tab" role="tab" data-tab="3" tr="SUBTAB_REMOTES"></button>
-                                        <button type="button" class="gen-tab" role="tab" data-tab="4" tr="SUBTAB_SCHEDULES"></button>
+                                        <button type="button" class="gen-tab" role="tab" data-tab="3" tr="SUBTAB_SCHEDULES"></button>
                                     </nav>
                                     <div id="shdPanels" class="gen-panels">
                                         <div class="gen-grid" role="tabpanel" data-tab="0">
-                                            <header class="gen-sec-head"><h2 tr="SUBTAB_GENERAL"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></span></header>
+                                            <header class="gen-sec-head"><h2 tr="SUBTAB_GENERAL"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></span></header>
                                             <div class="gen-tile">
                                                 <h3 class="gen-tile-title" tr="DEVICE_TILE_IDENTITY"></h3>
                                                 <div class="gen-field">
@@ -1457,51 +1456,12 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="gen-grid" role="tabpanel" data-tab="1" hidden>
-                                            <header class="gen-sec-head"><h2 tr="SUBTAB_CONTROL"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i><i></i></span></header>
-                                            <div id="shdSliderTile" class="gen-tile ed-span">
-                                                <div id="shdSliderPos" class="ed-slider">
-                                                    <div class="ed-slider-head"><label class="gen-tile-title" for="slidShadePos" tr="DEVICE_GOTO_POS"></label><b id="valShadePos"></b></div>
-                                                    <div class="slider-wrapper"><div class="slider-progress"><div class="slider-thumb-line"></div></div>
-                                                        <input id="slidShadePos" type="range" class="md3-range-input" min="0" max="100" step="1" oninput="syncSliderProgress(this); somfy.onEditorSliderInput(this);" onpointerdown="sliderDragStart(this);" onkeydown="sliderDragStart(this, true);" onkeyup="sliderDragEnd(this);" onchange="somfy.commitSliderTarget(this, parseInt(document.getElementById('spanShadeId').innerText, 10), false);"></div>
-                                                    <div class="ed-slider-ends"><span class="ed-end-lo"></span><span class="ed-end-hi"></span></div>
-                                                </div>
-                                                <div id="shdSliderTilt" class="ed-slider">
-                                                    <div class="ed-slider-head"><label class="gen-tile-title" for="slidShadeTilt" tr="OPT_PAGE_TILT"></label><b id="valShadeTilt"></b></div>
-                                                    <div class="slider-wrapper tilt-slider"><div class="slider-progress"><div class="slider-thumb-line"></div></div>
-                                                        <input id="slidShadeTilt" type="range" class="md3-range-input" min="0" max="100" step="1" oninput="syncSliderProgress(this); somfy.onEditorSliderInput(this);" onpointerdown="sliderDragStart(this);" onkeydown="sliderDragStart(this, true);" onkeyup="sliderDragEnd(this);" onchange="somfy.commitSliderTarget(this, parseInt(document.getElementById('spanShadeId').innerText, 10), true);"></div>
-                                                    <div class="ed-slider-ends"><span class="ed-end-lo"></span><span class="ed-end-hi"></span></div>
-                                                </div>
-                                            </div>
-                                            <div id="shdNoSliderTile" class="gen-tile ed-span">
-                                                <h3 class="gen-tile-title" tr="DEVICE_CTL_COMMAND"></h3>
-                                                <b class="ed-ctl-v"></b>
-                                                <p class="gen-tile-desc"></p>
-                                            </div>
-                                            <div id="shdCtlSent" class="gen-tile">
-                                                <h3 class="gen-tile-title" tr="SHADE_ACT_SENT"></h3>
-                                                <b class="ed-ctl-v"></b>
-                                                <p class="gen-tile-desc"></p>
-                                            </div>
-                                            <div id="shdCtlRemote" class="gen-tile">
-                                                <h3 class="gen-tile-title" tr="SUBTAB_REMOTES"></h3>
-                                                <b class="ed-ctl-v"></b>
-                                                <p class="gen-tile-desc"></p>
-                                            </div>
-                                            <div id="shdCtlNext" class="gen-tile">
-                                                <h3 class="gen-tile-title" tr="DEVICE_CTL_NEXT"></h3>
-                                                <b class="ed-ctl-v"></b>
-                                                <p class="gen-tile-desc"></p>
-                                            </div>
-                                            <div id="shdCtlSetup" class="gen-tile ed-tile-warn">
-                                                <h3 class="gen-tile-title"></h3>
-                                                <b class="ed-ctl-v"></b>
-                                                <p class="gen-tile-desc"></p>
-                                                <button type="button" class="gen-btn" onclick="shadeSetup.resume(parseInt(document.getElementById('spanShadeId').innerText, 10));" tr="BT_RESUME"></button>
-                                            </div>
+                                        <div class="gen-grid ed-wide" role="tabpanel" data-tab="1" hidden>
+                                            <header class="gen-sec-head"><h2 tr="SUBTAB_REMOTES"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i></span></header>
+                                            <div id="divShadeRemotes" class="ed-section"></div>
                                         </div>
                                         <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
-                                            <header class="gen-sec-head"><h2 tr="SUBTAB_SETTINGS"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i><i></i><i></i></span></header>
+                                            <header class="gen-sec-head"><h2 tr="SUBTAB_SETTINGS"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i><i></i></span></header>
                                             <div id="divShadeSetupTasks" class="gen-tile" style="display:none;">
                                                 <h3 id="shdSetupTitle" class="gen-tile-title"></h3>
                                                 <div class="gen-meter"><i id="shdSetupMeter"></i></div>
@@ -1637,7 +1597,7 @@
                                                         <span class="gen-seg-no" tr="BT_NO"></span>
                                                     </span>
                                                 </label>
-                                                <button type="button" class="gen-btn" onclick="shadeSetup.fromEdit(parseInt(document.getElementById('spanShadeId').innerText, 10), 'opts');"><svg><use href="#svg-favori"></use></svg><span tr="DEVICE_MY_SET"></span></button>
+                                                <button type="button" class="gen-btn" onclick="shadeSetup.fromEdit(parseInt(document.getElementById('spanShadeId').innerText, 10), 'my');"><svg><use href="#svg-favori"></use></svg><span tr="DEVICE_MY_SET"></span></button>
                                             </div>
                                             <div id="shdCommTile" class="gen-tile">
                                                 <h3 class="gen-tile-title" tr="COMMUNICATION"></h3>
@@ -1702,11 +1662,7 @@
                                             </div>
                                         </div>
                                         <div class="gen-grid ed-wide" role="tabpanel" data-tab="3" hidden>
-                                            <header class="gen-sec-head"><h2 tr="SUBTAB_REMOTES"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i><i></i></span></header>
-                                            <div id="divShadeRemotes" class="ed-section"></div>
-                                        </div>
-                                        <div class="gen-grid ed-wide" role="tabpanel" data-tab="4" hidden>
-                                            <header class="gen-sec-head"><h2 tr="SUBTAB_SCHEDULES"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i></i><i class="on"></i></span></header>
+                                            <header class="gen-sec-head"><h2 tr="SUBTAB_SCHEDULES"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i></span></header>
                                 <div id="divScheduleSectionShade" class="ed-section">
                                     <div id="divShadeScheduleBadges" class="cfg-tiles sched-tiles"></div>
                                 </div>

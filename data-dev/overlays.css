@@ -1200,33 +1200,8 @@ button[line].fw-sidebar-button:hover {
     border-radius: 0;
 }
 /* -----------------------------------------------------------------------
- *  Modale des télécommandes liées (modal-remotes)
+ *  Télécommandes liées : adresse et badge de signal (fiche, fenêtre de tâche)
  * ----------------------------------------------------------------------- */
-
-.somfyLinkedRemote {
-    display: flex;
-    align-items: center;
-    padding: 2px 10px;
-    background: var(--color-bg-inset);
-    border-radius: var(--radius-row);
-    border: 1px solid transparent;
-}
-.somfyLinkedRemote:hover {
-    background: var(--color-accent-transp-94);
-    color: var(--color-text-main);
-    border-radius:var(--radius-row);
-    border: 1px solid var(--color-accent);
-}
-.linkedWrap svg {
-    color: var(--color-text-secondary);
-}
-.linkedContent {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    text-align: left;
-    margin-left: 6px;
-}
 .idRemoteAddress {
     display: flex;
     align-items: center;
@@ -1234,55 +1209,6 @@ button[line].fw-sidebar-button:hover {
     flex-shrink: 0;
     margin-left: auto;
     line-height: 1;
-}
-/* --- Fusion divLinking/divRemotesOverlay (recherche de télécommande + qualité de signal) --- */
-/* Scopée à .linkedRemoteCard pour ne pas déteindre sur .somfyLinkedRemote/.linkedWrap/.linkedContent
-   ailleurs (setLinkedShadesList réemploie ces mêmes classes de structure). Pas de :hover ici,
-   contrairement à .somfyLinkedRemote:hover dont elle hérite sinon -- neutralisé ci-dessous en
-   repartant des mêmes valeurs que l'état par défaut. */
-.linkedRemoteCard {
-    /* Empilée en colonne : override du display:flex/align-items:center row de .somfyLinkedRemote,
-       qui centrerait sinon la ligne signal avec l'icône/la poubelle sur toute la hauteur. */
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 12px 14px;
-}
-.linkedRemoteCard:hover {
-    background: var(--color-bg-inset);
-    border-radius: var(--radius-row);
-    border-color: transparent;
-    color: inherit;
-}
-/* Bloc du haut (icône + infos + poubelle) : ce sont ces trois éléments-là qu'on centre entre eux,
-   pas la carte entière -- la ligne signal (.remote-card-bottom) reste alignée à gauche en dessous. */
-.linkedRemoteCard .remote-card-top {
-    display: flex;
-    align-items: center;
-    gap:4px;
-}
-.linkedRemoteCard .remote-card-bottom {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--color-border-hr-soft);
-}
-.linkedRemoteCard .linkedWrap .icon-svg {
-    width: 38px;
-    height: 38px;
-}
-.linkedRemote-title {
-    font-weight: 700;
-    font-size: 1.02em;
-    color: var(--color-text-main);
-}
-.linkedRemote-meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 3px;
-    font-size: 0.82em;
-    color: var(--color-text-secondary);
-    opacity: 0.8;
 }
 .linkedRemote-sep {
     opacity: 0.5;
@@ -1323,26 +1249,6 @@ button[line].fw-sidebar-button:hover {
 .linkedRemote-signal-icon.sig-bad,
 .linkedRemote-signal-value.sig-bad {
     color: var(--color-signal-bad);
-}
-.linkedRemote-btn-delete {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    color: var(--color-danger);
-    flex-shrink: 0;
-    cursor: pointer;
-    opacity: 0.9;
-    transition: opacity 0.2s ease;
-}
-.linkedRemote-btn-delete svg {
-    width: 25px;
-    height: 25px;
-    fill: currentColor;
-}
-.linkedRemote-btn-delete:hover {
-    opacity: 1;
 }
 .remote-search-status {
     margin: 0 20px 15px;
@@ -2871,29 +2777,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     justify-content: flex-end;
     gap: 8px;
 }
-.slider-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    width: 100%;
-    margin-bottom: 3px;
-}
-.slider-header .title {
-    font-size: 1em;
-    color: var(--color-text-main);
-    font-weight: 500;
-}
-.slider-header .val {
-    font-size: 0.9em;
-    font-weight: bold;
-    color: var(--color-text-secondary);
-}
-.slider-group {
-    width: 100%;
-}
-.slider-header .val span {
-    font-variant-numeric: tabular-nums;
-}
 .shade-positioner input[type=range] {
     width:100%;
     margin-top:0px;
@@ -3085,7 +2968,7 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
    quoi la feuille retomberait à une seule colonne. */
 @media (min-width: 768px) {
     .genmod-body .icon-pack-grid {
-        grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(max(var(--tile-min), calc((100% - 3 * var(--tile-gap)) / 4)), 1fr));
         gap: var(--tile-gap);
     }
     .genmod-body .icon-pack-tile {
@@ -3601,7 +3484,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .room-win-label { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; margin-top: 6px; }
 .room-win-label b { font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
 .room-win-label span { font-size: var(--fs-2); color: var(--text-3); }
-.room-win-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(var(--tile-min), 100%), 1fr)); gap: 10px; }
+.room-win-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(max(var(--tile-min), calc((100% - 30px) / 4)), 100%), 1fr)); gap: 10px; }
 .room-win-item, .room-win-item:hover { display: flex; justify-content: flex-start; align-items: center; gap: 12px; width: auto; min-height: 64px; margin: 0; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--r-4); background: var(--surface); color: var(--text); text-align: left; text-transform: none; font-weight: 400; }
 .room-win-item.on, .room-win-item.on:hover { border-color: var(--on-fill); box-shadow: inset 0 0 0 1px var(--on-fill); }
 .room-win-item-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--r-2); background: var(--surface-2); color: var(--text-2); }
@@ -3661,7 +3544,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .wiz-kick { font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
 .wiz-h { margin: 4px 0 0; font-size: clamp(24px, 2.3vw, 36px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; overflow-wrap: anywhere; }
 .wiz-lead { max-width: 760px; margin: 0; font-size: var(--fs-4); line-height: 1.5; color: var(--text-2); }
-.wiz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr)); gap: 16px; }
+.wiz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(max(380px, calc((100% - 48px) / 4)), 100%), 1fr)); gap: 16px; }
 .wiz-check, .wiz-check:hover { display: flex; justify-content: flex-start; align-items: center; gap: 12px; width: auto; min-height: 64px; margin: 0; padding: 12px 14px; border: 2px solid var(--surface-2); border-radius: var(--r-4); background: var(--surface); color: var(--text); text-align: left; text-transform: none; font-weight: 400; }
 .wiz-check.on, .wiz-check.on:hover { border-color: var(--on-fill); }
 .wiz-check:disabled, .wiz-check:disabled:hover { opacity: .5; }
@@ -3714,12 +3597,9 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .wiz-sec-h { display: flex; align-items: center; gap: 10px; margin: 0; font-size: var(--fs-6); font-weight: 800; }
 .wiz-sec-n { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: var(--r-pill); background: var(--on-fill); color: var(--on-fill-text); font-size: var(--fs-3); }
 .wiz-sec-off { opacity: .45; pointer-events: none; }
-/* Huit types : deux rangées pleines de quatre (une seule de huit sur très grand écran), toujours
+/* Huit types : deux rangées pleines de quatre, toujours
    sur toute la largeur, comme la tuile de copie en dessous ; jamais de tuile seule en bout de grille. */
 .wiz-fam { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-@media (min-width: 2300px) {
-    .wiz-fam { grid-template-columns: repeat(8, minmax(0, 1fr)); }
-}
 .wiz-fam-card, .wiz-fam-card:hover { flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 14px; width: auto; min-height: 190px; margin: 0; padding: 18px; border: 2px solid var(--surface); border-radius: var(--r-4); background: var(--surface); color: var(--text); font-size: var(--fs-5); font-weight: 700; text-align: left; text-transform: none; }
 .wiz-fam-card.on, .wiz-fam-card.on:hover { border-color: var(--on-fill); }
 .wiz-fam-icon { display: grid; place-items: center; width: 100%; height: 112px; border-radius: var(--r-3); background: var(--surface-2); color: var(--text-2); }
@@ -3743,27 +3623,124 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .wiz-after[hidden] { display: none; }
 /* Contenu des tâches de mise en service (corps setup-*, partagés avec l'overlay d'une tâche seule)
    remis aux couleurs de la coque : boutons pilule, contrôles segmentés, tuiles pour les options. */
-#divShadeSetup .wiz-main .setup-p { font-size: var(--fs-4); color: var(--text); }
-#divShadeSetup .wiz-main .setup-p.sub { font-size: var(--fs-3); color: var(--text-3); }
-#divShadeSetup .wiz-main .setup-actions button, #divShadeSetup .wiz-main .setup-actions button:hover,
-#divShadeSetup .wiz-main :is(.wiz-body, .setup-optq) > button:not(.setup-link), #divShadeSetup .wiz-main :is(.wiz-body, .setup-optq) > button:not(.setup-link):hover { flex: none; align-self: flex-start; width: auto; min-height: 44px; margin: 0; padding: 0 18px; border: 0; border-radius: var(--r-pill); background: var(--color-accent); color: var(--color-text-on-accent); font-size: var(--fs-3); font-weight: 700; text-transform: none; }
-#divShadeSetup .wiz-main .setup-actions button[line], #divShadeSetup .wiz-main .setup-actions button[line]:hover,
-#divShadeSetup .wiz-main :is(.wiz-body, .setup-optq) > button[line], #divShadeSetup .wiz-main :is(.wiz-body, .setup-optq) > button[line]:hover { background: var(--surface-2); color: var(--text); }
-#divShadeSetup .wiz-main :is(.wiz-body, .setup-optq, .setup-actions) > button.btn-success, #divShadeSetup .wiz-main :is(.wiz-body, .setup-optq, .setup-actions) > button.btn-success:hover { background: var(--ok); color: var(--surface); }
-#divShadeSetup .wiz-main .setup-link { font-size: var(--fs-3); font-weight: 700; text-decoration: none; }
-#divShadeSetup .wiz-main .setup-chips { gap: 4px; padding: 4px; border: 0; border-radius: var(--r-pill); background: var(--surface-2); }
-#divShadeSetup .wiz-main .setup-chip { padding: 7px 13px; border-radius: var(--r-pill); font-size: var(--fs-2); font-weight: 600; color: var(--text-3); }
-#divShadeSetup .wiz-main .setup-chip.sel { background: var(--on-fill); color: var(--on-fill-text); box-shadow: none; }
+/* --- Tâche seule au gabarit genmod- (cf. renderTask) : appairage, télécommandes, puis le contenu des
+   autres tâches repris de l'assistant, restylé par :is(.wiz-main, .genmod-body). --- */
+#divShadeSetup .genmod-body > .wiz-body { display: flex; flex-direction: column; gap: 16px; }
+.tw-steps { display: flex; flex-direction: column; gap: 10px; }
+.tw-step { display: flex; align-items: flex-start; gap: 14px; padding: 16px; border-radius: var(--r-4); background: var(--surface-2); }
+.tw-step-n { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--r-pill); background: var(--on-fill); color: var(--on-fill-text); font-size: var(--fs-3); font-weight: 800; }
+.tw-step-n svg { width: 16px; height: 16px; fill: currentColor; }
+.tw-step.is-done .tw-step-n { background: var(--ok); color: #fff; }
+.tw-step.is-off { opacity: .6; }
+.tw-step.is-off .tw-step-n { background: var(--border); color: var(--text-2); }
+.tw-step-t { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: var(--fs-3); line-height: 1.5; color: var(--text-2); }
+.tw-step-t > b { font-size: var(--fs-4); color: var(--text); }
+.tw-prog, .tw-prog:hover { align-self: flex-start; display: flex; width: auto; flex-direction: column; align-items: center; min-width: 220px; min-height: 64px; margin: 0; padding: 10px 24px; border: 0; border-radius: var(--r-4); background: var(--on-fill); color: var(--on-fill-text); font-size: var(--fs-7); font-weight: 800; letter-spacing: .04em; text-transform: uppercase; box-shadow: 0 6px 16px rgba(0, 0, 0, .18); user-select: none; }
+.tw-prog small { font-size: var(--fs-1); font-weight: 600; letter-spacing: 0; text-transform: none; opacity: .7; }
+.tw-q { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1.5px solid var(--border); border-radius: var(--r-4); }
+.tw-q[hidden] { display: none; }
+.tw-q > b { font-size: var(--fs-4); }
+.tw-chips, .tw-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.tw-acts .gen-btn { width: auto; }
+.tw-chip, .tw-chip:hover { width: auto; min-height: 44px; margin: 0; padding: 0 16px; border: 2px solid var(--surface-2); border-radius: var(--r-5); background: var(--surface); color: var(--text); font-size: var(--fs-3); font-weight: 700; text-transform: none; }
+.tw-chip.is-ok { border-color: var(--ok); background: var(--ok); color: #fff; }
+.tw-ok, .tw-card { display: flex; align-items: center; gap: 14px; margin: 0; padding: 16px; border-radius: var(--r-4); }
+.tw-ok { background: var(--ok-bg); color: var(--ok); font-size: var(--fs-4); font-weight: 700; }
+.tw-ok svg { flex: none; width: 22px; height: 22px; fill: currentColor; }
+.tw-card { background: var(--info-bg); color: var(--info); }
+.tw-card.is-ok { background: var(--ok-bg); color: var(--ok); }
+.tw-card.is-warn { align-items: flex-start; background: var(--warn-bg); color: var(--warn); }
+.tw-card-ico { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: var(--r-pill); background: var(--surface); }
+.tw-card-ico svg { width: 26px; height: 26px; fill: currentColor; }
+.tw-card.is-listen .tw-card-ico { animation: twPulse 1.4s ease-in-out infinite; }
+@keyframes twPulse { 50% { opacity: .35; } }
+.tw-card b { display: block; margin-bottom: 4px; font-size: var(--fs-4); }
+.tw-card span { font-size: var(--fs-3); line-height: 1.45; }
+.tw-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tw-facts i { padding: 4px 10px; border-radius: var(--r-pill); background: var(--surface); font-size: var(--fs-1); font-style: normal; font-weight: 700; }
+.tw-link, .tw-link:hover { align-self: flex-start; width: auto; min-height: 0; margin: 0; padding: 0; border: 0; background: none; color: var(--color-accent); font-size: var(--fs-3); font-weight: 700; text-transform: none; }
+.tw-sec { margin: 4px 0 0; font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.tw-rlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(max(300px, calc((100% - 30px) / 4)), 100%), 1fr)); gap: 10px; }
+.tw-rt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-width: 0; padding: 12px; border: 1.5px solid var(--border); border-radius: var(--r-3); }
+.tw-rt-ico { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-2); background: var(--surface-2); }
+.tw-rt-ico svg { width: 22px; height: 22px; fill: currentColor; }
+.tw-rt-t { display: flex; flex-direction: column; min-width: 0; }
+.tw-rt-t b { font-size: var(--fs-3); }
+.tw-rt-t small { font-size: var(--fs-1); color: var(--text-3); }
+.tw-rt .linkedRemote-signal { margin-left: auto; }
+/* --- Fenêtres de planning : programmation (ScheduleOverlay, gabarit genmod-) et horaire posé dessus. --- */
+.sw-sec { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 4px; font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.sw-days { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sw-days .schedule-day-btn, .sw-days .schedule-day-btn:hover { flex: none; box-sizing: border-box; display: grid; place-items: center; width: 44px; height: 44px; min-width: 0; margin: 0; padding: 0; border: 2px solid var(--surface-2); border-radius: var(--r-pill); background: var(--surface); color: var(--text-2); font-size: var(--fs-3); font-weight: 800; text-transform: none; }
+.sw-days .schedule-day-btn.active { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+.sw-hours { display: flex; flex-direction: column; gap: 8px; }
+.sw-hr { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--r-3); background: var(--surface); cursor: pointer; }
+.sw-hr:hover { border-color: var(--on-fill); }
+.sw-hr.is-off { opacity: .55; }
+.sw-hr-time { flex: none; min-width: 64px; font-size: var(--fs-6); font-weight: 800; font-variant-numeric: tabular-nums; }
+.sw-hr-ico { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: var(--r-2); background: var(--surface-2); }
+.sw-hr-ico svg { width: 18px; height: 18px; fill: currentColor; }
+.sw-hr-t { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sw-hr-t b { font-size: var(--fs-3); }
+.sw-hr-t small { font-size: var(--fs-2); color: var(--text-3); }
+.sw-hr-del, .sw-hr-del:hover { flex: none; display: grid; place-items: center; width: 36px; height: 36px; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--danger); }
+.sw-hr-del svg { width: 18px; height: 18px; fill: currentColor; }
+.sw-add, .sw-add:hover { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 56px; margin: 0; border: 2px dashed color-mix(in srgb, var(--text-3) 45%, transparent); border-radius: var(--r-3); background: transparent; color: var(--text-2); font-size: var(--fs-3); font-weight: 700; text-transform: none; }
+.sw-add:hover { border-color: var(--on-fill); }
+.sw-add svg { width: 20px; height: 20px; fill: currentColor; }
+.genmod-side .sw-off { align-self: center; padding: 4px 10px; border-radius: var(--r-pill); background: var(--warn-bg); color: var(--warn); font-size: var(--fs-1); font-weight: 700; }
+.sw-hour-overlay .message-content.sw-hour { display: flex; flex-direction: column; gap: 0; width: min(680px, calc(100% - 32px)); max-width: none; max-height: calc(100% - 48px); padding: 0; border-radius: var(--r-5); background: var(--surface); overflow: hidden; text-align: left; }
+.sw-hour-head { display: flex; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--border); }
+.sw-hour-head h3 { margin: 0; font-size: var(--fs-6); font-weight: 800; color: var(--text); }
+.sw-hour-head .genmod-close { display: flex; margin-left: auto; }
+.sw-hour-body { display: flex; flex-direction: column; gap: 14px; min-height: 0; padding: 18px 22px; overflow: auto; }
+.sw-col { display: flex; flex-direction: column; gap: 10px; }
+.sw-slh { display: flex; justify-content: space-between; align-items: baseline; }
+.sw-slh b { font-size: var(--fs-5); font-weight: 800; color: var(--text); }
+.sw-chips .schedule-quickpos-btn, .sw-chips .schedule-quickpos-btn:hover { flex: none; width: auto; flex-direction: row; gap: 8px; min-width: 0; min-height: 44px; margin: 0; padding: 0 16px; border: 2px solid var(--surface-2); border-radius: var(--r-5); background: var(--surface); color: var(--text); font-size: var(--fs-3); font-weight: 700; text-transform: none; }
+.sw-chips .schedule-quickpos-btn svg { width: 20px; height: 20px; fill: currentColor; }
+.sw-chips .schedule-quickpos-btn.active { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+.sw-hour .schedule-sun-offset-field { flex: 0 0 110px; height: auto; padding: 0 12px; }
+.sw-hour-foot { padding: 12px 22px; border-top: 1px solid var(--border); }
+.sw-hour .gen-btn, .sw-days .tw-link { width: auto; }
+@media (max-width: 767px) {
+    .sw-hour-overlay { align-items: flex-end; }
+    .sw-hour-overlay .message-content.sw-hour { width: 100%; max-height: 92%; border-radius: var(--r-5) var(--r-5) 0 0; }
+    .sw-hour-body { padding: 14px 16px; }
+    .sw-hour-foot { padding: 12px 16px; }
+    .sw-hr { gap: 10px; padding: 10px 12px; }
+    .sw-hr-time { min-width: 52px; font-size: var(--fs-5); }
+    /* Jours : les sept ronds se partagent la ligne (44 px au plus), « Tous les jours » passe dessous. */
+    .sw-days { gap: 6px; }
+    .sw-days .schedule-day-btn, .sw-days .schedule-day-btn:hover { flex: 1 1 0; width: auto; max-width: 44px; height: auto; aspect-ratio: 1; }
+    .sw-days .tw-link { flex-basis: 100%; text-align: left; }
+    /* Positions en icônes seules, sur une ligne : le libellé reste lu par les lecteurs d'écran. */
+    .sw-chips { flex-wrap: nowrap; gap: 6px; }
+    .sw-chips .schedule-quickpos-btn, .sw-chips .schedule-quickpos-btn:hover { position: relative; flex: 1 1 0; justify-content: center; min-height: 52px; padding: 0; }
+    .sw-chips .schedule-quickpos-btn svg { width: 26px; height: 26px; }
+    .sw-chips .schedule-quickpos-btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-p { font-size: var(--fs-4); color: var(--text); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-p.sub { font-size: var(--fs-3); color: var(--text-3); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-actions button, #divShadeSetup :is(.wiz-main, .genmod-body) .setup-actions button:hover,
+#divShadeSetup :is(.wiz-main, .genmod-body) :is(.wiz-body, .setup-optq) > button:not(.setup-link), #divShadeSetup :is(.wiz-main, .genmod-body) :is(.wiz-body, .setup-optq) > button:not(.setup-link):hover { flex: none; align-self: flex-start; width: auto; min-height: 44px; margin: 0; padding: 0 18px; border: 0; border-radius: var(--r-pill); background: var(--color-accent); color: var(--color-text-on-accent); font-size: var(--fs-3); font-weight: 700; text-transform: none; }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-actions button[line], #divShadeSetup :is(.wiz-main, .genmod-body) .setup-actions button[line]:hover,
+#divShadeSetup :is(.wiz-main, .genmod-body) :is(.wiz-body, .setup-optq) > button[line], #divShadeSetup :is(.wiz-main, .genmod-body) :is(.wiz-body, .setup-optq) > button[line]:hover { background: var(--surface-2); color: var(--text); }
+#divShadeSetup :is(.wiz-main, .genmod-body) :is(.wiz-body, .setup-optq, .setup-actions) > button.btn-success, #divShadeSetup :is(.wiz-main, .genmod-body) :is(.wiz-body, .setup-optq, .setup-actions) > button.btn-success:hover { background: var(--ok); color: var(--surface); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-link { font-size: var(--fs-3); font-weight: 700; text-decoration: none; }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-chips { gap: 4px; padding: 4px; border: 0; border-radius: var(--r-pill); background: var(--surface-2); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-chip { padding: 7px 13px; border-radius: var(--r-pill); font-size: var(--fs-2); font-weight: 600; color: var(--text-3); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-chip.sel { background: var(--on-fill); color: var(--on-fill-text); box-shadow: none; }
 #divShadeSetup .wiz-opts .setup-optq { gap: 12px; padding: 22px; border: 0; border-radius: var(--r-5); background: var(--surface); }
-#divShadeSetup .wiz-main .setup-q2 { font-size: var(--fs-4); font-weight: 700; color: var(--text); }
-#divShadeSetup .wiz-main :is(.setup-warn, .setup-info) { padding: 12px 14px; border: 0; border-radius: var(--r-4); }
-#divShadeSetup .wiz-main .setup-warn { background: var(--warn-bg); color: var(--warn); }
-#divShadeSetup .wiz-main .setup-info { background: var(--info-bg); color: var(--info); }
-#divShadeSetup .wiz-main .setup-meas div { border: 2px solid transparent; border-radius: var(--r-3); background: var(--surface-2); padding: 12px 14px; font-size: var(--fs-2); }
-#divShadeSetup .wiz-main .setup-meas b { margin-top: 2px; font-size: var(--fs-6); }
-#divShadeSetup .wiz-main .setup-meas .cur { border-color: var(--on-fill); }
-#divShadeSetup .wiz-main .setup-chrono { font-size: clamp(40px, 4.4vw, 64px); text-align: left; }
-#divShadeSetup .wiz-main :is(.setup-marks, .setup-mypos) { border: 0; border-radius: var(--r-3); background: var(--surface-2); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-q2 { font-size: var(--fs-4); font-weight: 700; color: var(--text); }
+#divShadeSetup :is(.wiz-main, .genmod-body) :is(.setup-warn, .setup-info) { padding: 12px 14px; border: 0; border-radius: var(--r-4); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-warn { background: var(--warn-bg); color: var(--warn); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-info { background: var(--info-bg); color: var(--info); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-meas div { border: 2px solid transparent; border-radius: var(--r-3); background: var(--surface-2); padding: 12px 14px; font-size: var(--fs-2); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-meas b { margin-top: 2px; font-size: var(--fs-6); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-meas .cur { border-color: var(--on-fill); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-chrono { font-size: clamp(40px, 4.4vw, 64px); text-align: left; }
+#divShadeSetup :is(.wiz-main, .genmod-body) :is(.setup-marks, .setup-mypos) { border: 0; border-radius: var(--r-3); background: var(--surface-2); }
 /* Tablette : étapes en bandeau au-dessus du contenu, croix au bout de la ligne du titre. */
 @media (max-width: 999px) {
     .message-content.wiz-window { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "side" "main" "foot"; }
@@ -3816,9 +3793,9 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .wiz-fam-icon svg { width: 48px; height: 48px; }
     .wiz-sec-h { font-size: var(--fs-5); }
     /* Réponses des questions : chips séparés, comme les questions du type, plutôt qu'un segmenté. */
-    #divShadeSetup .wiz-main .setup-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; background: none; }
-    #divShadeSetup .wiz-main .setup-chip { display: flex; align-items: center; min-height: 44px; padding: 0 16px; border: 2px solid var(--surface-2); border-radius: var(--r-5); background: var(--surface); color: var(--text); font-size: var(--fs-3); font-weight: 700; }
-    #divShadeSetup .wiz-main .setup-chip.sel { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+    #divShadeSetup :is(.wiz-main, .genmod-body) .setup-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; background: none; }
+    #divShadeSetup :is(.wiz-main, .genmod-body) .setup-chip { display: flex; align-items: center; min-height: 44px; padding: 0 16px; border: 2px solid var(--surface-2); border-radius: var(--r-5); background: var(--surface); color: var(--text); font-size: var(--fs-3); font-weight: 700; }
+    #divShadeSetup :is(.wiz-main, .genmod-body) .setup-chip.sel { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
     /* Page de création : le pied devient le message flottant de la barre d'enregistrement (.save-bar). */
     .message-content.wiz-window { position: relative; }
     .wiz-main.wiz-main-float { padding-bottom: 96px; }
@@ -4227,12 +4204,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .col-days-list span.active {
     color: var(--color-accent);
 }
-.schedule-hours-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
 .schedule-hour-time {
     display: flex;
     align-items: center;
@@ -4254,11 +4225,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     margin: -12px 0 -12px -10px;
     border: none;
     border-radius: var(--radius-row) 0 0 var(--radius-row);
-}
-.schedule-hour-block .uniRow:hover {
-    background: var(--color-accent-transp-94);
-    border-color: var(--color-accent);
-    cursor: pointer;
 }
 
 @media (max-width: 480px) {

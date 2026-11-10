@@ -2171,7 +2171,8 @@ body.is-home-welcome .container {
 }
 .gen-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    /* Quatre tuiles par ligne au plus, dans toute la nouvelle interface : la cinquième passe dessous. */
+    grid-template-columns: repeat(auto-fill, minmax(max(340px, calc((100% - 3 * 16px) / 4)), 1fr));
     gap: 16px;
 }
 .gen-panels {
@@ -2181,6 +2182,12 @@ body.is-home-welcome .container {
    reste dans la rangée. nth-of-type : le titre de section (<header>, mobile) ne compte pas. */
 @container (max-width: 1051px) {
     .gen-grid > div:last-child:nth-of-type(odd) {
+        grid-column: 1 / -1;
+    }
+    .gen-grid.js-span > div:not(.gen-span):last-child:nth-of-type(odd) {
+        grid-column: auto;
+    }
+    .gen-grid.js-span > .gen-span {
         grid-column: 1 / -1;
     }
 }
@@ -3813,14 +3820,8 @@ div.signal {
 }
 
 /* -----------------------------------------------------------------------
- *  Sélecteur de jours (programmation horaire des équipements/groupes)
+ *  Jours et positions de l'éditeur de planning (restylés par .sw-days / .sw-chips, overlays.css)
  * ----------------------------------------------------------------------- */
-
-.schedule-day-picker {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
 .schedule-day-btn {
     flex: 1;
     min-width: 40px;
@@ -3843,27 +3844,6 @@ div.signal {
     background: var(--color-accent);
     border-color: var(--color-accent);
     color: #ffffff;
-}
-.schedule-days-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 5px;
-}
-.schedule-alldays-btn {
-    border: none;
-    background: none;
-    color: var(--color-accent);
-    font-size: 0.85em;
-    font-weight: 600;
-    cursor: pointer;
-    padding: 4px 0;
-    justify-content: end;
-}
-.schedule-alldays-btn:hover {
-    background: none;
-    color: var(--color-accent-light);
 }
 .schedule-position-quick {
     display: flex;
@@ -5698,9 +5678,7 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 #divShadeSetup .setup-task-s { font-size: 12px; color: var(--color-text-secondary); text-align: right; }
 #divShadeSetup .setup-task.done .setup-task-s { color: var(--color-success); }
 #divShadeSetup .setup-task.skipped .setup-task-s { color: var(--color-text-warning); }
-#divShadeSetup .setup-task-b, #divShadeSetup .setup-col { padding: 2px 14px 14px 54px; display: flex; flex-direction: column; gap: 12px; }
-#divShadeSetup .setup-col { padding: 0; }
-#divShadeSetup .setup-col[hidden] { display: none; }
+#divShadeSetup .setup-task-b { padding: 2px 14px 14px 54px; display: flex; flex-direction: column; gap: 12px; }
 #divShadeSetup .setup-p { margin: 0; color: var(--color-text-main); font-size: 14px; line-height: 1.45; }
 #divShadeSetup .setup-p.sub { color: var(--color-text-secondary); font-size: 13px; }
 :is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -5710,7 +5688,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 :is(#divLinkListener, #divLinkRepeater) .ll-shared { display: flex; gap: 8px; align-items: flex-start; color: var(--color-warning); font-size: 13px; line-height: 1.35; }
 :is(#divLinkListener, #divLinkRepeater) .ll-shared svg { width: 16px; height: 16px; flex: none; margin-top: 1px; fill: var(--color-warning); }
 #divLinkRepeater .warning { margin: 0; }
-#divShadeSetup .setup-prog { height: 64px; font-size: 18px; letter-spacing: .08em; }
 #divShadeSetup .setup-nav { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--color-border); padding-top: 10px; }
 #divShadeSetup .setup-chrono { font-size: 34px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-text-main); text-align: center; padding: 4px 0; }
 #divShadeSetup .setup-chrono.run { color: var(--color-accent); }
@@ -5748,7 +5725,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     #divShadeSetup .setup-chips { display: grid; align-self: stretch; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
     #divShadeSetup .setup-chip { display: flex; align-items: center; justify-content: center; min-height: 32px; text-align: center; }
 }
-#divShadeSetup .setup-remotes-list { display: flex; flex-direction: column; gap: 8px; }
 #divShadeSetup .setup-single .setup-task-b { padding: 14px; }
 :is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap, :is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-side, :is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-cols { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
 :is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
@@ -6319,18 +6295,7 @@ body:has(.inst-overlay, .modal-overlay) :is(#divNetAdapter, #divMQTT, #divTransc
 .ed-ro > b.is-ok { color: var(--ok); }
 .ed-dot { flex: none; width: 8px; height: 8px; border-radius: var(--r-pill); background: var(--text-3); }
 .ed-dot.ok { background: var(--ok); }
-.ed-span { grid-column: 1 / -1; }
-/* Onglet Piloter : curseurs de l'interface (.slider-wrapper, base.css) et tuiles d'information. */
-.ed-slider { display: flex; flex-direction: column; gap: 10px; }
-.ed-slider + .ed-slider { margin-top: 10px; }
-.ed-slider-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-.ed-slider-head b { font-size: var(--fs-6); font-weight: 800; color: var(--text); }
 .ed-slider-ends { display: flex; justify-content: space-between; gap: 12px; font-size: var(--fs-2); color: var(--text-3); }
-.ed-ctl-v { display: flex; align-items: center; gap: 8px; font-size: var(--fs-6); font-weight: 700; color: var(--text); }
-.ed-ctl-v svg { flex: none; width: 22px; height: 22px; fill: currentColor; }
-.ed-tile-warn { background: var(--warn-bg); }
-.ed-tile-warn .gen-tile-title { color: var(--warn); }
-.ed-tile-warn > .gen-btn { align-self: flex-start; margin-top: auto; }
 /* Onglet Réglages : étapes de mise en service, temps de course, position favorite. */
 .ed-steps { display: flex; flex-direction: column; }
 .ed-step { display: flex; align-items: center; gap: 12px; width: 100%; margin: 0; padding: 12px 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; color: var(--text); font: inherit; text-align: left; text-transform: none; cursor: pointer; }
@@ -6349,9 +6314,13 @@ body:has(.inst-overlay, .modal-overlay) :is(#divNetAdapter, #divMQTT, #divTransc
 .ed-cmd:last-child { flex: 0 0 56px; }
 .ed-cmd svg { width: 26px; height: 26px; fill: currentColor; }
 #divSomfyGroupButtons.disabled { opacity: .5; pointer-events: none; }
-.ed-page.ed-new :is(#blocPairGroup, #blocShadeCmds, .gen-tabs, #grpPanels > [data-tab="1"], #grpPanels > [data-tab="2"], #shdPanels > :is([data-tab="1"], [data-tab="3"], [data-tab="4"]), #shdSummaryTile, #grpDangerTile) { display: none; }
-/* Fiche vierge : le protocole et l'ID, rangés dans Réglages, restent nécessaires pour créer. */
-.ed-page.ed-new #shdPanels > [data-tab="2"] { display: grid; }
+.ed-page.ed-new :is(#blocPairGroup, #blocShadeCmds, .gen-tabs, #grpPanels > [data-tab="1"], #grpPanels > [data-tab="2"], #shdPanels > :is([data-tab="1"], [data-tab="3"]), #shdSummaryTile, #grpDangerTile) { display: none; }
+/* Fiche vierge : le protocole et l'ID, rangés dans Réglages, restent nécessaires pour créer. Les deux
+   onglets s'effacent (display: contents) pour que Communication rejoigne la grille de Général. */
+.ed-page.ed-new #shdPanels { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(max(340px, calc((100% - 3 * 16px) / 4)), 100%), 1fr)); gap: 16px; }
+.ed-page.ed-new #shdPanels > :is([data-tab="0"], [data-tab="2"]) { display: contents; }
+.ed-page.ed-new #shdPanels .gen-sec-head { display: none; }
+.ed-page.ed-new #shdPanels .gen-tile { grid-column: auto; }
 /* !important : onShadeTypeChanged pose un display en ligne sur ces tuiles. */
 .ed-page.ed-new #shdPanels > [data-tab="2"] > :not(#shdCommTile) { display: none !important; }
 .ed-add-room { align-self: flex-start; }
@@ -6419,7 +6388,7 @@ body:has(.inst-overlay, .modal-overlay) :is(#divNetAdapter, #divMQTT, #divTransc
 .cfg-list.is-empty :is(.gen-filters, .gen-hero-note, .gen-hero-menu, .gen-tools) { display: none; }
 
 /* --- Tuiles (mesures A2 : jetons --tile-* de base.css) --- */
-.cfg-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(var(--tile-min), 100%), 1fr)); align-content: start; gap: var(--tile-gap); }
+.cfg-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(max(var(--tile-min), calc((100% - 3 * var(--tile-gap)) / 4)), 100%), 1fr)); align-content: start; gap: var(--tile-gap); }
 .sched-tiles { --tile-min: 300px; }
 .cfg-tiles-title { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; margin-top: 10px; font-size: var(--fs-4); font-weight: 800; color: var(--text); }
 .cfg-tiles-title span { font-size: var(--fs-2); font-weight: 600; color: var(--text-3); }
@@ -6462,8 +6431,6 @@ body:has(.inst-overlay, .modal-overlay) :is(#divNetAdapter, #divMQTT, #divTransc
 .sched-tile .name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sched-tile-meta { display: flex; align-items: center; gap: 6px; min-height: 24px; overflow: hidden; }
 .sched-tile-meta .schedule-badge-off { flex: none; margin: 0; }
-.sched-tile .sched-tile-target { display: inline-block; }
-#divScheduleList.cfg-sort-az .sched-tile-target { display: none; }
 .sched-tile-hours { display: flex; flex-direction: column; border-radius: var(--r-2); background: var(--surface-2); overflow: hidden; }
 .sched-tile-hour { display: grid; grid-template-columns: 18px 54px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-top: 1px solid var(--surface); }
 .sched-tile-hour:first-child { border-top: 0; }
@@ -6479,7 +6446,7 @@ body:has(.inst-overlay, .modal-overlay) :is(#divNetAdapter, #divMQTT, #divTransc
 .sched-tile-days { display: flex; gap: 5px; margin-top: auto; }
 .sched-tile-days span { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--text-3); font-size: var(--fs-1); font-weight: 700; }
 .sched-tile-days span.on { background: var(--on-fill); color: var(--on-fill-text); }
-.sched-tile.is-off :is(.cfg-tile-icon, .sched-tile-hours, .sched-tile-days, .sched-tile-target) { opacity: .5; }
+.sched-tile.is-off :is(.cfg-tile-icon, .sched-tile-hours, .sched-tile-days) { opacity: .5; }
 @media (max-width: 999px) {
     .cfg-list .gen-cap, .cfg-list .gen-hero-note { grid-column: 1 / -1; max-width: none; }
     .cfg-list .gen-cap { flex-direction: row; align-items: center; gap: 14px; padding: 10px 16px; border-radius: var(--r-3); }

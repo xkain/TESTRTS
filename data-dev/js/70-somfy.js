@@ -1874,7 +1874,7 @@ class Somfy {
     // Rafraîchit en direct le badge de signal d'une télécommande liée affichée dans la fenêtre des
     // télécommandes (tâche « remote »), depuis le RSSI de la trame : aucun aller-retour serveur.
     _updateLiveRemoteSignal(frame) {
-        document.querySelectorAll(`#divShadeSetup .somfyLinkedRemote[data-remoteaddress="${frame.address}"], #divShadeRemotes .cfg-tile[data-remoteaddress="${frame.address}"]`).forEach(row => {
+        document.querySelectorAll(`#divShadeSetup .tw-rt[data-remoteaddress="${frame.address}"], #divShadeRemotes .cfg-tile[data-remoteaddress="${frame.address}"]`).forEach(row => {
             const signalEl = row.querySelector('.linkedRemote-signal');
             if (signalEl) signalEl.outerHTML = this.remoteSignalHtml(frame.rssi, frame.address);
         });
@@ -2520,76 +2520,11 @@ class Somfy {
     // volontaire -- il ne change pas d'un évènement à l'autre. Un état socket seul ne le porte donc
     // pas, d'où le repli sur le cache `shades`, alimenté par /shades (toJSON, qui lui l'inclut) et
     // tenu à jour par procShadeState.
-    // Dans l'éditeur, le sélecteur prime sur la valeur enregistrée : changer le vocabulaire doit
-    // se voir tout de suite sur la ligne d'état, sans passer par un enregistrement -- même
-    // principe que l'icône d'ambiance et le reste de onShadeTypeChanged.
-    editorVocab(shade) {
-        const el = get('selShadeStateVocab');
-        if (el && el.value !== '') return parseInt(el.value, 10) || 0;
-        return this.shadeVocabOf(shade);
-    }
     shadeVocabOf(shade) {
         if (!shade) return 0;
         if (typeof shade.stateVocab === 'number') return shade.stateVocab;
         const full = (this.shades || []).find(s => s.shadeId === shade.shadeId);
         return (full && typeof full.stateVocab === 'number') ? full.stateVocab : 0;
-    }
-    // Onglet Piloter : curseurs (position, lames), ou la tuile « Commande » quand l'équipement
-    // ne se règle pas à une position (contact sec, bascule à un bouton).
-    applyShadeControlMode(type, tiltType, flipPosition) {
-        const g = get, st = this.shadeTypes.find(x => x.type === type) || {};
-        const isToggle = this.toggleShadeTypes.includes(type), isDry = this.dryContactShadeTypes.includes(type);
-        const tt = st.tilt ? tiltType : 0, slide = !!st.lift && !isToggle;
-        g('shdSliderTile').hidden = !slide;
-        g('shdSliderPos').hidden = tt === 3;
-        g('shdSliderTilt').hidden = !tt;
-        g('shdNoSliderTile').hidden = slide;
-        if (!slide) {
-            const tile = g('shdNoSliderTile'), vocab = this.stateVocabKeys[parseInt(g('selShadeStateVocab').value, 10) || 0] || this.stateVocabKeys[0];
-            tile.querySelector('.ed-ctl-v').textContent = tr(isDry ? 'DEVICE_CTL_DRY_T' : 'DEVICE_CTL_TOGGLE_T');
-            tile.querySelector('.gen-tile-desc').textContent = isDry ? tr('DEVICE_CTL_DRY_D').replace('{ON}', tr(vocab[0]).toLowerCase()).replace('{OFF}', tr(vocab[1]).toLowerCase()) : tr('DEVICE_CTL_TOGGLE_D');
-            return;
-        }
-        const W = typeof shadeSetup !== 'undefined' ? shadeSetup.words(type) : { open: tr('IS_OPEN'), closed: tr('IS_CLOSED') };
-        const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
-        const closedHi = this.closedPosition(type, flipPosition) === 100;
-        [['shdSliderPos', cap(W.open), cap(W.closed)], ['shdSliderTilt', tr('IS_OPEN'), tr('IS_CLOSED')]].forEach(([id, o, c]) => {
-            const box = g(id);
-            box.querySelector('.ed-end-lo').textContent = closedHi ? o : c;
-            box.querySelector('.ed-end-hi').textContent = closedHi ? c : o;
-        });
-    }
-    // Même règle que les curseurs du carrousel : realpos suit toujours l'équipement, l'affichage
-    // reste gelé pendant le geste (cf. procShadeState).
-    setEditorSlider(id, value) {
-        const el = get(id);
-        if (!el) return;
-        const v = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
-        el.dataset.realpos = v;
-        if (el.dataset.dragging === 'true') return;
-        el.value = v;
-        syncSliderProgress(el);
-        this.onEditorSliderInput(el);
-    }
-    onEditorSliderInput(el) {
-        const val = get(el.id.replace('slid', 'val'));
-        if (val) val.textContent = `${el.value} %`;
-    }
-    setEditorPosValue(shadeType, position) { this.setEditorSlider('slidShadePos', position); }
-    setEditorTiltValue(tilt) { this.setEditorSlider('slidShadeTilt', tilt); }
-    nextScheduleOf(kind, id) {
-        const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes(), sun = this._sunTimesToday();
-        const list = (this.schedules || []).filter(sc => sc.enabled && sc.targetType === kind && sc.targetId === id)
-            .map(sc => ({ sc, m: this._effectiveMinutesOf(sc, sun) })).filter(x => x.m !== null);
-        for (let d = 0; d < 8; d++) {
-            const bit = 1 << ((now.getDay() + d) % 7);
-            const hit = list.filter(x => (x.sc.dayMask & bit) && (d > 0 || x.m > nowMin)).sort((a, b) => a.m - b.m)[0];
-            if (!hit) continue;
-            const f = formatMinutesOfDay(hit.m);
-            const day = d === 0 ? tr('DEVICE_CTL_TODAY') : d === 1 ? tr('DEVICE_CTL_TOMORROW') : tr(SCHEDULE_DAY_DEFS.find(x => x.bit === bit).key);
-            return { time: f.main + (f.ampm ? ` ${f.ampm}` : ''), action: this._scheduleActionText(hit.sc), day };
-        }
-        return null;
     }
     // Tuile Récapitulatif de Général : les réglages enregistrés, en lecture seule.
     renderShadeSummary(shade) {
@@ -2621,22 +2556,6 @@ class Somfy {
         add(tr('SUBTAB_REMOTES'), `${(shade.linkedRemotes || []).length}/${this.maxLinkedRemotes || 15}`);
         add(tr('SUBTAB_SCHEDULES'), String((this.schedules || []).filter(sc => sc.targetType === 'shade' && sc.targetId === shade.shadeId).length));
         box.innerHTML = rows.join('');
-    }
-    // Tuiles d'information de Piloter : prochain planning et mise en service ; la dernière commande
-    // et les télécommandes suivent l'activité (cf. shadeSetup.paintActivity).
-    renderShadeCtlInfo(shade) {
-        const g = get, part = (id) => { const t = g(id); return { t, v: t.querySelector('.ed-ctl-v'), d: t.querySelector('.gen-tile-desc') }; };
-        const n = part('shdCtlNext'), next = this.nextScheduleOf('shade', shade.shadeId);
-        n.v.textContent = next ? `${next.action} · ${next.time}` : tr('EMPTY_SCHEDULE_TITLE');
-        n.d.textContent = next ? next.day : '';
-        const su = part('shdCtlSetup'), setup = typeof shadeSetup !== 'undefined' ? shadeSetup : null;
-        const miss = setup ? setup.missingSteps(shade) : 0;
-        su.t.hidden = !miss;
-        if (!miss) return;
-        const ids = setup.tasksFor(shade), steps = shade.setupSteps || 0;
-        su.t.querySelector('.gen-tile-title').textContent = `${tr('SETUP_RESUME_TITLE')} · ${ids.length - miss}/${ids.length}`;
-        su.v.textContent = setup.titleFor(shade, ids.find(id => !(steps & SETUP_BIT[id])));
-        su.d.textContent = miss > 1 ? setup.t('SETUP_BADGE_MANY', { n: miss }) : tr('SETUP_BADGE_ONE');
     }
     // Un contact sec ne connaît que deux ou trois commandes (cf. le tableau de rstrouse : Toggle
     // pour le 1-bouton, Up/Down pour le 2-boutons). Les appuis combinés (MyUp, MyDown, UpDown,
@@ -5382,49 +5301,6 @@ class Somfy {
         <span class="linkedRemote-signal-value sig-${level}">${valueText}</span>
         </div>`;
     }
-    modalRemotesListHtml(shade) {
-        const remotes = shade.linkedRemotes || [];
-        if (remotes.length === 0) {
-            return `
-            <div class="empty-state">
-            <svg class="empty-icon"><use href="#svg-linkRemot"></use></svg>
-            <div class="label">${tr('REMOTESLIST_EMPTY')}</div>
-            <div class="empty-subtext">${tr('REMOTESLIST_EMPTY_DESC')}</div>
-            </div>`;
-        }
-        // .linkedRemoteCard qualifie ce réemploi de .somfyLinkedRemote/.linkedWrap/.linkedContent
-        // (partagées avec setLinkedShadesList, la liste des équipements liés à un groupe) pour que
-        // l'agrandissement de l'icône, le titre mis en avant et le bouton de suppression rond ne
-        // s'appliquent QU'à cette carte-ci, sans déteindre sur cette autre liste.
-        // Carte scindée en deux blocs empilés : .remote-card-top (icône + infos + poubelle, alignés
-        // verticalement entre eux) et .remote-card-bottom (ligne signal), séparés par un filet --
-        // sans ça l'icône/la poubelle se recentraient sur toute la hauteur de la carte, signal
-        // inclus, cf. [[tooltip-unification-project]] pour le contexte de cette session de retouches.
-        return remotes.map((remote, i) => `
-        <div class="somfyLinkedRemote linkedRemoteCard" data-shadeid="${shade.shadeId}" data-remoteaddress="${remote.remoteAddress}">
-        <div class="remote-card-top">
-        <div class="linkedWrap">
-        <svg class="icon-svg"><use href="#svg-linkRemot"></use></svg>
-        </div>
-        <div class="linkedContent">
-        <div class="linkedRemote-title">${tr("REMOTESLIST_LINKED")} ${i + 1}</div>
-        <div class="linkedRemote-meta">
-        <span>${tr("ADDR")} ${remote.remoteAddress}</span>
-        <span class="linkedRemote-sep">|</span>
-        <span>${tr("CODE")} ${remote.lastRollingCode}</span>
-        </div>
-        </div>
-        <div class="linkedRemote-btn-delete" onclick="somfy.unlinkRemote(${shade.shadeId}, '${remote.remoteAddress}');">
-        <svg><use href="#svg-trash"></use></svg>
-        </div>
-        </div>
-        <div class="remote-card-bottom">
-        ${this.remoteSignalHtml(remote.lastRssi, remote.remoteAddress)}
-        </div>
-        </div>
-        `).join('');
-    }
-
     procShadeState(state) {
         const g = get, sId = state.shadeId;
         // L'évènement ne rafraîchissait que le DOM : `this.shades` gardait les valeurs du dernier
@@ -5454,7 +5330,6 @@ class Somfy {
             if (state.tiltType !== 0) ico.style.setProperty('--shade-tilt', state.tiltPosition);
         });
         if (g('spanShadeId')?.innerText == sId) {
-            this.setEditorPosValue(this.shadeTypeOf(state), state.position, state.flipPosition, this.shadeVocabOf(state));
             this.renderShadeHeroState(state);
             this.refreshShadeRollingCode(sId);
             const ed = typeof shadeSetup !== 'undefined' && shadeSetup.editShade && shadeSetup.editShade.shadeId === sId ? shadeSetup.editShade : null;
@@ -5463,7 +5338,7 @@ class Somfy {
                 this.setEditorMyValue(ed);
             }
 
-            if (state.tiltType !== 0) this.setEditorTiltValue(state.tiltPosition);
+
         }
         document.querySelectorAll(`.button-sunflag[data-shadeid="${sId}"]`).forEach(btn => {
             btn.style.display = state.sunSensor ? '' : 'none';
@@ -5651,11 +5526,6 @@ class Somfy {
         disp('divShadeOutputMode', isDry, 'flex');
         disp('divShadePulseTime', isDry && g('selShadeOutputMode')?.value === '1', 'flex');
         disp('divShadeStateVocab', isDry, 'flex');
-        this.applyShadeControlMode(type, tilt, g('cbFlipPosition')?.checked);
-        if (!isNew) {
-            const cur = (this.shades || []).find(x => x.shadeId === parseInt(g('spanShadeId').innerText, 10));
-            if (cur) this.setEditorPosValue(type, cur.position, cur.flipPosition, this.editorVocab(cur));
-        }
 
         // Pour un contact sec, la ligne d'inversion garde tout son sens mais ne parle pas de la même
         // chose : il n'y a pas de « % d'ouverture » à inverser, seulement l'état affiché. Le libellé
@@ -5681,6 +5551,7 @@ class Somfy {
             this.setEditorMyValue(preview);
         }
         if (this._shdLoaded) this.renderShadeHero();
+        get('shdPanels').querySelectorAll('.gen-grid').forEach(genGridSpan);
     }
     setEditorMyValue(shade) {
         const pos = get('valShadeMyPos'), tiltRow = get('rowShadeMyTilt');
@@ -5740,13 +5611,22 @@ class Somfy {
         }
     }
 
+    // Une fiche rechargée sur elle-même (après une fenêtre, un enregistrement) garde son onglet et
+    // son défilement ; ouverte depuis la liste ou au rechargement de la page, elle reprend l'onglet
+    // mémorisé pour cet élément (cf. bindGenTabs), sinon Général.
+    _keepView(pageId, spanId, id, tabs) {
+        const page = get(pageId), same = id !== undefined && page && page.style.display !== 'none' && get(spanId).innerText === String(id);
+        const tab = same ? tabs.current() : 0, y = window.scrollY;
+        return () => { if (same) { tabs.show(tab); window.scrollTo(0, y); } else tabs.restore(`${pageId}:${id ?? 'new'}`); };
+    }
+
     // =====================================================================
     // SECTION : FICHE ÉQUIPEMENT (même gabarit que la fiche groupe)
     // =====================================================================
     _bindShadePage() {
         if (this._shdTabs) return;
         const page = get('somfyShade');
-        this._shdTabs = bindGenTabs(page, { tabs: 'shdTabs', panels: 'shdPanels', pager: 'shdPager', prev: 'btnShdPrev', next: 'btnShdNext' });
+        this._shdTabs = bindGenTabs(page, { tabs: 'shdTabs', panels: 'shdPanels', pager: 'shdPager', prev: 'btnShdPrev', next: 'btnShdNext', keyed: true });
         ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateShadeDirty(), 0)));
         this._shdSaveBar = new SaveBar(page, { onSave: () => this.saveShade(), onRevert: () => this.revertShade() });
     }
@@ -5767,15 +5647,35 @@ class Somfy {
                 : el.tagName === 'SELECT' ? (Array.from(el.options).find(o => o.value === String(v))?.text ?? v) : v;
             diffs.push({ label: tr(LB[k]), from: show(this._shdLoaded[k]), to: show(now[k]) });
         });
-        this.changedShadeTimes().forEach(({ el }) => {
+        const times = this.changedShadeTimes();
+        times.forEach(({ el }) => {
             el.classList.add('is-dirty');
             diffs.push({ label: get(el.id.replace('fld', 'lbl')).textContent, from: el.defaultValue, to: el.value });
         });
+        this.previewSetupSteps(now, times);
         _recomputeIsDirty();
         if (!isDirty) document.body.classList.remove('dirty-alerted');
         this._shdSaveBar.update(diffs);
         this.renderShadeHero();
-        this.applyShadeControlMode(parseInt(get('selShadeType').value, 10), parseInt(get('selTiltType').value, 10), get('cbFlipPosition').checked);
+    }
+    // Régler à la main ce qu'une étape de mise en service règle vaut cette étape : elle passe « faite »
+    // dans la tuile tout de suite, et le masque part avec l'enregistrement (cf. saveShade).
+    static STEP_OF_FIELD = { flipCommands: 'dir', upTime: 'cal', downTime: 'cal', tiltTimeUp: 'tilt', tiltTimeDown: 'tilt',
+        flipPosition: 'opts', sunSensor: 'opts', repeats: 'opts', ledFeedback: 'opts', simMy: 'opts' };
+    previewSetupSteps(now, times) {
+        const d = this._shdData;
+        if (!d || typeof shadeSetup === 'undefined' || get('spanShadeId').innerText === '*') return;
+        const loaded = d.setupSteps || 0;
+        let mask = loaded;
+        const changed = Object.keys(Somfy.STEP_OF_FIELD).filter(k => k in now && String(now[k]) !== String(this._shdLoaded[k])).concat(times.map(t => t.k));
+        changed.forEach(k => { mask |= SETUP_BIT[Somfy.STEP_OF_FIELD[k]]; });
+        const preview = Object.assign({}, d, now, { setupSteps: mask });
+        times.forEach(({ el, k }) => { const v = parseFloat(el.value); if (!isNaN(v)) preview[k] = Math.round(v * 1000); });
+        this._shdSteps = mask;
+        const sig = JSON.stringify([mask, preview.flipCommands, preview.upTime, preview.downTime, preview.tiltTimeUp, preview.tiltTimeDown, preview.sunSensor, preview.repeats]);
+        if (sig === this._shdStepsSig) return;
+        this._shdStepsSig = sig;
+        shadeSetup.renderEditPanel(preview);
     }
     revertShade() {
         if (!this._shdData) return;
@@ -5853,6 +5753,7 @@ class Somfy {
 
         const s = (id, d) => { const e = g(id); if(e) e.style.display = d; };
         this._bindShadePage();
+        const restore = this._keepView('somfyShade', 'spanShadeId', shadeId, this._shdTabs);
         this.applyLedFeedbackVisibility();
 
         // Une programmation cible un shadeId existant : impossible tant que l'équipement n'est pas créé.
@@ -5874,17 +5775,14 @@ class Somfy {
                 });
             }
             if (!isNew) {
-
-                this.setEditorPosValue(shade.shadeType, shade.position, shade.flipPosition, this.editorVocab(shade));
                 this.setLinkedRemotesList(shade);
                 // Programmations rattachées à cet équipement (badges, bloc Options) : on recharge la
                 // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
-                this.updateScheduleList(() => { this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId); this.renderShadeCtlInfo(shade); this.renderShadeSummary(shade); });
+                this.updateScheduleList(() => { this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId); this.renderShadeSummary(shade); });
             }
             if (typeof shadeSetup !== 'undefined') shadeSetup.renderEditPanel(isNew ? null : shade);
             this.setEditorMyValue(isNew ? null : shade);
 
-            this.setEditorTiltValue(shade.tiltPosition || 0);
 
 
             const rev = shade.flipPosition,
@@ -5913,6 +5811,8 @@ class Somfy {
             this.onShadeProtoChanged(g('selShadeProto'));
             this.onShadeTypeChanged(g('selShadeType'));
             this._shdData = shade;
+            this._shdSteps = shade.setupSteps || 0;
+            this._shdStepsSig = '';
             this.fillShadeTimes(shade);
             Somfy.SHADE_TIMES.forEach(([id]) => { g(id).defaultValue = g(id).value; });
             this._shdLoaded = ui.fromElement(g('somfyShade'));
@@ -5924,9 +5824,9 @@ class Somfy {
             g('btnShadeRollingCode').disabled = true;
             g('spanShadeRollingCode').textContent = shade.lastRollingCode ?? '';
             this.renderShadeHeroState(isNew ? null : shade);
-            if (!isNew) { this.renderShadeCtlInfo(shade); this.renderShadeSummary(shade); }
-            this._shdTabs.show(0);
+            if (!isNew) this.renderShadeSummary(shade);
             this.showEditShade(true);
+            restore();
             routeSetEditor('divSomfyMotors', isNew ? 'new' : shadeId, { label: isNew ? tr('DEVICE_CREATE_TITLE') : shade.name });
             // Ne commence à suivre les modifications qu'une fois le formulaire rempli avec les
             // valeurs actuelles, pour ne pas marquer "modifié" ce remplissage programmatique.
@@ -5959,6 +5859,7 @@ class Somfy {
         // substituée en silence. On retire plutôt la clé : absente d'une requête, elle laisse la
         // valeur enregistrée inchangée, comme tout le reste de fromJSON.
         if (obj.pulseTime === null || obj.pulseTime === '' || isNaN(obj.pulseTime)) delete obj.pulseTime;
+        if (this._shdData && typeof this._shdSteps === 'number' && this._shdSteps !== (this._shdData.setupSteps || 0)) obj.setupSteps = this._shdSteps;
         // Seuls les temps modifiés partent : les autres restent tels que l'assistant les a mesurés.
         const times = this.changedShadeTimes();
         for (const { el, k } of times) {
@@ -6069,7 +5970,6 @@ class Somfy {
         if (!isNaN(real)) {
             el.value = real;
             syncSliderProgress(el);
-            if (el.id) this.onEditorSliderInput(el);
         }
     }
     sendCommand(shadeId, command, repeat, cb) {
@@ -6250,7 +6150,7 @@ class Somfy {
     _bindGroupPage() {
         if (this._grpTabs) return;
         const page = get('somfyGroup');
-        this._grpTabs = bindGenTabs(page, { tabs: 'grpTabs', panels: 'grpPanels', pager: 'grpPager', prev: 'btnGrpPrev', next: 'btnGrpNext' });
+        this._grpTabs = bindGenTabs(page, { tabs: 'grpTabs', panels: 'grpPanels', pager: 'grpPager', prev: 'btnGrpPrev', next: 'btnGrpNext', keyed: true });
         // Après _markDirty (watchDirty), comme Général : différé d'un tour.
         ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateGroupDirty(), 0)));
         this._grpSaveBar = new SaveBar(page, { onSave: () => this.saveGroup(), onRevert: () => this.revertGroup() });
@@ -6326,6 +6226,7 @@ class Somfy {
             return ui.errorMessage(g('divSomfySettings'), tr('ERR_GROUP_LIMIT_REACHED'));
         }
         this._bindGroupPage();
+        const restore = this._keepView('somfyGroup', 'spanGroupId', groupId, this._grpTabs);
         this.applyLedFeedbackVisibility();
         g('divGroupMembers').innerHTML = '';
         g('divGroupScheduleBadges').innerHTML = '';
@@ -6349,8 +6250,8 @@ class Somfy {
                 this.setLinkedShadesList(group);
                 this.updateScheduleList(() => this.renderScheduleBadges('divGroupScheduleBadges', 'group', groupId));
             }
-            this._grpTabs.show(0);
             this.showEditGroup(true);
+            restore();
             routeSetEditor('divSomfyGroups', isNew ? 'new' : groupId, { label: isNew ? tr('GROUP_CREATE_TITLE') : group.name });
             watchDirty(page);
             this.updateGroupDirty();
@@ -6622,7 +6523,7 @@ class Somfy {
         this._renderListeners();
     }
 
-    // Même langage que l'ajout de télécommande d'un équipement (shadeSetup.bodyRemote) : une carte
+    // Même langage que l'ajout de télécommande d'un équipement (shadeSetup.twRemote) : une carte
     // d'état unique, l'écoute expire au bout de SETUP_LISTEN_MS.
     linkListenRemote() {
         if ((this.listeners || []).length >= (this.maxListeners || 14)) {

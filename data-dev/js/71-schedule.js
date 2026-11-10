@@ -272,7 +272,7 @@ class _SomfySchedule {
             const shadeId = parseInt(get('spanShadeId').innerText, 10);
             if (!isNaN(shadeId)) {
                 this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId);
-                if (this._shdData && this._shdData.shadeId === shadeId) { this.renderShadeCtlInfo(this._shdData); this.renderShadeSummary(this._shdData); }
+                if (this._shdData && this._shdData.shadeId === shadeId) this.renderShadeSummary(this._shdData);
             }
         }
         const groupForm = get('somfyGroup');
@@ -322,7 +322,7 @@ class _SomfySchedule {
         <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="${this._scheduleTargetIcon(group)}"></use></svg></span>
         ${this.cfgTileMenu(`somfy.deleteScheduleGroup('${key}')`, `<div class="dropdown-item" onclick="this.parentElement.classList.remove('show'); somfy.toggleScheduleGroup('${key}', ${!group.enabled});"><svg><use href="#svg-${group.enabled ? 'stop' : 'play'}"></use></svg>${tr(group.enabled ? 'BT_PAUSE' : 'BT_RESUME')}</div>`)}</div>
         <div class="cfg-tile-name"><span class="name-text">${escHtml(title)}</span>
-        <span class="sched-tile-meta"><span class="cfg-tile-room sched-tile-target"><svg><use href="${this._scheduleTargetIcon(group)}"></use></svg>${escHtml(this.scheduleTargetName(group))}</span>${group.enabled ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`}</span></div>
+        <span class="sched-tile-meta">${group.enabled ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`}</span></div>
         <div class="sched-tile-hours">${hours}</div>
         <div class="sched-tile-days">${days}</div>
         </div>`;
@@ -512,19 +512,11 @@ class _SomfySchedule {
             ? `${summary}<span class="schedule-hour-trigger">· ${this._scheduleTriggerInfoHtml(step)}</span>`
             : summary;
         const offBadge = step.enabled ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`;
-        return `<div class="uniRow schedule-hour-row${step.enabled ? '' : ' is-off'}" data-step="${index}">
-        <div class="uniLeft">
-        <div class="uniblocSvg-F"><svg><use href="${this._scheduleHourIcon(step)}"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${this._scheduleHourActionLabel(step)}${offBadge}</div>
-        <div class="uniStatus schedule-hour-time">${detail}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <div class="divEditDelete-svg" data-delete="1">
-        <svg class="icon-svg" style="color: var(--color-danger);"><use href="#svg-trash"></use></svg>
-        </div>
-        </div>
+        return `<div class="sw-hr schedule-hour-row${step.enabled ? '' : ' is-off'}" data-step="${index}">
+        <span class="sw-hr-time">${timeMain}</span>
+        <span class="sw-hr-ico"><svg><use href="${this._scheduleHourIcon(step)}"></use></svg></span>
+        <span class="sw-hr-t"><b>${this._scheduleHourActionLabel(step)}${offBadge}</b><small class="schedule-hour-time">${detail}</small></span>
+        <button type="button" class="sw-hr-del" data-delete="1" aria-label="${escAttr(tr('BT_DELETE'))}"><svg><use href="#svg-trash"></use></svg></button>
         </div>`;
     }
     // Éditeur d'une programmation : nom, cible, jours, et la LISTE de ses horaires. Chaque horaire
@@ -537,7 +529,6 @@ class _SomfySchedule {
         const titleKey = isEdit ? 'SCHEDULE_EDIT_TITLE' : 'SCHEDULE_CREATE_TITLE';
         const descKey = isEdit ? 'SCHEDULE_EDIT_DESC' : 'SCHEDULE_CREATE_DESC';
         const buttonText = isEdit ? tr('BT_SAVE') : tr('BT_CREATE');
-        const iconHref = isEdit ? '#svg-save' : '#svg-add';
 
         // Modèle d'édition : détaché de this.schedules, c'est lui qui fait foi jusqu'à
         // l'enregistrement. `removed` retient les règles à supprimer côté firmware pour que
@@ -557,7 +548,7 @@ class _SomfySchedule {
 
         let div = document.createElement('div');
         div.id = 'divEditScheduleOverlay';
-        div.className = 'inst-overlay';
+        div.className = 'modal-overlay genmod-overlay';
         div.setAttribute('data-groupkey', group.key || '');
         // Toujours renseignés, y compris en mode "cible libre" (ce sont eux qui font foi tant que
         // l'utilisateur n'a pas changé la sélection) : sert de repli dans saveSchedule() quand le
@@ -566,81 +557,39 @@ class _SomfySchedule {
         div.setAttribute('data-targettype', model.targetType);
         div.setAttribute('data-targetid', model.targetId);
 
-        const dayBtn = (bit, key) => `<button type="button" class="schedule-day-btn" data-bit="${bit}" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));">${tr(key)}</button>`;
+        const dayBtn = (bit, key) => `<button type="button" class="schedule-day-btn" data-bit="${bit}" aria-label="${escAttr(tr(key))}" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));">${tr(key).charAt(0)}</button>`;
 
         // Sélecteur de cible libre (page générale des Plannings) vs. bloc verrouillé (ouvert depuis
         // l'édition d'un équipement/Groupe précis : la cible est déjà imposée par le formulaire parent).
-        const targetBlock = lockedTarget ? `
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-indicShutter"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label">${tr('SCHEDULE_TARGET')}</label>
-        <div class="inputAndSelect schedule-target-locked">${this.scheduleTargetName(model)}</div>
-        </div>
-        </div>` : `
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-indicShutter"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="selScheduleTarget">${tr('SCHEDULE_TARGET')}</label>
-        <select id="selScheduleTarget" class="inputAndSelect"></select>
-        </div>
-        </div>`;
-
-        div.innerHTML = `
-        <div class="instructions-content">
-        ${overlayHeader(titleKey, descKey, 'svg-schedule', { subtitle: descKey, stateBadge: 'DISABLED_F' })}
-        <div class="overlay-scroll-content">
-        <input type="hidden" id="fldScheduleStepsDirty">
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('GENERAL_INFO')}</h3>
-        <div class="uniblocRow">
-        <div class="uniRow dirty-target">
-        <div class="unifield-content">
-        <label class="label" for="fldScheduleName">${tr('NAME')}</label>
-        <input id="fldScheduleName" class="inputAndSelect" name="scheduleName" type="text" length="20" placeholder="${tr('SCHEDULE_NAME_PHL')}">
-        </div>
-        </div>
-        ${targetBlock}
-        </div>
-        </div>
-        <div class="unibloc-container dirty-target">
-        <div class="schedule-days-header">
-        <h3 class="unibloc-title">${tr('SCHEDULE_DAYS')}</h3>
-        <button type="button" id="btnScheduleAllDays" class="schedule-alldays-btn">${tr('BT_SELECT_ALL_DAYS')}</button>
-        </div>
-        <div id="divScheduleDayPicker" class="schedule-day-picker">
-        ${dayBtn(2, 'SCHEDULE_MON')}${dayBtn(4, 'SCHEDULE_TUE')}${dayBtn(8, 'SCHEDULE_WED')}${dayBtn(16, 'SCHEDULE_THU')}${dayBtn(32, 'SCHEDULE_FRI')}${dayBtn(64, 'SCHEDULE_SAT')}${dayBtn(1, 'SCHEDULE_SUN')}
-        </div>
-        </div>
-        <div class="unibloc-container">
-        <div class="schedule-hours-header">
-        <h3 class="unibloc-title">${tr('SCHEDULE_HOURS')}</h3>
-        <span class="switch">
-        <input id="cbScheduleHoursEnabled" type="checkbox" aria-label="${escAttr(tr('SCHEDULE_HOURS_ENABLE_ALL'))}" data-tooltip-text="${escAttr(tr('SCHEDULE_HOURS_ENABLE_ALL'))}">
-        <div></div>
-        </span>
-        </div>
-        <div class="schedule-hour-block">
-        <div class="uniRow schedule-add-row marginB" id="rowScheduleAddHour">
-        <div class="uniLeft">
-        <div class="uniblocSvg-F"><svg><use href="#svg-add"></use></svg></div>
-        <div class="uniText"><div class="uniLabel">${tr('SCHEDULE_HOUR_ADD')}</div></div>
-        </div>
-        <div class="uniRight"><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></div>
-        </div>
-        <div id="divScheduleHourList"></div>
-        </div>
-        </div>
-        </div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="button-container-overlay">
-        <button id="btnScheduleGoBack" line type="button">${tr('BT_CLOSE')}</button>
-        <button id="btnSaveSchedule" type="button">
-        <svg><use id="useSaveScheduleIcon" href="${iconHref}"></use></svg>
-        <span id="btnSaveScheduleText">${buttonText}</span>
-        </button>
-        </div>
-        </div>`;
+        // Cible imposée quand l'éditeur s'ouvre depuis la fiche d'un équipement ou d'un groupe.
+        const targetBlock = lockedTarget
+            ? `<div class="gen-field"><span class="gen-field-label">${tr('SCHEDULE_TARGET')}</span><div class="gen-input-box schedule-target-locked"><span class="gen-input">${escHtml(this.scheduleTargetName(model))}</span></div></div>`
+            : `<div class="gen-field"><label class="gen-field-label" for="selScheduleTarget">${tr('SCHEDULE_TARGET')}</label><div class="gen-input-box dirty-target"><select id="selScheduleTarget" class="gen-input"></select></div></div>`;
+        const max = this.maxSchedules || 30, left = Math.max(0, max - (this.schedules || []).length);
+        div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
+            id: 'schedWin', icon: 'svg-schedule', titleKey, descKey, sectionKey: titleKey,
+            stateKey: tr('SCHEDULE_TARGET'), stateValue: escHtml(this.scheduleTargetName(model)), hintKey: 'SCHEDULE_SLOTS_REMAINING', footId: 'schedWinFoot',
+            sideExtra: `<span class="overlayHeader-state sw-off" style="display:none;">${tr('DISABLED_F')}</span>`,
+            bodyHtml: `<input type="hidden" id="fldScheduleStepsDirty">
+            <div class="gen-field-pair">
+            ${targetBlock}
+            <div class="gen-field"><label class="gen-field-label" for="fldScheduleName">${tr('NAME')}</label>
+            <div class="gen-input-box dirty-target"><input id="fldScheduleName" class="gen-input" name="scheduleName" type="text" maxlength="20" placeholder="${tr('SCHEDULE_NAME_PHL')}"></div></div>
+            </div>
+            <div class="sw-sec"><span>${tr('SCHEDULE_DAYS')}</span></div>
+            <div id="divScheduleDayPicker" class="sw-days dirty-target">
+            ${dayBtn(2, 'SCHEDULE_MON')}${dayBtn(4, 'SCHEDULE_TUE')}${dayBtn(8, 'SCHEDULE_WED')}${dayBtn(16, 'SCHEDULE_THU')}${dayBtn(32, 'SCHEDULE_FRI')}${dayBtn(64, 'SCHEDULE_SAT')}${dayBtn(1, 'SCHEDULE_SUN')}
+            <button type="button" id="btnScheduleAllDays" class="tw-link">${tr('BT_SELECT_ALL_DAYS')}</button>
+            </div>
+            <div class="sw-sec"><span>${tr('SCHEDULE_HOURS')}</span>
+            <span class="gen-seg gen-seg-bool" title="${escAttr(tr('SCHEDULE_HOURS_ENABLE_ALL'))}"><input id="cbScheduleHoursEnabled" type="checkbox" aria-label="${escAttr(tr('SCHEDULE_HOURS_ENABLE_ALL'))}"><span class="gen-seg-yes" tr="BT_YES">${tr('BT_YES')}</span><span class="gen-seg-no" tr="BT_NO">${tr('BT_NO')}</span></span></div>
+            <div class="sw-hours"><div id="divScheduleHourList" class="sw-hours"></div>
+            <button type="button" class="sw-add" id="rowScheduleAddHour"><svg><use href="#svg-add"></use></svg><span>${tr('SCHEDULE_HOUR_ADD')}</span></button></div>`
+        })}</div>`;
+        div.querySelector('#schedWinHint').textContent = tr('SCHEDULE_SLOTS_REMAINING').replace('{n}', left);
+        div.querySelector('#schedWinFoot').innerHTML = `<button id="btnScheduleGoBack" class="gen-btn" type="button">${tr('BT_CLOSE')}</button>
+        <button id="btnSaveSchedule" class="gen-btn gen-btn-primary" type="button"><span id="btnSaveScheduleText">${buttonText}</span></button>`;
+        div.addEventListener('click', (e) => { if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div); });
 
         shOverlay(div);
 
@@ -757,125 +706,80 @@ class _SomfySchedule {
 
         let div = document.createElement('div');
         div.id = 'divEditScheduleHourOverlay';
-        div.className = 'modal-overlay';
+        div.className = 'modal-overlay sw-hour-overlay';
         div.innerHTML = `
-        <div class="message-content" id="divScheduleHourContent">
-        ${modalHeader(isNew ? 'SCHEDULE_HOUR_CREATE_TITLE' : 'SCHEDULE_HOUR_EDIT_TITLE', 'svg-schedule', { subtitle: 'SCHEDULE_HOUR_DESC' })}
-        <div class="overlay-scroll-content">
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('SCHEDULE_TIME')}</h3>
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="selScheduleTimeRef">${tr('SCHEDULE_TIME_REF')}</label>
-        <select id="selScheduleTimeRef" class="inputAndSelect">
+        <div class="message-content sw-hour" id="divScheduleHourContent" role="dialog" aria-modal="true" aria-labelledby="swHourTitle">
+        <div class="sw-hour-head"><h3 id="swHourTitle">${tr(isNew ? 'SCHEDULE_HOUR_CREATE_TITLE' : 'SCHEDULE_HOUR_EDIT_TITLE')}</h3>
+        <button type="button" class="genmod-close" data-genmod-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
+        <div class="sw-hour-body">
+        <div class="sw-sec"><span>${tr('SCHEDULE_TIME')}</span></div>
+        <div class="gen-field-pair">
+        <div class="gen-field"><label class="gen-field-label" for="selScheduleTimeRef">${tr('SCHEDULE_TIME_REF')}</label>
+        <div class="gen-input-box dirty-target"><select id="selScheduleTimeRef" class="gen-input">
         <option value="clock">${tr('SCHEDULE_TIME_REF_CLOCK')}</option>
         <option value="sunrise">${tr('SCHEDULE_TIME_REF_OPT_SUNRISE')}${sunRefSuffix}</option>
         <option value="sunset">${tr('SCHEDULE_TIME_REF_OPT_SUNSET')}${sunRefSuffix}</option>
-        </select>
+        </select></div></div>
+        <div id="divScheduleClockTime" class="gen-field"><label class="gen-field-label" for="fldScheduleTime">${tr('SCHEDULE_TIME_REF_CLOCK')}</label>
+        <div class="gen-input-box dirty-target"><input id="fldScheduleTime" class="gen-input" type="time"></div></div>
         </div>
-        </div>
-        <div id="divScheduleSunGeoHint" class="uniStatus" style="display:none;">${tr('SCHEDULE_SUN_NOT_CONFIGURED')}</div>
-        <div id="divScheduleClockTime" class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
-        <div class="unifield-content">
-        <input id="fldScheduleTime" class="inputAndSelect" type="time">
-        </div>
-        </div>
-        <div id="divScheduleSunBlock" style="display:none;">
-        <div id="divScheduleSunTimeInfo" class="schedule-sun-time-info"></div>
-        <label class="uniRow dirty-target" for="cbScheduleSunOffsetEnabled">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg class="svg-mirror-x"><use href="#svg-schedule"></use></svg></div>
-        <div class="uniText"><div class="uniLabel">${tr('SCHEDULE_SUN_OFFSET_ENABLE')}</div></div>
-        </div>
-        <div class="uniRight">
-        <span class="switch">
-        <input id="cbScheduleSunOffsetEnabled" type="checkbox">
-        <div></div>
-        </span>
-        </div>
-        </label>
-        <div id="divScheduleSunOffsetBlock" style="display:none;">
+        <p id="divScheduleSunGeoHint" class="gen-tile-desc is-warning" style="display:none;">${tr('SCHEDULE_SUN_NOT_CONFIGURED')}</p>
+        <div id="divScheduleSunBlock" class="sw-col" style="display:none;">
+        <p id="divScheduleSunTimeInfo" class="gen-tile-desc is-info"></p>
+        <label class="gen-row dirty-target" for="cbScheduleSunOffsetEnabled"><span class="gen-row-text"><b>${tr('SCHEDULE_SUN_OFFSET_ENABLE')}</b></span>
+        <span class="gen-seg gen-seg-bool"><input id="cbScheduleSunOffsetEnabled" type="checkbox"><span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span></label>
+        <div id="divScheduleSunOffsetBlock" class="sw-col" style="display:none;">
         <div class="schedule-sun-offset-row">
         <div class="slider-wrapper schedule-sun-offset-slider dirty-target">
         <div class="slider-progress"><div class="slider-thumb-line"></div></div>
         <input id="slidScheduleSunOffset" class="md3-range-input" type="range" min="-720" max="720" step="1" value="0">
         </div>
-        <div class="schedule-sun-offset-field dirty-target">
-        <input id="inputScheduleSunOffset" class="schedule-sun-offset-number" type="number" min="-720" max="720" step="1" value="0">
-        <span class="schedule-sun-offset-unit">${tr('SCHEDULE_SUN_OFFSET_UNIT')}</span>
+        <div class="gen-input-box schedule-sun-offset-field dirty-target">
+        <input id="inputScheduleSunOffset" class="gen-input schedule-sun-offset-number" type="number" min="-720" max="720" step="1" value="0">
+        <span class="gen-input-unit">${tr('SCHEDULE_SUN_OFFSET_UNIT')}</span>
         </div>
         </div>
-        <div id="divScheduleSunOffsetSummary" class="uniStatus"></div>
+        <p id="divScheduleSunOffsetSummary" class="gen-tile-desc"></p>
         </div>
         </div>
-        </div>
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('IS_POSITION')}</h3>
-        <div class="schedule-position-quick">
+        <div class="sw-sec"><span>${tr('IS_POSITION')}</span></div>
+        <div class="schedule-position-quick sw-chips">
         <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn"><svg><use href="#svg-up"></use></svg><span>${tr('BT_OPEN')}</span></button>
         <button type="button" id="btnSchedulePosClose" class="schedule-quickpos-btn"><svg><use href="#svg-down"></use></svg><span>${tr('BT_CLOSE')}</span></button>
         <button type="button" id="btnSchedulePosCustom" class="schedule-quickpos-btn"><svg><use href="#svg-target"></use></svg><span>${tr('SCHEDULE_POS_CUSTOM')}</span></button>
         <button type="button" id="btnSchedulePosTiltOnly" class="schedule-quickpos-btn" style="display:none;"><svg><use href="#svg-indicblind"></use></svg><span>${tr('SCHEDULE_POS_TILT_ONLY')}</span></button>
         <button type="button" id="btnSchedulePosMy" class="schedule-quickpos-btn"><svg><use href="#svg-my"></use></svg><span>${tr('SCHEDULE_POS_MY')}</span></button>
         </div>
-        <div id="divScheduleMyGroupNote" class="uniStatus schedule-my-note" style="display:none;"></div>
+        <p id="divScheduleMyGroupNote" class="gen-tile-desc is-warning schedule-my-note" style="display:none;"></p>
         <input type="hidden" id="fldSchedulePositionMode" value="position">
-        <div id="divScheduleSliderGroup" class="slider-group">
-        <div class="slider-header"><span class="title">${tr('SETMYPOS_TARGET_POS')}</span><span class="val"><span id="spanScheduleTargetPos">0</span> %</span></div>
+        <div id="divScheduleSliderGroup" class="sw-col">
+        <div class="sw-slh"><span class="gen-field-label">${tr('SETMYPOS_TARGET_POS')}</span><b><span id="spanScheduleTargetPos">0</span> %</b></div>
         <div class="slider-wrapper">
         <div class="slider-progress"><div class="slider-thumb-line"></div></div>
         <input id="slidScheduleTargetPos" class="md3-range-input" type="range" min="0" max="100" step="1" value="0" oninput="syncSliderProgress(this); get('spanScheduleTargetPos').innerText = this.value;">
         </div>
         </div>
-        <div id="divScheduleTiltSliderGroup" class="slider-group" style="display:none;">
-        <div class="slider-header"><span class="title">${tr('SETMYPOS_TARGET_TILT_POS')}</span><span class="val"><span id="spanScheduleTargetTilt">0</span> %</span></div>
-        <div class="slider-wrapper">
+        <div id="divScheduleTiltSliderGroup" class="sw-col" style="display:none;">
+        <div class="sw-slh"><span class="gen-field-label">${tr('SETMYPOS_TARGET_TILT_POS')}</span><b><span id="spanScheduleTargetTilt">0</span> %</b></div>
+        <div class="slider-wrapper tilt-slider">
         <div class="slider-progress"><div class="slider-thumb-line"></div></div>
         <input id="slidScheduleTargetTilt" class="md3-range-input" type="range" min="0" max="100" step="1" value="0" oninput="syncSliderProgress(this); get('spanScheduleTargetTilt').innerText = this.value;">
         </div>
         </div>
-        </div>
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('OPTION')}</h3>
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="selScheduleRetries">${tr('REPEAT_COMMANDS')}</label>
-        <select id="selScheduleRetries" class="inputAndSelect">
+        <div class="sw-sec"><span>${tr('OPTION')}</span></div>
+        <div class="gen-field"><label class="gen-field-label" for="selScheduleRetries">${tr('REPEAT_COMMANDS')}</label>
+        <div class="gen-input-box dirty-target"><select id="selScheduleRetries" class="gen-input">
         ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${tr(n === 0 ? 'OPT_NO_REPEAT' : 'OPT_' + n + 'TIME')}</option>`).join('')}
-        </select>
+        </select></div></div>
+        <label class="gen-row dirty-target" for="cbScheduleEnabled"><span class="gen-row-text"><b>${tr('SCHEDULE_HOUR_ENABLED')}</b><span>${tr('SCHEDULE_ENABLED_DESC')}</span></span>
+        <span class="gen-seg gen-seg-bool"><input id="cbScheduleEnabled" type="checkbox" checked><span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span></label>
         </div>
-        </div>
-        <label class="uniRow dirty-target" for="cbScheduleEnabled">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('SCHEDULE_HOUR_ENABLED')}</div>
-        <div class="uniStatus">${tr('SCHEDULE_ENABLED_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch">
-        <input id="cbScheduleEnabled" type="checkbox" checked/>
-        <div></div>
-        </span>
-        </div>
-        </label>
-        </div>
-        </div>
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnScheduleHourCancel" line type="button">${tr('BT_CANCEL')}</button>
-        <button id="btnScheduleHourConfirm" type="button">
-        <svg><use href="#svg-check"></use></svg>
-        <span>${tr('BT_CONFIRM')}</span>
-        </button>
-        </div>
-        </div>
+        <div class="genmod-foot sw-hour-foot"><span class="genmod-foot-hint"></span><div class="genmod-foot-btns">
+        <button id="btnScheduleHourCancel" class="gen-btn" type="button">${tr('BT_CANCEL')}</button>
+        <button id="btnScheduleHourConfirm" class="gen-btn gen-btn-primary" type="button">${tr('BT_CONFIRM')}</button>
+        </div></div>
         </div>`;
+        div.addEventListener('click', (e) => { if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div); });
 
         get('divContainer').appendChild(div);
         shOverlay(div);

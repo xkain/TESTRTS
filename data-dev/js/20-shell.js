@@ -1500,9 +1500,14 @@ function bindGenTabs(page, ids) {
         });
         pager.hidden = panels.getBoundingClientRect().bottom + window.scrollY <= window.innerHeight;
     };
+    // Onglet mémorisé pour la session de l'onglet du navigateur : un rechargement y revient. `key`
+    // distingue l'élément affiché (fiche d'un équipement, d'un groupe) ; vide pour les pages fixes.
+    const store = 'genTab:' + ids.tabs;
+    let key = '';
     const show = (i) => {
         if (i < 0 || i >= tabs().length) return;
         current = i;
+        try { sessionStorage.setItem(store, JSON.stringify({ key, i })); } catch (e) { /* stockage indisponible */ }
         tabs().forEach(t => {
             const on = parseInt(t.dataset.tab, 10) === i;
             t.classList.toggle('selected', on);
@@ -1526,7 +1531,24 @@ function bindGenTabs(page, ids) {
     if (window.ResizeObserver) new ResizeObserver(update).observe(panels);
     window.addEventListener('resize', update);
     window.addEventListener('scroll', sections, { passive: true });
-    return { show, update };
+    const restore = (k = '') => {
+        key = k;
+        let i = 0;
+        try { const v = JSON.parse(sessionStorage.getItem(store) || 'null'); if (v && v.key === k) i = v.i; } catch (e) { /* stockage indisponible */ }
+        show(i);
+    };
+    if (!ids.keyed) restore('');
+    return { show, update, restore, current: () => current };
+}
+
+// Grille gen- dont le JS masque des tuiles : nth-of-type (main.css) les compte quand même. On pose
+// .gen-span sur la dernière tuile visible quand leur nombre est impair, à la place de cette règle.
+function genGridSpan(grid) {
+    grid.classList.add('js-span');
+    const tiles = [...grid.children].filter(e => e.tagName === 'DIV');
+    tiles.forEach(t => t.classList.remove('gen-span'));
+    const vis = tiles.filter(t => getComputedStyle(t).display !== 'none');
+    if (vis.length % 2) vis[vis.length - 1].classList.add('gen-span');
 }
 
 // --- Coque des fenêtres de la page Général (classes genmod-, overlays.css) ---------------
