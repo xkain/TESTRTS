@@ -683,15 +683,6 @@ class ShadeSetup {
         }
         return tr('SETUP_S_DONE');
     }
-    // Signal des télécommandes liées : le dernier RSSI connu, moyenné s'il y en a plusieurs.
-    remoteSignal(shade) {
-        const vals = (shade.linkedRemotes || []).map(r => (typeof r.lastRssi === 'number' && r.lastRssi > -128) ? r.lastRssi : somfy._getStoredRemoteSignal(r.remoteAddress))
-            .filter(v => typeof v === 'number');
-        const n = (shade.linkedRemotes || []).length;
-        const avg = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
-        const level = avg === null ? 'unknown' : somfy.rssiLevel(avg);
-        return `<span class="setup-signal"><svg class="linkedRemote-signal-icon sig-${level}"><use href="#svg-tabRadio"></use></svg>${tr('M_SIGNAL')} | <span class="sig-${level}">${avg === null ? '—' : avg + ' dBm'}</span>${n > 1 && avg !== null ? ` (${tr('SETUP_SIGNAL_AVG')})` : ''}</span>`;
-    }
     hasLed() { return typeof window.__ledPin === 'number' && window.__ledPin >= 0; }
     renderEditPanel(shade) {
         const sec = get('divShadeSetupTasks'), list = get('divShadeSetupList');
@@ -702,7 +693,6 @@ class ShadeSetup {
         this.renderActivity(shade);
         if (!shade) { if (get('divShadeRemotes')) get('divShadeRemotes').innerHTML = ''; return; }
         const steps = shade.setupSteps || 0, legacy = !steps && shade.paired;
-        const remotes = (shade.linkedRemotes || []).length;
         const ids = this.tasksFor(shade), doneN = ids.length - this.missingSteps(shade);
         get('shdSetupTitle').textContent = `${tr('SETUP_RESUME_TITLE')} · ${doneN}/${ids.length}`;
         get('shdSetupMeter').style.width = `${Math.round(doneN / ids.length * 100)}%`;
@@ -716,14 +706,21 @@ class ShadeSetup {
             <span class="ed-step-t"><b>${this.titleFor(shade, id)}</b>${status ? `<span>${status}</span>` : ''}</span>
             <svg class="ed-step-go"><use href="#svg-arrowRight"></use></svg></button>`;
         }).join('');
-        // Onglet Télécommandes de la fiche.
-        const rbox = get('divShadeRemotes');
-        if (rbox) rbox.innerHTML = `<div class="unibloc-container"><div class="button-container-Colpair">
-            <button type="button" class="editDevice-btn-pair setup-row setup-remote-row" onclick="shadeSetup.runTask(${shade.shadeId},'remote')">
-            <div class="editDevice-pair-btn-content"><div class="editDevice-pair-icon"><svg><use href="#svg-linkRemot"></use></svg></div>
-            <div class="uniText"><span class="editDevice-pair-title">${tr('REMOTESLIST_TITLE')}${remotes ? ` (${remotes}/${somfy.maxLinkedRemotes || 15})` : ''}</span><span id="spanShadeRemoteSignal" class="uniStatus-Button">${remotes ? this.remoteSignal(shade) : tr('BT_LINK_REMOTE_DESC')}</span></div></div>
-            <svg class="editDevice-arrow-icon setup-add"><use href="#svg-add"></use></svg></button>`
-            + (remotes ? `<div class="setup-remotes">${somfy.modalRemotesListHtml(shade)}</div>` : '') + '</div></div>';
+        this.renderRemoteTiles(shade);
+    }
+    // Onglet Télécommandes de la fiche : tuile d'ajout puis une tuile par télécommande, comme les
+    // membres de la fiche groupe.
+    renderRemoteTiles(shade) {
+        const box = get('divShadeRemotes');
+        if (!box) return;
+        const id = shade.shadeId, list = shade.linkedRemotes || [], max = somfy.maxLinkedRemotes || 15;
+        box.innerHTML = `<p class="ed-tip"><svg><use href="#svg-info"></use></svg><span>${tr('DEVICE_REMOTES_TIP')} <b>${list.length}/${max}</b></span></p>
+        <div class="cfg-tiles"><button type="button" class="cfg-tile cfg-tile-add" onclick="shadeSetup.runTask(${id},'remote')"${list.length >= max ? ' disabled' : ''}><svg><use href="#svg-add"></use></svg><span>${tr('BT_LINK_REMOTE')}</span><small>${tr('DEVICE_REMOTE_ADD_DESC')}</small></button>`
+            + list.map((r, i) => `<div class="cfg-tile" data-remoteaddress="${r.remoteAddress}">
+            <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#svg-remote"></use></svg></span>${somfy.cfgTileMenu(`somfy.unlinkRemote(${id}, '${r.remoteAddress}')`, '', 'DEVICE_REMOTE_UNLINK')}</div>
+            <div class="cfg-tile-name"><span class="name-text">${tr('REMOTESLIST_LINKED')} ${i + 1}</span><span class="cfg-tile-sub">${tr('ADDR')} ${r.remoteAddress}</span></div>
+            <div class="cfg-tile-foot">${somfy.remoteSignalHtml(r.lastRssi, r.remoteAddress)}<span class="cfg-tile-id">${tr('CODE')} ${r.lastRollingCode}</span></div>
+            </div>`).join('') + '</div>';
     }
     renderActivity(shade) {
         const box = get('divShadeActivity');
@@ -788,8 +785,6 @@ class ShadeSetup {
         const r = sh && (sh.linkedRemotes || []).find(x => Number(x.remoteAddress) === addr);
         if (!r || parseInt(get('spanShadeId')?.innerText, 10) !== sh.shadeId) return;
         r.lastRssi = frame.rssi;
-        const sig = get('spanShadeRemoteSignal');
-        if (sig) sig.innerHTML = this.remoteSignal(sh);
         if (this.act && this.act.shadeId === sh.shadeId) { this.act.heardAt = Date.now(); this.act.heardRssi = frame.rssi; this.paintActivity(); }
     }
     onShadeCommand(msg) {

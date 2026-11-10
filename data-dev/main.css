@@ -3287,202 +3287,6 @@ div.signal {
     justify-content: flex-end;
 }
 
-/*
- * editshade Page*/
-/* -----------------------------------------------------------------------
- *  Page édition équipement - PANNEAU GAUCHE (position, infos équipement)
- * ----------------------------------------------------------------------- */
-
-.editDevice-left-panel {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    background: var(--color-bg-surface-2);
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-    border-radius: var(--radius-row);
-    padding: 14px 16px;
-    gap: 12px;
-    flex: 1;
-    min-width: 250px;
-    box-sizing: border-box;
-}
-
-/* Zone supérieure : Icône + Statuts */
-.editDevice-visual-zone {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-}
-
-.editDevice-icon-wrapper {
-    width: 70px;
-    height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.editDevice-icon-wrapper svg {
-    width: 70px;
-    height: 70px;
-}
-
-/* Lignes de données (Position et Inclinaison partagent ce style) */
-.editDevice-status-row {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    font-size: 0.95em;
-}
-
-.editDevice-info-title {
-    color: var(--color-text-secondary);
-}
-
-.editDevice-val,
-#valPos,
-#valTilt {
-color: var(--color-accent-light);
-font-weight: 700;
-}
-
-/* Zone inférieure : Boutons alignés style Dashboard */
-/* Ce même design est réutilisé pour les boutons up/my/down de la page editgroup
- * (#divSomfyGroupButtons) afin de garder une apparence identique entre editshade et editgroup. */
-.editDevice-action-buttons-column,
-#divSomfyGroupButtons {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    margin-top: 0;
-}
-
-/* editgroup : #divSomfyGroupButtons est seul enfant de son .uniblocCol (row-To-Col-Mobile, cf.
- * index.html), alors que la colonne voisine (.feedback-card, bouton "lier un équipement") est plus
- * haute -- .uniblocCol s'étire (align-items:stretch par défaut sur .row-To-Col-Mobile) mais reste
- * flex-direction:column donc son unique enfant colle en haut. margin:auto en axe principal d'un
- * flex-direction:column centre verticalement, comme margin:auto en ligne pour centrer
- * horizontalement -- scopé à l'ID (pas à .editDevice-action-buttons-column, réutilisée telle
- * quelle par editshade où ce souci ne se pose pas) pour ne pas déteindre sur cette autre page. */
-#divSomfyGroupButtons {
-    margin-top: auto;
-    margin-bottom: auto;
-}
-
-.editDevice-action-buttons-column .button-outline,
-#divSomfyGroupButtons .button-outline {
-    background-color: var(--color-control-bg);
-    border: 1px solid var(--color-control-border);
-    color: var(--color-text-main);
-    height: 40px;
-    border-radius: var(--radius-btn);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    padding: 0;
-    box-shadow: none;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.editDevice-action-buttons-column .button-outline:hover,
-#divSomfyGroupButtons .button-outline:hover {
-    background-color: var(--color-control-bg-hover);
-    filter: none;
-}
-
-/* Télécommande virtuelle : accessoire des commandes, pas une commande de plus -- carré fixe au
- * lieu du flex:1 partagé par ▲/My/▼. */
-.editDevice-action-buttons-column .btn-ctl-remote,
-#divSomfyGroupButtons .btn-ctl-remote {
-    flex: 0 0 40px;
-    width: 40px;
-}
-.btn-ctl-remote svg {
-    width: 22px;
-    height: 22px;
-}
-
-
-
-
-/* -----------------------------------------------------------------------
- *  Page édition équipement - PANNEAU DROITE (appairage)
- * ----------------------------------------------------------------------- */
-
-.button-container-Colpair {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-    flex: 1;
-    position: relative;
-    clear: both;
-}
-.button-container-Colpair .editDevice-btn-pair {
-    width: 100%;
-    flex: 1;
-    box-sizing: border-box;
-}
-.editDevice-btn-pair {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    color: var(--color-text-main);
-    background: var(--color-bg-surface-2);
-    box-shadow: var(--shadow-card);
-    border: 1px solid var(--color-border);
-    border-radius:var(--radius-btn);
-    padding: 14px 8px;
-    cursor: pointer;
-}
-.editDevice-btn-pair:hover {
-    filter:brightness(0.97);
-    background: var(--color-bg-card);
-}
-.editDevice-pair-btn-content {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.editDevice-pair-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.editDevice-pair-icon svg {
-    width: 42px;
-    height: 42px;
-    color: var(--color-button-pair-link);
-}
-.editDevice-pair-title {
-    color: var(--color-text-main);
-    font-size: 0.94em;
-    font-weight: 600;
-}
-.editDevice-pair-icon { position: relative; }
-
-.bloc80slidStep input {
-    width:100%;
-}
-.bloc80slidStep label {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-top:0px;
-    padding:0 7px;
-    font-size: 0.9em;
-    color: var(--color-text-secondary);
-}
-
 .disabled {
     opacity: 0.3 !important;
     filter: grayscale(1) !important;
@@ -5837,14 +5641,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     .blocRadioHeaderTitle {
         min-width: 0;
     }
-    .editDevice-icon-wrapper,
-    .editDevice-icon-wrapper svg {
-        width: 78px;
-        height: 78px;
-    }
-    .editDevice-visual-zone {
-        gap: 5px;
-    }
     .blocRadioHeaderTitle label {
         font-size: 11px;
         white-space: nowrap;
@@ -5864,7 +5660,7 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 #divShadeSetup .setup-chip:hover { color: var(--color-text-main); }
 #divShadeSetup .setup-chip.sel { background: var(--color-bg-card); color: var(--color-accent); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
 :is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-#divLinkListener .setup-fields .uniRow, #divLinkRepeater .setup-fields .uniRow, #divShadeSetup .setup-fields .uniRow, #divShadeSetup .setup-adv-body .uniRow { min-width: 0; }
+#divLinkListener .setup-fields .uniRow, #divLinkRepeater .setup-fields .uniRow, #divShadeSetup .setup-fields .uniRow { min-width: 0; }
 :is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote { display: flex; align-items: flex-start; gap: 14px; padding: 14px; border: 1.5px solid var(--color-border); border-radius: var(--radius-row); background: var(--color-bg-card); }
 :is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-idle { cursor: pointer; }
 :is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-idle:hover { border-color: var(--color-accent); }
@@ -5886,12 +5682,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 #divShadeSetup .setup-keep { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-main); }
 #divShadeSetup .setup-link { background: none; border: 0; padding: 0; width: auto; min-width: 0; height: auto; color: var(--color-accent); cursor: pointer; font-size: 13px; text-decoration: underline; text-transform: none; }
 #divShadeSetup .setup-start { align-self: flex-start; }
-#divShadeSetup details.setup-adv { border-top: 1px solid var(--color-border-hr); padding-top: 14px; }
-#divShadeSetup details.setup-adv summary { cursor: pointer; color: var(--color-text-secondary); font-size: 14px; list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-#divShadeSetup details.setup-adv summary::before { content: '▸'; transition: transform .15s; }
-#divShadeSetup details.setup-adv[open] summary::before { transform: rotate(90deg); }
-#divShadeSetup details.setup-adv summary span { font-size: 12px; }
-#divShadeSetup .setup-adv-body { margin-top: 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 #divShadeSetup .setup-tasks { display: flex; flex-direction: column; gap: 10px; }
 #divShadeSetup .setup-task { border: 1.5px solid var(--color-border); border-radius: var(--radius-row); background: var(--color-bg-card); overflow: hidden; }
 #divShadeSetup .setup-task.active { border-color: var(--color-accent); }
@@ -5953,114 +5743,40 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 #divShadeSetup .setup-okline span { flex: 1; }
 .setup-badge { width: auto; min-width: 0; height: auto; margin: 0 8px; padding: 4px 10px; flex: none; font-size: 12px; border-radius: 999px; text-transform: none; background: var(--color-warning-tint-bg); border: 1px solid var(--color-warning-tint-border); color: var(--color-text-main); }
 @media (max-width: 600px) {
-    #divShadeSetup .setup-fields, #divShadeSetup .setup-adv-body { grid-template-columns: minmax(0, 1fr); }
+    #divShadeSetup .setup-fields { grid-template-columns: minmax(0, 1fr); }
     #divShadeSetup .setup-task-b { padding-left: 14px; }
     #divShadeSetup .setup-chips { display: grid; align-self: stretch; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
     #divShadeSetup .setup-chip { display: flex; align-items: center; justify-content: center; min-height: 32px; text-align: center; }
 }
-#divShadeSetupTasks .setup-row-done .editDevice-pair-icon svg { color: var(--color-success); fill: var(--color-success); }
 #divShadeSetup .setup-remotes-list { display: flex; flex-direction: column; gap: 8px; }
-:is(#divShadeSetupTasks, #divShadeRemotes) .setup-signal { display: inline-flex; align-items: center; gap: 4px; }
-:is(#divShadeSetupTasks, #divShadeRemotes) .setup-signal svg { width: 14px; height: 14px; }
-#divShadeSetupTasks .setup-row .editDevice-pair-icon { position: relative; }
 #divShadeSetup .setup-single .setup-task-b { padding: 14px; }
-:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap, :is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-side, :is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-cols, :is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
-:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
-:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col:not(:has(> .unibloc-container:not([style*="none"]))) { display: none; }
-:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title { display: flex; align-items: center; gap: 10px; }
-:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
-:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
-:is(#somfyShade, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
-#somfyShade .tile-pills { margin-left: auto; display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
-#somfyShade .tile-pills .setup-badge { margin: 0; font-size: 0.62em; }
+:is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap, :is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-side, :is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-cols { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+:is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
+:is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title { display: flex; align-items: center; gap: 10px; }
+:is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
+:is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
+:is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
 /* Survol et clic restent dans l'orange du badge : sans quoi button:hover/:active (base.css) le
  * repeignent à la couleur d'accent. */
 .setup-badge:hover, .setup-badge:active { background: color-mix(in srgb, var(--color-warning), transparent 78%); border-color: color-mix(in srgb, var(--color-warning), transparent 55%); }
 .setup-badge-short { display: none; }
-#somfyShade .setup-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 0.62em; font-weight: 500; color: var(--color-success); background: color-mix(in srgb, var(--color-success) 14%, transparent); }
-#somfyShade .setup-pill svg { width: 12px; height: 12px; fill: currentColor; }
 .uniRow .field-pen { width: 18px; height: 18px; flex: none; margin-left: auto; align-self: center; cursor: text; opacity: .55; transition: opacity .15s; }
 .uniRow .field-pen path { fill: var(--color-text-secondary); }
 .uniRow:hover .field-pen { opacity: .85; }
 .uniRow:focus-within .field-pen { opacity: 1; }
 .uniRow:focus-within .field-pen path { fill: var(--color-accent); }
 .uniRow:has(> .field-pen) .inputAndSelect:focus { outline: none; }
-#somfyShade .ctl-zone { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "ico meters" "ico chips"; gap: 12px 16px; align-items: center; }
-#somfyShade .ctl-zone .editDevice-icon-wrapper { grid-area: ico; }
-#somfyShade .ctl-zone .editDevice-icon-wrapper, #somfyShade .ctl-zone .editDevice-icon-wrapper svg { width: 150px; height: 150px; }
-#somfyShade .ctl-meters { grid-area: meters; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-#somfyShade .ctl-meter { flex-direction: column; align-items: stretch; gap: 5px; }
-#somfyShade .ctl-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-#somfyShade .ctl-meter .editDevice-info-title { font-size: .85em; color: var(--color-text-secondary); }
-#somfyShade .ctl-meter .editDevice-val { font-size: 1.25em; font-weight: 700; color: var(--color-accent); }
-#somfyShade #labelPosContainer .editDevice-val { font-size: 1.5em; }
-#somfyShade .ctl-bar { height: 6px; border-radius: 99px; background: var(--color-border); overflow: hidden; }
-#somfyShade .ctl-bar > span { display: block; width: 0; height: 100%; border-radius: 99px; background: var(--color-accent); transition: width .3s; }
-#somfyShade .ctl-bar-tilt > span { background: repeating-linear-gradient(90deg, var(--color-accent) 0 6px, transparent 6px 9px); }
-#somfyShade .ctl-chips { grid-area: chips; display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 8px; }
-#somfyShade .ctl-chips:not(:has(> .ctl-chip:not([style*="none"]))) { display: none; }
-#somfyShade .ctl-chip { flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); min-width: 0; }
-#somfyShade .ctl-chip .editDevice-info-title { font-size: .72em; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-#somfyShade .ctl-chip .editDevice-val { font-size: 1.05em; font-weight: 700; color: var(--color-text-main); }
-#somfyShade .ctl-tag { font-size: .68em; font-weight: 500; color: var(--color-accent); }
-#somfyShade .ctl-tag:empty { display: none; }
-@media (max-width: 767px) {
-    #somfyShade .ctl-zone { grid-template-areas: "ico meters" "chips chips"; }
-    #somfyShade .ctl-zone .editDevice-icon-wrapper, #somfyShade .ctl-zone .editDevice-icon-wrapper svg { width: 90px; height: 90px; }
 }
-#somfyShade .tile-activity { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); }
-#somfyShade .tile-act-row { display: flex; gap: 10px; align-items: flex-start; }
-#somfyShade .tile-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex: none; background: var(--color-text-secondary); }
-#somfyShade .tile-dot.ok { background: var(--color-success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-success) 20%, transparent); }
-#somfyShade .tile-act-t { font-size: .78em; color: var(--color-text-secondary); }
-#somfyShade .tile-act-v { font-size: .88em; color: var(--color-text-main); }
-#divShadeSetupList { gap: 0; }
-:is(#divShadeSetupList, #divShadeRemotes) .setup-row { border-radius: 0; border-width: 0 0 1px 0; background: transparent; box-shadow: none; position: relative; }
-:is(#divShadeSetupList, #divShadeRemotes) .setup-row.setup-remote-row { border-width: 0; }
-:is(#divShadeSetupList, #divShadeRemotes) .setup-row:hover { background: color-mix(in srgb, var(--color-accent) 6%, transparent); }
-#divShadeSetupList .setup-step:has(+ .setup-step)::before { content: ''; position: absolute; left: calc(10px + 13px); top: 50%; height: 100%; width: 2px; background: var(--color-border); z-index: 0; }
-#divShadeSetupList .setup-step-n { width: 32px; height: 32px; min-width: 32px; box-sizing: border-box; border-radius: 50%; border: 4px solid var(--color-bg-surface-0); display: grid; place-items: center; position: relative; z-index: 1; font-size: 13px; font-weight: 700; color: var(--color-text-secondary); background: var(--color-bg-surface-0); box-shadow: inset 0 0 0 2px var(--color-border); }
-#divShadeSetupList .setup-row-done .setup-step-n { background: var(--color-success); box-shadow: none; }
-#divShadeSetupList .setup-row-done .setup-step-n svg { width: 16px; height: 16px; fill: var(--color-text-inverse); color: var(--color-text-inverse); }
-#divShadeSetupList .setup-step-todo .setup-step-n { color: var(--color-warning); box-shadow: inset 0 0 0 2px var(--color-warning); }
-#divShadeSetupList .setup-step-todo .uniStatus-Button { color: var(--color-warning); }
-#divShadeSetupList .setup-hint { opacity: .7; }
-#divShadeSetupList .setup-sep { border: 0; border-top: 1px solid var(--color-border); margin: 12px -20px; width: calc(100% + 40px); align-self: flex-start; height: 0; flex: none; box-sizing: border-box; }
-:is(#divShadeSetupList, #divShadeRemotes) .setup-add { width: 22px; height: 22px; fill: var(--color-accent); color: var(--color-accent); }
-:is(#divShadeSetupList, #divShadeRemotes) .setup-remotes { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 140px; max-height: 280px; padding: 4px 2px 2px; }
-:is(#divShadeSetupList, #divShadeRemotes) .setup-remotes > * { flex: none; }
-@media (min-width: 1000px) {
-    .subtab-content:has(> #somfyShade:not([style*="none"])) { max-width: 1440px; }
-    #somfyShade .tile-cols { flex-direction: row; align-items: stretch; }
-    #somfyShade .tile-col { flex: 1 1 0; }
-    #somfyShade #divShadeSetupTasks { flex: 1 1 auto; }
-    #divShadeSetupList > * { flex: 0 0 auto; }
-    #divShadeSetupList > .setup-remotes { flex: 1 1 0; max-height: none; }
-    #somfyShade #divShadeOptionsGrid { grid-template-columns: repeat(auto-fit, minmax(225px, 1fr)); }
-}
-@media (max-width: 1599px) {
-    #somfyShade .tile-tip { display: none !important; }
-}
-@media (min-width: 1600px) {
-    #somfyShade .tile-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; grid-template-areas: "info side" "cols side" "sched side"; }
-    #somfyShade .tile-wrap > .marginB25 { grid-area: info; }
-    #somfyShade .tile-wrap > .tile-side { grid-area: side; }
-    #somfyShade .tile-wrap > .tile-cols { grid-area: cols; }
-    #somfyShade .tile-wrap > #divScheduleSectionShade { grid-area: sched; }
-    #somfyShade .tile-side .uniblocRow { flex-direction: column; }
-    #somfyShade .tile-side .uniRow { width: 100%; flex: none; }
-    #somfyShade .tile-col:first-child { flex: 0.8 1 0; }
-}
-:is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
-:is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
-:is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) { padding-bottom: 70px; }
-body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { display: none; }
+:is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
+:is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
+:is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) { padding-bottom: 70px; }
+body:has(.inst-overlay, .modal-overlay) :is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { display: none; }
 @media (min-width: 768px) {
-    :is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { left: var(--sidebar-width); }
+    :is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { left: var(--sidebar-width); }
 }
 @media (max-width: 767px) {
-    :is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
-    :is(#somfyShade, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
+    :is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
+    :is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
 }
 #divNetAdapter .tile-wrap .unibloc-container { margin: 0; }
 #divNetAdapter .tile-tip { display: none; }

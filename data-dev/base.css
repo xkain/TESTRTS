@@ -469,20 +469,6 @@
     fill: currentColor;
 }
 
-.desc-highlight{
-    background-color: var(--color-accent-transp-94);
-    color: var(--color-accent);
-    padding: 2px 6px;
-    border-radius: var(--radius-md);
-    font-size: 0.8em;
-    margin-left: 2px;
-    font-weight: 600;
-    border: 1px solid var(--color-accent-card-blend);
-    display: inline-flex;
-    align-items: center;
-    align-self: center;
-}
-
 /* -----------------------------------------------------------------------
  *  Éléments HTML de base, typographie, séparateurs
  * ----------------------------------------------------------------------- */
@@ -843,12 +829,6 @@ form {
     flex-direction: row;
     gap: 15px;
 }
-.row-To-Col-Mobile {
-    display: flex;
-    flex-direction: row;
-    gap: 15px;
-    width: 100%;
-}
 .options-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -898,8 +878,7 @@ form {
     align-items: stretch;
     width: 100%;
 }
-.uniblocCol,
-.uniblocStep {
+.uniblocCol {
     display:flex;
     flex-direction:column;
     clear:both;
@@ -913,9 +892,6 @@ form {
     border:1px solid var(--color-border);
     box-shadow: var(--shadow-card);
     gap: 15px;
-}
-.uniblocStep {
-    gap:15px;
 }
 
 .flex1 {
@@ -1030,7 +1006,6 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
  * ========================================================================= */
 
 html[data-feedback-commands="off"] .btn-somfy-svg:active,
-html[data-feedback-commands="off"] .btn-somfy-svg-wide:active,
 html[data-feedback-commands="off"] .vr-cmd-btn:active {
     transform: none !important;
     filter: none !important;
@@ -1044,8 +1019,8 @@ html[data-feedback-commands="off"] .vr-arrow-down:active {
     transform: translateX(-50%) !important;
 }
 
-html[data-feedback-ui="off"] .animScale:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):not(.vr-cmd-btn):active,
-html[data-feedback-ui="off"] button:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):active,
+html[data-feedback-ui="off"] .animScale:not(.btn-somfy-svg):not(.vr-cmd-btn):active,
+html[data-feedback-ui="off"] button:not(.btn-somfy-svg):active,
 html[data-feedback-ui="off"] .welcomeCard:active,
 html[data-feedback-ui="off"] .radioBtnPrec:active,
 html[data-feedback-ui="off"] [close]:active {
@@ -1054,19 +1029,17 @@ html[data-feedback-ui="off"] [close]:active {
     filter: none !important;
 }
 
-html:not([data-feedback-commands="off"]):not([data-feedback-style-commands="flash"]) .btn-somfy-svg:active,
-html:not([data-feedback-commands="off"]):not([data-feedback-style-commands="flash"]) .btn-somfy-svg-wide:active {
+html:not([data-feedback-commands="off"]):not([data-feedback-style-commands="flash"]) .btn-somfy-svg:active {
     filter: none !important;
 }
-html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .animScale:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):not(.vr-cmd-btn):active,
-html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) button:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):active,
+html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .animScale:not(.btn-somfy-svg):not(.vr-cmd-btn):active,
+html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) button:not(.btn-somfy-svg):active,
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .welcomeCard:active,
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .radioBtnPrec:active {
     filter: none !important;
 }
 
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .btn-somfy-svg:active,
-html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .btn-somfy-svg-wide:active,
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-cmd-btn:active {
     transform: none !important;
     filter: brightness(1.3) !important;
@@ -1083,8 +1056,8 @@ html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-wheel-arrow:active svg {
     color: var(--color-text-main) !important;
 }
-html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .animScale:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):not(.vr-cmd-btn):active,
-html:not([data-feedback-ui="off"])[data-feedback-style="flash"] button:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):active,
+html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .animScale:not(.btn-somfy-svg):not(.vr-cmd-btn):active,
+html:not([data-feedback-ui="off"])[data-feedback-style="flash"] button:not(.btn-somfy-svg):active,
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .welcomeCard:active,
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .radioBtnPrec:active {
     transform: none !important;
@@ -1202,17 +1175,11 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
     gap: 4px;
     text-align: left;
 }
-.uniStatus,
-.uniStatus-Button {
+.uniStatus {
     font-size:0.8em;
     color:var(--color-text-secondary);
     margin-bottom:2px;
     padding:0;
-}
-.uniStatus-Button {
-    font-weight: 400;
-    text-transform: none;
-
 }
 
 .uniLabel {
@@ -1956,13 +1923,6 @@ button:disabled:active {
 .unibutton:hover {
     background:transparent;
 }
-.bouton-Danger {
-    background:var(--color-danger);
-    border: 2px solid var(--color-danger);
-}
-.bouton-Danger:hover {
-    background: color-mix(in srgb,var(--color-danger),#060606 20%);
-}
 .version-badge {
     font-size:0.9em;
     opacity:0.7;
@@ -2004,8 +1964,7 @@ button:disabled:active {
     border-left: 5px solid var(--color-danger-tint-border);
 }
 .warning-header,
-.information-header,
-.error-header {
+.information-header {
     display: flex;
     align-items: center;
     gap: 5px;
@@ -2033,8 +1992,7 @@ button:disabled:active {
 }
 
 .warning-header b,
-.information-header b,
-.error-header b {
+.information-header b {
     margin: 0;
     line-height: 1.2;
 }
@@ -2049,11 +2007,6 @@ button:disabled:active {
 
 .information-header b { color: #0072ff; }
 .warning-header b { color: var(--color-warning);}
-
-.error-header svg,
-.error-header b {
-    color: var(--color-danger);
-}
 .warning span,
 .information span,
 .error span {
@@ -2381,24 +2334,13 @@ button:disabled:active {
     color:var(--color-icon-muted);
 }
 
-.btn-somfy-svg-wide {
-    display:inline-flex;
-    width:88px;
-    height:44px;
-    padding: 0;
-    text-transform: none;
-    box-shadow: 0 1px 3px 0 var(--color-shadow-alt);
-}
-
-.btn-somfy-svg svg,
-.btn-somfy-svg-wide svg {
+.btn-somfy-svg svg {
     width:100%;
     height:100%;
     display:block;
 }
 
-.btn-somfy-svg:hover,
-.btn-somfy-svg-wide:hover {
+.btn-somfy-svg:hover {
     filter:brightness(1.1);
 }
 
@@ -2427,11 +2369,6 @@ button:disabled:active {
 @media (max-width: 945px) {
     .uniblocRow {
         flex-direction: column;
-    }
-
-    .row-To-Col-Mobile {
-        flex-direction: column;
-        gap: 12px;
     }
 
     .options-grid {
@@ -2466,7 +2403,7 @@ button:disabled:active {
         overflow-x:hidden;
         font-size: 13px;
     }
-    .uniblocCol, .uniblocStep {
+    .uniblocCol {
         padding: 13px;
     }
     .uniLeft,

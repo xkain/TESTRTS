@@ -247,10 +247,10 @@ class _SomfySchedule {
         }
 
         const list = (this.schedules || []).filter(sc => sc.targetType === targetType && sc.targetId === targetId);
-        // Fiche groupe (nouvelle interface) : tuiles de la page Plannings, la tuile d'ajout en premier.
-        if (containerId === 'divGroupScheduleBadges') {
+        // Fiches équipement et groupe : tuiles de la page Plannings, la tuile d'ajout en premier.
+        if (containerId === 'divGroupScheduleBadges' || containerId === 'divShadeScheduleBadges') {
             const max = this.maxSchedules || 30, left = Math.max(0, max - (this.schedules || []).length);
-            container.innerHTML = `<button type="button" class="cfg-tile cfg-tile-add" onclick="somfy.openAddScheduleInline('group', ${targetId});"${left ? '' : ' disabled'}><svg><use href="#svg-add"></use></svg><span>${tr('SCHEDULE_ADD')}</span><small id="spanScheduleSlotsGroup">${tr('SCHEDULE_SLOTS_REMAINING').replace('{n}', left)}</small></button>`
+            container.innerHTML = `<button type="button" class="cfg-tile cfg-tile-add" onclick="somfy.openAddScheduleInline('${targetType}', ${targetId});"${left ? '' : ' disabled'}><svg><use href="#svg-add"></use></svg><span>${tr('SCHEDULE_ADD')}</span><small id="${targetType === 'group' ? 'spanScheduleSlotsGroup' : 'spanScheduleSlotsShade'}">${tr('SCHEDULE_SLOTS_REMAINING').replace('{n}', left)}</small></button>`
                 + this._groupSchedules(list).map(g => this.scheduleTileHtml(g, 'openEditScheduleGroupInline')).join('');
             return;
         }
@@ -270,7 +270,10 @@ class _SomfySchedule {
         const shadeForm = get('somfyShade');
         if (shadeForm && shadeForm.style.display !== 'none') {
             const shadeId = parseInt(get('spanShadeId').innerText, 10);
-            if (!isNaN(shadeId)) this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId);
+            if (!isNaN(shadeId)) {
+                this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId);
+                if (this._shdData && this._shdData.shadeId === shadeId) this.renderShadeCtlInfo(this._shdData);
+            }
         }
         const groupForm = get('somfyGroup');
         if (groupForm && groupForm.style.display !== 'none') {

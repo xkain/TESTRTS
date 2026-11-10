@@ -735,14 +735,6 @@ body.modal-open {
     line-height: 1.4;
     color: var(--color-text-main);
 }
-.uniblocRollingCode label {
-    color: var(--color-accent);
-}
-.uniblocRollingCode input {
-    text-align:center;
-    font-size: 35px !important;
-    color: var(--color-accent) !important;
-}
 .wizard-step p {
     font-size:14px;
     margin:0;
@@ -833,14 +825,6 @@ body.modal-open {
 .instructions-content .empty-state {
     padding:0;
 }
-#divRollingCode button[line] {
-    border: 2px solid #398a1b;
-    color: #398a1b;
-}
-#divRollingCode button[line]:hover {
-    background: #398a1b;
-    color: white;
-}
 .firmware-message {
     display: none;
     align-items: center;
@@ -908,14 +892,6 @@ button[line].fw-sidebar-button:hover {
        remises à zéro, le bandeau touche exactement les bords -- même résultat, par l'autre chemin. */
     margin-left: 0;
     margin-right: 0;
-}
-#divPrereleaseWarning .error-header svg {
-    width: 20px;
-    height: 20px;
-    margin-right: 4px;
-}
-#divPrereleaseWarning .error-header b {
-    font-size: 11.5px;
 }
 #divPrereleaseWarning .information-text {
     font-size: 12.5px;
@@ -4082,25 +4058,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     }
 }
 
-/* -----------------------------------------------------------------------
- *  Cartes de planning (Options -> Équipement/Groupe), une par ligne (cf.
- *  renderScheduleBadges(), 71-schedule.js). L'icône de suppression réutilise
- *  .divEditDelete-svg/.icon-svg plutôt qu'un composant dédié -- activé/désactivé
- *  reste piloté depuis l'édition complète (switch de ScheduleOverlay).
- * ----------------------------------------------------------------------- */
-/* .devButtonUpdate est déjà en column (titre puis description) : cette ligne interne les remet
- * côte à côte sans toucher au reste de la mise en page du bouton. */
-.schedule-add-title-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.schedule-card-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-}
 /* Fiche de planning : trois zones empilées -- en-tête d'identité, une ligne par horaire, jours en
  * pied. L'en-tête reprend le gabarit commun aux cartes équipement/groupe/pièce (.shade-icon-wrapper,
  * .name-text, .cfg-room, poubelle), pour qu'une programmation se lise comme le reste de l'appli.

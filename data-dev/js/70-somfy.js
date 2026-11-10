@@ -1874,7 +1874,7 @@ class Somfy {
     // Rafraîchit en direct le badge de signal d'une télécommande liée affichée dans la fenêtre des
     // télécommandes (tâche « remote »), depuis le RSSI de la trame : aucun aller-retour serveur.
     _updateLiveRemoteSignal(frame) {
-        document.querySelectorAll(`#divShadeSetup .somfyLinkedRemote[data-remoteaddress="${frame.address}"], #divShadeSetupList .somfyLinkedRemote[data-remoteaddress="${frame.address}"]`).forEach(row => {
+        document.querySelectorAll(`#divShadeSetup .somfyLinkedRemote[data-remoteaddress="${frame.address}"], #divShadeRemotes .cfg-tile[data-remoteaddress="${frame.address}"]`).forEach(row => {
             const signalEl = row.querySelector('.linkedRemote-signal');
             if (signalEl) signalEl.outerHTML = this.remoteSignalHtml(frame.rssi, frame.address);
         });
