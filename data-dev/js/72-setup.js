@@ -676,7 +676,7 @@ class ShadeSetup {
                 if (!somfy.noMyShadeTypes.includes(shade.shadeType)) parts.push(shade.myPos >= 0 ? this.t(shade.simMy ? 'SETUP_S_MY_SIM' : 'SETUP_S_MY', { pos: shade.myPos }) : tr('SETUP_S_NO_MY'));
                 if (st.tilt && [1, 2, 4].includes(shade.tiltType) && shade.myPos >= 0 && shade.myTiltPos >= 0) parts.push(this.t('SETUP_S_MY_TILT', { tilt: shade.myTiltPos }));
                 if (st.sun) parts.push(tr(shade.sunSensor ? 'SETUP_S_SUN' : 'SETUP_S_NO_SUN'));
-                if ((shade.repeats ?? 1) > 1) parts.push(tr('SETUP_S_REACH_STRONG'));
+                if ((shade.repeats ?? 1) > 1) parts.push(this.t('SETUP_S_REPEATS', { n: shade.repeats }));
                 if (this.hasLed() && shade.ledFeedback) parts.push(tr('SETUP_S_LED'));
                 return parts.join(' · ') || tr('SETUP_S_REACH_NORMAL');
             }
@@ -703,17 +703,18 @@ class ShadeSetup {
         if (!shade) { if (get('divShadeRemotes')) get('divShadeRemotes').innerHTML = ''; return; }
         const steps = shade.setupSteps || 0, legacy = !steps && shade.paired;
         const remotes = (shade.linkedRemotes || []).length;
-        const pills = get('spanShadeSetupPills');
-        if (pills) pills.innerHTML = this.badgeHtml(shade) + (shade.paired ? `<span class="setup-pill"><svg><use href="#svg-check"></use></svg>${tr('SETUP_PILL_PAIRED')}</span>` : '');
-        list.innerHTML = this.tasksFor(shade).map((id, i) => {
+        const ids = this.tasksFor(shade), doneN = ids.length - this.missingSteps(shade);
+        get('shdSetupTitle').textContent = `${tr('SETUP_RESUME_TITLE')} · ${doneN}/${ids.length}`;
+        get('shdSetupMeter').style.width = `${Math.round(doneN / ids.length * 100)}%`;
+        list.innerHTML = ids.map((id, i) => {
             // Équipement d'avant setupSteps : rien ne dit ce qui a été fait, on n'affiche pas d'état.
             const done = id === 'pair' ? !!shade.paired : !!(steps & SETUP_BIT[id]);
             const status = legacy && id !== 'pair' ? '' : done ? this.valueFor(shade, id) : tr('SETUP_S_TODO');
-            const state = done && status ? ' setup-row-done' : status ? ' setup-step-todo' : '';
-            return `<button type="button" class="editDevice-btn-pair setup-row setup-step${state}" onclick="shadeSetup.fromEdit(${shade.shadeId},'${id}')">
-            <div class="editDevice-pair-btn-content"><div class="editDevice-pair-icon setup-step-n">${done && status ? '<svg><use href="#svg-check"></use></svg>' : `<span>${i + 1}</span>`}</div>
-            <div class="uniText"><span class="editDevice-pair-title">${this.titleFor(shade, id)}</span>${status ? `<span class="uniStatus-Button">${status}</span>` : ''}</div></div>
-            <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg></button>`;
+            const state = done && status ? ' is-done' : status ? ' is-todo' : '';
+            return `<button type="button" class="ed-step${state}" onclick="shadeSetup.fromEdit(${shade.shadeId},'${id}')">
+            <span class="ed-step-n">${done && status ? '<svg><use href="#svg-check"></use></svg>' : i + 1}</span>
+            <span class="ed-step-t"><b>${this.titleFor(shade, id)}</b>${status ? `<span>${status}</span>` : ''}</span>
+            <svg class="ed-step-go"><use href="#svg-arrowRight"></use></svg></button>`;
         }).join('');
         // Onglet Télécommandes de la fiche.
         const rbox = get('divShadeRemotes');
@@ -769,6 +770,18 @@ class ShadeSetup {
         get('rowShadeHeard').style.display = a.remotes.length ? '' : 'none';
         get('valShadeHeard').textContent = a.heardAt ? `${this.agoText(a.heardAt)}${typeof a.heardRssi === 'number' && a.heardRssi > -128 ? ` · ${a.heardRssi} dBm` : ''}` : tr('SHADE_ACT_NEVER');
         get('dotShadeHeard').classList.toggle('ok', !!a.heardAt);
+        // Tuiles de l'onglet Piloter.
+        const sent = get('shdCtlSent'), rem = get('shdCtlRemote');
+        if (sent) {
+            sent.querySelector('.ed-ctl-v').textContent = a.sentAt ? cmd : '—';
+            sent.querySelector('.gen-tile-desc').textContent = a.sentAt ? this.agoText(a.sentAt) : tr('SHADE_ACT_NEVER');
+        }
+        if (rem) {
+            const has = typeof a.heardRssi === 'number' && a.heardRssi > -128;
+            rem.querySelector('.ed-ctl-v').innerHTML = !a.remotes.length ? escHtml(tr('REMOTESLIST_EMPTY'))
+                : `<svg class="linkedRemote-signal-icon sig-${has ? somfy.rssiLevel(a.heardRssi) : 'unknown'}"><use href="#svg-tabRadio"></use></svg>${has ? `${a.heardRssi} dBm` : '—'}`;
+            rem.querySelector('.gen-tile-desc').textContent = !a.remotes.length ? '' : a.heardAt ? `${tr('SHADE_ACT_HEARD')} · ${this.agoText(a.heardAt)}` : tr('SHADE_ACT_NEVER');
+        }
     }
     onRemoteHeard(frame) {
         const sh = this.editShade, addr = Number(frame.address);
@@ -1298,14 +1311,11 @@ class ShadeSetup {
             <div class="setup-chips">${chip('posq', 'closed', tr('IS_CLOSED'))}${chip('posq', 'open', tr('IS_OPEN'))}</div></div>`;
         h += `<div class="setup-optq"><div class="setup-q2">${tr('SETUP_REACH_Q')}</div>
             <p class="setup-p sub">${tr('SETUP_REACH_DESC')}</p>
-            <div class="setup-chips"><div class="setup-chip${s.rep <= 1 ? ' sel' : ''}" onclick="shadeSetup.setRep(1)">${tr('SETUP_REACH_NORMAL')}</div><div class="setup-chip${s.rep > 1 ? ' sel' : ''}" onclick="shadeSetup.setRep(3)">${tr('SETUP_REACH_STRONG')}</div></div>
-            <p class="setup-p sub setup-why"><i>${tr('SETUP_REACH_HINT')}</i></p>
             ${(() => {
-                const opts = [0, 1, 2, 3, 4, 5, 6, 7].map(v => `<option value="${v}"${s.rep === v ? ' selected' : ''}>${tr(v ? `OPT_${v}TIME` : 'OPT_NO_REPEAT')}</option>`).join('');
+                // Équipement : le nombre exact (0 à 20, plafond du firmware) plutôt que Normale/Renforcée.
+                const opts = Array.from({ length: 21 }, (_, v) => `<option value="${v}"${s.rep === v ? ' selected' : ''}>${tr(v ? `OPT_${v}TIME` : 'OPT_NO_REPEAT')}</option>`).join('');
                 const sel = `<select class="${wiz ? 'gen-input' : 'inputAndSelect'}" aria-label="${escAttr(tr('REPEAT_COMMANDS'))}" onchange="shadeSetup.setRep(parseInt(this.value, 10))">${opts}</select>`;
-                const open = s.rep === 1 || s.rep === 3 ? '' : ' open';
-                return wiz ? `<details class="wiz-adv"${open}><summary>${tr('SETUP_REACH_CUSTOM')}</summary><div class="gen-input-box">${sel}</div></details>`
-                    : `<details class="setup-adv"${open}><summary>${tr('SETUP_REACH_CUSTOM')}</summary><div class="setup-adv-body">${sel}</div></details>`;
+                return wiz ? `<div class="gen-input-box">${sel}</div>` : sel;
             })()}</div>`;
         if (this.hasLed()) h += `<div class="setup-optq"><div class="setup-q2">${tr({ 'BOX-WIFI': 'SETUP_LED_Q_BOX_WIFI', 'BOX-ETH': 'SETUP_LED_Q_BOX_ETH' }[window.__hardwareProfile] || 'SETUP_LED_Q')}</div>
             <div class="setup-chips">${chip('led', 'oui', tr('BT_YES'))}${chip('led', 'non', tr('BT_NO'))}</div></div>`;
@@ -1382,7 +1392,7 @@ class ShadeSetup {
         if (s.st.sun) parts.push(tr(fields.sunSensor ? 'SETUP_S_SUN' : 'SETUP_S_NO_SUN'));
         if (!s.isToggle) fields.flipPosition = s.posq === 'open';
         fields.repeats = s.rep;
-        if (s.rep > 1) parts.push(tr('SETUP_S_REACH_STRONG'));
+        if (s.rep > 1) parts.push(this.t('SETUP_S_REPEATS', { n: s.rep }));
         if (this.hasLed()) {
             fields.ledFeedback = s.led === 'oui';
             if (fields.ledFeedback) parts.push(tr('SETUP_S_LED'));

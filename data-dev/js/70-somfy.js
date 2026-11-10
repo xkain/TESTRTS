@@ -2534,36 +2534,78 @@ class Somfy {
         const full = (this.shades || []).find(s => s.shadeId === shade.shadeId);
         return (full && typeof full.stateVocab === 'number') ? full.stateVocab : 0;
     }
-    // Ligne de haut de l'éditeur (#labelPosContainer, dans le bloc Contrôle) : « Position actuelle
-    // ... 60 % » pour un équipement positionné, « État ... Marche » pour un contact sec. Le « % »
-    // vit hors de #valPos dans le gabarit -- d'où le span dédié qu'on masque plutôt qu'un texte
-    // recomposé. L'attribut `tr` suit le texte, pour le prochain passage du traducteur.
-    applyEditorStateRow(shadeType) {
-        const row = get('labelPosContainer');
-        if (!row) return;
-        const isDry = this.dryContactShadeTypes.includes(shadeType);
-        const title = row.querySelector('.editDevice-info-title');
-        if (title) {
-            const cle = isDry ? 'IS_STATE' : 'DEVICE_POS';
-            title.setAttribute('tr', cle);
-            title.innerText = tr(cle);
+    // Onglet Piloter : curseurs (position, lames), ou la tuile « Commande » quand l'équipement
+    // ne se règle pas à une position (contact sec, bascule à un bouton).
+    applyShadeControlMode(type, tiltType, flipPosition) {
+        const g = get, st = this.shadeTypes.find(x => x.type === type) || {};
+        const isToggle = this.toggleShadeTypes.includes(type), isDry = this.dryContactShadeTypes.includes(type);
+        const tt = st.tilt ? tiltType : 0, slide = !!st.lift && !isToggle;
+        g('shdSliderTile').hidden = !slide;
+        g('shdSliderPos').hidden = tt === 3;
+        g('shdSliderTilt').hidden = !tt;
+        g('shdNoSliderTile').hidden = slide;
+        if (!slide) {
+            const tile = g('shdNoSliderTile'), vocab = this.stateVocabKeys[parseInt(g('selShadeStateVocab').value, 10) || 0] || this.stateVocabKeys[0];
+            tile.querySelector('.ed-ctl-v').textContent = tr(isDry ? 'DEVICE_CTL_DRY_T' : 'DEVICE_CTL_TOGGLE_T');
+            tile.querySelector('.gen-tile-desc').textContent = isDry ? tr('DEVICE_CTL_DRY_D').replace('{ON}', tr(vocab[0]).toLowerCase()).replace('{OFF}', tr(vocab[1]).toLowerCase()) : tr('DEVICE_CTL_TOGGLE_D');
+            return;
         }
-        const unit = get('valPosUnit');
-        if (unit) unit.style.display = isDry ? 'none' : '';
+        const W = typeof shadeSetup !== 'undefined' ? shadeSetup.words(type) : { open: tr('IS_OPEN'), closed: tr('IS_CLOSED') };
+        const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
+        const closedHi = this.closedPosition(type, flipPosition) === 100;
+        [['shdSliderPos', cap(W.open), cap(W.closed)], ['shdSliderTilt', tr('IS_OPEN'), tr('IS_CLOSED')]].forEach(([id, o, c]) => {
+            const box = g(id);
+            box.querySelector('.ed-end-lo').textContent = closedHi ? o : c;
+            box.querySelector('.ed-end-hi').textContent = closedHi ? c : o;
+        });
     }
-    setEditorPosValue(shadeType, position, flipPosition, vocab) {
-        const val = get('valPos');
-        if (!val) return;
-        const isDry = this.dryContactShadeTypes.includes(shadeType);
-        val.innerText = isDry ? this.shadeStateLabel(position, flipPosition, vocab) : position;
-        const track = get('barPosTrack'), bar = get('barPos');
-        if (track) track.style.display = isDry ? 'none' : '';
-        if (bar) bar.style.width = `${Math.max(0, Math.min(100, position || 0))}%`;
+    // Même règle que les curseurs du carrousel : realpos suit toujours l'équipement, l'affichage
+    // reste gelé pendant le geste (cf. procShadeState).
+    setEditorSlider(id, value) {
+        const el = get(id);
+        if (!el) return;
+        const v = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
+        el.dataset.realpos = v;
+        if (el.dataset.dragging === 'true') return;
+        el.value = v;
+        syncSliderProgress(el);
+        this.onEditorSliderInput(el);
     }
-    setEditorTiltValue(tilt) {
-        const val = get('valTilt'), bar = get('barTilt');
-        if (val) val.innerText = tilt;
-        if (bar) bar.style.width = `${Math.max(0, Math.min(100, tilt || 0))}%`;
+    onEditorSliderInput(el) {
+        const val = get(el.id.replace('slid', 'val'));
+        if (val) val.textContent = `${el.value} %`;
+    }
+    setEditorPosValue(shadeType, position) { this.setEditorSlider('slidShadePos', position); }
+    setEditorTiltValue(tilt) { this.setEditorSlider('slidShadeTilt', tilt); }
+    nextScheduleOf(kind, id) {
+        const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes(), sun = this._sunTimesToday();
+        const list = (this.schedules || []).filter(sc => sc.enabled && sc.targetType === kind && sc.targetId === id)
+            .map(sc => ({ sc, m: this._effectiveMinutesOf(sc, sun) })).filter(x => x.m !== null);
+        for (let d = 0; d < 8; d++) {
+            const bit = 1 << ((now.getDay() + d) % 7);
+            const hit = list.filter(x => (x.sc.dayMask & bit) && (d > 0 || x.m > nowMin)).sort((a, b) => a.m - b.m)[0];
+            if (!hit) continue;
+            const f = formatMinutesOfDay(hit.m);
+            const day = d === 0 ? tr('DEVICE_CTL_TODAY') : d === 1 ? tr('DEVICE_CTL_TOMORROW') : tr(SCHEDULE_DAY_DEFS.find(x => x.bit === bit).key);
+            return { time: f.main + (f.ampm ? ` ${f.ampm}` : ''), action: this._scheduleActionText(hit.sc), day };
+        }
+        return null;
+    }
+    // Tuiles d'information de Piloter : prochain planning et mise en service ; la dernière commande
+    // et les télécommandes suivent l'activité (cf. shadeSetup.paintActivity).
+    renderShadeCtlInfo(shade) {
+        const g = get, part = (id) => { const t = g(id); return { t, v: t.querySelector('.ed-ctl-v'), d: t.querySelector('.gen-tile-desc') }; };
+        const n = part('shdCtlNext'), next = this.nextScheduleOf('shade', shade.shadeId);
+        n.v.textContent = next ? `${next.action} · ${next.time}` : tr('EMPTY_SCHEDULE_TITLE');
+        n.d.textContent = next ? next.day : '';
+        const su = part('shdCtlSetup'), setup = typeof shadeSetup !== 'undefined' ? shadeSetup : null;
+        const miss = setup ? setup.missingSteps(shade) : 0;
+        su.t.hidden = !miss;
+        if (!miss) return;
+        const ids = setup.tasksFor(shade), steps = shade.setupSteps || 0;
+        su.t.querySelector('.gen-tile-title').textContent = `${tr('SETUP_RESUME_TITLE')} · ${ids.length - miss}/${ids.length}`;
+        su.v.textContent = setup.titleFor(shade, ids.find(id => !(steps & SETUP_BIT[id])));
+        su.d.textContent = miss > 1 ? setup.t('SETUP_BADGE_MANY', { n: miss }) : tr('SETUP_BADGE_ONE');
     }
     // Un contact sec ne connaît que deux ou trois commandes (cf. le tableau de rstrouse : Toggle
     // pour le 1-bouton, Up/Down pour le 2-boutons). Les appuis combinés (MyUp, MyDown, UpDown,
@@ -5382,13 +5424,7 @@ class Somfy {
                 this.setEditorMyValue(ed);
             }
 
-            const lTC = g('labelTiltContainer');
-            if (state.tiltType !== 0) {
-                if (lTC) lTC.style.display = 'flex';
-                this.setEditorTiltValue(state.tiltPosition);
-            } else if (lTC) {
-                lTC.style.display = 'none';
-            }
+            if (state.tiltType !== 0) this.setEditorTiltValue(state.tiltPosition);
         }
         document.querySelectorAll(`.button-sunflag[data-shadeid="${sId}"]`).forEach(btn => {
             btn.style.display = state.sunSensor ? '' : 'none';
@@ -5514,7 +5550,7 @@ class Somfy {
         isNew = g('spanShadeId').innerText === '*',
         st = this.shadeTypes.find(x => x.type === type) || { type };
 
-        ['somfyShade', 'divSomfyButtons'].forEach(id => g(id)?.setAttribute('data-shadetype', type));
+        g('somfyShade').setAttribute('data-shadetype', type);
 
         if (ico) {
 
@@ -5543,7 +5579,18 @@ class Somfy {
         };
 
             disp('divTiltSettings', st.tilt, 'flex');
-            disp('divShadeTimings', hasLift, 'flex');
+            disp('shdTravelTimes', hasLift && curTilt !== 3, 'grid');
+            disp('shdTiltTimes', curTilt > 0, 'grid');
+            disp('divShadeTimings', (hasLift && curTilt !== 3) || curTilt > 0, 'flex');
+            disp('divShadeMyTile', this.shadeTypeSupportsMy(type), 'flex');
+            disp('divShadeContact', this.dryContactShadeTypes.includes(type), 'flex');
+            const W = typeof shadeSetup !== 'undefined' ? shadeSetup.words(type) : null;
+            if (W) {
+                g('lblShadeUpTime').textContent = shadeSetup.t('SETUP_TIME_OF', { what: W.upN }).replace(/\s*\(s\)$/, '');
+                g('lblShadeDownTime').textContent = shadeSetup.t('SETUP_TIME_OF', { what: W.downN }).replace(/\s*\(s\)$/, '');
+            }
+            g('lblShadeTiltUp').textContent = tr('SETUP_TILT_OPEN');
+            g('lblShadeTiltDown').textContent = tr('SETUP_TILT_CLOSE');
             disp('divSunSensor', st.sun);
             disp('divFlipPosition', st.fpos);
             disp('divFlipCommands', st.fcmd);
@@ -5565,13 +5612,11 @@ class Somfy {
         disp('divShadeOutputMode', isDry, 'flex');
         disp('divShadePulseTime', isDry && g('selShadeOutputMode')?.value === '1', 'flex');
         disp('divShadeStateVocab', isDry, 'flex');
-        disp('labelPosContainer', (hasLift || isDry) && !isNew);
-        this.applyEditorStateRow(type);
+        this.applyShadeControlMode(type, tilt, g('cbFlipPosition')?.checked);
         if (!isNew) {
             const cur = (this.shades || []).find(x => x.shadeId === parseInt(g('spanShadeId').innerText, 10));
             if (cur) this.setEditorPosValue(type, cur.position, cur.flipPosition, this.editorVocab(cur));
         }
-        disp('labelTiltContainer', curTilt && !isNew);
 
         // Pour un contact sec, la ligne d'inversion garde tout son sens mais ne parle pas de la même
         // chose : il n'y a pas de « % d'ouverture » à inverser, seulement l'état affiché. Le libellé
@@ -5581,8 +5626,8 @@ class Somfy {
         const fp = g('divFlipPosition');
         if (fp) {
             const isDry = this.dryContactShadeTypes.includes(type);
-            [['.uniLabel', isDry ? 'DEVICE_FLIP_STATE' : 'DEVICE_FLIP_POSITION'],
-             ['.uniStatus', isDry ? 'DEVICE_STATE_DESC' : 'DEVICE_POSITION_DESC']].forEach(([sel, cle]) => {
+            [['.gen-row-text > b', isDry ? 'DEVICE_FLIP_STATE' : 'DEVICE_FLIP_POSITION'],
+             ['.gen-row-text > span', isDry ? 'DEVICE_STATE_DESC' : 'DEVICE_POSITION_DESC']].forEach(([sel, cle]) => {
                 const el = fp.querySelector(sel);
                 if (el) { el.setAttribute('tr', cle); el.innerText = tr(cle); }
             });
@@ -5599,19 +5644,27 @@ class Somfy {
         if (this._shdLoaded) this.renderShadeHero();
     }
     setEditorMyValue(shade) {
-        const row = get('labelMyContainer'), tiltRow = get('labelMyTiltContainer');
-        if (!row || !tiltRow) return;
-        const my = !!shade && this.shadeTypeSupportsMy(shade.shadeType);
-        const st = shade && this.shadeTypes.find(x => x.type === shade.shadeType);
-        const showPos = my && shade.myPos >= 0;
-        const showTilt = my && !!(st && st.tilt) && shade.tiltType > 0 && shade.myTiltPos >= 0;
-        row.style.display = showPos ? 'flex' : 'none';
-        tiltRow.style.display = showTilt ? 'flex' : 'none';
-        if (showPos) {
-            get('valMy').textContent = `${shade.myPos} %`;
-            get('valMyTag').textContent = shade.simMy ? tr('CTRL_MY_SIM') : 'My';
-        }
-        if (showTilt) get('valMyTilt').textContent = `${shade.myTiltPos} %`;
+        const pos = get('valShadeMyPos'), tiltRow = get('rowShadeMyTilt');
+        if (!pos || !shade) return;
+        const st = this.shadeTypes.find(x => x.type === shade.shadeType);
+        const val = (v) => typeof v === 'number' && v >= 0 ? `${v} %` : tr('CARD_MY_NONE');
+        pos.textContent = val(shade.myPos);
+        tiltRow.hidden = !(st && st.tilt) || !(shade.tiltType > 0);
+        get('valShadeMyTilt').textContent = val(shade.myTiltPos);
+    }
+    // Temps de course : en millisecondes côté firmware, en secondes dans la fiche. Hors de
+    // ui.toElement/fromElement, d'où leur suivi à part dans la barre et à l'enregistrement.
+    static SHADE_TIMES = [['fldShadeUpTime', 'upTime'], ['fldShadeDownTime', 'downTime'], ['fldShadeTiltUp', 'tiltTimeUp'], ['fldShadeTiltDown', 'tiltTimeDown']];
+    fillShadeTimes(shade) {
+        Somfy.SHADE_TIMES.forEach(([id, k]) => { get(id).value = typeof shade[k] === 'number' && shade[k] > 0 ? shade[k] / 1000 : ''; });
+    }
+    // Champs visibles dont la valeur diffère de celle chargée.
+    changedShadeTimes() {
+        if (!this._shdData) return [];
+        return Somfy.SHADE_TIMES.filter(([id, k]) => {
+            const el = get(id), was = typeof this._shdData[k] === 'number' && this._shdData[k] > 0 ? this._shdData[k] / 1000 : '';
+            return el.offsetParent !== null && el.value !== String(was);
+        }).map(([id, k]) => ({ id, k, el: get(id) }));
     }
     relayoutOptionGrids() {
         document.querySelectorAll('.options-grid').forEach(grid => {
@@ -5675,15 +5728,21 @@ class Somfy {
                 : el.tagName === 'SELECT' ? (Array.from(el.options).find(o => o.value === String(v))?.text ?? v) : v;
             diffs.push({ label: tr(LB[k]), from: show(this._shdLoaded[k]), to: show(now[k]) });
         });
+        this.changedShadeTimes().forEach(({ el }) => {
+            el.classList.add('is-dirty');
+            diffs.push({ label: get(el.id.replace('fld', 'lbl')).textContent, from: el.defaultValue, to: el.value });
+        });
         _recomputeIsDirty();
         if (!isDirty) document.body.classList.remove('dirty-alerted');
         this._shdSaveBar.update(diffs);
         this.renderShadeHero();
+        this.applyShadeControlMode(parseInt(get('selShadeType').value, 10), parseInt(get('selTiltType').value, 10), get('cbFlipPosition').checked);
     }
     revertShade() {
         if (!this._shdData) return;
         const g = get;
         ui.toElement(g('somfyShade'), this._shdData);
+        this.fillShadeTimes(this._shdData);
         g('somfyShade').setAttribute('data-bitlength', g('selShadeBitLength').value);
         this.onShadeProtoChanged(g('selShadeProto'));
         this.onShadeTypeChanged(g('selShadeType'));
@@ -5757,13 +5816,10 @@ class Somfy {
         this._bindShadePage();
         this.applyLedFeedbackVisibility();
 
-        // Si c'est un nouvel équipement, on cache TOUT le bloc. Sinon on l'affiche.
-        s('divControlContent', isNew ? 'none' : 'flex');
         // Une programmation cible un shadeId existant : impossible tant que l'équipement n'est pas créé.
         s('divScheduleSectionShade', isNew ? 'none' : 'flex');
 
         s('divshowSomfyButtons', 'flex');
-        s('labelPosContainer', 'none');
 
         getJSONSync(isNew ? '/getNextShade' : `/shade?shadeId=${shadeId}`, (err, shade) => {
             if (err) {
@@ -5779,13 +5835,12 @@ class Somfy {
                 });
             }
             if (!isNew) {
-                s('labelPosContainer', 'flex');
 
                 this.setEditorPosValue(shade.shadeType, shade.position, shade.flipPosition, this.editorVocab(shade));
                 this.setLinkedRemotesList(shade);
                 // Programmations rattachées à cet équipement (badges, bloc Options) : on recharge la
                 // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
-                this.updateScheduleList(() => this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId));
+                this.updateScheduleList(() => { this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId); this.renderShadeCtlInfo(shade); });
             }
             if (typeof shadeSetup !== 'undefined') shadeSetup.renderEditPanel(isNew ? null : shade);
             this.setEditorMyValue(isNew ? null : shade);
@@ -5808,8 +5863,7 @@ class Somfy {
             // Créer passe par l'assistant ; une fiche vierge reste joignable par l'URL (cf. .ed-new).
             g('somfyShade').classList.toggle('ed-new', isNew);
 
-            // Course, temps morts et lames n'ont plus de champ : leurs tâches de la zone « Mise en
-            // service » les règlent.
+            // Temps morts et ordre des lames n'ont pas de champ : leurs tâches de mise en service les règlent.
             ui.toElement(g('somfyShade'), shade);
             if (g('selShadeBitLength')) g('somfyShade').setAttribute('data-bitlength', g('selShadeBitLength').value);
             // data-proto ne vit que posé par onShadeProtoChanged (événement change du select) : sans ce
@@ -5820,6 +5874,8 @@ class Somfy {
             this.onShadeProtoChanged(g('selShadeProto'));
             this.onShadeTypeChanged(g('selShadeType'));
             this._shdData = shade;
+            this.fillShadeTimes(shade);
+            Somfy.SHADE_TIMES.forEach(([id]) => { g(id).defaultValue = g(id).value; });
             this._shdLoaded = ui.fromElement(g('somfyShade'));
             const paired = g('valShadePaired');
             paired.textContent = tr(shade.paired ? 'SETUP_PILL_PAIRED' : 'DEVICE_NOT_PAIRED');
@@ -5829,6 +5885,7 @@ class Somfy {
             g('btnShadeRollingCode').disabled = true;
             g('spanShadeRollingCode').textContent = shade.lastRollingCode ?? '';
             this.renderShadeHeroState(isNew ? null : shade);
+            if (!isNew) this.renderShadeCtlInfo(shade);
             this._shdTabs.show(0);
             this.showEditShade(true);
             routeSetEditor('divSomfyMotors', isNew ? 'new' : shadeId, { label: isNew ? tr('DEVICE_CREATE_TITLE') : shade.name });
@@ -5856,13 +5913,20 @@ class Somfy {
         obj = ui.fromElement(g('somfyShade')),
         settings = g('divSomfySettings');
 
-        // Temps de course, temps morts, temps et ordre des lames ne partent plus d'ici : absents de
-        // la requête, ils restent tels que leurs tâches les ont enregistrés.
+        // Temps morts et ordre des lames ne partent pas d'ici : absents de la requête, ils restent
+        // tels que leurs tâches les ont enregistrés.
         // Champ de durée d'impulsion vidé : ui.fromElement remonte alors `null`, que le firmware
         // ramènerait à sa borne basse (50 ms) -- une impulsion trop courte pour bien des relais,
         // substituée en silence. On retire plutôt la clé : absente d'une requête, elle laisse la
         // valeur enregistrée inchangée, comme tout le reste de fromJSON.
         if (obj.pulseTime === null || obj.pulseTime === '' || isNaN(obj.pulseTime)) delete obj.pulseTime;
+        // Seuls les temps modifiés partent : les autres restent tels que l'assistant les a mesurés.
+        const times = this.changedShadeTimes();
+        for (const { el, k } of times) {
+            const v = parseFloat(el.value);
+            if (isNaN(v) || v < 0.5 || v > 180) return ui.errorMessage(settings, tr(k.startsWith('tilt') ? 'SETUP_ERR_TILT_TIMES' : 'SETUP_ERR_TIMES'));
+            obj[k] = Math.round(v * 1000);
+        }
 
         const checks = [
             [isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215, 'ERR_REMOTE_ADDRESS_INVALID'],
@@ -5966,6 +6030,7 @@ class Somfy {
         if (!isNaN(real)) {
             el.value = real;
             syncSliderProgress(el);
+            if (el.id) this.onEditorSliderInput(el);
         }
     }
     sendCommand(shadeId, command, repeat, cb) {

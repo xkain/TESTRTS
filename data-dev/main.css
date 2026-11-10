@@ -6603,6 +6603,33 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #divNetAdapter, #divMQT
 .ed-ro > b.is-ok { color: var(--ok); }
 .ed-dot { flex: none; width: 8px; height: 8px; border-radius: var(--r-pill); background: var(--text-3); }
 .ed-dot.ok { background: var(--ok); }
+.ed-span { grid-column: 1 / -1; }
+/* Onglet Piloter : curseurs de l'interface (.slider-wrapper, base.css) et tuiles d'information. */
+.ed-slider { display: flex; flex-direction: column; gap: 10px; }
+.ed-slider + .ed-slider { margin-top: 10px; }
+.ed-slider-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.ed-slider-head b { font-size: var(--fs-6); font-weight: 800; color: var(--text); }
+.ed-slider-ends { display: flex; justify-content: space-between; gap: 12px; font-size: var(--fs-2); color: var(--text-3); }
+.ed-ctl-v { display: flex; align-items: center; gap: 8px; font-size: var(--fs-6); font-weight: 700; color: var(--text); }
+.ed-ctl-v svg { flex: none; width: 22px; height: 22px; fill: currentColor; }
+.ed-tile-warn { background: var(--warn-bg); }
+.ed-tile-warn .gen-tile-title { color: var(--warn); }
+.ed-tile-warn > .gen-btn { align-self: flex-start; margin-top: auto; }
+/* Onglet Réglages : étapes de mise en service, temps de course, position favorite. */
+.ed-steps { display: flex; flex-direction: column; }
+.ed-step { display: flex; align-items: center; gap: 12px; width: 100%; margin: 0; padding: 12px 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; color: var(--text); font: inherit; text-align: left; text-transform: none; cursor: pointer; }
+.ed-step:first-child { border-top: 0; padding-top: 0; }
+.ed-step-n { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--r-pill); background: var(--surface-2); font-size: var(--fs-2); font-weight: 800; color: var(--text-2); }
+.ed-step-n svg { width: 14px; height: 14px; fill: currentColor; }
+.ed-step.is-done .ed-step-n { background: var(--ok); color: #fff; }
+.ed-step.is-todo .ed-step-n { background: var(--warn-bg); color: var(--warn); }
+.ed-step-t { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ed-step-t b { font-size: var(--fs-3); }
+.ed-step-t span { font-size: var(--fs-2); color: var(--text-3); }
+.ed-step.is-todo .ed-step-t span { color: var(--warn); }
+.ed-step-go { flex: none; width: 18px; height: 18px; fill: currentColor; color: var(--text-3); }
+.ed-step:hover .ed-step-t b { color: var(--color-accent); }
+#divShadeTimings > .gen-btn, #divShadeMyTile > .gen-btn { align-self: flex-start; margin-top: auto; }
 .ed-cmd:last-child { flex: 0 0 56px; }
 .ed-cmd svg { width: 26px; height: 26px; fill: currentColor; }
 #divSomfyGroupButtons.disabled { opacity: .5; pointer-events: none; }
