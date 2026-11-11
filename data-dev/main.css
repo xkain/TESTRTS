@@ -43,7 +43,7 @@ body.onboarding-active .sidebar > :not(.sidebar-brand) {
  * sinon affiché par-dessus (checkBrowserLangSuggestion()/langSuggestionChecked ne gardent qu'un
  * premier affichage, pas une réapparition). Masquage forcé et inconditionnel tant que l'onboarding
  * est actif, quel que soit le moment où le toast a été créé. */
-body.onboarding-active #langPromptToast {
+body.onboarding-active .toast[data-toast-id="langPrompt"] {
     display: none !important;
 }
 /* =======================================================================
@@ -120,15 +120,6 @@ body.onboarding-active #langPromptToast {
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
-}
-.prompt-dont-ask {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 12px;
-    font-size: 0.9em;
-    color: var(--color-text-secondary);
-    cursor: pointer;
 }
 .site-title {
     font-weight: bold;
@@ -2277,7 +2268,7 @@ label.gen-row {
     min-height: 44px;
     padding: 0 16px;
     border: 0;
-    border-radius: var(--r-pill);
+    border-radius: var(--r-2);
     background: var(--surface-2);
     color: var(--text);
     font-size: var(--fs-3);
@@ -6309,6 +6300,8 @@ input.gen-input.mqtt-mono {
 #divHomePnl .group-icon { height: auto; cursor: pointer; }
 #divHomePnl .somfyShadeCtl .shade-name,
 #divHomePnl .somfyGroupCtl .group-name { gap: 2px; cursor: pointer; }
+/* Connexion perdue : l'état affiché est celui d'avant la coupure, on l'atténue. */
+body.is-offline .shadectl-state { opacity: .45; }
 #divHomePnl .shadectl-state,
 #divHomePnl .somfyGroupCtl .groupctl-shades { display: block; margin: 0; font-size: 0.8em; font-weight: 500; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #divHomePnl .somfyGroupCtl .groupctl-shades span { display: inline; font-size: inherit; color: inherit; }

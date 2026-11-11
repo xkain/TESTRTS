@@ -228,31 +228,6 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
 @media (prefers-reduced-motion: reduce) {
     :root { --ui-pulse-speed: 0s; --ui-pulse-rest: 1; }
 }
-/*sucess*/
-@keyframes toastIn {
-    0% {
-        transform: translate(-50%, -100px);
-        opacity: 0;
-    }
-    100% {
-        transform: translate(-50%, 0);
-        opacity: 1;
-    }
-}
-@keyframes toastPulse {
-    0%, 100% { transform: translate(-50%, 0) scale(1); }
-    50% { transform: translate(-50%, 0) scale(1.02); }
-}
-@keyframes toastOut {
-    0% {
-        transform: translate(-50%, 0) scale(1);
-        opacity: 1;
-    }
-    100% {
-        transform: translate(-50%, -100px) scale(0.98);
-        opacity: 0;
-    }
-}
 @keyframes remote-search-spin {
     to { transform: rotate(360deg); }
 }
@@ -323,10 +298,6 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
 @keyframes progress-bar-halo {
     100% { transform:translateX(100%); }
 }
-@keyframes langPromptSlideIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-}
 @keyframes radioActivityRadarPing {
     0% { opacity: 0.55; transform: scale(0.5); }
     100% { opacity: 0; transform: scale(2.2); }
@@ -347,69 +318,6 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
 }
 @keyframes frame-row-in {
     from { background: var(--color-accent-transp-70); }
-}
-.success-toast {
-    position: fixed;
-    top: 15px;
-    left: 50%;
-    background: #f0f0f0;
-    color: #000000;
-    border: 1px solid var(--color-success);
-    padding: 9px 21px;
-    border-radius: 50px;
-    z-index: 9999;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    pointer-events: none;
-    animation: toastIn 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards,
-    toastPulse 1.5s ease-in-out 0.5s infinite;
-}
-.success-content {
-    display: flex;
-    align-items: center;
-    color: var(--txt-color);
-    gap: 10px;
-}
-.success-content svg {
-    width: 20px;
-    height: 20px;
-    color: var(--color-success);
-}
-.success-toast.hide {
-    animation: toastOut 0.3s ease-in forwards;
-}
-/* Même patron que .success-toast, coloré avertissement. PLUS AUCUN UTILISATEUR : le refus de
-   fermeture en dur passe désormais par ui.infoMessage() (cf. showLockedInfo(), 20-shell.js), ses
-   messages étant trop longs pour une pastille. Conservé pour un futur message court. */
-.warning-toast {
-    position: fixed;
-    top: 15px;
-    left: 50%;
-    background: #f0f0f0;
-    color: #000000;
-    border: 1px solid var(--color-warning);
-    padding: 9px 21px;
-    border-radius: 50px;
-    z-index: 9999;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    pointer-events: none;
-    max-width: min(90vw, 420px);
-    animation: toastIn 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards,
-    toastPulse 1.5s ease-in-out 0.5s infinite;
-}
-.warning-toast .success-content svg {
-    color: var(--color-warning);
-}
-.warning-toast.hide {
-    animation: toastOut 0.3s ease-in forwards;
-}
-.socketAttempts{
-    position:absolute;
-    width:100%;
-    top:0px;
-    left:0px;
-    padding-right:24px;
-    text-align:right;
-    font-size:18px;
 }
 .inst-overlay {
     display: flex;
@@ -539,11 +447,6 @@ body.modal-open {
 .modal-mobile-handle {
     display: none;
 }
-.info-content,
-.error-content,
-.prompt-content {
-    padding:20px;
-}
 .sub-message  { margin: 10px 0;}
 .sub-message code {
     font-size: 0.9em;
@@ -671,35 +574,381 @@ body.modal-open {
 }
 
 /* =======================================================================
- *  LISTE DES MODIFICATIONS NON ENREGISTRÉES (SaveBar.showList, 20-shell.js)
+ *  FENÊTRE DE MESSAGE (ui.dialog, 30-ui-binder.js : confirmation, erreur, information)
  *  ======================================================================= */
-.save-bar-sheet {
-    max-width: 560px;
-    padding: 20px;
+.message-content.msg-window {
+    width: calc(100% - 32px);
+    max-width: 600px;
+    border: 0;
     border-radius: var(--r-5);
-}
-.save-bar-sheet-list {
-    margin: 12px 0 0;
-    padding: 12px 16px;
-    list-style: none;
-    border-radius: var(--r-3);
-    background: var(--surface-2);
+    background: var(--panel);
+    color: var(--text);
+    box-shadow: var(--shadow-window);
     text-align: left;
+    font-size: 16px;
 }
-.save-bar-sheet-list li + li {
+.msg-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 22px 22px 6px;
+}
+.msg-icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--r-3);
+    background: var(--info-bg);
+    color: var(--info);
+}
+.msg-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+.msg-warn .msg-icon { background: var(--warn-bg); color: var(--warn); }
+.msg-danger .msg-icon { background: var(--danger-bg); color: var(--danger); }
+.msg-ok .msg-icon { background: var(--ok-bg); color: var(--ok); }
+.msg-texts {
+    min-width: 0;
+}
+.msg-title {
+    margin: 0;
+    font-size: var(--fs-6);
+    font-weight: 800;
+    line-height: 1.25;
+}
+.msg-desc {
     margin-top: 6px;
+    font-size: var(--fs-4);
+    line-height: 1.5;
+    color: var(--text-2);
 }
-.save-bar-sheet .button-container-row button {
-    flex: 1 1 auto;
-    width: auto;
+.msg-desc p { margin: 0; }
+.msg-desc p + p { margin-top: 8px; }
+.msg-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 8px 22px 4px;
+}
+.msg-cons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 12px 14px 12px 32px;
+    border-radius: var(--r-3);
+    background: var(--surface);
+    font-size: var(--fs-3);
+}
+.msg-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
     border-radius: var(--r-2);
-    text-transform: none;
+    background: var(--surface);
+    font-size: var(--fs-3);
+    cursor: pointer;
+}
+.msg-check input {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    accent-color: var(--text);
+}
+.msg-error {
+    margin: 8px 22px 0;
+    font-size: var(--fs-3);
+    font-weight: 600;
+    color: var(--danger);
+}
+.msg-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 22px 22px;
+}
+.msg-foot .gen-btn {
+    align-self: auto;
     white-space: nowrap;
 }
+.msg-foot .gen-btn[disabled] {
+    opacity: .4;
+    cursor: default;
+}
+.msg-foot .gen-btn-danger,
+.msg-foot .gen-btn-danger:hover {
+    background: var(--destroy);
+    color: #fff;
+    box-shadow: none;
+}
+.msg-btn-short {
+    display: none;
+}
+.msg-foot .gen-btn.is-busy::before {
+    content: '';
+    width: 14px;
+    height: 14px;
+    border: 3px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: wait-spinner-rotate 1s linear infinite;
+}
+/* Occupée, la fenêtre ne se ferme plus par la poignée : l'action est déjà partie. */
+.msg-window.is-busy .modalHeader-handle {
+    pointer-events: none;
+}
 @media (max-width: 767px) {
-    .save-bar-sheet .button-container-row {
-        flex-direction: column-reverse;
-        gap: 10px;
+    .message-content.msg-window {
+        width: 100%;
+        max-width: 100%;
+        border-radius: var(--r-5) var(--r-5) 0 0;
+    }
+    .msg-window .modalHeader-handle { margin-bottom: 0; }
+    .msg-head {
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        padding: 0 20px 6px;
+        text-align: center;
+    }
+    .msg-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 20px;
+    }
+    .msg-icon svg {
+        width: 34px;
+        height: 34px;
+    }
+    .msg-body { padding: 8px 20px 4px; }
+    .msg-error { margin: 8px 20px 0; }
+    /* En ligne, à parts égales, jamais empilés (choix du user, cf. .genmod-foot-btns). */
+    .msg-foot {
+        gap: 8px;
+        padding: 16px 20px 24px;
+    }
+    .msg-foot .gen-btn {
+        flex: 1 1 0;
+        min-width: 0;
+        justify-content: center;
+        white-space: normal;
+        text-align: center;
+        line-height: 1.2;
+    }
+    .msg-btn-long:has(+ .msg-btn-short) { display: none; }
+    .msg-btn-short { display: inline; }
+}
+
+/* =======================================================================
+ *  BANDEAUX (ui.banner, 30-ui-binder.js) : erreurs de requête, connexion perdue
+ *  ======================================================================= */
+.banner-stack {
+    position: fixed;
+    top: calc(var(--topbar-height) + 12px);
+    left: calc(var(--sidebar-width) + 22px);
+    right: 22px;
+    z-index: 2100;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 16px;
+    pointer-events: none;
+}
+.banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: var(--r-3);
+    background: var(--danger-bg);
+    color: var(--text);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .1);
+    font-size: var(--fs-4);
+    line-height: 1.4;
+    pointer-events: auto;
+}
+.banner-warn { background: var(--warn-bg); }
+.banner-info { background: var(--info-bg); }
+.banner-icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--danger);
+}
+.banner-warn .banner-icon { color: var(--warn); }
+.banner-info .banner-icon { color: var(--info); }
+.banner-icon svg { width: 18px; height: 18px; fill: currentColor; }
+.banner-texts { flex: 1; min-width: 0; }
+.banner-line { margin: 0; }
+.banner-details summary {
+    margin-top: 2px;
+    font-size: var(--fs-2);
+    color: var(--text-3);
+    cursor: pointer;
+}
+.banner-details code {
+    display: block;
+    margin-top: 4px;
+    padding: 6px 8px;
+    border-radius: var(--r-1);
+    background: var(--surface);
+    font-size: var(--fs-1);
+    overflow-wrap: anywhere;
+}
+.banner-actions { flex: none; display: flex; align-items: center; gap: 4px; }
+.banner-btn,
+.banner-btn:hover {
+    width: auto;
+    min-height: 36px;
+    margin: 0;
+    padding: 0 14px;
+    border: 0;
+    border-radius: var(--r-2);
+    background: var(--surface);
+    color: var(--text);
+    font-size: var(--fs-3);
+    font-weight: 700;
+    text-transform: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.banner-close,
+.banner-close:hover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    min-height: 36px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-2);
+    background: transparent;
+    color: var(--text-2);
+    cursor: pointer;
+}
+.banner-close svg { width: 16px; height: 16px; fill: currentColor; }
+@media (max-width: 767px) {
+    .banner-stack {
+        top: calc(var(--mobile-header-height) + 8px);
+        left: 12px;
+        right: 12px;
+    }
+    .banner { flex-wrap: wrap; padding: 10px 12px; }
+}
+
+/* =======================================================================
+ *  MESSAGES BREFS (ui.toast, 30-ui-binder.js) : une pile en bas, au-dessus des barres
+ *  ======================================================================= */
+.toast-stack {
+    position: fixed;
+    right: 24px;
+    bottom: calc(var(--toast-offset, 0px) + 24px);
+    z-index: 1500;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    width: min(420px, calc(100% - 48px));
+    font-size: 16px;
+    pointer-events: none;
+    transition: bottom .3s cubic-bezier(.16, 1, .3, 1);
+}
+.toast {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px 12px 16px;
+    border: 1px solid var(--toast-border);
+    border-radius: var(--r-3);
+    background: var(--toast-bg);
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .2);
+    font-size: var(--fs-4);
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity .35s cubic-bezier(.16, 1, .3, 1), transform .35s cubic-bezier(.16, 1, .3, 1);
+}
+.toast.is-shown { opacity: 1; transform: none; }
+.toast.is-leaving { opacity: 0; transform: translateY(16px); transition-duration: .3s; }
+.toast-icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--ok-bg);
+    color: var(--ok);
+}
+.toast-icon svg { width: 18px; height: 18px; fill: currentColor; }
+.toast-info .toast-icon { background: var(--info-bg); color: var(--info); }
+.toast-warn .toast-icon { background: var(--warn-bg); color: var(--warn); }
+.toast-danger .toast-icon { background: var(--danger-bg); color: var(--danger); }
+.toast.is-busy .toast-icon svg { display: none; }
+.toast.is-busy .toast-icon::before {
+    content: '';
+    width: 14px;
+    height: 14px;
+    border: 3px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: wait-spinner-rotate 1s linear infinite;
+}
+.toast-texts {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.35;
+}
+.toast-detail { font-size: var(--fs-3); color: #c9ccd3; }
+.toast-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; margin-left: auto; }
+.toast-actions:empty { display: none; }
+/* Plusieurs actions : elles passent sous le texte au lieu de l'écraser. */
+.toast:has(.toast-btn + .toast-btn) .toast-actions { flex-basis: 100%; }
+.toast-btn,
+.toast-btn:hover {
+    width: auto;
+    min-height: 36px;
+    margin: 0;
+    padding: 0 10px;
+    border: 0;
+    border-radius: var(--r-2);
+    background: transparent;
+    color: #9ec3f0;
+    font-size: var(--fs-3);
+    font-weight: 700;
+    text-transform: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.toast-btn:hover { background: rgba(255, 255, 255, .08); }
+@media (max-width: 767px) {
+    .toast-stack {
+        left: 12px;
+        right: 12px;
+        bottom: calc(var(--toast-offset, 0px) + 14px);
+        width: auto;
+        align-items: stretch;
     }
 }
 
@@ -1306,10 +1555,6 @@ button[line].fw-sidebar-button:hover {
     margin-bottom:10px;
 }
 
-.prompt-content .sub-message p.is-warning {
-    color: var(--color-danger);
-    font-weight: 600;
-}
 #cbLedEnabled:not(:checked) ~ .label-left,
 #cbLedEnabled:checked ~ .label-right {
     color: #ffffff;
@@ -3789,10 +4034,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 
     .modal-mobile-handle:active {
         opacity: 1;
-    }
-    .error-content,
-    .prompt-content {
-        padding:0 20px 20px 20px;
     }
     .modal-overlay.overlay-exit .message-content {
         animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;

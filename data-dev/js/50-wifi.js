@@ -54,7 +54,7 @@ class Wifi {
         // d'où le nouveau rendu.
         initMultiClickToggle('#netHeroName', () => {
             document.body.classList.add('show-expert-gpio');
-            ui.successMessage("Mode avancé débloqué.");
+            ui.toast("Mode avancé débloqué.");
             this.useEthernetClicked();
         }, 5);
 
@@ -597,7 +597,7 @@ class Wifi {
             .then(() => { this._settings.ip = ip; this._ipData = ip; });
         chain.then(() => {
             if (has('conn')) { this.saveNetwork(); return; }
-            ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            ui.toast(tr('MSG_SAVE_SUCCESS'));
             this.updateDirtyCount();
             this._renderHero();
         }).catch(err => ui.serviceError(err));
@@ -790,9 +790,6 @@ class Wifi {
             // l'utilisateur comprenne que quelque chose est en cours plutôt que de croire à un bug.
             get('btnConfirmNetCancel').disabled = true;
             get('btnConfirmNetSave').disabled = true;
-            // La sauvegarde réseau déclenche un ui.successMessage() qui appelle ui.clearErrors() :
-            // celle-ci ne ferme que les modales d'ALERTE (cf. 30-ui-binder.js), donc cette fenêtre
-            // reste affichée le temps que l'ESP32 termine réellement de basculer de réseau.
             ui.waitMessage(div, 'WAIT_MSG_NET_SWITCH');
             // Ethernet : l'objet réseau est déjà constitué (cf. saveNetwork()), on l'envoie tel
             // quel. Wi-Fi : on repasse par saveNetwork(), qui relit les champs à cet instant.
@@ -955,7 +952,7 @@ class Wifi {
                 }
                 if (obj.hostname) this._hostnameSaved(obj.hostname);
                 if (opts && opts.onSent) opts.onSent();
-                else ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                else ui.toast(tr('MSG_SAVE_SUCCESS'));
                 logger.debug("Network settings updated:", response);
                 clearDirty();
                 this._rebaseline(obj);

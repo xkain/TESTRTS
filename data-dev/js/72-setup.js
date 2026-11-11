@@ -201,8 +201,8 @@ class ShadeSetup {
         const id = parseInt(sel.value, 10), src = (somfy.shades || []).find(x => x.shadeId === id);
         sel.value = '';
         if (!src) return;
-        const prompt = ui.promptMessage(this.box(), this.t('SETUP_COPY_CONFIRM', { name: escHtml(src.name) }), () => this.createCopy(id));
-        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('SETUP_COPY_CONFIRM_DESC')}</p>`;
+        ui.confirm({ level: 'info', title: tr('SETUP_COPY_CONFIRM').replace('{name}', src.name), desc: `<p>${tr('SETUP_COPY_CONFIRM_DESC')}</p>`, confirm: tr('BT_CREATE') })
+            .then(ok => { if (ok) this.createCopy(id); });
     }
     createCopy(id) {
         const c = this.c;
@@ -465,7 +465,7 @@ class ShadeSetup {
     // Fin de parcours : un message bref, la carte de la liste dit ce qui reste à faire.
     finishWiz() {
         const s = this.s, todo = s.tasks.some(T => T.state !== 'done');
-        ui.successMessage(this.t(todo ? 'SETUP_CREATED' : 'SETUP_READY', { name: escHtml(s.shade.name) }));
+        ui.toast(this.t(todo ? 'SETUP_CREATED' : 'SETUP_READY', { name: s.shade.name }));
         closeOverlay(this.div);
     }
 

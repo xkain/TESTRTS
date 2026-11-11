@@ -281,6 +281,8 @@
     --r-4: 18px;
     --r-5: 22px;
     --r-pill: 999px;
+    /* Fond du bouton qui détruit : le même rouge dans les deux thèmes, texte blanc. */
+    --destroy: #b3261e;
     /* Échelle de texte en em : la page migrée pose 16 px sur son conteneur (html est à 14 px),
        et seuls les éléments qui portent du texte fixent une taille, sinon les em se multiplient. */
     --fs-1: .75em;
@@ -341,6 +343,9 @@
        couleur qu'elle recouvre -- sans quoi la colonne d'identité de la fenêtre se confond
        avec celle de la page. */
     --shadow-window: 0 14px 34px rgba(0, 0, 0, .18);
+    /* Message bref : plaque sombre dans les deux thèmes, un cran plus claire en sombre. */
+    --toast-bg: #17181c;
+    --toast-border: #17181c;
     /* Voile de la page derrière une fenêtre : assombrit la zone de contenu seule, pour
        que la page recule et que la fenêtre s'en détache même à couleur égale. */
     --scrim-page: rgba(0, 0, 0, .14);
@@ -381,6 +386,8 @@
     --fw-dev-ink: #8d949e;
     --fw-dev-line: #4a515c;
     --shadow-window: 0 14px 34px rgba(0, 0, 0, .6);
+    --toast-bg: #2e343e;
+    --toast-border: #3d4551;
     --scrim-page: rgba(0, 0, 0, .35);
 }
 
@@ -2465,43 +2472,3 @@ button:disabled:active {
         padding-right:80px !important;
     }
 }
-
-/* ==========================================================================
- *  SUGGESTION DE LANGUE NAVIGATEUR -- toast discret, non bloquant,
- *  déclenché par checkBrowserLangSuggestion() (10-core-utils.js).
- *  ========================================================================== */
-.lang-prompt-toast {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-    max-width: 340px;
-    padding: 14px 16px;
-    background: var(--color-bg-card);
-    border: 1px solid var(--color-border);
-    border-radius: 14px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    animation: langPromptSlideIn 0.3s ease;
-}
-.lang-prompt-text {
-    font-size: 0.9em;
-    line-height: 1.4;
-}
-.lang-prompt-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    justify-content: flex-end;
-}
-@media (max-width: 480px) {
-    .lang-prompt-toast {
-        left: 12px;
-        right: 12px;
-        bottom: 12px;
-        max-width: none;
-    }
-}
-

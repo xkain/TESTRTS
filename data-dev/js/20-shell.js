@@ -23,7 +23,9 @@ async function initSockets() {
     for (let i = 0; i < wms.length; i++) {
         wms[i].remove();
     }
-    ui.waitMessage(get('divContainer'), 'WAIT_MSG_CONNECTING').classList.add('socket-wait');
+    // Connexion perdue après chargement : le bandeau suffit, la page reste lisible.
+    if (!document.body.classList.contains('is-offline'))
+        ui.waitMessage(get('divContainer'), 'WAIT_MSG_CONNECTING').classList.add('socket-wait');
     let host = isDevHost ? hst : window.location.hostname;
     try {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -137,9 +139,8 @@ async function initSockets() {
             for (let i = 0; i < wms.length; i++) {
                 wms[i].remove();
             }
-            let errs = document.getElementsByClassName('socket-error');
-            for (let i = 0; i < errs.length; i++)
-                errs[i].remove();
+            hideSocketLost();
+            ui.closeBanner('socketTooMany');
             if (general.reloadApp) {
                 general.reload();
             }
@@ -168,12 +169,15 @@ async function initSockets() {
         socket.onclose = (evt) => {
             wifi.procWifiStrength({ ssid: '', channel: -1, strength: -100 });
             wifi.procEthernet({ connected: false, speed: 0, fullduplex: false });
-            if (document.getElementsByClassName('socket-wait').length === 0)
+            // Page déjà chargée et coupure non voulue (3000 = redémarrage demandé) : bandeau.
+            const lost = connects > 0 && evt.code !== 3000;
+            if (!lost && document.getElementsByClassName('socket-wait').length === 0)
                 ui.waitMessage(get('divContainer'), 'WAIT_MSG_CONNECTING').classList.add('socket-wait');
             if (evt.wasClean) {
                 logger.debug('Socket closed cleanly');
                 connectFailed = 0;
                 tConnect = setTimeout(async () => { await reopenSocket(); }, 7000);
+                if (lost) showSocketLost(7000);
                 logger.debug('Reconnecting socket in 7 seconds');
             }
             else {
@@ -181,6 +185,7 @@ async function initSockets() {
                 if (connects > 0) {
                     logger.debug('Reconnecting socket in 3 seconds');
                     tConnect = setTimeout(async () => { await reopenSocket(); }, 3000);
+                    if (lost) showSocketLost(3000);
                 }
                 else {
                     if (connecting) {
@@ -199,14 +204,12 @@ async function initSockets() {
                                     if (!ctx) return;
                                     const max = ctx.maxClients || window.__maxClients || 0;
                                     if (!max || (ctx.wsClients || 0) < max) return;
-                                    ui.socketError(trOr('ERR_SOCKET_TOO_MANY',
+                                    ui.banner({ id: 'socketTooMany', closable: false, title: trOr('ERR_SOCKET_TOO_MANY',
                                         'Too many clients connected. A maximum of {MAX} clients may be connected at any one time. Close some connections to the ESP Somfy RTS device to proceed.')
-                                        .replace('{MAX}', max));
+                                        .replace('{MAX}', max) });
                                 })
                                 .catch(() => { /* appareil injoignable : surtout ne rien affirmer */ });
                         }
-                        let spanAttempts = get('spanSocketAttempts');
-                        if (spanAttempts) spanAttempts.innerHTML = connectFailed.fmt("#,##0");
                     }
                     else {
                         logger.debug('Connecting socket in .5 seconds');
@@ -281,15 +284,14 @@ function handleMobileDismiss(handleElement) {
 // ferme l'overlay -- même logique de sortie que le bouton Annuler/[close]/glisser-pour-fermer
 // ci-dessus, donc même passage par requestCloseOverlay() (confirmation si modifications en cours
 // OU action bloquante en vol -- cf. section VERROUILLAGE plus bas) si nécessaire.
-// Exclusions volontaires : les alertes critiques (confirmation/erreur/info -- ui.promptMessage(),
-// ui.errorMessage(), ui.infoMessage(), socketError()...) ne doivent jamais se fermer par
-// accident au clic extérieur ; elles se reconnaissent à leur classe interne prompt-content/
-// error-content/info-content, posée par ces fonctions dans 30-ui-binder.js.
+// Exclusions volontaires : les alertes critiques (confirmation/erreur/info -- ui.dialog() et
+// ses appelants) ne doivent jamais se fermer par accident au clic extérieur ; elles se reconnaissent à la classe .msg-alert, posée par ces
+// fonctions dans 30-ui-binder.js.
 document.addEventListener('click', (e) => {
     const overlay = e.target.closest('.modal-overlay, .inst-overlay');
     if (!overlay) return;
     if (e.target.closest('.message-content, .instructions-content')) return;
-    if (overlay.querySelector('.prompt-content, .error-content, .info-content')) return;
+    if (overlay.querySelector('.msg-alert')) return;
     requestCloseOverlay(overlay);
 });
 
@@ -604,8 +606,7 @@ function clearDirty(container) {
  *   à suivre via watchDirty().
  * @param {string} [options.titleKey] - Clé de traduction du titre (défaut : PROMPT_UNSAVED_TITLE).
  * @param {string} [options.msgKey] - Clé de traduction du message (défaut : PROMPT_UNSAVED_MSG).
- * @param {string} [options.icon] - Icône du modalHeader (défaut : svg-info).
- * @param {string} [options.type] - Type du modalHeader (défaut : 'small', 'small danger' pour force).
+ * @param {string} [options.icon] - Icône de la fenêtre (défaut : celle de son niveau).
  */
 function confirmDiscardChanges(onLeave, onStay, options) {
     const opts = options || {};
@@ -618,33 +619,23 @@ function confirmDiscardChanges(onLeave, onStay, options) {
     if (scopeDirty) document.body.classList.add('dirty-alerted');
     const titleKey = opts.titleKey || 'PROMPT_UNSAVED_TITLE';
     const msgKey = opts.msgKey || 'PROMPT_UNSAVED_MSG';
-    const icon = opts.icon || (opts.force ? 'svg-warning' : 'svg-info');
-    const type = opts.type || (opts.force ? 'small danger' : 'small');
-    let div = document.createElement('div');
-    div.className = 'modal-overlay';
-    div.innerHTML = `
-    <div class="message-content prompt-content">
-    ${modalHeader(titleKey, icon, { type: type })}
-    <div class="sub-message"><p>${tr(msgKey)}</p></div>
-    <div class="button-container-row">
-    <button id="btnUnsavedStay" line type="button">${tr('BT_STAY_PAGE')}</button>
-    <button id="btnUnsavedLeave" red type="button"><span>${tr('BT_LEAVE_WITHOUT_SAVING')}</span></button>
-    </div>
-    </div>`;
-    shOverlay(div);
-    div.querySelector('#btnUnsavedStay').onclick = () => {
-        closeOverlay(div);
-        if (typeof onStay === 'function') onStay();
-    };
-    div.querySelector('#btnUnsavedLeave').onclick = () => {
+    // Rester est le choix sûr, donc le bouton principal. Quand la sortie interrompt une action
+    // en cours (force), quitter passe en rouge.
+    ui.dialog({
+        level: opts.force ? 'danger' : 'warn',
+        icon: opts.icon,
+        title: tr(titleKey),
+        desc: `<p>${tr(msgKey)}</p>`,
+        buttons: [
+            { id: 'leave', label: tr('BT_LEAVE_WITHOUT_SAVING'), short: tr('BT_LEAVE'), kind: opts.force ? 'danger' : '' },
+            { id: 'cancel', label: tr('BT_STAY_PAGE'), short: tr('BT_STAY'), kind: 'primary' }
+        ]
+    }).then(({ button }) => {
+        if (button !== 'leave') { if (typeof onStay === 'function') onStay(); return; }
         if (typeof general !== 'undefined' && general.initialized) general.discardChanges(scope);
-        if (typeof wifi !== 'undefined' && wifi.initialized && (!scope || scope.contains(get('divNetAdapter')))) wifi.revertPage();
-        if (typeof mqtt !== 'undefined' && mqtt.initialized && (!scope || scope.contains(get('divMQTT')) || scope.contains(get('divHomeAssistant')))) mqtt.revertPage();
-        if (typeof somfy !== 'undefined' && somfy._radioSaveBar && (!scope || scope.contains(get('divTransceiverSettings')))) somfy.revertRadio();
         clearDirty(scope || undefined);
-        closeOverlay(div);
         onLeave();
-    };
+    });
 }
 
 // =========================================================================
@@ -684,6 +675,7 @@ class SaveBar {
     update(diffs) {
         this.diffs = diffs;
         const el = this.el, n = diffs.length;
+        if (el.classList.contains('shown') !== n > 0) setTimeout(() => ui.placeToasts(), 350);
         el.classList.toggle('shown', n > 0);
         el.inert = n === 0;
         // Vidée, la barre garde son dernier texte le temps de redescendre.
@@ -699,30 +691,22 @@ class SaveBar {
         el.querySelector('.save-bar-save-btn span').textContent = tr('BT_SAVE');
     }
     showList() {
-        const div = document.createElement('div');
-        div.className = 'modal-overlay';
-        div.innerHTML = `
-    <div class="message-content save-bar-sheet">
-    ${modalHeader('', 'svg-save', { type: 'small' })}
-    <div class="sub-message"><p>${tr('SAVEBAR_PENDING_DESC')}</p><ul class="save-bar-sheet-list"></ul></div>
-    <div class="button-container-row">
-    <button type="button" class="save-bar-sheet-stay-btn" line>${tr('BT_STAY_PAGE')}</button>
-    <button type="button" class="save-bar-sheet-revert-btn" line>${tr('BT_REVERT')}</button>
-    <button type="button" class="save-bar-sheet-save-btn">${tr('BT_SAVE')}</button>
-    </div>
-    </div>`;
-        // Libellés et valeurs viennent des champs saisis : textContent, jamais innerHTML.
-        div.querySelector('.modalHeader-title').textContent = SaveBar.count(this.diffs.length);
-        const list = div.querySelector('.save-bar-sheet-list');
-        this.diffs.forEach(d => {
-            const li = document.createElement('li');
-            li.textContent = SaveBar.detail(d);
-            list.appendChild(li);
+        // Libellés et valeurs viennent des champs saisis : échappés avant d'entrer dans la liste.
+        ui.dialog({
+            level: 'warn',
+            icon: 'svg-save',
+            title: SaveBar.count(this.diffs.length),
+            desc: `<p>${tr('SAVEBAR_PENDING_DESC')}</p>`,
+            cons: this.diffs.map(d => escHtml(SaveBar.detail(d))),
+            buttons: [
+                { id: 'cancel', label: tr('BT_STAY_PAGE'), short: tr('BT_STAY') },
+                { id: 'revert', label: tr('BT_REVERT'), short: tr('BT_CANCEL') },
+                { id: 'save', label: tr('BT_SAVE'), kind: 'primary' }
+            ]
+        }).then(({ button }) => {
+            if (button === 'revert') this.onRevert();
+            else if (button === 'save') this.onSave();
         });
-        shOverlay(div);
-        div.querySelector('.save-bar-sheet-stay-btn').onclick = () => closeOverlay(div);
-        div.querySelector('.save-bar-sheet-revert-btn').onclick = () => { closeOverlay(div); this.onRevert(); };
-        div.querySelector('.save-bar-sheet-save-btn').onclick = () => { closeOverlay(div); this.onSave(); };
     }
 }
 
@@ -783,7 +767,7 @@ function flashOverlayLocked(overlay) {
 // Explication affichée en plus de la secousse, via ui.infoMessage() (30-ui-binder.js) plutôt qu'un
 // toast : les messages de verrouillage (ex: PROMPT_UPDATE_IN_PROGRESS_MSG -- "patientez, ne fermez
 // pas cette fenêtre, n'éteignez pas l'appareil") sont trop longs pour la pastille compacte d'un
-// toast (.warning-toast, conservée dans overlays.css mais plus utilisée). ui.infoMessage() gère
+// message bref (ui.toast). ui.infoMessage() gère
 // l'anti-empilement si l'utilisateur martèle le clic.
 function showLockedInfo(overlay) {
     if (typeof ui === 'undefined' || typeof ui.infoMessage !== 'function') return;
@@ -1014,14 +998,17 @@ function openPageHelp() {
     let skip = false;
     try { skip = localStorage.getItem('docPromptOff') === '1'; } catch (e) {}
     if (skip) return open();
-    const prompt = ui.promptMessage(get('divContainer'), tr('PROMPT_DOC_TITLE'), () => {
-        if (prompt.querySelector('.prompt-dont-ask input').checked) {
-            try { localStorage.setItem('docPromptOff', '1'); } catch (e) {}
-        }
+    ui.dialog({
+        icon: 'svg-linkOut',
+        title: tr('PROMPT_DOC_TITLE'),
+        desc: `<p>${tr('PROMPT_DOC_SUB')}</p>`,
+        check: { label: tr('BT_DONT_ASK_AGAIN') },
+        buttons: [{ id: 'cancel', label: tr('BT_CANCEL') }, { id: 'open', label: tr('BT_SEE_GUIDE'), kind: 'primary' }]
+    }).then(({ button, checked }) => {
+        if (button !== 'open') return;
+        if (checked) try { localStorage.setItem('docPromptOff', '1'); } catch (e) {}
         open();
-    }, false, 'svg-linkOut');
-    prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_DOC_SUB')}</p><label class="prompt-dont-ask"><input type="checkbox"><span>${tr('PROMPT_DONT_ASK_AGAIN')}</span></label>`;
-    prompt.querySelector('#btnYes span').textContent = tr('BT_OPEN');
+    });
 }
 function whenSomfyDataReady(cb, onGiveUp) {
     let waited = 0;
@@ -1814,6 +1801,32 @@ function bindAppTooltips() {
         if (appTooltipTrigger === el) hideAppTooltip();
         else showAppTooltip(el);
     });
+}
+// trOr : ce bandeau peut s'afficher pendant un git.lockFS, quand /lang ne répond plus (cf. trOr).
+let tLostCount = null;
+function showSocketLost(ms) {
+    clearInterval(tLostCount);
+    document.body.classList.add('is-offline');
+    let left = Math.ceil(ms / 1000);
+    const el = ui.banner({
+        id: 'socketLost',
+        first: true,
+        closable: false,
+        title: trOr('ERR_SOCKET_LOST', 'The device is not responding.'),
+        text: trOr('ERR_SOCKET_RETRY_IN', 'Retrying in {N} s.').replace('{N}', `<span class="banner-count">${left}</span>`),
+        actions: [{ label: trOr('BT_RETRY', 'Retry'), onClick: () => { clearInterval(tLostCount); reopenSocket(); } }]
+    });
+    tLostCount = setInterval(() => {
+        left = Math.max(0, left - 1);
+        const c = el.querySelector('.banner-count');
+        if (c) c.textContent = left;
+        if (!left) clearInterval(tLostCount);
+    }, 1000);
+}
+function hideSocketLost() {
+    clearInterval(tLostCount);
+    ui.closeBanner('socketLost');
+    document.body.classList.remove('is-offline');
 }
 async function reopenSocket() {
     if (tConnect) clearTimeout(tConnect);

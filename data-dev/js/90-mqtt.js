@@ -119,7 +119,7 @@ class MQTT {
                 logger.error('Failed to save MQTT discovery:', err);
                 return;
             }
-            ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            ui.toast(tr('MSG_SAVE_SUCCESS'));
             if (response && typeof response.hostname === 'string') this._settings = response;
             else Object.assign(this._settings, disco);
             this._applySettings('ha');
@@ -197,7 +197,7 @@ class MQTT {
                 ui.serviceError(err);
                 logger.error('Failed to save MQTT settings:', err);
             } else {
-                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                ui.toast(tr('MSG_SAVE_SUCCESS'));
                 logger.debug('MQTT settings saved:', response);
                 // Le firmware renvoie les réglages tels qu'il vient de les enregistrer : c'est la
                 // seule valeur qui fasse foi pour un refus ultérieur.

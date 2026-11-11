@@ -516,7 +516,7 @@ class Somfy {
                 putJSONSync('/saveRadio', t, (err, res) => {
                     if (err) return ui.serviceError(err);
 
-                    ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                    ui.toast(tr('MSG_SAVE_SUCCESS'));
                     clearDirty();
 
                     // La reference de ce que la CARTE execute vient de changer : sans cette mise
@@ -548,10 +548,8 @@ class Somfy {
             };
 
             if (isM && !pinsTrusted) {
-                let prompt = ui.promptMessage(get('divContainer'), tr('PROMPT_RADIO_MANUAL_TITLE'), () => {
-                    proceedSave();
-                });
-                prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_RADIO_MANUAL_WARNING")}</p>`;
+                ui.confirm({ title: tr('PROMPT_RADIO_MANUAL_TITLE'), desc: `<p>${tr('PROMPT_RADIO_MANUAL_WARNING')}</p>`, confirm: tr('BT_SAVE') })
+                    .then(ok => { if (ok) proceedSave(); });
             } else {
                 proceedSave();
             }
@@ -2790,12 +2788,9 @@ class Somfy {
     // reference de balayage sans que rien ne le signale a l'ecran. La question evite l'accident,
     // et le sous-titre dit exactement ce qui va se passer -- dont le fait que RIEN n'est ecrit
     // dans le boitier, ce qui rend le geste annulable en quittant sans enregistrer.
-    // promptMessage() n'expose que son titre ; il renvoie son element, dont on remplit le
-    // .sub-message laisse vide. Pas de modification du helper partage pour un seul appelant.
-    resetRadioSettings() {
-        const prompt = ui.promptMessage(tr('PROMPT_RADIO_RESET_TITLE'), () => this.applyRadioDefaults());
-        const sub = prompt && prompt.querySelector('.sub-message');
-        if (sub) sub.innerHTML = `<p>${tr('PROMPT_RADIO_RESET_MSG')}</p>`;
+    async resetRadioSettings() {
+        if (await ui.confirm({ title: tr('PROMPT_RADIO_RESET_TITLE'), desc: `<p>${tr('PROMPT_RADIO_RESET_MSG')}</p>`, confirm: tr('BT_RESET') }))
+            this.applyRadioDefaults();
     }
     applyRadioDefaults() {
         const d = this.radioDefaults;
@@ -4345,7 +4340,7 @@ class Somfy {
         }));
         const finish = (roomId, ops) => this._putSequence(ops, (err) => {
             if (err) ui.serviceError(err);
-            else ui.successMessage(tr(o.isEdit ? 'MSG_SAVE_SUCCESS' : 'MSG_ADD_SUCCESS'));
+            else ui.toast(tr(o.isEdit ? 'MSG_SAVE_SUCCESS' : 'MSG_ADD_SUCCESS'));
             clearDirty(div);
             closeOverlay(div);
             const ctx = o.ctx;
@@ -4384,16 +4379,14 @@ class Somfy {
             getJSONSync(`/room?roomId=${roomId}`, (err, room) => {
                 if (err) ui.serviceError(err);
                 else {
-                    let prompt = ui.promptMessage(tr('PROMPT_DELETE_ROOM'), () => {
-                        ui.clearErrors();
-                        putJSONSync('/deleteRoom', { roomId: roomId }, (err, room) => {
-                            prompt.remove();
+                    ui.confirm({ level: 'danger', icon: 'svg-trash', title: tr('PROMPT_DELETE_NAMED').replace('{name}', room.name),
+                        desc: `<p>${tr('PROMPT_DELETE_ROOM_WARNING')}</p>`, confirm: tr('BT_DELETE_ROOM') }).then(ok => {
+                        if (!ok) return;
+                        putJSONSync('/deleteRoom', { roomId: roomId }, (err) => {
                             if (err) ui.serviceError(err);
-                            else
-                                this.updateRoomsList();
+                            else this.updateRoomsList();
                         });
                     });
-                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_ROOM_WARNING")}</p>`;
                 }
             });
         }
@@ -5160,7 +5153,7 @@ class Somfy {
                 });
                 this.refreshCardSheet('shade', shadeId);
             }
-            ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            ui.toast(tr('MSG_SAVE_SUCCESS'));
         });
     }
     // Préférences d'interface par équipement (page de carrousel par défaut, visibilité du badge "My"),
@@ -5247,7 +5240,8 @@ class Somfy {
     confirmCardCommand(kind, id, fn) {
         if (!this.cardUIPrefs(kind, id).confirm) { fn(); return; }
         const item = kind === 'shade' ? (this.shades || []).find(x => x.shadeId === id) : (this.groups || []).find(x => x.groupId === id);
-        const prompt = ui.promptMessage(tr('CARD_CONFIRM_SEND').replace('{name}', escHtml(item ? item.name : '')), () => { closeOverlay(prompt); fn(); });
+        ui.confirm({ level: 'info', title: tr('CARD_CONFIRM_SEND').replace('{name}', item ? item.name : ''), confirm: tr('BT_SEND') })
+            .then(ok => { if (ok) fn(); });
     }
     cardGroupCommand(groupId, cmd) {
         this.confirmCardCommand('group', groupId, () => this.sendGroupCommand(groupId, cmd));
@@ -5730,17 +5724,17 @@ class Somfy {
         const shadeId = parseInt(get('spanShadeId').innerText, 10), input = get('fldShadeRollingCode');
         const code = parseInt(input.value, 10);
         if (isNaN(code) || code < 0 || code > 65535) return ui.errorMessage(tr('ERR_ROLLING_CODE_INVALID'));
-        const prompt = ui.promptMessage(tr('PROMPT_DEVICE_ROLLING'), () => {
+        ui.confirm({ title: tr('PROMPT_DEVICE_ROLLING'), confirm: tr('BT_APPLY'),
+            desc: `<p>${tr('PROMPT_DEVICE_ROLLING_CONFIRM').replace('{CODE}', code).replace('{OLD}', escHtml(get('spanShadeRollingCode').textContent))}</p>` }).then(ok => {
+            if (!ok) return;
             putJSONSync('/setRollingCode', { shadeId, rollingCode: code }, (err, shade) => {
-                prompt.remove();
                 if (err) return ui.serviceError(err);
                 get('spanShadeRollingCode').textContent = shade && typeof shade.lastRollingCode === 'number' ? shade.lastRollingCode : code;
                 input.value = '';
                 get('btnShadeRollingCode').disabled = true;
-                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                ui.toast(tr('MSG_SAVE_SUCCESS'));
             });
         });
-        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_DEVICE_ROLLING_CONFIRM').replace('{CODE}', code).replace('{OLD}', escHtml(get('spanShadeRollingCode').textContent))}</p>`;
     }
     // Point d'entrée réel d'ouverture d'un équipement (nouveau ou existant) : garde contre la perte de
     // modifications non enregistrées si un autre équipement/groupe/planning était en cours d'édition
@@ -5909,7 +5903,7 @@ class Somfy {
 
             logger.debug("Shade saved/added:", shade);
             const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
-            ui.successMessage(msg);
+            ui.toast(msg);
             clearDirty();
             if (this._shdSaveBar) this._shdSaveBar.update([]);
             this.updateShadeList()
@@ -5927,20 +5921,18 @@ class Somfy {
             getJSONSync(`/shade?shadeId=${shadeId}`, (err, shade) => {
                 if (err) ui.serviceError(err);
                 else if (shade.inGroup) ui.errorMessage(tr('ERR_DEVICE_IN_GROUP'));
-                else this.updateScheduleList(() => {
+                else this.updateScheduleList(async () => {
                     const scheduleCount = (this.schedules || []).filter(sc => sc.targetType === 'shade' && sc.targetId === shadeId).length;
-                    let prompt = ui.promptMessage(tr('PROMPT_DELETE_DEVICE'), () => {
-                        ui.clearErrors();
-                        putJSONSync('/deleteShade', { shadeId: shadeId }, (err, shade) => {
-                            if (err) ui.serviceError(err);
-                            else if (get('spanShadeId').innerText === String(shadeId)) this.showEditShade(false);
-                            this.updateShadeList();
-                            if (scheduleCount > 0) this.updateScheduleList();
-                            prompt.remove();
-                        });
+                    const cons = scheduleCount > 0 ? [tr('PROMPT_DELETE_TARGET_SCHEDULES').replace('{n}', scheduleCount)] : [];
+                    cons.push(tr('PROMPT_DELETE_DEVICE_WARNING'));
+                    if (!await ui.confirm({ level: 'danger', icon: 'svg-trash', title: tr('PROMPT_DELETE_NAMED').replace('{name}', shade.name),
+                        desc: `<p>${tr('PROMPT_IRREVERSIBLE')}</p>`, cons, confirm: tr('BT_DELETE_DEVICE') })) return;
+                    putJSONSync('/deleteShade', { shadeId: shadeId }, (err) => {
+                        if (err) ui.serviceError(err);
+                        else if (get('spanShadeId').innerText === String(shadeId)) this.showEditShade(false);
+                        this.updateShadeList();
+                        if (scheduleCount > 0) this.updateScheduleList();
                     });
-                    const scheduleWarning = scheduleCount > 0 ? `<p>${tr('PROMPT_DELETE_TARGET_SCHEDULES').replace('{n}', scheduleCount)}</p>` : '';
-                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_DEVICE_WARNING")}</p>${scheduleWarning}<p>${tr("PROMPT_DELETE_DEVICE_CONFIRM").replace("{DEVICE_NAME}", escHtml(shade.name))}</p>`;
                 });
             });
         }
@@ -6033,17 +6025,13 @@ class Somfy {
                         if (typeof cb === 'function') cb(err, shade);
                     });
     }
-    unlinkRemote(shadeId, remoteAddress) {
-        let prompt = ui.promptMessage(tr('PROMPT_UNLINK_REMOTE'), () => {
-            let obj = {
-                shadeId: shadeId,
-                remoteAddress: remoteAddress
-            };
-            putJSONSync('/unlinkRemote', obj, (err, shade) => {
-                logger.debug('Remote unlinked:', shade);
-                prompt.remove();
-                this.setLinkedRemotesList(shade);
-            });
+    async unlinkRemote(shadeId, remoteAddress) {
+        const shade = (this.shades || []).find(x => x.shadeId === shadeId);
+        if (!await ui.confirm({ title: tr('PROMPT_UNLINK_REMOTE'), confirm: tr('BT_UNLINK'),
+            desc: `<p>${tr('PROMPT_UNLINK_REMOTE_DESC').replace('{name}', escHtml(shade ? shade.name : ''))}</p>` })) return;
+        putJSONSync('/unlinkRemote', { shadeId: shadeId, remoteAddress: remoteAddress }, (err, shade) => {
+            if (err) return ui.serviceError(err);
+            this.setLinkedRemotesList(shade);
         });
     }
 
@@ -6217,17 +6205,17 @@ class Somfy {
         const groupId = parseInt(get('spanGroupId').innerText, 10), input = get('fldGroupRollingCode');
         const code = parseInt(input.value, 10);
         if (isNaN(code) || code < 0 || code > 65535) return ui.errorMessage(tr('ERR_ROLLING_CODE_INVALID'));
-        const prompt = ui.promptMessage(tr('PROMPT_GROUP_ROLLING'), () => {
+        ui.confirm({ title: tr('PROMPT_GROUP_ROLLING'), confirm: tr('BT_APPLY'),
+            desc: `<p>${tr('PROMPT_GROUP_ROLLING_CONFIRM').replace('{CODE}', code).replace('{OLD}', escHtml(get('spanGroupRollingCode').textContent))}</p>` }).then(ok => {
+            if (!ok) return;
             putJSONSync('/setRollingCode', { groupId, rollingCode: code }, (err, group) => {
-                prompt.remove();
                 if (err) return ui.serviceError(err);
                 get('spanGroupRollingCode').textContent = group && typeof group.lastRollingCode === 'number' ? group.lastRollingCode : code;
                 input.value = '';
                 get('btnGroupRollingCode').disabled = true;
-                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                ui.toast(tr('MSG_SAVE_SUCCESS'));
             });
         });
-        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_GROUP_ROLLING_CONFIRM').replace('{CODE}', code).replace('{OLD}', escHtml(get('spanGroupRollingCode').textContent))}</p>`;
     }
 
     openEditGroup(groupId, opts) { confirmDiscardChanges(() => this._openEditGroup(groupId, opts)); }
@@ -6289,7 +6277,7 @@ class Somfy {
 
         putJSONSync(isNew ? '/addGroup' : '/saveGroup', obj, (err, group) => {
             if (err) return ui.serviceError(err);
-            ui.successMessage(tr(isNew ? 'MSG_ADD_SUCCESS' : 'MSG_SAVE_SUCCESS'));
+            ui.toast(tr(isNew ? 'MSG_ADD_SUCCESS' : 'MSG_SAVE_SUCCESS'));
             clearDirty();
             this._grpSaveBar.update([]);
             if (isNew && !(this.groups || []).some(x => x.groupId === group.groupId)) (this.groups = this.groups || []).push(group);
@@ -6310,19 +6298,17 @@ class Somfy {
                     if (group.linkedShades.length > 0) {
                         ui.errorMessage(tr('ERR_GROUP_NOT_EMPTY'));
                     }
-                    else this.updateScheduleList(() => {
+                    else this.updateScheduleList(async () => {
                         const scheduleCount = (this.schedules || []).filter(sc => sc.targetType === 'group' && sc.targetId === groupId).length;
-                        let prompt = ui.promptMessage(tr('PROMPT_DELETE_GROUP'), () => {
-                            putJSONSync('/deleteGroup', { groupId: groupId }, (err, g) => {
-                                if (err) ui.serviceError(err);
-                                else if (get('spanGroupId').innerText === String(groupId)) this.showEditGroup(false);
-                                this.updateGroupList();
-                                if (scheduleCount > 0) this.updateScheduleList();
-                                prompt.remove();
-                            });
+                        if (!await ui.confirm({ level: 'danger', icon: 'svg-trash', title: tr('PROMPT_DELETE_NAMED').replace('{name}', group.name),
+                            desc: `<p>${tr('PROMPT_IRREVERSIBLE')}</p>`, confirm: tr('BT_DELETE_GROUP'),
+                            cons: scheduleCount > 0 ? [tr('PROMPT_DELETE_TARGET_SCHEDULES').replace('{n}', scheduleCount)] : [] })) return;
+                        putJSONSync('/deleteGroup', { groupId: groupId }, (err) => {
+                            if (err) ui.serviceError(err);
+                            else if (get('spanGroupId').innerText === String(groupId)) this.showEditGroup(false);
+                            this.updateGroupList();
+                            if (scheduleCount > 0) this.updateScheduleList();
                         });
-                        const scheduleWarning = scheduleCount > 0 ? `<p>${tr('PROMPT_DELETE_TARGET_SCHEDULES').replace('{n}', scheduleCount)}</p>` : '';
-                        prompt.querySelector('.sub-message').innerHTML = `${scheduleWarning}<p>${tr("PROMPT_DELETE_GROUP_CONFIRM").replace("{GROUP_NAME}", escHtml(group.name))}</p>`;
                     });
                 }
             });
@@ -6527,13 +6513,11 @@ class Somfy {
             this.setRepeaterList(data);
         });
     }
-    unlinkRepeater(address) {
-        let prompt = ui.promptMessage(tr('PROMPT_UNLINK_REPEATER'), () => {
-            putJSONSync('/unlinkRepeater', { address: address }, (err, repeaters) => {
-                if (err) ui.serviceError(err);
-                else this.setRepeaterList(repeaters);
-                prompt.remove();
-            });
+    async unlinkRepeater(address) {
+        if (!await ui.confirm({ title: tr('PROMPT_UNLINK_REPEATER'), desc: `<p>${tr('PROMPT_UNLINK_REPEATER_DESC')}</p>`, confirm: tr('BT_UNREPEAT') })) return;
+        putJSONSync('/unlinkRepeater', { address: address }, (err, repeaters) => {
+            if (err) ui.serviceError(err);
+            else this.setRepeaterList(repeaters);
         });
     }
 
@@ -6683,13 +6667,11 @@ class Somfy {
             this.setListenerList(data);
         });
     }
-    unlinkListenRemote(address) {
-        let prompt = ui.promptMessage(tr('PROMPT_UNLINK_LISTENER'), () => {
-            putJSONSync('/unlinkListener', { address: Number(address) }, (err, listeners) => {
-                if (err) ui.serviceError(err);
-                else this.setListenerList(listeners);
-                prompt.remove();
-            });
+    async unlinkListenRemote(address) {
+        if (!await ui.confirm({ title: tr('PROMPT_UNLINK_LISTENER'), desc: `<p>${tr('PROMPT_UNLINK_LISTENER_DESC')}</p>`, confirm: tr('BT_UNLISTEN') })) return;
+        putJSONSync('/unlinkListener', { address: Number(address) }, (err, listeners) => {
+            if (err) ui.serviceError(err);
+            else this.setListenerList(listeners);
         });
     }
 

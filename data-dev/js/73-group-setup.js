@@ -206,7 +206,7 @@ class GroupSetup {
         if (this.hasLed()) fields.ledFeedback = s.led === 'oui';
         putJSONSync('/saveGroup', fields, (err) => {
             if (err) return ui.serviceError(err);
-            ui.successMessage(tr('MSG_ADD_SUCCESS'));
+            ui.toast(tr('MSG_ADD_SUCCESS'));
             this.closeDone();
         });
     }

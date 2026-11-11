@@ -1210,7 +1210,7 @@ class _SomfySchedule {
                 this.updateScheduleList(() => this.refreshOpenTargetScheduleBadges());
                 return ui.serviceError(err);
             }
-            ui.successMessage(tr(isNew ? 'MSG_ADD_SUCCESS' : 'MSG_SAVE_SUCCESS'));
+            ui.toast(tr(isNew ? 'MSG_ADD_SUCCESS' : 'MSG_SAVE_SUCCESS'));
             clearDirty(overlayEl);
             this.updateScheduleList(() => this.refreshOpenTargetScheduleBadges());
             closeOverlay(overlayEl);
@@ -1223,16 +1223,10 @@ class _SomfySchedule {
         const newKey = this.groupKeyOf({ targetType: model.targetType, targetId: model.targetId, dayMask: model.dayMask });
         const existing = (newKey !== model.key) ? this.getScheduleGroup(newKey) : null;
         if (!existing) return run();
-        let prompt = ui.promptMessage(tr('PROMPT_SCHEDULE_MERGE'), () => {
-            prompt.remove();
-            run();
-        });
-        const mergeMsg = prompt.querySelector('.sub-message');
-        if (mergeMsg) {
-            mergeMsg.innerHTML = `<p>${tr('PROMPT_SCHEDULE_MERGE_CONFIRM')
+        ui.confirm({ title: tr('PROMPT_SCHEDULE_MERGE'), confirm: tr('BT_MERGE'),
+            desc: `<p>${tr('PROMPT_SCHEDULE_MERGE_CONFIRM')
                 .replace('{target}', this.scheduleTargetName(model))
-                .replace('{n}', existing.steps.length + model.steps.length)}</p>`;
-        }
+                .replace('{n}', existing.steps.length + model.steps.length)}</p>` }).then(ok => { if (ok) run(); });
     }
     // Enchaîne des requêtes PUT une par une, en s'arrêtant à la première erreur (plannings, fenêtre
     // pièce) : chaque appel écrit un fichier de config, les lancer en parallèle l'exposerait à des
@@ -1270,20 +1264,17 @@ class _SomfySchedule {
             this.updateScheduleList(() => this.refreshOpenTargetScheduleBadges());
         });
     }
-    deleteScheduleGroup(key) {
+    async deleteScheduleGroup(key) {
         const group = this.getScheduleGroup(key);
         if (!group) return;
-        const desc = `${this.scheduleGroupTimesText(group)} - ${this.scheduleTargetName(group)}`;
-        let prompt = ui.promptMessage(tr('PROMPT_DELETE_SCHEDULE'), () => {
-            const ops = group.steps.map(({ sc }) => ({ url: '/deleteSchedule', body: { id: sc.id } }));
-            this._putSequence(ops, (err) => {
-                if (err) ui.serviceError(err);
-                this.updateScheduleList(() => this.refreshOpenTargetScheduleBadges());
-                prompt.remove();
-            });
+        const desc = `${this.scheduleGroupTimesText(group)} – ${this.scheduleTargetName(group)}`;
+        if (!await ui.confirm({ level: 'danger', icon: 'svg-trash', title: tr('PROMPT_DELETE_SCHEDULE'), confirm: tr('BT_DELETE_SCHEDULE'),
+            desc: `<p>${tr('PROMPT_DELETE_SCHEDULE_DESC').replace('{SCHEDULE_DESC}', desc)}</p>` })) return;
+        const ops = group.steps.map(({ sc }) => ({ url: '/deleteSchedule', body: { id: sc.id } }));
+        this._putSequence(ops, (err) => {
+            if (err) ui.serviceError(err);
+            this.updateScheduleList(() => this.refreshOpenTargetScheduleBadges());
         });
-        const subMsg = prompt.querySelector('.sub-message');
-        if (subMsg) subMsg.innerHTML = `<p>${tr('PROMPT_DELETE_SCHEDULE_CONFIRM').replace('{SCHEDULE_DESC}', desc)}</p>`;
     }
 }
 for (const k of Object.getOwnPropertyNames(_SomfySchedule.prototype)) {

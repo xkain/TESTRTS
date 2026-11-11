@@ -41,7 +41,7 @@ class Firmware {
                 if (this.fwInfo) this.fwInfo.checkForUpdate = val;
                 this.refreshUpdateBadge();
             }
-            ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            ui.toast(tr('MSG_SAVE_SUCCESS'));
         });
     }
     checkNow() {
@@ -302,18 +302,12 @@ class Firmware {
             if (lines.length > 0) {
                 const ver = parseInt(lines[0].split(',')[0]);
                 if (!isNaN(ver) && ver < 25) {
-                    let prompt = ui.promptMessage(tr('PROMPT_RESTORE_FILE_TITLE'), () => closeOverlay(prompt));
-
-                    prompt.querySelector('.sub-message').innerHTML = `<p style="color:var(--color-warning); font-weight:bold;"><p>${tr('PROMPT_RESTORE_FILE_DESC')}</p><p><b>${tr('PROMPT_RESTORE_FILE_DESC_1')}</b></p><p>${tr('PROMPT_RESTORE_FILE_DESC_2')}</p>`;
-
-                    const btnCan = prompt.querySelector('button[line]');
-                    if (btnCan) {
-                        btnCan.onclick = () => {
-                            get('fileName').value = "";
-                            get('span-selected-file').innerText = tr('FILE_PICK_BACKUP');
-                            closeOverlay(prompt);
-                        };
-                    }
+                    ui.confirm({ title: tr('PROMPT_RESTORE_FILE_TITLE'), confirm: tr('BT_CONTINUE'),
+                        desc: `<p>${tr('PROMPT_RESTORE_FILE_DESC')}</p><p><b>${tr('PROMPT_RESTORE_FILE_DESC_1')}</b></p>` }).then(ok => {
+                        if (ok) return;
+                        get('fileName').value = "";
+                        get('span-selected-file').innerText = tr('FILE_PICK_BACKUP');
+                    });
                 }
             }
         };
@@ -499,11 +493,8 @@ class Firmware {
         // closeOverlay()/clearOverlays() génériques (cf. leurs commentaires respectifs), qui ne
         // dépendent que de la présence d'un .modal-overlay dans le DOM, pas de qui l'a posé.
         document.body.classList.add('modal-open');
-        // Devenu .modal-overlay, divGitInstall reste hors du champ de ui.clearErrors() : celle-ci
-        // ne ferme que les modales d'ALERTE (.prompt-content/.error-content/.info-content, cf.
-        // 30-ui-binder.js), pas les fenêtres de travail comme celle-ci. Elle est appelée juste
-        // après confirmInstallGitRelease() (le clic sur #btnYes du prompt de confirmation fait
-        // onYes() PUIS clearErrors()), qui referme donc bien le prompt sans toucher à cet écran.
+        // Devenu .modal-overlay, divGitInstall reste hors du champ de ui.clearErrors(), qui ne
+        // ferme que les fenêtres d'alerte (.msg-alert, cf. 30-ui-binder.js).
 
         div.innerHTML = `
         <div class="message-content">
@@ -569,13 +560,7 @@ class Firmware {
     // Annuler, ni poignée mobile -- cf. ses commentaires) puisque le flash, une fois lancé côté
     // ESP32, ne peut de toute façon plus être interrompu (aucune route /cancelInstallGit). La
     // confirmation doit donc se faire ICI, avant, pendant qu'il est encore temps de reculer.
-    confirmInstallGitRelease(div) {
-        // ui.promptMessage() ne remappe (el, msg, onYes) que pour ses formes à 2/3 arguments (cf.
-        // son propre commentaire dans 30-ui-binder.js) -- isDanger+iconId en plus obligent donc à
-        // passer `el` explicitement, comme rebootDevice() (40-general.js).
-        const prompt = ui.promptMessage(get('divContainer'), tr('GIT_RELEASE_CONFIRM_TITLE'), () => {
-            this.installGitRelease(div);
-        }, true, 'svg-cloudDownload');
+    async confirmInstallGitRelease(div) {
         // Même comparaison que gitReleaseSelected() (data-vernum de l'option sélectionnée vs
         // data-currentvernum posé sur le conteneur) -- recalculée ici plutôt que mémorisée :
         // l'utilisateur peut changer la version sélectionnée entre le rendu du bouton et ce clic.
@@ -592,11 +577,16 @@ class Firmware {
         // passerait le contrôle sans être vu, et la fenêtre afficherait le nom de la clé.
         // La version de dev (data-vernum -1) n'a pas de numéro comparable : ni réinstallation ni retour arrière.
         const isDevBuild = opt && opt.getAttribute('data-devbuild') === 'true';
-        prompt.querySelector('.sub-message').innerHTML = `<p>${
-            isDevBuild ? tr('GIT_RELEASE_CONFIRM_SUB')
-            : !opt || vernum === currentVerNum ? tr('GIT_RELEASE_CONFIRM_SUB_REINSTALL')
-            : vernum < currentVerNum ? tr('GIT_RELEASE_CONFIRM_SUB_DOWNGRADE')
-            : tr('GIT_RELEASE_CONFIRM_SUB')}</p>`;
+        const reinstall = !isDevBuild && (!opt || vernum === currentVerNum);
+        const downgrade = !isDevBuild && !reinstall && vernum < currentVerNum;
+        const ok = await ui.confirm({
+            level: downgrade ? 'danger' : 'warn',
+            icon: 'svg-cloudDownload',
+            title: tr('GIT_RELEASE_CONFIRM_TITLE'),
+            desc: `<p>${reinstall ? tr('GIT_RELEASE_CONFIRM_SUB_REINSTALL') : downgrade ? tr('GIT_RELEASE_CONFIRM_SUB_DOWNGRADE') : tr('GIT_RELEASE_CONFIRM_SUB')}</p>`,
+            confirm: reinstall ? tr('BT_REINSTALL') : downgrade ? tr('BT_INSTALL') : tr('BT_UPDATE')
+        });
+        if (ok) this.installGitRelease(div);
     }
 
     async installGitRelease(div) {
@@ -674,7 +664,7 @@ class Firmware {
         const subMsg = langFailed
             ? `${tr('GIT_RELEASE_SUCCESS_1')}<br>${tr('GIT_LANG_RESTORE_FAILED').replace('%1', codes.join(', '))}`
             : `${tr('GIT_RELEASE_SUCCESS_1')}<br>${tr('GIT_RELEASE_SUCCESS_2')}`;
-        ui.successMessage(tr('GIT_RELEASE_SUCCESS_TITLE'), subMsg);
+        ui.toast({ title: tr('GIT_RELEASE_SUCCESS_TITLE'), detail: subMsg });
         general.reloadApp = true;
         setTimeout(() => general.reload(), 3000);
     }
@@ -782,8 +772,8 @@ class Firmware {
         div.querySelectorAll('.genmod-mode-select').forEach(m => { m.value = cur; });
         if (cur === mode) return;
         if (mode !== 'dev') return div.setGitMode(mode);
-        const prompt = ui.promptMessage(get('divContainer'), tr('FIRMWARE_DEV_CONFIRM_TITLE'), () => div.setGitMode('dev'), true, 'svg-warning');
-        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('FIRMWARE_DEV_CONFIRM')}</p>`;
+        ui.confirm({ level: 'danger', title: tr('FIRMWARE_DEV_CONFIRM_TITLE'), desc: `<p>${tr('FIRMWARE_DEV_CONFIRM')}</p>`, confirm: tr('BT_ENABLE') })
+            .then(ok => { if (ok) div.setGitMode('dev'); });
     }
 
     updateGithub() {
@@ -1192,12 +1182,15 @@ class Firmware {
             return true;
         }
     }
-    confirmUploadFile(service, el, data, file) {
+    async confirmUploadFile(service, el, data, file) {
         const isRestore = service === '/restore';
-        const prompt = ui.promptMessage(get('divContainer'), tr(isRestore ? 'RESTORE_CONFIRM_TITLE' : 'GIT_RELEASE_CONFIRM_TITLE'), () => {
-            this._startUpload(service, el, data, file);
-        }, true, isRestore ? 'svg-restore' : 'svg-upload');
-        prompt.querySelector('.sub-message').innerHTML = `<p>${tr(isRestore ? 'RESTORE_CONFIRM_SUB' : 'GIT_RELEASE_CONFIRM_SUB')}</p>`;
+        const ok = await ui.confirm({
+            icon: isRestore ? 'svg-restore' : 'svg-upload',
+            title: tr(isRestore ? 'RESTORE_CONFIRM_TITLE' : 'GIT_RELEASE_CONFIRM_TITLE'),
+            desc: `<p>${tr(isRestore ? 'RESTORE_CONFIRM_SUB' : 'GIT_RELEASE_CONFIRM_SUB')}</p>`,
+            confirm: tr(isRestore ? 'BT_RESTORE' : 'BT_INSTALL')
+        });
+        if (ok) this._startUpload(service, el, data, file);
     }
     async _startUpload(service, el, data, file) {
         if (service !== '/restore' && !this.isMobile()) {

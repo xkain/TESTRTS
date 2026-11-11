@@ -93,8 +93,8 @@ function initMultiClickToggle(triggerSelector, action, requiredClicks = 3) {
     let clickTimeout;
     const fire = typeof action === 'function' ? action : () => {
         document.body.classList.add(action);
-        if (typeof ui?.successMessage === 'function') {
-            ui.successMessage("Mode avancé débloqué.");
+        if (typeof ui?.toast === 'function') {
+            ui.toast("Mode avancé débloqué.");
         }
     };
 
@@ -948,6 +948,8 @@ function _xhrError(xhr, method, url, data) {
     let err = xhr.response || {};
     if (typeof err !== 'object' || err === null) err = {};
     err.htmlError = xhr.status || 500;
+    // Statut 0 : aucune réponse (appareil injoignable), que le 500 ci-dessus ne dit pas.
+    if (!xhr.status) err.noResponse = true;
     err.service = `${method} ${url}`;
     if (typeof data !== 'undefined') err.data = data;
     if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];

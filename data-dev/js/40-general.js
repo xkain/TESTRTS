@@ -555,7 +555,7 @@ class General {
                     if (err.code === 'GEO_LAT_INVALID' || err.code === 'GEO_LON_INVALID') ui.errorMessage(tr('GENERAL_GEO_TITLE'), tr('ERR_' + err.code));
                     else ui.serviceError(err);
                 } else {
-                    ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                    ui.toast(tr('MSG_SAVE_SUCCESS'));
                     logger.debug('General settings saved:', response);
                     if (obj.accentColor) {
                         this._savedAccent = obj.accentColor;
@@ -817,7 +817,7 @@ class General {
                 if (typeof somfy !== 'undefined' && typeof somfy.switchMobileTab === 'function') {
                     somfy.switchMobileTab(payload.defaultMobileTab);
                 }
-                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                ui.toast(tr('MSG_SAVE_SUCCESS'));
                 clearDirty(div);
                 closeOverlay(div);
             });
@@ -1302,7 +1302,7 @@ class General {
             if (typeof payload.ledPin === 'number') window.__ledPin = payload.ledPin;
             this.updateLedBadge();
             if (typeof somfy !== 'undefined') somfy.applyLedFeedbackVisibility();
-            ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            ui.toast(tr('MSG_SAVE_SUCCESS'));
             logger.debug('LED settings saved:', response);
             clearDirty(div);
             closeOverlay(div);
@@ -1323,21 +1323,12 @@ class General {
         };
         this.onSecurityTypeChanged();
     }
-    rebootDevice() {
-        let prompt = ui.promptMessage(
-            get('divContainer'),
-            tr('PROMPT_REBOOT_CONFIRM_TITLE'),
-            () => {
-                if(typeof socket !== 'undefined') socket.close(3000, 'reboot');
-                putJSONSync('/reboot', {}, (err, response) => {
-                    logger.debug('Reboot requested:', response);
-                });
-                ui.clearErrors();
-            },
-            true,'svg-reboot'
-        );
-        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_REBOOT_CONFIRM_SUB')}</p>`;
-        prompt.querySelector('#btnYes use').setAttribute('href', '#svg-restart');
+    async rebootDevice() {
+        if (!await ui.confirm({ icon: 'svg-reboot', title: tr('PROMPT_REBOOT_CONFIRM_TITLE'), desc: `<p>${tr('PROMPT_REBOOT_CONFIRM_SUB')}</p>`, confirm: tr('BT_REBOOT') })) return;
+        if (typeof socket !== 'undefined') socket.close(3000, 'reboot');
+        putJSONSync('/reboot', {}, (err, response) => {
+            logger.debug('Reboot requested:', response);
+        });
     }
 
     // Affiche la langue active dans le bouton de réglages (#currentLangDisplay). Le libellé vient du
@@ -1477,7 +1468,7 @@ class General {
         // L'import (importLangFileManually) puis la bascule de langue qui suit (onLanguageChanged)
         // se terminent par un rechargement complet de la page, plusieurs secondes plus tard --
         // sans indicateur, la modale ne montrerait rien pendant ce temps (même mécanisme que
-        // TOAST_LANG_DOWNLOADING_RELOAD dans acceptLangPrompt()).
+        // TOAST_LANG_DOWNLOADING_RELOAD dans _relayLangFromToast()).
         const overlay = ui.waitMessage(get('divLangManagerOverlay') || get('divContainer'), 'WAIT_MSG_LANG_IMPORT');
 
         // L'upload est en vol : bloque la fermeture accidentelle du catalogue tant qu'il n'a pas
@@ -1660,7 +1651,7 @@ class General {
             titleKey: 'PROMPT_LANG_ACTION_TITLE',
             msgKey: 'PROMPT_LANG_ACTION_MSG',
         });
-        // `return` : reinstallActiveLang() a besoin de savoir quand la chaîne est retombée pour
+        // `return` : _relayLangFromToast() a besoin de savoir quand la chaîne est retombée pour
         // retirer son toast. L'appelant du catalogue (ligne ~1586) ignore la valeur, sans effet.
         return relayLangViaBrowser(code)
         .then(() => { clearOverlayLock(get('divLangManagerOverlay')); return this.onLanguageChanged(code); })
@@ -1679,7 +1670,7 @@ class General {
             if (err.message.startsWith('github-fetch-failed')) {
                 this._manualImportPending.add(code);
                 this._langSel = code;
-                // Depuis un toast (acceptLangPrompt/reinstallActiveLang), la modale du catalogue
+                // Depuis un toast (_relayLangFromToast), la modale du catalogue
                 // n'est pas forcément ouverte -- l'ouvrir pour que l'utilisateur voie le bloc
                 // d'import qui vient d'être activé (openLangManager() réinitialise
                 // _manualImportPending et recharge déjà le catalogue, donc on préserve/relance
@@ -1802,13 +1793,10 @@ class General {
         if (value) value.textContent = `${pct}%`;
     }
     procLangDownloadComplete(msg) {
-        // no-op si le catalogue n'est pas ouvert (déclenché depuis un toast, cf. acceptLangPrompt).
+        // no-op si le catalogue n'est pas ouvert (déclenché depuis un toast, cf. _relayLangFromToast).
         clearOverlayLock(get('divLangManagerOverlay'));
         this.clearLangProgress();
-        const toast = get('langPromptToast');
-        if (toast) toast.remove();
-        const missingToast = get('langMissingToast');
-        if (missingToast) missingToast.remove();
+        ['langPrompt', 'langMissing'].forEach(id => ui.findToast(id)?.close());
         if (msg.success) {
             // Bascule vers la langue fraîchement téléchargée puis recharge, comme un changement manuel réussi.
             this.onLanguageChanged(msg.code).catch(err => ui.serviceError({ desc: err.message, service: '/setLang' }));
@@ -1824,46 +1812,25 @@ class General {
         }
     }
     // --- Suggestion discrète de langue navigateur, déclenchée par
-    // checkBrowserLangSuggestion() -- un simple toast, pas une modale bloquante. ---
+    // checkBrowserLangSuggestion() -- un message bref qui reste, pas une fenêtre bloquante. ---
     showBrowserLangPrompt(code, info) {
-        if (get('langPromptToast')) return; // déjà affiché
-        const div = document.createElement('div');
-        div.id = 'langPromptToast';
-        div.className = 'lang-prompt-toast';
-        div.innerHTML = `
-        <div class="lang-prompt-text">${tr('TOAST_LANG_MSG').replace('{LANG}', info.native)}</div>
-        <div class="lang-prompt-actions">
-        <button type="button" pop onclick="general.acceptLangPrompt('${code}')">${tr('BT_INSTALL_LANG')}</button>
-        <button type="button" pop line onclick="general.snoozeLangPrompt()">${tr('BT_REMIND_LATER')}</button>
-        <button type="button" pop line onclick="general.dismissLangPrompt('${code}')">${tr('BT_DONT_ASK_AGAIN')}</button>
-        </div>`;
-        document.body.appendChild(div);
+        ui.toast({ id: 'langPrompt', level: 'info', duration: 0, title: tr('TOAST_LANG_MSG').replace('{LANG}', info.native), actions: [
+            { label: tr('BT_INSTALL_LANG'), onClick: () => this._relayLangFromToast('langPrompt', code) },
+            { label: tr('BT_REMIND_LATER'), onClick: t => t.close() },
+            { label: tr('BT_DONT_ASK_AGAIN'), onClick: t => { localStorage.setItem('langPromptDismissed_' + code, '1'); t.close(); } }
+        ] });
     }
-    acceptLangPrompt(code) {
-        // Le toast n'est pas retiré mais transformé en indicateur de progression : le
-        // téléchargement prend quelques secondes et se termine par un rechargement complet de la
-        // page (langDownloadComplete -> onLanguageChanged). Sans ce repère, l'utilisateur clique,
-        // ne voit plus rien, puis subit un rechargement inexpliqué.
-        const toast = get('langPromptToast');
-        if (toast) {
-            toast.innerHTML = `<div class="lang-prompt-text">${tr('TOAST_LANG_DOWNLOADING_RELOAD')}</div>`;
-        }
-        // Relais navigateur : le succès bascule la langue et recharge la page (onLanguageChanged) ;
-        // en cas d'échec relayLangDownload affiche l'erreur ou ouvre l'import manuel.
-        const done = () => { const t = get('langPromptToast'); if (t) t.remove(); };
+    // Le message n'est pas retiré mais devient l'indicateur de progression : le téléchargement
+    // prend quelques secondes et finit par un rechargement complet de la page
+    // (langDownloadComplete -> onLanguageChanged), qui sans ce repère semblerait inexpliqué.
+    _relayLangFromToast(id, code) {
+        ui.findToast(id)?.update({ title: tr('TOAST_LANG_DOWNLOADING_RELOAD'), actions: [], busy: true });
+        // Le succès recharge la page ; en cas d'échec relayLangDownload affiche l'erreur ou ouvre
+        // l'import manuel, et le message n'a plus lieu d'être.
+        const done = () => ui.findToast(id)?.close();
         const chain = this.relayLangDownload(code);
         if (chain && typeof chain.then === 'function') chain.then(done, done);
         else done();
-    }
-    snoozeLangPrompt() {
-        // Pas de mémorisation : reproposé au prochain chargement de page.
-        const toast = get('langPromptToast');
-        if (toast) toast.remove();
-    }
-    dismissLangPrompt(code) {
-        localStorage.setItem('langPromptDismissed_' + code, '1');
-        const toast = get('langPromptToast');
-        if (toast) toast.remove();
     }
     // --- Langue active absente du filesystem, déclenché par checkActiveLangAvailability() --
     // typiquement après une mise à jour firmware qui a réécrit toute la partition LittleFS sans
@@ -1871,60 +1838,15 @@ class General {
     // vrai problème fonctionnel (l'utilisateur voit l'anglais sans explication), pas une simple
     // suggestion. ---
     showLangMissingPrompt(code) {
-        if (get('langMissingToast')) return; // déjà affiché
-        const div = document.createElement('div');
-        div.id = 'langMissingToast';
-        div.className = 'lang-prompt-toast';
-        div.innerHTML = `
-        <div class="lang-prompt-text">${tr('TOAST_LANG_MISSING_MSG').replace('{LANG}', code.toUpperCase())}</div>
-        <div class="lang-prompt-actions">
-        <button type="button" pop onclick="general.reinstallActiveLang('${code}')">${tr('BT_INSTALL_LANG')}</button>
-        <button type="button" pop line onclick="general.dismissLangMissingPrompt()">${tr('BT_REMIND_LATER')}</button>
-        </div>`;
-        document.body.appendChild(div);
-    }
-    reinstallActiveLang(code) {
-        // Le toast n'est PAS retiré mais transformé en indicateur de progression, comme le fait
-        // déjà acceptLangPrompt() pour le toast de suggestion : le téléchargement prend quelques
-        // secondes et se termine par un rechargement complet de la page (langDownloadComplete ->
-        // onLanguageChanged), sans quoi l'utilisateur cliquerait "Installer" sans plus rien voir
-        // avant un rechargement inexpliqué. Son retrait est assuré par procLangDownloadComplete()
-        // en cas de succès, et par les branches d'échec ci-dessous.
-        const toast = get('langMissingToast');
-        if (toast) {
-            toast.innerHTML = `<div class="lang-prompt-text">${tr('TOAST_LANG_DOWNLOADING_RELOAD')}</div>`;
-        }
-        // Le relais navigateur pose son verrou sur la modale du catalogue -- or elle n'est pas
-        // ouverte quand on arrive d'un toast (setOverlayLock sort aussitôt sur un élément nul),
-        // donc ce toast est le SEUL repère visible de toute l'opération. Le succès recharge la
-        // page ; en cas d'échec relayLangDownload affiche l'erreur ou bascule vers l'import
-        // manuel, et le toast n'a alors plus lieu d'être.
-        const done = () => { const t = get('langMissingToast'); if (t) t.remove(); };
-        const chain = this.relayLangDownload(code);
-        if (chain && typeof chain.then === 'function') chain.then(done, done);
-        else done();
-    }
-    dismissLangMissingPrompt() {
-        // Pas de mémorisation : reproposé au prochain chargement de page tant que le problème
-        // n'est pas résolu (contrairement à dismissLangPrompt(), un choix délibéré de l'utilisateur).
-        const toast = get('langMissingToast');
-        if (toast) toast.remove();
+        ui.toast({ id: 'langMissing', level: 'warn', duration: 0, title: tr('TOAST_LANG_MISSING_MSG').replace('{LANG}', code.toUpperCase()), actions: [
+            { label: tr('BT_INSTALL_LANG'), onClick: () => this._relayLangFromToast('langMissing', code) },
+            { label: tr('BT_REMIND_LATER'), onClick: t => t.close() }
+        ] });
     }
     // Confirmation "one-shot" (cf. checkPendingLangApplied()) qu'une langue mise en attente en
-    // mode AP vient d'être téléchargée et appliquée automatiquement -- l'interface est déjà dans
-    // cette langue au moment où ce toast s'affiche, c'est une simple notification, pas une action.
+    // mode AP vient d'être téléchargée et appliquée automatiquement.
     showLangAppliedToast(code) {
-        if (get('langAppliedToast')) return;
-        const div = document.createElement('div');
-        div.id = 'langAppliedToast';
-        div.className = 'lang-prompt-toast';
-        const label = langLabel(code);
-        div.innerHTML = `
-        <div class="lang-prompt-text">${tr('TOAST_LANG_PENDING_APPLIED').replace('{LANG}', label)}</div>
-        <div class="lang-prompt-actions">
-        <button type="button" pop line onclick="get('langAppliedToast').remove();">${tr('BT_CLOSE')}</button>
-        </div>`;
-        document.body.appendChild(div);
+        ui.toast({ id: 'langApplied', title: tr('TOAST_LANG_PENDING_APPLIED').replace('{LANG}', langLabel(code)) });
     }
     onModeThemeChanged() {
         const sel = get('selThemeMode');
@@ -2081,11 +2003,11 @@ class General {
         const clearPin = finalType !== 1 && this._hasPin;
         // Prévenir AVANT d'enregistrer, et seulement quand il y a réellement quelque chose à
         // perdre : c'est le seul moment où l'utilisateur peut encore revenir en arrière.
-        const clearWarning = (clearPassword || clearPin) ? `<p class="is-warning">${tr('PROMPT_SECURITY_CLEAR_SECRET_DESC')}</p>` : '';
+        const cons = (clearPassword || clearPin) ? [tr('PROMPT_SECURITY_CLEAR_SECRET_DESC')] : [];
 
-        let confirmText = '';
+        let ask;
         if (finalType === 0) {
-            confirmText = `<p>${tr('PROMPT_SECURITY_CONFIRM_DESACTIVE')}</p>${clearWarning}`;
+            ask = { level: 'warn', title: tr('PROMPT_SECURITY_CONFIRM'), desc: `<p>${tr('PROMPT_SECURITY_CONFIRM_DESACTIVE')}</p>`, confirm: tr('BT_DISABLE_SECURITY') };
         }
         else if (finalType === 1) {
             if (pinTouched) {
@@ -2096,7 +2018,8 @@ class General {
             } else if (!this._hasPin) {
                 return this.secError('ERR_PIN_INVALID', 'ERR_PIN_INVALID_DESC');
             }
-            confirmText = `<p>${tr('PROMPT_SECURITY_PIN_WARNING')}</p><p>${tr('PROMPT_SECURITY_PIN_CONFIRM')}</p>${clearWarning}`;
+            ask = { level: 'danger', title: tr('PROMPT_SECURITY_PIN_TITLE'), desc: `<p>${tr('PROMPT_SECURITY_PIN_WARNING')}</p>`,
+                    check: { label: tr('PROMPT_SECURITY_PIN_CONFIRM'), required: true }, confirm: tr('BT_PROTECT') };
         }
         else if (finalType === 2) {
             if (!s.username) return this.secError('ERR_USERNAME_MISSING', 'ERR_USERNAME_MISSING_DESC');
@@ -2119,7 +2042,8 @@ class General {
             } else if (!this._hasPassword) {
                 return this.secError('ERR_PASSWORD_MISSING', 'ERR_PASSWORD_MISSING_DESC');
             }
-            confirmText = `<p>${tr('PROMPT_SECURITY_PASSWORD_WARNING')}</p><p>${tr('PROMPT_SECURITY_PASSWORD_CONFIRM')}</p>${clearWarning}`;
+            ask = { level: 'danger', title: tr('PROMPT_SECURITY_PASSWORD_TITLE'), desc: `<p>${tr('PROMPT_SECURITY_PASSWORD_WARNING')}</p>`,
+                    check: { label: tr('PROMPT_SECURITY_PASSWORD_CONFIRM'), required: true }, confirm: tr('BT_PROTECT') };
         }
 
         const data = {
@@ -2148,13 +2072,10 @@ class General {
             this.onSecurityTypeChanged();
         };
 
-        const prompt = ui.promptMessage(tr('PROMPT_SECURITY_CONFIRM'), () => {
-            putJSONSync('/saveSecurity', data, (e, resp) => {
-                prompt.remove();
-                if (e) {
-                    ui.serviceError(e);
-                    return;
-                }
+        // Un refus de l'appareil s'affiche dans la fenêtre, qui reste ouverte avec la saisie.
+        ui.confirm(Object.assign(ask, { cons, onConfirm: () => new Promise((res, rej) => putJSONSync('/saveSecurity', data, (e, resp) => {
+                if (e) return rej(e);
+                res();
                 // Le serveur recalcule un apikey sur les NOUVEAUX réglages et le renvoie ici
                 // (cf. Web::handleSaveSecurity). Sans le mémoriser, activer la sécurité depuis une
                 // session jusque-là non protégée laissait security.apiKey vide : tous les appels
@@ -2175,9 +2096,7 @@ class General {
                 const cont = get('divContainer');
                 if (cont) cont.setAttribute('data-securitytype', finalType);
                 applyLocalState();
-            });
-        });
-        prompt.querySelector('.sub-message').innerHTML = confirmText;
+            })) }));
     }
     secError(title, desc) {
         ui.errorMessage(tr(title), tr(desc));
