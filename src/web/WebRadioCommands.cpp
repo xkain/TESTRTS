@@ -662,40 +662,37 @@ namespace WebRadioCommands {
     else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
   }
 
+  static bool readListenerBody(AsyncWebServerRequest *request, uint32_t &address, char *name, size_t nameLen);
+  // Objet et non plus tableau d'adresses : les noms suivent au même rang. Seule l'interface lit
+  // ces réponses ; /controller garde son tableau `repeaters` de nombres.
+  static void sendRepeaters(AsyncWebServerRequest *request) {
+    JsonAsyncResponse resp;
+    resp.beginResponse(request);
+    resp.beginObject();
+    resp.beginArray("repeaters");
+    somfy.toJSONRepeaters(resp);
+    resp.endArray();
+    resp.beginArray("repeaterNames");
+    somfy.toJSONRepeaterNames(resp);
+    resp.endArray();
+    resp.endObject();
+    resp.endResponse();
+  }
   static void handleLinkRepeater(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
     if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
-      // We are adding a linked repeater.
-      uint32_t address = 0;
-      if (asyncHasBody(request)) {
-        DBG_PRINTLN("Linking a repeater");
-        DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
-        if (err) {
-          webServer.handleDeserializationError(request, err);
-          return;
-        }
-        else {
-          JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("address")) address = obj["address"];
-          else if(obj.containsKey("remoteAddress")) address = obj["remoteAddress"];
-        }
-      }
-      else if(request->hasArg("address"))
-        address = atoi(request->arg("address").c_str());
-      if(address == 0)
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No repeater address was supplied.\"}");
-      else if(!somfy.linkRepeater(address))
+      uint32_t address;
+      char name[sizeof(somfy.repeaterNames[0])];
+      if(!readListenerBody(request, address, name, sizeof(name))) return;
+      if(!somfy.linkRepeater(address))
         request->send(500, _encoding_json, "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":-18}");
       else {
-        JsonAsyncResponse resp;
-        resp.beginResponse(request);
-        resp.beginArray();
-        somfy.toJSONRepeaters(resp);
-        resp.endArray();
-        resp.endResponse();
+        // linkRepeater() sert aussi au chargement de shades.cfg et ne marque donc rien à écrire.
+        somfy.isDirty = true;
+        if(name[0]) somfy.renameRepeater(address, name);
+        sendRepeaters(request);
       }
     }
     // Ces routes sont enregistrées en AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD
@@ -704,46 +701,31 @@ namespace WebRadioCommands {
     // client attend son propre délai d'expiration, connexion tenue pendant tout ce temps.
     else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
   }
-
+  static void handleRenameRepeater(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      uint32_t address;
+      char name[sizeof(somfy.repeaterNames[0])];
+      if(!readListenerBody(request, address, name, sizeof(name))) return;
+      if(!somfy.renameRepeater(address, name))
+        request->send(404, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Remote is not repeated.\"}");
+      else sendRepeaters(request);
+    }
+    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+  }
   static void handleUnlinkRepeater(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
     if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
-      // We are adding a linked repeater.
-      uint32_t address = 0;
-      if (asyncHasBody(request)) {
-        DBG_PRINTLN("Unlinking a repeater");
-        DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
-        if (err) {
-          webServer.handleDeserializationError(request, err);
-          return;
-        }
-        else {
-          JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("address")) address = obj["address"];
-          else if(obj.containsKey("remoteAddress")) address = obj["remoteAddress"];
-        }
-      }
-      else if(request->hasArg("address"))
-        address = atoi(request->arg("address").c_str());
-      if(address == 0)
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No repeater address was supplied.\"}");
-      else {
-        somfy.unlinkRepeater(address);
-        JsonAsyncResponse resp;
-        resp.beginResponse(request);
-        resp.beginArray();
-        somfy.toJSONRepeaters(resp);
-        resp.endArray();
-        resp.endResponse();
-      }
+      uint32_t address;
+      char name[sizeof(somfy.repeaterNames[0])];
+      if(!readListenerBody(request, address, name, sizeof(name))) return;
+      somfy.unlinkRepeater(address);
+      sendRepeaters(request);
     }
-    // Ces routes sont enregistrées en AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD
-    // entrerait ici sans satisfaire aucune condition, et la fonction retournerait SANS qu'aucune
-    // réponse ne soit posée. Sous ESPAsyncWebServer la requête n'est alors jamais close : le
-    // client attend son propre délai d'expiration, connexion tenue pendant tout ce temps.
     else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
   }
 
@@ -1151,6 +1133,7 @@ namespace WebRadioCommands {
     server.on("/unpairShade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnpairShade(request); }, nullptr, asyncBodyHandler);
     server.on("/linkRepeater", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLinkRepeater(request); }, nullptr, asyncBodyHandler);
     server.on("/unlinkRepeater", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnlinkRepeater(request); }, nullptr, asyncBodyHandler);
+    server.on("/renameRepeater", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRenameRepeater(request); }, nullptr, asyncBodyHandler);
     server.on("/linkListener", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLinkListener(request); }, nullptr, asyncBodyHandler);
     server.on("/renameListener", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRenameListener(request); }, nullptr, asyncBodyHandler);
     server.on("/unlinkListener", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnlinkListener(request); }, nullptr, asyncBodyHandler);

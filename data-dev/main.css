@@ -4408,12 +4408,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
 .rx-tile.is-recent {
     box-shadow: 0 0 0 2px var(--color-accent);
 }
-.rx-tile-name {
-    padding: 11px 0;
-    font-size: var(--fs-4);
-    font-weight: 800;
-    overflow-wrap: anywhere;
-}
 .rx-name .gen-input {
     font-weight: 700;
 }

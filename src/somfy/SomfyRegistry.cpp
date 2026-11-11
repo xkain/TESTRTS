@@ -246,6 +246,8 @@ void SomfyShadeController::compressRepeaters() {
       if(i != j) {
         this->repeaters[j] = this->repeaters[i];
         this->repeaters[i] = 0;
+        memcpy(this->repeaterNames[j], this->repeaterNames[i], sizeof(this->repeaterNames[j]));
+        this->repeaterNames[i][0] = '\0';
       }
       j++;
     }
@@ -493,7 +495,10 @@ SomfyShade *SomfyShadeController::addShade() {
 }
 bool SomfyShadeController::unlinkRepeater(uint32_t address) {
   for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++) {
-    if(this->repeaters[i] == address) this->repeaters[i] = 0;
+    if(this->repeaters[i] == address) {
+      this->repeaters[i] = 0;
+      this->repeaterNames[i][0] = '\0';
+    }
   }
   this->compressRepeaters();
   this->isDirty = true;
@@ -503,12 +508,16 @@ bool SomfyShadeController::linkRepeater(uint32_t address) {
   bool bSet = false;
   for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++) {
     if(!bSet && this->repeaters[i] == address) bSet = true;
-    else if(bSet && this->repeaters[i] == address) this->repeaters[i] = 0;
+    else if(bSet && this->repeaters[i] == address) {
+      this->repeaters[i] = 0;
+      this->repeaterNames[i][0] = '\0';
+    }
   }
   if(!bSet) {
     for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++) {
       if(this->repeaters[i] == 0) {
         this->repeaters[i] = address;
+        this->repeaterNames[i][0] = '\0';
         return true;
       }
     }
@@ -519,11 +528,23 @@ bool SomfyShadeController::linkRepeater(uint32_t address) {
 // Le nom est écrit tel quel dans un champ à largeur fixe de shades.cfg (writeString) : une virgule
 // ou un saut de ligne y serait lu comme la fin du champ ou de l'enregistrement. Remplacés par une
 // espace plutôt que refusés -- « Terrasse, zone 3 » reste lisible.
-static void setListenerName(somfy_listener_t *l, const char *name) {
-  strlcpyUtf8(l->name, name ? name : "", sizeof(l->name));
-  for(char *p = l->name; *p; p++) {
+static void setCfgName(char *dst, size_t len, const char *name) {
+  strlcpyUtf8(dst, name ? name : "", len);
+  for(char *p = dst; *p; p++) {
     if(*p == ',' || *p == '\n' || *p == '\r') *p = ' ';
   }
+}
+static void setListenerName(somfy_listener_t *l, const char *name) { setCfgName(l->name, sizeof(l->name), name); }
+bool SomfyShadeController::renameRepeater(uint32_t address, const char *name) {
+  if(address == 0) return false;
+  for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++) {
+    if(this->repeaters[i] == address) {
+      setCfgName(this->repeaterNames[i], sizeof(this->repeaterNames[i]), name);
+      this->isDirty = true;
+      return true;
+    }
+  }
+  return false;
 }
 void SomfyShadeController::compressListeners() {
   for(uint8_t i = 0, j = 0; i < SOMFY_MAX_LISTENERS; i++) {

@@ -535,6 +535,11 @@ void SomfyShadeController::toJSONRepeaters(JsonFormatter &json) {
     if(somfy.repeaters[i] != 0) json.addElem((uint32_t)somfy.repeaters[i]);
   }
 }
+void SomfyShadeController::toJSONRepeaterNames(JsonFormatter &json) {
+  for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++) {
+    if(somfy.repeaters[i] != 0) json.addElem(somfy.repeaterNames[i]);
+  }
+}
 // L'adresse d'une télécommande physique ne monte qu'au niveau CONFIG, comme celle des
 // télécommandes liées (cf. SomfyShade::toJSON). `linkedShadeId` nourrit l'avertissement de
 // l'interface : 255 = la télécommande ne commande aucun équipement du boîtier.

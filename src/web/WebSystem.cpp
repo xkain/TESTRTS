@@ -59,6 +59,7 @@ namespace WebSystem {
                       // imbriqués dans le même tampon d'élément
     CTL_ROOMS, CTL_SHADES, CTL_GROUPS, CTL_REPEATERS, CTL_SCHEDULES,
     CTL_LISTENERS,    // ajout v3, en dernier : clé nouvelle, rien d'existant ne bouge
+    CTL_REPEATER_NAMES, // ajout v3, même rang que `repeaters` (même instantané reps[])
     CTL_EPILOGUE,     // "}"
     CTL_DONE
   };
@@ -247,6 +248,18 @@ namespace WebSystem {
           j->beginObject();
           somfy.toJSONListener(*j, &somfy.listeners[st->lsts[st->idx]], st->secrets);
           j->endObject();
+          st->idx++; st->firstItem = false;
+          st->abortTail = ABORT_IN_ARRAY;
+          break;
+        }
+        st->em.emitRaw("]");
+        st->phase = CTL_REPEATER_NAMES; st->openEmitted = false; st->firstItem = true; st->idx = 0;
+        return true;
+      case CTL_REPEATER_NAMES:
+        if(!st->openEmitted) { st->em.emitRaw(",\"repeaterNames\":["); st->openEmitted = true; return true; }
+        if(st->idx < st->nReps) {
+          JsonFormatter *j = st->em.beginItem(!st->firstItem);
+          j->addElem(somfy.repeaterNames[st->reps[st->idx]]);
           st->idx++; st->firstItem = false;
           st->abortTail = ABORT_IN_ARRAY;
           break;

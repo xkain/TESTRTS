@@ -415,7 +415,7 @@ class Somfy {
                 this.setShadesList(somfy.shades);
                 this.setGroupsList(somfy.groups);
                 this.maxRepeaters = somfy.maxRepeaters || 7;
-                this.setRepeaterList(somfy.repeaters);
+                this.setRepeaterList(somfy);
                 this.maxListeners = somfy.maxListeners || 14;
                 this.maxLinkedRemotes = somfy.maxLinkedRemotes || 15;
                 this.setListenerList(somfy.listeners);
@@ -6347,28 +6347,35 @@ class Somfy {
     // =========================================================================
 
 
-    // Le firmware ne donne que les adresses : la dernière trame et le signal de chaque répéteur sont
-    // ceux vus par ce navigateur depuis l'ouverture de la page (cf. _onRepeaterFrame).
-    setRepeaterList(addresses) {
-        this.repeaters = Array.isArray(addresses) ? addresses.map(Number) : [];
+    // `repeaters` et `repeaterNames` au même rang, dans /controller comme dans les réponses des
+    // routes. La dernière trame et le signal de chaque répéteur sont ceux vus par ce navigateur
+    // depuis l'ouverture de la page (cf. _onRepeaterFrame).
+    setRepeaterList(data) {
+        const list = data && Array.isArray(data.repeaters) ? data.repeaters : [];
+        const names = data && Array.isArray(data.repeaterNames) ? data.repeaterNames : [];
+        this.repeaters = list.map(Number);
+        this.repeaterNames = {};
+        this.repeaters.forEach((a, i) => { this.repeaterNames[a] = names[i] || ''; });
         this._renderRepeaters();
     }
     _renderRepeaters() {
-        const seen = this._repeaterSeen || {}, list = this.repeaters || [];
+        const seen = this._repeaterSeen || {}, list = this.repeaters || [], box = get('divRepeatList');
         const recent = list.reduce((a, r) => (seen[r] && (a === null || seen[r].at > seen[a].at)) ? r : a, null);
         const max = this.maxRepeaters || 7;
-        get('divRepeatList').innerHTML = this._rxAddTileHtml('somfy.linkRepeatRemote()', 'REPEATER_CAPTURE', 'REPEATER_CAPTURE_DESC', list.length >= max)
+        const keep = this._rxKeepFocus(box);
+        box.innerHTML = this._rxAddTileHtml('somfy.linkRepeatRemote()', 'REPEATER_CAPTURE', 'REPEATER_CAPTURE_DESC', list.length >= max)
             + list.map(r => this._repeaterCardHtml(r, seen[r], r === recent)).join('');
+        keep();
         this._rxHero('divRepeaterPage', 'spanRepeaterHero', 'REPEATER_HERO', list.length, max);
         get('spanRepeaterFrames').innerText = this._repeaterFrames || 0;
         get('spanRepeaterLast').innerText = recent !== null ? this._listenerTime(seen[recent].at) : '—';
     }
     _repeaterCardHtml(address, seen, recent) {
         const known = this.frameAddressName(address);
-        const name = known && !known.own ? escHtml(tr('REPEATER_OF').replace('%s', known.name)) : tr('REPEATER_ADDRESS');
+        const hint = known && !known.own ? tr('REPEATER_OF').replace('%s', known.name) : tr('REPEATER_ADDRESS');
         const last = seen ? `${escHtml(seen.cmd || '?')} · ${this._listenerTime(seen.at)}` : tr('REPEATER_NO_FRAME');
         return `<div class="rx-tile${recent ? ' is-recent' : ''}" data-address="${address}">
-            <b class="rx-tile-name">${name}</b>
+            ${this._rxNameHtml(address, (this.repeaterNames || {})[address], hint, 'somfy.renameRepeater(this)')}
             <div class="ed-ro-list">
                 <div class="ed-ro"><span>${tr('RADIO_RX_LAST')}</span><b>${last}</b></div>
                 <div class="ed-ro"><span>${tr('M_SIGNAL')}</span><b>${this._rxSignalHtml(seen ? seen.rssi : -128, address)}</b></div>
@@ -6390,6 +6397,22 @@ class Somfy {
         root.querySelector('.gen-cap-left').textContent = tr(left === 1 ? 'LIST_CAP_FREE_ONE' : 'LIST_CAP_FREE_MANY').replace('{N}', left);
         root.querySelector('.gen-cap').classList.toggle('is-full', left === 0);
         root.querySelector('.gen-meter i').style.width = `${Math.min(100, Math.round(n / max * 100))}%`;
+    }
+    _rxNameHtml(address, name, hint, onchange) {
+        return `<div class="gen-input-box rx-name">
+                <input class="gen-input" type="text" maxlength="20" value="${escAttr(name || '')}" placeholder="${escAttr(hint)}" aria-label="${escAttr(tr('NAME'))}" data-address="${escAttr(address)}" onchange="${onchange};" onkeydown="if (event.key === 'Enter') this.blur();">
+                <svg class="rx-pen"><use href="#svg-edit"></use></svg>
+            </div>`;
+    }
+    // Un appui ou une trame redessine toute la liste : le nom en cours de saisie doit y survivre.
+    _rxKeepFocus(box) {
+        const act = box.contains(document.activeElement) ? document.activeElement : null;
+        if (!act || !act.dataset.address) return () => {};
+        const k = { addr: act.dataset.address, value: act.value, from: act.selectionStart, to: act.selectionEnd };
+        return () => {
+            const fld = box.querySelector(`input[data-address="${k.addr}"]`);
+            if (fld) { fld.value = k.value; fld.focus(); fld.setSelectionRange(k.from, k.to); }
+        };
     }
     _rxSignalHtml(rssi, address) {
         if (typeof rssi === 'number' && rssi > -128) this._storeRemoteSignal(address, rssi);
@@ -6472,6 +6495,15 @@ class Somfy {
         });
     }
 
+    renameRepeater(fld) {
+        const addr = Number(fld.dataset.address), old = (this.repeaterNames || {})[addr] || '';
+        const name = fld.value.trim();
+        if (name === old) return;
+        putJSON('/renameRepeater', { address: addr, name: name }, (err, data) => {
+            if (err) { ui.serviceError(err); fld.value = old; return; }
+            this.setRepeaterList(data);
+        });
+    }
     unlinkRepeater(address) {
         let prompt = ui.promptMessage(tr('PROMPT_UNLINK_REPEATER'), () => {
             putJSONSync('/unlinkRepeater', { address: address }, (err, repeaters) => {
@@ -6504,14 +6536,10 @@ class Somfy {
         const list = this.listeners, box = get('divListenList');
         const recent = list.reduce((a, l) => (l.lastRxAt && (!a || l.lastRxAt > a.lastRxAt)) ? l : a, null);
         const max = this.maxListeners || 14;
-        const act = box.contains(document.activeElement) ? document.activeElement : null;
-        const keep = act && act.dataset.address ? { addr: act.dataset.address, value: act.value, from: act.selectionStart, to: act.selectionEnd } : null;
+        const keep = this._rxKeepFocus(box);
         box.innerHTML = this._rxAddTileHtml('somfy.linkListenRemote()', 'LISTENER_CAPTURE', 'LISTENER_CAPTURE_DESC', list.length >= max)
             + list.map(l => this._listenerCardHtml(l, l === recent)).join('');
-        if (keep) {
-            const fld = box.querySelector(`input[data-address="${keep.addr}"]`);
-            if (fld) { fld.value = keep.value; fld.focus(); fld.setSelectionRange(keep.from, keep.to); }
-        }
+        keep();
         this._rxHero('divListenerPage', 'spanListenerHero', 'LISTENER_HERO', list.length, max);
         get('spanListenerPresses').innerText = this._listenerPresses || 0;
         get('spanListenerLast').innerText = recent ? this._listenerTime(recent.lastRxAt) : '—';
@@ -6526,10 +6554,7 @@ class Somfy {
         const warn = shade ? `<p class="gen-tile-desc is-warning">${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', shade.name))}</p>` : '';
         const last = l.lastRxAt ? `${escHtml(l.lastCommand || '?')} · ${this._listenerTime(l.lastRxAt)}` : tr('LISTENER_NEVER_HEARD');
         return `<div class="rx-tile${recent ? ' is-recent' : ''}" data-address="${addr}">
-            <div class="gen-input-box rx-name">
-                <input class="gen-input" type="text" maxlength="20" value="${escAttr(l.name || '')}" placeholder="${addr}" aria-label="${escAttr(tr('NAME'))}" data-address="${addr}" onchange="somfy.renameListenRemote(this);" onkeydown="if (event.key === 'Enter') this.blur();">
-                <svg class="rx-pen"><use href="#svg-edit"></use></svg>
-            </div>
+            ${this._rxNameHtml(l.address, l.name, String(l.address), 'somfy.renameListenRemote(this)')}
             ${warn}
             <div class="ed-ro-list">
                 <div class="ed-ro"><span>${tr('LISTENER_LAST_PRESS')}</span><b>${last}</b></div>
