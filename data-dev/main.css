@@ -1776,6 +1776,7 @@ body.is-home-welcome .container {
 #divSystemOptions.subtab-content,
 #divFirmware.subtab-content,
 #divNetAdapter.subtab-content,
+#divHomeAssistant.subtab-content,
 #divMQTT.subtab-content,
 #divListener.subtab-content,
 #divRepeater.subtab-content,
@@ -1793,6 +1794,7 @@ body.is-home-welcome .container {
 #divSystemOptions [hidden],
 #divFirmware [hidden],
 #divNetAdapter [hidden],
+#divHomeAssistant [hidden],
 #divMQTT [hidden],
 #divListener [hidden],
 #divRadioSettings [hidden],
@@ -1804,7 +1806,7 @@ body.is-home-welcome .container {
 .container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divSystemOptions:not([style*="none"])),
 .container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divFirmware:not([style*="none"])),
 .container:has(#divConfigPnl:not([style*="none"]) > #divNetworkSettings:not([style*="none"]) > #divNetAdapter:not([style*="none"])),
-.container:has(#divConfigPnl:not([style*="none"]) > #divIntegrationSettings:not([style*="none"]) > :is(#divMQTT, #divListener):not([style*="none"])),
+.container:has(#divConfigPnl:not([style*="none"]) > #divIntegrationSettings:not([style*="none"]) > :is(#divHomeAssistant, #divMQTT, #divListener):not([style*="none"])),
 .container:has(#divConfigPnl:not([style*="none"]) > #divRadioSettings:not([style*="none"]) > :is(#divRepeater, #divFrameLog, #divTransceiverSettings):not([style*="none"])) {
     background: var(--bg);
 }
@@ -5947,7 +5949,8 @@ input.gen-input.mqtt-mono {
     font-weight: 500;
     overflow-wrap: anywhere;
 }
-#divMQTT.mqtt-off .gen-tile {
+#divMQTT.mqtt-off .gen-tile,
+#divHomeAssistant.mqtt-off .ha-disco {
     opacity: .5;
 }
 .mqtt-addr {
@@ -5959,7 +5962,8 @@ input.gen-input.mqtt-mono {
     font-size: var(--fs-4);
     color: var(--text-3);
 }
-#divMQTT .gen-input-box:has(> input:disabled) {
+#divMQTT .gen-input-box:has(> input:disabled),
+#divHomeAssistant .gen-input-box:has(> input:disabled) {
     opacity: .5;
 }
 .mqtt-code {
@@ -5974,12 +5978,14 @@ input.gen-input.mqtt-mono {
 /* Ordinateur et tablette : une seule grille comme sur les autres pages ; les titres de
    section ne servent qu'au mobile. */
 @media (min-width: 768px) {
-    #divMQTT .gen-panels {
+    #divMQTT .gen-panels,
+    #divHomeAssistant .gen-panels {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(max(340px, calc((100% - 3 * 16px) / 4)), 1fr));
         gap: 16px;
     }
-    #divMQTT .gen-grid {
+    #divMQTT .gen-grid,
+    #divHomeAssistant .gen-grid {
         display: contents;
     }
     #mqttOffNote {

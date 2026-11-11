@@ -17,6 +17,12 @@ class MQTT {
         // Différé d'un tour : _markDirty (watchDirty) passe après cet écouteur.
         ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateDirtyCount(), 0)));
         this._saveBar = new SaveBar(page, { onSave: () => this.connectMQTT(), onRevert: () => this.revertPage() });
+        // La découverte vit sur la page Home Assistant, avec sa propre barre : /connectmqtt ne lit
+        // que les clés reçues, chaque page n'envoie donc que les siennes.
+        const ha = get('divHomeAssistant');
+        bindGenSections(ha);
+        ['input', 'change'].forEach(evt => ha.addEventListener(evt, () => setTimeout(() => this.updateDirtyCount(), 0)));
+        this._haBar = new SaveBar(ha, { onSave: () => this.saveDiscovery(), onRevert: () => this.revertPage() });
     }
 
     async loadMQTT() {
@@ -28,14 +34,17 @@ class MQTT {
                 this.storedRootTopic = settings.rootTopic || '';
                 this._applySettings();
                 watchDirty(get('divMQTT'));
+                watchDirty(get('divHomeAssistant'));
                 this.updateDirtyCount();
             }
         });
     }
     // Remet à l'écran l'état enregistré : au chargement, après un enregistrement et sur « Annuler ».
-    _applySettings() {
+    // only : 'mqtt' ou 'ha' pour ne remettre qu'une page, sans écraser la saisie en cours de l'autre.
+    _applySettings(only) {
         const s = this._settings;
-        ui.toElement(get('divMQTT'), { mqtt: s });
+        if (only !== 'ha') ui.toElement(get('divMQTT'), { mqtt: s });
+        if (only !== 'mqtt') ui.toElement(get('divHomeAssistant'), { mqtt: s });
         // Le serveur ne renvoie jamais le mot de passe existant, seulement s'il est défini :
         // masque factice si déjà configuré, jamais de pré-remplissage avec le vrai secret.
         resetSecretField(get('fldMqttPassword'), s.hasPassword);
@@ -55,6 +64,8 @@ class MQTT {
         get('mqttHeroCred').textContent = user ? tr('MQTT_HERO_CRED_USER').replace('{USER}', user) : tr('NONE');
         get('mqttOffNote').hidden = on;
         get('divMQTT').classList.toggle('mqtt-off', !on);
+        get('divHomeAssistant').classList.toggle('mqtt-off', !on);
+        get('haMqttOffTile').hidden = on;
         get('codeMqttStatus').textContent = root + '/status';
         get('codeMqttPos').textContent = root + '/shades/1/position';
         get('codeMqttCmd').textContent = root + '/shades/1/target/set';
@@ -66,7 +77,7 @@ class MQTT {
     _fields() {
         const s = this._settings || {};
         const yesNo = (v) => tr(v ? 'BT_YES' : 'BT_NO');
-        const field = (label, id, saved, now, show = (v) => v, secret = false) => ({ label, el: get(id), saved, now, show, secret });
+        const field = (label, id, saved, now, show = (v) => v, secret = false) => ({ label, el: get(id), saved, now, show, secret, ha: get('divHomeAssistant').contains(get(id)) });
         const val = (id) => get(id).value;
         return [
             field('MQTT_HERO_ENABLE', 'cbMqttEnabled', !!s.enabled, get('cbMqttEnabled').checked, yesNo),
@@ -81,20 +92,40 @@ class MQTT {
         ].filter(f => String(f.saved) !== String(f.now));
     }
     updateDirtyCount() {
-        const page = get('divMQTT');
-        if (!this._saveBar || !this._settings || !page.offsetParent) return;
-        page.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+        if (!this._settings) return;
         const diffs = this._fields();
-        diffs.forEach(f => f.el.classList.add('is-dirty'));
+        [[get('divMQTT'), this._saveBar, false], [get('divHomeAssistant'), this._haBar, true]].forEach(([page, bar, ha]) => {
+            if (!bar || !page.offsetParent) return;
+            page.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+            const mine = diffs.filter(f => f.ha === ha);
+            mine.forEach(f => f.el.classList.add('is-dirty'));
+            bar.update(mine.map(f => ({ label: tr(f.label), from: f.show(f.saved), to: f.show(f.now), secret: f.secret })));
+        });
         _recomputeIsDirty();
         if (!isDirty) document.body.classList.remove('dirty-alerted');
-        this._saveBar.update(diffs.map(f => ({ label: tr(f.label), from: f.show(f.saved), to: f.show(f.now), secret: f.secret })));
         this._render();
     }
     revertPage() {
         if (!this._settings) return;
         this._applySettings();
         this.updateDirtyCount();
+    }
+
+    saveDiscovery() {
+        const disco = { pubDisco: get('cbPubDisco').checked, discoTopic: get('fldDiscoTopic').value };
+        putJSONSync('/connectmqtt', disco, (err, response) => {
+            if (err) {
+                ui.serviceError(err);
+                logger.error('Failed to save MQTT discovery:', err);
+                return;
+            }
+            ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            if (response && typeof response.hostname === 'string') this._settings = response;
+            else Object.assign(this._settings, disco);
+            this._applySettings('ha');
+            clearDirty(get('divHomeAssistant'));
+            this.updateDirtyCount();
+        });
     }
 
     connectMQTT() {
@@ -172,7 +203,7 @@ class MQTT {
                 // seule valeur qui fasse foi pour un refus ultérieur.
                 if (response && typeof response.rootTopic === 'string') this.storedRootTopic = response.rootTopic;
                 if (response && typeof response.hostname === 'string') this._settings = response;
-                this._applySettings();
+                this._applySettings('mqtt');
                 clearDirty(get('divMQTT'));
                 this.updateDirtyCount();
             }

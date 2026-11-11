@@ -639,7 +639,7 @@ function confirmDiscardChanges(onLeave, onStay, options) {
     div.querySelector('#btnUnsavedLeave').onclick = () => {
         if (typeof general !== 'undefined' && general.initialized) general.discardChanges(scope);
         if (typeof wifi !== 'undefined' && wifi.initialized && (!scope || scope.contains(get('divNetAdapter')))) wifi.revertPage();
-        if (typeof mqtt !== 'undefined' && mqtt.initialized && (!scope || scope.contains(get('divMQTT')))) mqtt.revertPage();
+        if (typeof mqtt !== 'undefined' && mqtt.initialized && (!scope || scope.contains(get('divMQTT')) || scope.contains(get('divHomeAssistant')))) mqtt.revertPage();
         if (typeof somfy !== 'undefined' && somfy._radioSaveBar && (!scope || scope.contains(get('divTransceiverSettings')))) somfy.revertRadio();
         clearDirty(scope || undefined);
         closeOverlay(div);
@@ -861,6 +861,7 @@ const ROUTE_LEAF_PARENT = {
     divSystemOptions: 'divSystemSettings',
     divFirmware: 'divSystemSettings',
     divNetAdapter: 'divNetworkSettings',
+    divHomeAssistant: 'divIntegrationSettings',
     divMQTT: 'divIntegrationSettings',
     divSomfyRooms: 'divSomfySettings',
     divSomfyMotors: 'divSomfySettings',
@@ -876,6 +877,7 @@ const ROUTE_SLUGS = {
     divSystemOptions: 'general',
     divFirmware: 'firmware',
     divNetAdapter: 'connection',
+    divHomeAssistant: 'home-assistant',
     divMQTT: 'mqtt',
     divSomfyRooms: 'rooms',
     divSomfyMotors: 'shades',
