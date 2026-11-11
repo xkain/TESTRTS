@@ -316,6 +316,8 @@
     --on-fill-text: #ffffff;
     --info-bg: #e5eefa;
     --info: #154c90;
+    --violet-bg: #efe7fb;
+    --violet: #5b21b6;
     --warn-bg: #fff1d6;
     --warn: #8a5300;
     --danger-bg: #fdecea;
@@ -354,6 +356,8 @@
     --on-fill-text: #0e1013;
     --info-bg: #1b2c44;
     --info: #8ab8f2;
+    --violet-bg: #2b2140;
+    --violet: #c4a6f5;
     --warn-bg: #3a2b0f;
     --warn: #f2b24a;
     --danger-bg: #3b1a18;

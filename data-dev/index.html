@@ -2195,200 +2195,113 @@
                     </div>
 
                     <div id="divListener" style="display:none;" class="subtab-content">
-                        <div class="main-header">
-                            <div class="main-headerBlock">
-                                <h2 class="main-headerTitle" tr="LISTENER_PAGE_TITLE"></h2>
-                                <p class="main-headerDesc" tr="LISTENER_PAGE_DESC"></p>
-                            </div>
-                            <div class="main-headerAmbient">
-                                <svg><use href="#svg-remote"></use></svg>
-                            </div>
-                        </div>
-                        <div class="tile-wrap">
-                            <div class="tile-side">
-                                <div class="unibloc-container">
-                                    <h3 class="unibloc-title tile-title"><span tr="ACTIVITY"></span></h3>
-                                    <div class="ls-metrics">
-                                        <div class="ls-metric"><b><span id="spanListenerCount">0</span><small>/<span id="spanListenerMax">14</span></small></b><span tr="LISTENER_COUNT"></span></div>
-                                        <div class="ls-metric"><b id="spanListenerPresses">0</b><span tr="LISTENER_PRESSES"></span></div>
-                                    </div>
-                                    <div class="ls-last"><span tr="LISTENER_LAST_PRESS"></span><b id="spanListenerLast">—</b></div>
+                        <div id="divListenerPage" class="gen-layout rx-page">
+                            <section class="gen-hero">
+                                <span class="gen-hero-halo rx-halo"><svg><use href="#svg-remote"></use></svg></span>
+                                <div class="gen-hero-text">
+                                    <span class="gen-hero-state" tr="SUBTAB_LISTENERS"></span>
+                                    <h2 id="spanListenerHero" class="gen-hero-title"></h2>
+                                    <p class="gen-hero-desc" tr="LISTENER_PAGE_DESC"></p>
                                 </div>
-                                <div class="unibloc-container tile-tip">
-                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
-                                    <p class="tile-tip-text" tr="LISTENER_TIP"></p>
+                                <div class="rx-stats">
+                                    <div class="rx-stat"><b id="spanListenerLast">—</b><span tr="LISTENER_LAST_PRESS"></span></div>
+                                    <div class="rx-stat"><b id="spanListenerPresses">0</b><span tr="LISTENER_PRESSES"></span></div>
                                 </div>
-                            </div>
-                            <div class="tile-cols">
-                                <div class="unibloc-container">
-                                    <h3 class="unibloc-title tile-title"><span tr="SUBTAB_LISTENERS"></span><span id="spanListenerBadge" class="ls-count"></span></h3>
-                                    <div id="divListenerEmptyState" class="empty-state" style="display:none;">
-                                        <svg class="empty-icon"><use href="#svg-remote"></use></svg>
-                                        <p tr="EMPTY_LISTENER_TITLE"></p>
-                                        <p class="empty-subtext" tr="EMPTY_LISTENER_DESC"></p>
-                                    </div>
-                                    <div id="divListenerListContent">
-                                        <p class="ls-desc" tr="LISTENER_LIST_DESC"></p>
-                                        <div id="divListenList" class="ls-rows"></div>
-                                    </div>
-                                    <button id="btnLinkListener" class="ls-cta" type="button" onclick="somfy.linkListenRemote();">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
-                                        <span class="ls-cta-t"><b tr="LISTENER_CAPTURE"></b><small tr="LISTENER_CAPTURE_DESC"></small></span>
-                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                    </button>
-                                </div>
+                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                <p class="gen-tile-desc is-info rx-tip" tr="LISTENER_TIP"></p>
+                            </section>
+                            <div class="gen-body">
+                                <header class="rx-head rx-head-list">
+                                    <h2 class="rx-head-title" tr="LISTENER_PAGE_TITLE"></h2>
+                                    <p class="rx-head-desc"><span tr="LISTENER_LIST_DESC"></span> <span tr="RX_APPLY_NOW"></span></p>
+                                </header>
+                                <header class="rx-head rx-head-empty">
+                                    <h2 class="rx-head-title" tr="EMPTY_LISTENER_TITLE"></h2>
+                                    <p class="rx-head-desc" tr="EMPTY_LISTENER_DESC"></p>
+                                </header>
+                                <div id="divListenList" class="rx-tiles"></div>
                             </div>
                         </div>
                     </div>
                     <div id="divRepeater" style="display:none;" class="subtab-content">
-                        <div class="main-header">
-                            <div class="main-headerBlock">
-                                <h2 class="main-headerTitle" tr="REPEAT_REMOTE_TITLE"></h2>
-                                <p class="main-headerDesc" tr="REPEATER_PAGE_DESC"></p>
-                            </div>
-                            <div class="main-headerAmbient">
-                                <svg><use href="#svg-repeater"></use></svg>
-                            </div>
-                        </div>
-                        <div class="tile-wrap">
-                            <div class="tile-side">
-                                <div class="unibloc-container">
-                                    <h3 class="unibloc-title tile-title"><span tr="REPEATER_CAPACITY"></span></h3>
-                                    <div class="ls-metrics">
-                                        <div class="ls-metric"><b><span id="spanRepeaterCount">0</span><small>/<span id="spanRepeaterMax">7</span></small></b><span tr="REPEATER_COUNT"></span></div>
-                                        <div class="ls-metric"><b id="spanRepeaterHeard">0</b><span tr="REPEATER_HEARD"></span></div>
-                                    </div>
-                                    <div class="ls-last"><span tr="RADIO_RX_LAST"></span><b id="spanRepeaterLast">—</b></div>
+                        <div id="divRepeaterPage" class="gen-layout rx-page">
+                            <section class="gen-hero">
+                                <span class="gen-hero-halo rx-halo rx-halo-repeat"><svg><use href="#svg-repeater"></use></svg></span>
+                                <div class="gen-hero-text">
+                                    <span class="gen-hero-state" tr="SUBTAB_REPEATER"></span>
+                                    <h2 id="spanRepeaterHero" class="gen-hero-title"></h2>
+                                    <p class="gen-hero-desc" tr="REPEATER_PAGE_DESC"></p>
                                 </div>
-                                <div class="unibloc-container tile-tip">
-                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
-                                    <p class="tile-tip-text" tr="REPEAT_REMOTE_DESC_2"></p>
+                                <div class="rx-stats">
+                                    <div class="rx-stat"><b id="spanRepeaterLast">—</b><span tr="RADIO_RX_LAST"></span></div>
+                                    <div class="rx-stat"><b id="spanRepeaterFrames">0</b><span tr="REPEATER_FRAMES"></span></div>
                                 </div>
-                            </div>
-                            <div class="tile-cols">
-                                <div class="unibloc-container">
-                                    <h3 class="unibloc-title tile-title"><span tr="REPEATER_LIST_TITLE"></span><span id="spanRepeaterBadge" class="ls-count"></span></h3>
-                                    <div id="divRepeaterEmptyState" class="empty-state" style="display:none;">
-                                        <svg class="empty-icon"><use href="#svg-emptyRepeater"></use></svg>
-                                        <p tr="EMPTY_REPEATER_TITLE"></p>
-                                        <p class="empty-subtext" tr="EMPTY_REPEATER_DESC"></p>
-                                    </div>
-                                    <div id="divRepeaterListContent">
-                                        <p class="ls-desc" tr="REPEATER_LIST_DESC"></p>
-                                        <div id="divRepeatList" class="ls-rows"></div>
-                                    </div>
-                                    <button id="btnLinkRepeater" class="ls-cta" type="button" onclick="somfy.linkRepeatRemote();">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
-                                        <span class="ls-cta-t"><b tr="REPEATER_CAPTURE"></b><small tr="REPEATER_CAPTURE_DESC"></small></span>
-                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                    </button>
-                                </div>
+                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                <p class="gen-tile-desc is-info rx-tip" tr="REPEAT_REMOTE_DESC_2"></p>
+                            </section>
+                            <div class="gen-body">
+                                <header class="rx-head rx-head-list">
+                                    <h2 class="rx-head-title" tr="REPEATER_LIST_TITLE"></h2>
+                                    <p class="rx-head-desc"><span tr="REPEATER_LIST_DESC"></span> <span tr="RX_APPLY_NOW"></span></p>
+                                </header>
+                                <header class="rx-head rx-head-empty">
+                                    <h2 class="rx-head-title" tr="EMPTY_REPEATER_TITLE"></h2>
+                                    <p class="rx-head-desc" tr="EMPTY_REPEATER_DESC"></p>
+                                </header>
+                                <div id="divRepeatList" class="rx-tiles"></div>
                             </div>
                         </div>
                     </div>
-                    <div id="divFrameLog" class="subtab-content frame-log" style="display:none;">
-                        <div class="main-header">
-                            <div class="main-headerBlock">
-                                <h2 class="main-headerTitle" tr="LOG_TITLE"></h2>
-                                <p class="main-headerDesc" tr="LOG_DESC"></p>
-                            </div>
-                            <div class="main-headerAmbient">
-                                <svg><use href="#svg-doc"></use></svg>
-                            </div>
-                        </div>
-
-                        <div class="tile-wrap lg-wrap">
-                            <div class="tile-side">
-                                <div class="unibloc-container lg-live">
-                                    <h3 class="unibloc-title tile-title"><span tr="LOG_LIVE_TITLE"></span></h3>
-                                    <div class="log-live-bar">
-                                        <div id="divLogLiveState" class="log-live-state">
-                                            <span class="log-live-dot"></span>
-                                            <span id="spanLogLiveText" class="log-live-text" tr="LOG_LIVE"></span>
-                                        </div>
-                                        <div class="log-live-metrics">
-                                            <div class="log-metric">
-                                                <span id="spanLogCount" class="log-metric-value">0</span>
-                                                <span class="log-metric-label" tr="LOG_FRAMES"></span>
-                                            </div>
-                                            <div class="log-metric">
-                                                <span id="spanLogRate" class="log-metric-value">0</span>
-                                                <span class="log-metric-label" tr="LOG_RATE"></span>
-                                            </div>
-                                            <div class="log-metric">
-                                                <span id="spanLogRssi" class="log-metric-value sig-unknown">--</span>
-                                                <span class="log-metric-label" tr="SCANFREQ_RSSI"></span>
-                                            </div>
-                                        </div>
-                                    </div>
+                    <div id="divFrameLog" class="subtab-content" style="display:none;">
+                        <div class="gen-layout lg-page">
+                            <section class="gen-hero">
+                                <span id="divLogLiveState" class="gen-hero-halo lg-halo" data-state="live"><svg><use href="#svg-wave"></use></svg></span>
+                                <div class="gen-hero-text">
+                                    <span class="gen-hero-state" tr="LOG_TITLE"></span>
+                                    <h2 id="spanLogLiveText" class="gen-hero-title" tr="LOG_LIVE"></h2>
+                                    <p class="gen-hero-desc" tr="LOG_DESC"></p>
                                 </div>
-                                <div class="unibloc-container lg-src">
-                                    <h3 class="unibloc-title tile-title"><span tr="LOG_SRC_TITLE"></span></h3>
-                                    <p class="lg-src-desc" tr="LOG_SRC_DESC"></p>
+                                <div class="rx-stats lg-stats">
+                                    <div class="rx-stat"><b id="spanLogCount">0</b><span tr="LOG_FRAMES"></span></div>
+                                    <div class="rx-stat"><b id="spanLogRate">0</b><span tr="LOG_RATE"></span></div>
+                                    <div class="rx-stat"><b id="spanLogRssi">--</b><span tr="SCANFREQ_RSSI"></span></div>
+                                </div>
+                                <div class="lg-src">
+                                    <h3 class="gen-tile-title" tr="LOG_SRC_TITLE"></h3>
+                                    <p class="gen-tile-desc" tr="LOG_SRC_DESC"></p>
                                     <div id="divLogSources" class="lg-src-list"></div>
                                 </div>
-                                <div class="unibloc-container tile-tip">
-                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
-                                    <p class="tile-tip-text" tr="LOG_TIP"></p>
+                                <p class="gen-tile-desc lg-tip" tr="LOG_TIP"></p>
+                            </section>
+                            <div class="gen-body">
+                                <div class="lg-tools">
+                                    <label class="gen-search"><svg><use href="#svg-search"></use></svg><input id="fldLogFilter" class="gen-search-input" type="search" autocomplete="off" spellcheck="false" tr="LOG_FILTER" oninput="somfy.setFrameFilter(this.value);"></label>
+                                    <button id="btnLogValidOnly" class="gen-btn lg-chip" type="button" aria-pressed="false" onclick="somfy.toggleFrameValidOnly();"><svg><use href="#svg-check"></use></svg><span tr="LOG_VALID_ONLY"></span></button>
+                                    <button id="btnLogPause" class="gen-btn lg-chip" type="button" aria-pressed="false" onclick="somfy.toggleFrameLogPause();"><svg id="svgLogPause"><use href="#svg-stop"></use></svg><span id="spanLogPause" tr="BT_PAUSE"></span></button>
+                                    <span class="lg-tools-end">
+                                        <button id="btnCopyFrame" class="gen-btn" type="button" onclick="somfy.framesToClipboard();"><svg><use href="#svg-clipboard"></use></svg><span tr="BT_COPY"></span></button>
+                                        <button id="btnClearFrames" class="gen-btn gen-btn-danger" type="button" onclick="somfy.clearFrames();"><svg><use href="#svg-clear"></use></svg><span tr="BT_CLEAR"></span></button>
+                                    </span>
                                 </div>
-                            </div>
-                            <div class="tile-cols">
-                                <div class="unibloc-container lg-list">
-                                    <h3 class="unibloc-title tile-title"><span tr="LOG_FRAMES_TITLE"></span></h3>
-                                    <div class="log-toolbar">
-                                        <div class="log-search">
-                                            <svg class="log-search-icon"><use href="#svg-search"></use></svg>
-                                            <input id="fldLogFilter" class="log-search-input" type="text" autocomplete="off" spellcheck="false" tr="LOG_FILTER" oninput="somfy.setFrameFilter(this.value);">
-                                            <button id="btnLogFilterClear" class="log-search-clear" type="button" style="display:none;" onclick="somfy.setFrameFilter('');">
-                                                <svg><use href="#svg-close"></use></svg>
-                                            </button>
-                                        </div>
-                                        <div class="log-toolbar-actions">
-                                            <button id="btnLogValidOnly" class="log-chip" type="button" onclick="somfy.toggleFrameValidOnly();">
-                                                <svg><use href="#svg-check"></use></svg>
-                                                <span tr="LOG_VALID_ONLY"></span>
-                                            </button>
-                                            <button id="btnLogPause" class="log-chip" type="button" onclick="somfy.toggleFrameLogPause();">
-                                                <svg id="svgLogPause"><use href="#svg-stop"></use></svg>
-                                                <span id="spanLogPause" tr="BT_PAUSE"></span>
-                                            </button>
-                                        </div>
+                                <div class="lg-table">
+                                    <div class="frame-header">
+                                        <span tr="RADIO_TIME"></span>
+                                        <span tr="RADIO_COMMAND"></span>
+                                        <span tr="RADIO_ADDRESS"></span>
+                                        <span tr="SCANFREQ_RSSI"></span>
+                                        <span tr="RADIO_KEY"></span>
+                                        <span tr="RADIO_CODE"></span>
+                                        <span tr="RADIO_BITS"></span>
+                                        <span class="frame-head-toggle"></span>
                                     </div>
-
-                                    <div class="log-global-container">
-                                        <div class="frame-header">
-                                            <span tr="RADIO_TIME"></span>
-                                            <span tr="RADIO_COMMAND"></span>
-                                            <span tr="RADIO_ADDRESS"></span>
-                                            <span tr="SCANFREQ_RSSI"></span>
-                                            <span tr="RADIO_KEY"></span>
-                                            <span tr="RADIO_CODE"></span>
-                                            <span tr="RADIO_BITS"></span>
-                                            <span class="frame-head-toggle"></span>
-                                        </div>
-                                        <div id="divFrames" class="frame-list"></div>
-                                        <div id="divFramesEmpty" class="empty-state frame-empty">
-                                            <svg class="empty-icon frame-empty-icon"><use href="#svg-wave"></use></svg>
-                                            <div id="spanFramesEmptyTitle" class="label" tr="LOG_EMPTY_TITLE"></div>
-                                            <p id="spanFramesEmptyDesc" class="empty-subtext" tr="LOG_EMPTY_DESC"></p>
-                                        </div>
-                                    </div>
-                                    <div class="log-footnote">
-                                        <span tr="LOG_LIMIT"></span>
-                                        <span id="spanLogLimit">300</span>
+                                    <div id="divFrames" class="frame-list"></div>
+                                    <div id="divFramesEmpty" class="lg-empty">
+                                        <b id="spanFramesEmptyTitle" tr="LOG_EMPTY_TITLE"></b>
+                                        <p id="spanFramesEmptyDesc" tr="LOG_EMPTY_DESC"></p>
                                     </div>
                                 </div>
+                                <p class="lg-foot"><span tr="LOG_LIMIT"></span> <span id="spanLogLimit">300</span></p>
                             </div>
-                        </div>
-                        <div class="button-container-footerHtml">
-                            <button id="btnClearFrames" type="button" line onclick="somfy.clearFrames();">
-                                <svg><use href="#svg-clear"></use></svg>
-                                <span tr="BT_CLEAR"></span>
-                            </button>
-                            <button id="btnCopyFrame" type="button" onclick="somfy.framesToClipboard();">
-                                <svg><use href="#svg-clipboard"></use></svg>
-                                <span tr="BT_COPY"></span>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -3123,14 +3036,6 @@
         <symbol id="svg-group" viewBox="0 0 24 24">
             <path fill="currentColor" opacity=".2" d="M4 6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm10 0a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2zM4 16a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/>
             <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm10 0a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2zM4 16a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm13.5-1v6M15 17.5l2.5-2.5 2.5 2.5"/>
-        </symbol>
-
-        <!-- SOMFY > REPETEUR -->
-        <symbol id="svg-emptyRepeater" viewBox="0 0 24 24">
-            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-                <path d="M12 12c.6-.8 1.2-1.5 2.2-1.5a1.5 1.5 0 1 1 0 3c-1 0-1.6-.7-2.2-1.5-.6.8-1.2 1.5-2.2 1.5a1.5 1.5 0 1 1 0-3c1 0 1.6.7 2.2 1.5z" stroke-width="1.2"/>
-                <path d="M5 4.9a10 10 0 0 0 0 14.2M7.8 7.7a6 6 0 0 0 0 8.6M16.2 16.3a6 6 0 0 0 0-8.6M19 19.1a10 10 0 0 0 0-14.2"/>
-            </g>
         </symbol>
 
         <!-- SOMFY > PLANNINGS -->

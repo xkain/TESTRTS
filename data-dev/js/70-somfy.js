@@ -1342,10 +1342,6 @@ class Somfy {
         if (!this.dataLoaded) return;
         const getEl = id => get(id);
         const setDisp = (el, show, style = 'block') => { if (el) el.style.display = show ? style : 'none'; };
-        const togglePair = (hasData, emptyId, contentId) => {
-            setDisp(getEl(emptyId), !hasData);
-            setDisp(getEl(contentId), hasData);
-        };
 
         const divShadeControls = getEl('divShadeControls');
         const divGroupControls = getEl('divGroupControls');
@@ -1362,11 +1358,6 @@ class Somfy {
         const hasRooms = _rooms.length > 1;
         const totalDevices = shades.length + groups.length;
 
-
-        const divRepeatList = getEl('divRepeatList');
-        togglePair(divRepeatList && divRepeatList.children.length > 0, 'divRepeaterEmptyState', 'divRepeaterListContent');
-        const divListenList = getEl('divListenList');
-        togglePair(divListenList && divListenList.children.length > 0, 'divListenerEmptyState', 'divListenerListContent');
 
         let visibleShadesCount = 0, visibleGroupsCount = 0;
         shades.forEach(el => { if (currentRoomId === 0 || parseInt(el.getAttribute('data-roomid'), 10) === currentRoomId) visibleShadesCount++; });
@@ -2134,7 +2125,7 @@ class Somfy {
         const rssi = get('spanLogRssi');
         if (rssi) {
             rssi.textContent = last ? last.rssi : '--';
-            rssi.className = `log-metric-value sig-${last ? this.rssiLevel(last.rssi) : 'unknown'}`;
+            rssi.className = `sig-${last ? this.rssiLevel(last.rssi) : 'unknown'}`;
         }
         const state = get('divLogLiveState');
         const text = get('spanLogLiveText');
@@ -2173,20 +2164,18 @@ class Somfy {
         this.frameFilter = raw.trim().toLowerCase();
         const fld = get('fldLogFilter');
         if (fld && fld.value !== raw) fld.value = raw;
-        const clear = get('btnLogFilterClear');
-        if (clear) clear.style.display = this.frameFilter ? '' : 'none';
         this.renderFrameLog();
     }
     toggleFrameValidOnly() {
         this.frameValidOnly = !this.frameValidOnly;
         const btn = get('btnLogValidOnly');
-        if (btn) btn.classList.toggle('active', this.frameValidOnly);
+        if (btn) btn.setAttribute('aria-pressed', this.frameValidOnly);
         this.renderFrameLog();
     }
     toggleFrameLogPause() {
         this.frameLogPaused = !this.frameLogPaused;
         const btn = get('btnLogPause');
-        if (btn) btn.classList.toggle('active', this.frameLogPaused);
+        if (btn) btn.setAttribute('aria-pressed', this.frameLogPaused);
         const icon = get('svgLogPause');
         if (icon && icon.firstElementChild) icon.firstElementChild.setAttribute('href', this.frameLogPaused ? '#svg-play' : '#svg-stop');
         const label = get('spanLogPause');
@@ -6367,28 +6356,54 @@ class Somfy {
     _renderRepeaters() {
         const seen = this._repeaterSeen || {}, list = this.repeaters || [];
         const recent = list.reduce((a, r) => (seen[r] && (a === null || seen[r].at > seen[a].at)) ? r : a, null);
-        get('divRepeatList').innerHTML = list.map(r => this._repeaterCardHtml(r, seen[r], r === recent)).join('');
         const max = this.maxRepeaters || 7;
-        get('spanRepeaterCount').innerText = list.length;
-        get('spanRepeaterMax').innerText = max;
-        get('spanRepeaterBadge').innerText = `${list.length} / ${max}`;
-        get('spanRepeaterHeard').innerText = list.filter(r => seen[r]).length;
-        const known = recent !== null ? this.frameAddressName(recent) : null;
-        get('spanRepeaterLast').innerText = recent !== null ? `${known ? known.name : recent} · ${seen[recent].cmd || '?'} · ${this._listenerTime(seen[recent].at)}` : '—';
-        this.checkEmptyState();
+        get('divRepeatList').innerHTML = this._rxAddTileHtml('somfy.linkRepeatRemote()', 'REPEATER_CAPTURE', 'REPEATER_CAPTURE_DESC', list.length >= max)
+            + list.map(r => this._repeaterCardHtml(r, seen[r], r === recent)).join('');
+        this._rxHero('divRepeaterPage', 'spanRepeaterHero', 'REPEATER_HERO', list.length, max);
+        get('spanRepeaterFrames').innerText = this._repeaterFrames || 0;
+        get('spanRepeaterLast').innerText = recent !== null ? this._listenerTime(seen[recent].at) : '—';
     }
     _repeaterCardHtml(address, seen, recent) {
         const known = this.frameAddressName(address);
         const name = known && !known.own ? escHtml(tr('REPEATER_OF').replace('%s', known.name)) : tr('REPEATER_ADDRESS');
-        const press = seen
-            ? `<span class="ls-cmd">${escHtml(seen.cmd || '?')}</span><small>${this._listenerTime(seen.at)}</small>`
-            : `<span class="ls-cmd none">—</span><small>${tr('REPEATER_NO_FRAME')}</small>`;
-        return `<div class="ls-row ${recent ? 'ls-flash' : (seen ? '' : 'idle')}" data-address="${address}"><div class="ls-ico"><svg><use href="#svg-repeater"></use></svg></div><div class="ls-row-t"><b>${name}</b><small>${address}</small>${this.remoteSignalHtml(seen ? seen.rssi : -128, address)}</div><div class="ls-press">${press}</div><button class="ls-del" type="button" onclick="somfy.unlinkRepeater('${address}');"><svg><use href="#svg-trash"></use></svg></button></div>`;
+        const last = seen ? `${escHtml(seen.cmd || '?')} · ${this._listenerTime(seen.at)}` : tr('REPEATER_NO_FRAME');
+        return `<div class="rx-tile${recent ? ' is-recent' : ''}" data-address="${address}">
+            <b class="rx-tile-name">${name}</b>
+            <div class="ed-ro-list">
+                <div class="ed-ro"><span>${tr('RADIO_RX_LAST')}</span><b>${last}</b></div>
+                <div class="ed-ro"><span>${tr('M_SIGNAL')}</span><b>${this._rxSignalHtml(seen ? seen.rssi : -128, address)}</b></div>
+                <div class="ed-ro"><span>${tr('RADIO_ADDRESS')}</span><b class="rx-mono">${address}</b></div>
+            </div>
+            <button type="button" class="gen-btn gen-btn-danger" onclick="somfy.unlinkRepeater('${address}');">${tr('BT_UNREPEAT')}</button>
+        </div>`;
+    }
+    // Pages Déclencheurs et Répéteur : tuile d'ajout, titre de la colonne, jauge des places.
+    _rxAddTileHtml(onclick, label, desc, full) {
+        return `<button type="button" class="cfg-tile cfg-tile-add" onclick="${onclick};"${full ? ' disabled' : ''}><svg><use href="#svg-add"></use></svg><span>${tr(label)}</span><small>${tr(desc)}</small></button>`;
+    }
+    _rxHero(rootId, titleId, key, n, max) {
+        const root = get(rootId);
+        root.classList.toggle('is-empty', n === 0);
+        get(titleId).innerText = tr(n > 1 ? `${key}_MANY` : `${key}_ONE`).replace('{N}', n);
+        const left = Math.max(0, max - n);
+        root.querySelector('.gen-cap-n').innerHTML = `${n} <small>${tr('LIST_CAP_OF').replace('{MAX}', max)}</small>`;
+        root.querySelector('.gen-cap-left').textContent = tr(left === 1 ? 'LIST_CAP_FREE_ONE' : 'LIST_CAP_FREE_MANY').replace('{N}', left);
+        root.querySelector('.gen-cap').classList.toggle('is-full', left === 0);
+        root.querySelector('.gen-meter i').style.width = `${Math.min(100, Math.round(n / max * 100))}%`;
+    }
+    _rxSignalHtml(rssi, address) {
+        if (typeof rssi === 'number' && rssi > -128) this._storeRemoteSignal(address, rssi);
+        else rssi = this._getStoredRemoteSignal(address);
+        if (typeof rssi !== 'number') return '—';
+        const n = rssi > -70 ? 4 : rssi > -80 ? 3 : 2;
+        const bars = [4, 7, 10, 14].map((h, i) => `<i${i < n ? ' class="on"' : ''} style="height:${h}px"></i>`).join('');
+        return `<span class="rx-bars sig-${this.rssiLevel(rssi)}" aria-hidden="true">${bars}</span>${rssi} ${tr('UNIT_DBM')}`;
     }
     _onRepeaterFrame(frame) {
         const addr = Number(frame.address);
         if (frame.valid === false || !(this.repeaters || []).includes(addr)) return;
         (this._repeaterSeen = this._repeaterSeen || {})[addr] = { cmd: frame.command, at: Date.now(), rssi: frame.rssi };
+        this._repeaterFrames = (this._repeaterFrames || 0) + 1;
         this._renderRepeaters();
     }
     _frameFactsHtml(frame) {
@@ -6483,33 +6498,46 @@ class Somfy {
         });
         this._renderListeners();
     }
-    // Toute la liste est redessinée à chaque appui (14 lignes au plus) : le cadre « dernier appui »
-    // doit quitter la ligne précédente.
+    // Toute la liste est redessinée à chaque appui (14 tuiles au plus) : le cadre « dernier appui »
+    // doit quitter la tuile précédente. Un nom en cours de saisie survit au redessin.
     _renderListeners() {
-        const list = this.listeners;
+        const list = this.listeners, box = get('divListenList');
         const recent = list.reduce((a, l) => (l.lastRxAt && (!a || l.lastRxAt > a.lastRxAt)) ? l : a, null);
-        get('divListenList').innerHTML = list.map(l => this._listenerCardHtml(l, l === recent)).join('');
         const max = this.maxListeners || 14;
-        get('spanListenerCount').innerText = list.length;
-        get('spanListenerMax').innerText = max;
-        get('spanListenerBadge').innerText = `${list.length} / ${max}`;
+        const act = box.contains(document.activeElement) ? document.activeElement : null;
+        const keep = act && act.dataset.address ? { addr: act.dataset.address, value: act.value, from: act.selectionStart, to: act.selectionEnd } : null;
+        box.innerHTML = this._rxAddTileHtml('somfy.linkListenRemote()', 'LISTENER_CAPTURE', 'LISTENER_CAPTURE_DESC', list.length >= max)
+            + list.map(l => this._listenerCardHtml(l, l === recent)).join('');
+        if (keep) {
+            const fld = box.querySelector(`input[data-address="${keep.addr}"]`);
+            if (fld) { fld.value = keep.value; fld.focus(); fld.setSelectionRange(keep.from, keep.to); }
+        }
+        this._rxHero('divListenerPage', 'spanListenerHero', 'LISTENER_HERO', list.length, max);
         get('spanListenerPresses').innerText = this._listenerPresses || 0;
-        get('spanListenerLast').innerText = recent ? `${recent.name || recent.address} · ${recent.lastCommand || '?'} · ${this._listenerTime(recent.lastRxAt)}` : '—';
-        this.checkEmptyState();
+        get('spanListenerLast').innerText = recent ? this._listenerTime(recent.lastRxAt) : '—';
     }
     _listenerTime(t) {
         const d = new Date(t);
         return `${d.getHours().fmt('00')}:${d.getMinutes().fmt('00')}:${d.getSeconds().fmt('00')}`;
     }
     _listenerCardHtml(l, recent) {
-        const name = l.name ? escHtml(l.name) : escHtml(String(l.address));
+        const addr = escAttr(l.address);
         const shade = l.linkedShadeId !== 255 ? (this.shades || []).find(s => s.shadeId === l.linkedShadeId) : null;
-        const warn = shade ? `<em><svg><use href="#svg-warning"></use></svg>${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', shade.name))}</em>` : '';
-        const press = l.lastRxAt
-            ? `<span class="ls-cmd">${escHtml(l.lastCommand || '?')}</span><small>${this._listenerTime(l.lastRxAt)}</small>`
-            : `<span class="ls-cmd none">—</span><small>${tr('LISTENER_NEVER_HEARD')}</small>`;
-        const cls = recent ? 'ls-flash' : (shade ? 'warn' : (l.lastRxAt ? '' : 'idle'));
-        return `<div class="ls-row ${cls}" data-address="${escAttr(l.address)}" onclick="somfy.renameListenRemote('${escAttr(l.address)}');"><div class="ls-ico"><svg><use href="#svg-remote"></use></svg></div><div class="ls-row-t"><b>${name}</b><small>${escHtml(l.address)}</small>${this.remoteSignalHtml(l.lastRssi, l.address)}${warn}</div><div class="ls-press">${press}</div><button class="ls-del" type="button" onclick="event.stopPropagation(); somfy.unlinkListenRemote('${escAttr(l.address)}');"><svg><use href="#svg-trash"></use></svg></button></div>`;
+        const warn = shade ? `<p class="gen-tile-desc is-warning">${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', shade.name))}</p>` : '';
+        const last = l.lastRxAt ? `${escHtml(l.lastCommand || '?')} · ${this._listenerTime(l.lastRxAt)}` : tr('LISTENER_NEVER_HEARD');
+        return `<div class="rx-tile${recent ? ' is-recent' : ''}" data-address="${addr}">
+            <div class="gen-input-box rx-name">
+                <input class="gen-input" type="text" maxlength="20" value="${escAttr(l.name || '')}" placeholder="${addr}" aria-label="${escAttr(tr('NAME'))}" data-address="${addr}" onchange="somfy.renameListenRemote(this);" onkeydown="if (event.key === 'Enter') this.blur();">
+                <svg class="rx-pen"><use href="#svg-edit"></use></svg>
+            </div>
+            ${warn}
+            <div class="ed-ro-list">
+                <div class="ed-ro"><span>${tr('LISTENER_LAST_PRESS')}</span><b>${last}</b></div>
+                <div class="ed-ro"><span>${tr('M_SIGNAL')}</span><b>${this._rxSignalHtml(l.lastRssi, l.address)}</b></div>
+                <div class="ed-ro"><span>${tr('RADIO_ADDRESS')}</span><b class="rx-mono">${escHtml(l.address)}</b></div>
+            </div>
+            <button type="button" class="gen-btn gen-btn-danger" onclick="somfy.unlinkListenRemote('${addr}');">${tr('BT_UNLISTEN')}</button>
+        </div>`;
     }
     // Évènement WebSocket `listenerEvent` (SomfyShadeController::processListenerFrame) : un appui
     // retenu, déjà dédoublonné par le firmware. Le compteur d'appuis ne vaut que pour cette page.
@@ -6597,58 +6625,15 @@ class Somfy {
         const exists = (this.listeners || []).some(x => Number(x.address) === Number(frame.address));
         this._listenerRender(div, exists ? 'already' : 'captured', frame);
     }
-    renameListenRemote(address) {
-        const l = (this.listeners || []).find(x => String(x.address) === String(address));
+    renameListenRemote(fld) {
+        const l = (this.listeners || []).find(x => String(x.address) === fld.dataset.address);
         if (!l) return;
-        let div = document.createElement('div');
-        div.className = 'inst-overlay';
-        div.id = 'divRenameListener';
-        div.dataset.address = address;
-        this._listenerNameStep(div, address, true);
-        shOverlay(div);
-    }
-    _listenerNameStep(div, address, isRename) {
-        const existing = (this.listeners || []).find(x => Number(x.address) === Number(address));
-        const known = this.frameAddressName(address);
-        // Avertissement, pas refus : l'utilisateur peut vouloir à la fois piloter un équipement et
-        // déclencher une automatisation avec la même touche.
-        const warn = known && !known.own && !existing ? `
-        <div class="warning">
-        <div class="warning-header"><svg><use href="#svg-warning"></use></svg><b>${tr("MSG_ALERT")}</b></div>
-        <div class="information-text"><span>${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', known.name))}</span></div>
-        </div>` : '';
-        div.innerHTML = `
-        <div class="instructions-content">
-        ${overlayHeader("LISTENER_TITLE", "LISTENER_NAME_DESC", "svg-remote", { subtitle: "LISTENER_NAME_DESC" })}
-        <div class="overlay-scroll-content">
-        <div class="uniRow"><div class="unifield-content"><label class="label" tr="REPEATER_ADDRESS">${tr('REPEATER_ADDRESS')}</label><span>${escHtml(address)}</span></div></div>
-        <div class="uniRow"><div class="unifield-content"><label class="label" for="fldListenerName">${tr('NAME')}</label>
-        <input id="fldListenerName" class="inputAndSelect" type="text" maxlength="20" placeholder="${escAttr(tr('ENTER_NAME'))}" value="${escAttr(existing ? existing.name : '')}"></div></div>
-        ${warn}
-        </div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="button-container-overlay">
-        <button id="btnListenerCancel" type="button" line>${tr("BT_CANCEL_1")}</button>
-        <button id="btnListenerSave" type="button">${tr("BT_SAVE")}</button>
-        </div>
-        </div>`;
-        // Contenu remplacé après shOverlay() pendant un scan : la croix d'en-tête est neuve et doit
-        // être rebranchée.
-        const closeBtn = div.querySelector('[close]');
-        if (closeBtn) closeBtn.onclick = () => requestCloseOverlay(div);
-        div.querySelector('#btnListenerCancel').onclick = () => requestCloseOverlay(div);
-        div.querySelector('#btnListenerSave').onclick = () => {
-            const name = div.querySelector('#fldListenerName').value.trim();
-            const overlay = ui.waitMessage(div);
-            putJSON(isRename ? '/renameListener' : '/linkListener', { address: Number(address), name: name }, (err, data) => {
-                overlay.remove();
-                if (err) { ui.serviceError(err); return; }
-                div.remove();
-                this.setListenerList(data);
-            });
-        };
-        const fld = div.querySelector('#fldListenerName');
-        if (fld) fld.focus();
+        const name = fld.value.trim();
+        if (name === (l.name || '')) return;
+        putJSON('/renameListener', { address: Number(l.address), name: name }, (err, data) => {
+            if (err) { ui.serviceError(err); fld.value = l.name || ''; return; }
+            this.setListenerList(data);
+        });
     }
     unlinkListenRemote(address) {
         let prompt = ui.promptMessage(tr('PROMPT_UNLINK_LISTENER'), () => {

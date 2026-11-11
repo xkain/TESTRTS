@@ -345,11 +345,6 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     0%   { box-shadow: 0 0 0 0    color-mix(in srgb, var(--vr-radio-color), transparent 40%); }
     100% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--vr-radio-color), transparent 100%); }
 }
-@keyframes log-live-pulse {
-    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--log-live-pulse), transparent 45%); }
-    70% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--log-live-pulse), transparent 100%); }
-    100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--log-live-pulse), transparent 100%); }
-}
 @keyframes frame-row-in {
     from { background: var(--color-accent-transp-70); }
 }
