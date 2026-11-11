@@ -55,7 +55,7 @@ REF = "fr"
 # pourtant déclaré.
 ALLOWED_LITERALS = {s.lower() for s in {
     "HACS", "Home Assistant", "Open HACS repository on", "GitHub", "ESPSomfyRTS_", ".bin",
-    "WT32-ETH01", "ESP32-D1 mini", "XIAO ESP32-S3", "ESPSomfy RTS", "Somfy",
+    "WT32-ETH01", "ESP32-D1 mini", "XIAO ESP32-S3", "ESPSomfy RTS", "ESPSomfy-RTS", "Somfy",
     "MY", "unknown", "RSSI", "MQTT", "Wi-Fi", "Ethernet", "PoE", "GPIO",
 }}
 

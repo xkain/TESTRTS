@@ -2348,6 +2348,29 @@ button:disabled:active {
 
 
 
+/* =========================================================================
+ *  RÉSEAUX WI-FI À PROXIMITÉ (class WifiNear, 50-wifi.js)
+ *  Même liste dans l'assistant de première connexion et l'onglet Wi-Fi de la
+ *  page Connexion.
+ *  ========================================================================= */
+.wifi-near { display: flex; flex: 1 1 auto; flex-direction: column; gap: 14px; }
+.wifi-near-list { display: flex; flex-direction: column; gap: 2px; }
+.wifi-near-wait { display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px; font-size: var(--fs-3); color: var(--text-3); }
+.wifi-near-net, .wifi-near-net:hover { display: flex; justify-content: flex-start; align-items: center; gap: 12px; width: 100%; min-height: 0; margin: 0; padding: 12px; border: 0; border-radius: var(--r-2); background: transparent; color: var(--text); text-align: left; text-transform: none; font-weight: 400; }
+.wifi-near-net:hover { background: var(--surface-2); }
+.wifi-near-net.on, .wifi-near-net.on:hover { background: color-mix(in srgb, var(--color-accent) 10%, var(--surface)); }
+.wifi-near-text { display: flex; flex-direction: column; min-width: 0; }
+.wifi-near-text b { overflow: hidden; font-size: var(--fs-4); text-overflow: ellipsis; white-space: nowrap; }
+.wifi-near-text small { font-size: var(--fs-2); color: var(--text-3); }
+.wifi-near-bars { display: inline-flex; align-items: flex-end; gap: 3px; flex: none; height: 16px; }
+.wifi-near-bars i { width: 4px; border-radius: 2px; background: var(--sunken); }
+.wifi-near-bars i:nth-child(1) { height: 5px; }
+.wifi-near-bars i:nth-child(2) { height: 8px; }
+.wifi-near-bars i:nth-child(3) { height: 12px; }
+.wifi-near-bars i:nth-child(4) { height: 16px; }
+.wifi-near-bars i:first-child, .wifi-near-bars.lvl-1 i:nth-child(-n+2), .wifi-near-bars.lvl-2 i:nth-child(-n+3), .wifi-near-bars.lvl-3 i { background: var(--ok); }
+.wifi-near-links { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: auto; }
+
 /* =======================================================================
  *  MEDIA QUERIES RESPONSIVE (composants génériques)
  *  ======================================================================= */

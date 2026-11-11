@@ -157,7 +157,7 @@ window.escAttr = function(str) {
 //
 // ATTENTION AU CHEMIN RETOUR : partout où une valeur échappée est ensuite RELUE depuis le DOM,
 // lire .textContent et non .innerHTML -- ce dernier rendrait l'entité (`&amp;`) au lieu du
-// caractère, et un SSID contenant `&` deviendrait irrejoignable (cf. Wifi.selectSSID).
+// caractère, et un SSID contenant `&` deviendrait irrejoignable.
 window.escHtml = function(str) {
     return String(str ?? '').replace(/[&<>"']/g, c =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

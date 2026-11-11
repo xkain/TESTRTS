@@ -198,6 +198,17 @@ class Wifi {
         // Différé d'un tour : _markDirty (watchDirty) passe après cet écouteur.
         ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateDirtyCount(), 0)));
         this._saveBar = new SaveBar(page, { onSave: () => this.savePage(), onRevert: () => this.revertPage() });
+        // Un réseau choisi remplit le nom et passe la main au mot de passe ; « réseau caché » vide le nom.
+        this._near = new WifiNear('netNear', {
+            picked: () => (get('fldSsid').value || '').trim(),
+            onPick: (name) => {
+                const fld = get('fldSsid');
+                fld.value = name;
+                fld.dispatchEvent(new Event('input', { bubbles: true }));
+                (name ? get('fldPassphrase') : fld).focus();
+            }
+        });
+        this._near.render();
     }
     loadNetwork() {
         getJSONSync('/networksettings', (err, settings) => {
@@ -217,6 +228,7 @@ class Wifi {
         const ct = parseInt(s.connType, 10);
         this._pending = !!this.isHotspot || !(ct >= 1 && ct <= 3);
         ui.toElement(pnl, s);
+        get('fldHostname').value = s.hostname || '';
         get('cbHardwired').checked = ct >= 2;
         get('cbFallbackWireless').checked = ct === 3;
 
@@ -437,6 +449,8 @@ class Wifi {
         if (!box || !this._settings) return;
         const m = this._mode(), rows = [];
         const add = (key, value, tab, missing = false) => rows.push({ key, value, tab, missing });
+        const host = get('fldHostname').value.trim();
+        add('GENERAL_HOSTNAME', host || tr('CONNEXION_TO_FILL'), 3, !host);
         if (m === 1 || m === 3) {
             const ssid = get('fldSsid').value.trim();
             add(m === 3 ? 'CONNEXION_WIFI_FALLBACK' : 'CONNEXION_TITLE_WIFI', ssid || tr('CONNEXION_TO_FILL'), 2, !ssid);
@@ -487,6 +501,7 @@ class Wifi {
         const board = get('selETHBoardType').value;
         const dhcp = get('cbNetDhcp').checked;
         const list = [
+            field('host', 'GENERAL_HOSTNAME', get('fldHostname'), s.hostname || '', get('fldHostname').value.trim()),
             field('conn', 'CONNEXION_TYPE', get('cbHardwired'), savedMode, this._pending ? savedMode : this._mode(), (v) => modeKeys[v] ? tr(modeKeys[v]) : ''),
             field('conn', 'CONNEXION_WIFI_SSID', get('fldSsid'), w.ssid || '', get('fldSsid').value),
             field('conn', 'SECURITY_PASSWORD', get('fldPassphrase'), '', secretValue(get('fldPassphrase')), undefined, true),
@@ -527,8 +542,8 @@ class Wifi {
         this._applySettings();
         this.updateDirtyCount();
     }
-    // Trois routes : le mot de passe du point d'accès et l'adresse IP s'appliquent sans
-    // redémarrage, la connexion en dernier, puisqu'elle peut couper la session.
+    // Quatre routes : le nom d'hôte, le mot de passe du point d'accès et l'adresse IP s'appliquent
+    // sans redémarrage, la connexion en dernier, puisqu'elle peut couper la session.
     savePage() {
         const diffs = this._netFields(), has = (g) => diffs.some(f => f.group === g);
         const m = this._mode();
@@ -549,12 +564,26 @@ class Wifi {
                 return;
             }
         }
+        // Le firmware garde 31 caractères (char hostname[32]) et coupe le reste sans prévenir.
+        const host = get('fldHostname').value.trim();
+        if (has('host')) {
+            const why = !host ? 'ERR_INVALID_HOSTNAME' : !/^[a-zA-Z0-9-]+$/.test(host) ? 'ERR_HOSTNAME_CHARS' : host.length > 31 ? 'ERR_HOSTNAME_LENGTH' : '';
+            if (why) {
+                ui.errorMessage(tr('ERR_HOSTNAME'), tr(why));
+                this._goTab(3);
+                return;
+            }
+        }
         const ip = { dhcp: get('cbNetDhcp').checked };
         ['ip', 'subnet', 'gateway', 'dns1', 'dns2'].forEach((k, i) => { ip[k] = get(['fldIPAddress', 'fldSubnetMask', 'fldGateway', 'fldDNS1', 'fldDNS2'][i]).value.trim(); });
         if (has('ip') && !this._validateIp(ip)) return;
 
         const put = (url, body) => new Promise((resolve, reject) => putJSONSync(url, body, (err) => err ? reject(err) : resolve()));
+        // Nom d'hôte en premier : la connexion, enregistrée en dernier, peut redémarrer l'appareil.
         let chain = Promise.resolve();
+        if (has('host')) chain = chain
+            .then(() => put('/setNetwork', { hostname: host }))
+            .then(() => this._hostnameSaved(host));
         if (has('ap')) chain = chain
             // Champ vide = « inchangé » côté firmware : pour ouvrir le point d'accès, apPasswordClear.
             .then(() => put('/setNetwork', { wifi: protect ? { apPassword: apPwd } : { apPasswordClear: true } }))
@@ -588,10 +617,6 @@ class Wifi {
         if (obj.dns1 && !valid(obj.dns1)) { ui.errorMessage(tr('ERR_DNS1_INVALID')); return false; }
         if (obj.dns2 && !valid(obj.dns2)) { ui.errorMessage(tr('ERR_DNS2_INVALID')); return false; }
         return true;
-    }
-    // Depuis la page, la modale ne fait que remplir les champs : la barre d'enregistrement conclut.
-    findWifi() {
-        this.wifiOverlay('CONNEXION_FIND_WIFI', false, () => this.updateDirtyCount());
     }
     // Tête de page : ce que fait l'appareil maintenant, pas ce qui est réglé.
     _renderHero() {
@@ -634,232 +659,8 @@ class Wifi {
         get('netHeroSpeedRow').hidden = !eth;
         get('netHeroSpeed').textContent = isNaN(this._ethSpeed) ? '--' : `${this._ethSpeed} Mbit/s${this._ethDuplex ? ' · full duplex' : ''}`;
     }
-    // onCapture (facultatif) fait basculer la modale en mode CAPTURE : "Confirmer" retient le
-    // réseau et rend la main à l'appelant au lieu d'enchaîner sur l'enregistrement. Utilisé par
-    // l'assistant de premier démarrage, où l'Ethernet et le Wi-Fi de secours doivent partir dans un
-    // seul /setNetwork (cf. Onboarding._openWifiCapture()) -- et où c'est donc le pied de la carte,
-    // pas cette modale, qui conclut. Rien à capturer explicitement : les identifiants sont déjà
-    // recopiés en direct dans #fldSsid/#fldPassphrase par les oninput ci-dessous et par
-    // selectSSID(), et ni cancelScan() ni closeOverlay() ne les effacent.
-    wifiOverlay(modalTitle, startAtPage2 = false, onCapture = null) {
-        if (get('divWifiScanOverlay')) return;
-
-        let div = document.createElement('div');
-        div.id = 'divWifiScanOverlay';
-        div.className = 'modal-overlay';
-
-        div.innerHTML = `
-        <div class="message-content wifiOverlay-content">
-        ${modalHeader(modalTitle, 'svg-wifi', {
-            subtitle: startAtPage2 ? 'CONNEXION_MODAL_SELECT_M_DESC' : 'CONNEXION_MODAL_SELECT_DESC',
-            rightContent: `<!-- Ton contenu de droite si nécessaire -->`
-        })}
-        <!-- Seule cette zone défile -- le header et le pied de page restent fixes, comme sur
-        les autres modal-overlay (cf. ledOverlay). -->
-        <div class="overlay-scroll-content">
-        <!-- CARROUSEL CONTAINER -->
-        <div id="wifiCarousel">
-        <!-- PAGE 1 : Liste des réseaux -->
-        <div id="wifiPage1" class="wifiChoosePage">
-        <div class="blocdivApsOverlay"><div id="divApsOverlay" data-lastloaded="0"></div></div>
-        <div class="divbtsTButton">
-        <button id="btnManualWifi" type="button" btsText><svg><use href="#svg-add"></use></svg><span>${tr("BT_ADD_MANUAL")}</span></button>
-        <button id="btnRefreshWifiInModal" type="button" btsText><svg><use href="#svg-retry"></use></svg><span>${tr("BT_RETRY")}</span></button>
-        </div>
-        </div>
-
-        <!-- PAGE 2 : Saisie SSID & Mot de passe -->
-        <div id="wifiPage2" class="wifiChoosePage">
-        <div class="marginB" style="display: ${startAtPage2 ? 'none' : 'flex'};">
-        <button id="btnModalBackToPage1" type="button" btsText><svg><use href="#svg-arrowLeft"></use></svg><span>${tr("BT_GO_BACK")}</span></button>
-        </div>
-        <div style="height: ${startAtPage2 ? '25px' : '0px'};"></div>
-        <!-- Bloc des inputs -->
-        <div class="baseFlexCol">
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-ssid"></use></svg></div>
-        <div class="unifield-content" style="width: 100%;">
-        <label class="label">${tr("CONNEXION_WIFI_SSID")}</label>
-        <input id="modalFldSsid" class="inputAndSelect" type="text" tr="CONNEXION_WIFI_ENTER_SSID" placeholder="Entrer votre SSID">
-        </div>
-        </div>
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label">${tr("SECURITY_PASSWORD")}</label>
-        <input id="modalFldPassphrase" class="inputAndSelect" type="password" placeholder="${tr("SECURITY_PASSWORD_PLH")}">
-        <div class="password-eye" onclick="security.toggleFieldPassword('modalFldPassphrase', this)">
-        <svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg>
-        </div>
-        </div>
-        </div>
-        </div>
-        </div>
-        </div>
-        </div>
-        <!-- Pied de page commun aux 2 pages : hors du carrousel qui glisse (donc fixe, comme
-        sur les autres modal-overlay), son contenu bascule au fil de slideCarousel(). -->
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal" id="wifiFooterPage1">
-        <button id="btnWifiGoBack" line type="button">${tr('BT_CLOSE')}</button>
-        </div>
-        <div class="button-content-modal" id="wifiFooterPage2" style="display: none;">
-        <button id="btnModalCancelWifi2" line type="button">${tr('BT_CANCEL_1')}</button>
-        <button id="btnModalSaveWifi" type="button"><svg><use href="#svg-succes"></use></svg><span>${tr("BT_CONFIRM")}</span></button>
-        </div>
-        </div>
-        </div>`;
-
-        get('divContainer').appendChild(div);
-        shOverlay(div);
-        watchDirty(div);
-
-        get('btnRefreshWifiInModal').onclick = () => this.loadAPs(true);
-        // cancelScan() route désormais elle-même via requestCloseOverlay(), qui appelle
-        // confirmDiscardChanges() en interne (donc l'alerte "modifications non enregistrées"
-        // reste posée exactement comme avant) tout en respectant en plus le verrou de scan en
-        // cours (cf. setOverlayLock() dans loadAPs()) -- plus besoin de l'enrober ici.
-        get('btnWifiGoBack').onclick = () => this.cancelScan();
-        get('btnManualWifi').onclick = () => {
-            this.setupManualInputMode();
-            this.slideCarousel(1);
-            setTimeout(() => { get('modalFldSsid').focus(); }, 350);
-        };
-        get('btnModalBackToPage1').onclick = () => this.slideCarousel(0);
-
-        const btnCancel2 = get('btnModalCancelWifi2');
-        if (btnCancel2) {
-            btnCancel2.onclick = () => this.cancelScan();
-        }
-
-        get('btnModalSaveWifi').onclick = () => {
-            const ssidVal = get('modalFldSsid').value || '';
-            const passVal = get('modalFldPassphrase').value || '';
-
-            if (!ssidVal.trim()) {
-                ui.errorMessage(tr('ERR_WIFI_SSID_INVALID'));
-                return;
-            }
-            if (ssidVal.length > 64) {
-                ui.errorMessage(tr('ERR_WIFI_SSID_INVALID'), tr('ERR_WIFI_SSID_MAX_LENGTH_64'));
-                return;
-            }
-            if (passVal.length > 64) {
-                ui.errorMessage(tr('ERR_WIFI_PASSPHRASE_INVALID'), tr('ERR_WIFI_PASSPHRASE_MAX_LENGTH_64'));
-                return;
-            }
-
-            this.cancelScan();
-            if (typeof onCapture === 'function') { onCapture(); return; }
-            // window.__currentHostname vient de /loginContext, donc disponible dès le boot -- y
-            // compris pendant l'onboarding, où window.settings n'a jamais été chargé (la page
-            // Système n'est pas atteinte) et retombait donc systématiquement sur le nom générique.
-            const currentHostname = window.__currentHostname || (window.settings && window.settings.hostname) || 'espsomfyrts';
-            this.networkConfirmationOverlay(currentHostname);
-        };
-
-        get('modalFldSsid').oninput = (e) => {
-            const realSsid = document.getElementsByName('ssid')[0];
-            if (realSsid) {
-                realSsid.value = e.target.value;
-                realSsid.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-        };
-        get('modalFldPassphrase').oninput = (e) => {
-            const realPass = document.getElementsByName('passphrase')[0];
-            if (realPass) {
-                realPass.value = e.target.value;
-                realPass.dataset.secretDummy = 'false';
-                realPass.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-        };
-
-        if (startAtPage2) {
-            this.setupManualInputMode();
-            const carousel = get('wifiCarousel');
-            carousel.style.transition = 'none';
-            this.slideCarousel(1);
-            setTimeout(() => {
-                carousel.style.transition = 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)';
-                get('modalFldSsid').focus();
-            }, 50);
-        } else {
-            this.loadAPs(true);
-        }
-    }
-    setupManualInputMode() {
-        const modalSsid = get('modalFldSsid');
-        if (modalSsid) {
-            modalSsid.value = document.getElementsByName('ssid')[0]?.value || '';
-            modalSsid.removeAttribute('readonly');
-            modalSsid.style.opacity = '1';
-            modalSsid.style.background = 'none';
-        }
-        const modalPass = get('modalFldPassphrase');
-        if (modalPass) {
-            modalPass.value = secretValue(document.getElementsByName('passphrase')[0]);
-        }
-    }
-    slideCarousel(pageIndex) {
-        const carousel = get('wifiCarousel');
-        if (carousel) {
-            carousel.style.transform = `translateX(-${pageIndex * 50}%)`;
-        }
-        // Le pied de page est commun aux 2 pages (hors du carrousel) : on bascule son contenu en
-        // même temps que la page affichée.
-        const footer1 = get('wifiFooterPage1');
-        const footer2 = get('wifiFooterPage2');
-        if (footer1) footer1.style.display = pageIndex === 0 ? 'flex' : 'none';
-        if (footer2) footer2.style.display = pageIndex === 1 ? 'flex' : 'none';
-    }
-
-    // Le verrou de ré-entrée porte sur #btnRefreshWifiInModal (le bouton "Réessayer" de la modale) :
-    // il naît et meurt avec elle, et le grisage tombe donc sur le contrôle réellement indisponible
-    // pendant le scan.
-    async loadAPs(forceLoader = false) {
-        const btnScan = get('btnRefreshWifiInModal');
-        const divAps = get('divApsOverlay');
-        if (!divAps) {
-            this.wifiOverlay();
-            return;
-        }
-        if (btnScan && btnScan.classList.contains('disabled')) return;
-
-        divAps.innerHTML = `<div class="no-wifi"><div class="wifiConnectScan"><svg class="wait-spinner" viewBox="25 25 50 50"><circle class="wait-spinner-track" cx="50" cy="50" r="20" fill="none" stroke-width="3"/><circle class="wait-spinner-arc" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/></svg></div><div class="loadAPScan">${tr("WAIT_MSG_SCANNING")}</div></div>`;
-
-        if (btnScan) btnScan.classList.add('disabled');
-
-        const overlay = get('divWifiScanOverlay');
-        // Scan court et autonome (pas de commande à annuler côté device) : verrou 'confirm' plutôt
-        // que 'hard', juste pour éviter qu'un clic accidentel sur le fond referme l'overlay pendant
-        // ce court instant sans que l'utilisateur s'en rende compte.
-        setOverlayLock(overlay, 'confirm', {
-            onConfirm: () => { if (btnScan) btnScan.classList.remove('disabled'); },
-            titleKey: 'PROMPT_WIFI_SCAN_TITLE',
-            msgKey: 'PROMPT_WIFI_SCAN_MSG',
-        });
-
-        // Le scan Wi-Fi est désormais bloquant côté device (WebNetwork::handleScanAps, comme
-        // /getReleases pour GitHub) : un seul appel, réponse complète directement, plus de statut
-        // "scanning" à repoller.
-        setTimeout(() => {
-            getJSON('/scanaps', (err, aps) => {
-                if (err) logger.error('Wi-Fi scan failed:', err);
-                else logger.debug('Wi-Fi scan found', aps?.accessPoints?.length || 0, 'access points');
-
-                if (btnScan) btnScan.classList.remove('disabled');
-                clearOverlayLock(overlay);
-                if (err || !aps || !aps.accessPoints) {
-                    this.displayAPs({ accessPoints: [] });
-                } else {
-                    this.displayAPs(aps);
-                }
-            });
-        }, forceLoader ? 100 : 0);
-    }
-
-    displayAPs(aps) {
+    // Un réseau par nom, au signal le plus fort, du plus fort au plus faible.
+    groupAPs(aps) {
         let nets = [];
         if (aps && aps.accessPoints) {
             for (let i = 0; i < aps.accessPoints.length; i++) {
@@ -875,60 +676,7 @@ class Wifi {
             }
         }
         nets.sort((a, b) => b.strength - a.strength);
-
-        let div = "";
-        if (nets.length > 0) {
-            for (let i = 0; i < nets.length; i++) {
-                let ap = nets[i];
-                div += `<div class="network-wifi-row" onclick="wifi.selectSSID(this);" data-channel="${ap.channel}" data-encryption="${ap.encryption}" data-strength="${ap.strength}" data-mac="${escAttr(ap.macAddress)}"><span class="ssid">${escHtml(ap.name)}</span><span class="strength">${this.displaySignal(ap.strength)}</span></div>`;
-            }
-        } else {
-            div = `<div class="no-wifi"><div>${tr("ERR_NO_WIFI_FOUND")}</div></div>`;
-        }
-
-        let divAps = get('divApsOverlay');
-        if (divAps) {
-            divAps.setAttribute('data-lastloaded', new Date().getTime());
-            divAps.innerHTML = div;
-        }
-    }
-    cancelScan() {
-        const overlay = get('divWifiScanOverlay');
-        if (!overlay) return;
-        clearDirty(overlay);
-        // Le retrait de la classe 'disabled' du bouton de rafraîchissement pendant un scan actif est désormais
-        // géré par le onConfirm du verrou (cf. setOverlayLock() dans loadAPs()) : requestCloseOverlay()
-        // ne l'exécute qu'une fois la fermeture réellement confirmée/effective.
-        requestCloseOverlay(overlay);
-    }
-    selectSSID(el) {
-        let obj = {
-            // .textContent et non .innerHTML : la valeur affichée est désormais échappée (cf.
-            // escHtml dans displayAPs), et innerHTML rendrait l'entité au lieu du caractère.
-            name: el.querySelector('span.ssid').textContent,
-            encryption: el.getAttribute('data-encryption'),
-            strength: parseInt(el.getAttribute('data-strength'), 10),
-            channel: parseInt(el.getAttribute('data-channel'), 10)
-        };
-        logger.debug('SSID selected:', obj);
-        const realSsidField = document.getElementsByName('ssid')[0];
-        if (realSsidField) {
-            realSsidField.value = obj.name;
-            realSsidField.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        const modalSsidField = get('modalFldSsid');
-        if (modalSsidField) {
-            modalSsidField.value = obj.name;
-        }
-        const realPassField = document.getElementsByName('passphrase')[0];
-        const modalPassField = get('modalFldPassphrase');
-        if (realPassField && modalPassField) {
-            modalPassField.value = secretValue(realPassField);
-        }
-        this.slideCarousel(1);
-        setTimeout(() => {
-            if (modalPassField) modalPassField.focus();
-        }, 350);
+        return nets;
     }
     // Modale FINALE d'enregistrement, commune aux deux modes de connexion (d'où son nom : ni
     // "wifi", ni "ethernet"). Sans pendingObj, elle conclut le parcours Wi-Fi et rappelle
@@ -969,7 +717,7 @@ class Wifi {
         <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="txtConfirmHostname">${tr("GENERAL_HOSTNAME")}</label>
-        <input id="txtConfirmHostname" class="inputAndSelect" type="text" length="32" value="${host}">
+        <input id="txtConfirmHostname" class="inputAndSelect" type="text" maxlength="31" value="${host}">
         </div>
         </div>
         </div>
@@ -1033,7 +781,7 @@ class Wifi {
             // l'ancienne étape d'assistant, c'est la dernière occasion de corriger le nom d'hôte
             // avant que l'appareil ne change de réseau.
             const hostVal = hostFld ? (hostFld.value || '').trim() : '';
-            if (hostFld && (!hostVal || !/^[a-zA-Z0-9-]+$/.test(hostVal) || hostVal.length > 32)) {
+            if (hostFld && (!hostVal || !/^[a-zA-Z0-9-]+$/.test(hostVal) || hostVal.length > 31)) {
                 ui.errorMessage(tr('ERR_HOSTNAME'), tr('ERR_HOSTNAME_CHARS'));
                 return;
             }
@@ -1048,20 +796,14 @@ class Wifi {
             ui.waitMessage(div, 'WAIT_MSG_NET_SWITCH');
             // Ethernet : l'objet réseau est déjà constitué (cf. saveNetwork()), on l'envoie tel
             // quel. Wi-Fi : on repasse par saveNetwork(), qui relit les champs à cet instant.
-            const proceed = () => {
-                if (pendingObj) this.sendNetworkSettings(pendingObj);
-                else if (this.saveNetwork) this.saveNetwork();
-            };
-            // Le nom d'hôte part AVANT /setNetwork : ce dernier peut programmer un redémarrage
-            // (cf. Web.cpp) qui couperait la session en cours et ferait perdre la valeur saisie.
-            if (hostVal && hostVal !== (window.__currentHostname || '')) {
-                putJSONSync('/setgeneral', { hostname: hostVal }, (err) => {
-                    if (err) logger.error('Failed to save hostname from network confirmation:', err);
-                    else window.__currentHostname = hostVal;
-                    proceed();
-                });
+            // Le nom d'hôte voyage dans le même /setNetwork : le firmware l'enregistre avant de
+            // programmer un éventuel redémarrage.
+            const hostname = hostVal && hostVal !== (window.__currentHostname || '') ? hostVal : undefined;
+            if (pendingObj) {
+                if (hostname) pendingObj.hostname = hostname;
+                this.sendNetworkSettings(pendingObj);
             }
-            else proceed();
+            else this.saveNetwork({ hostname });
         };
     }
     calcWaveStrength(sig) {
@@ -1072,35 +814,10 @@ class Wifi {
         if (sig > -60) wave = 3;
         return wave;
     }
-    displaySignal(sig) {
-        let level = this.calcWaveStrength(sig);
-        if (level > 3) level = 3;
-
-        // Détermination de la couleur en fonction du niveau, mêmes variables --color-signal-*
-        // que #divWiFiStrength (main.css) -- pas de --sig-*-color, qui n'existe nulle part et
-        // laissait ces icônes sans couleur (fill invalide).
-        let colorSuffix = 'bad';
-        if (level >= 2) colorSuffix = 'good';
-        else if (level === 1) colorSuffix = 'medium';
-
-        const getPart = (idNum) => {
-            const active = idNum <= level;
-            const fillColor = active ? `var(--color-signal-${colorSuffix})` : '#ccc';
-            return `<use href="#svg-wifi-${idNum}" fill="${fillColor}" style="opacity:${active ? '1' : '0.3'}" />`;
-        };
-
-        return `
-        <div class="signal">
-        <svg>
-        ${getPart(0)}
-        ${getPart(1)}
-        ${getPart(2)}
-        ${getPart(3)}
-        </svg>
-        </div>`;
-    }
-
-    saveNetwork() {
+    // opts : { hostname, onSent, onFail }. hostname part dans le même /setNetwork. Avec onSent
+    // (assistant de première connexion), la fenêtre de confirmation n'est pas ouverte : le nom
+    // d'hôte y est déjà saisi.
+    saveNetwork(opts = null) {
         let pnl = get('divNetAdapter'), obj = ui.fromElement(pnl);
 
         if (!obj.ethernet) obj.ethernet = {};
@@ -1122,6 +839,7 @@ class Wifi {
         // Masque factice = inchangé : le firmware garde la phrase de passe sur une chaîne vide.
         if (obj.wifi) obj.wifi.passphrase = secretValue(get('fldPassphrase'));
         delete obj.ip;
+        if (opts && opts.hostname) obj.hostname = opts.hostname;
 
         const eth = obj.ethernet;
 
@@ -1139,11 +857,21 @@ class Wifi {
         if (obj.connType >= 2) {
             const container = get('divContainer');
             const isBOXEth = container && container.getAttribute('data-hardwareprofile') === 'BOX-ETH';
-            if (isBOXEth) this.networkConfirmationOverlay(this._currentHostname(), obj);
+            if (opts && opts.onSent) {
+                if (isBOXEth) this.sendNetworkSettings(obj, opts);
+                else this.ethernetConfirmationOverlay(obj, () => this.sendNetworkSettings(obj, opts), opts.onFail);
+            }
+            else if (isBOXEth) this.networkConfirmationOverlay(this._currentHostname(), obj);
             else this.ethernetConfirmationOverlay(obj);
             return;
         }
-        this.sendNetworkSettings(obj);
+        this.sendNetworkSettings(obj, opts);
+    }
+    // Nom d'hôte accepté par le firmware : la page, le reste de l'interface et Général le reprennent.
+    _hostnameSaved(host) {
+        if (this._settings) this._settings.hostname = host;
+        window.__currentHostname = host;
+        general.onHostnameSaved(host);
     }
     _currentHostname() {
         return window.__currentHostname || (window.settings && window.settings.hostname) || 'espsomfyrts';
@@ -1153,7 +881,7 @@ class Wifi {
     // d'aller plus loin. Purement informatif -- l'ancienne case à cocher de sécurité, qui
     // maintenait le bouton désactivé tant qu'elle n'était pas cochée, a été retirée. "Confirmer"
     // enchaîne sur la modale finale d'enregistrement (networkConfirmationOverlay).
-    ethernetConfirmationOverlay(obj) {
+    ethernetConfirmationOverlay(obj, onConfirm = null, onCancel = null) {
         if (get('divEthernetConfirmationOverlay')) return;
 
         const div = document.createElement('div');
@@ -1183,10 +911,14 @@ class Wifi {
         get('divContainer').appendChild(div);
         shOverlay(div);
 
+        // Toute sortie autre que Confirmer (bouton, clic dehors, poignée) rend la main à l'appelant.
+        div._onClosed = () => { if (!div._confirmed && onCancel) onCancel(); };
         get('btnEthConfirmCancel').onclick = () => closeOverlay(div);
         get('btnEthConfirmNext').onclick = () => {
+            div._confirmed = true;
             closeOverlay(div);
-            this.networkConfirmationOverlay(this._currentHostname(), obj);
+            if (onConfirm) onConfirm();
+            else this.networkConfirmationOverlay(this._currentHostname(), obj);
         };
     }
     _ethSummaryHtml(eth) {
@@ -1207,10 +939,10 @@ class Wifi {
         </div>
         </div>`;
     }
-    sendNetworkSettings(obj) {
+    sendNetworkSettings(obj, opts = null) {
         // Enregistrer le réseau est l'action qui conclut RÉELLEMENT l'assistant de premier
-        // démarrage : l'utilisateur valide par btnConfirmNetSave (Wi-Fi) ou btnSaveEthernet
-        // (Ethernet), puis attend la bascule du hotspot vers le réseau local -- il ne repasse
+        // démarrage : l'utilisateur valide par « Enregistrer et connecter », puis attend la
+        // bascule du hotspot vers le réseau local -- il ne repasse
         // jamais par "Ignorer", seule autre sortie de l'assistant, donc onboarding.skip() n'est
         // pas appelé. Tout ce qui doit être appliqué en fin d'assistant doit donc l'être ici aussi.
         const isOnboarding = isApMode && !window.__onboardingDone;
@@ -1218,9 +950,12 @@ class Wifi {
             putJSONSync('/setNetwork', obj, (err, response) => {
                 if (err) {
                     ui.serviceError(err);
+                    if (opts && opts.onFail) opts.onFail();
                     return;
                 }
-                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                if (obj.hostname) this._hostnameSaved(obj.hostname);
+                if (opts && opts.onSent) opts.onSent();
+                else ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                 logger.debug("Network settings updated:", response);
                 clearDirty();
                 this._rebaseline(obj);
@@ -1233,7 +968,8 @@ class Wifi {
         // (attendu, pour garantir l'ordre malgré deux requêtes distinctes) : l'appareil retrouve
         // directement le tableau de bord normal une fois reconnecté, plutôt que de rester en
         // attente d'une étape désormais inaccessible.
-        if (isOnboarding) {
+        const go = () => {
+            if (!isOnboarding) return doSend();
             // Sans réessai (markDone(0), le défaut) : la sauvegarde réseau enchaîne juste derrière
             // et ne peut pas s'offrir plusieurs secondes d'attente. En cas d'échec on envoie quand
             // même -- perdre le drapeau ne coûte qu'une réapparition de l'assistant.
@@ -1243,9 +979,8 @@ class Wifi {
                 logger.error('Failed to auto-complete onboarding before network save:', err);
                 doSend();
             });
-        } else {
-            doSend();
-        }
+        };
+        go();
     }
 
     // Pas de relecture du serveur : l'appareil peut redémarrer dans la seconde.
@@ -1279,11 +1014,58 @@ class Wifi {
     }
 }
 var wifi = new Wifi();
-// Assistant de premier démarrage (Onboarding Wizard) : affiché à la place du tableau de bord en
-// mode AP tant qu'il n'est pas terminé/ignoré (cf. showAuthenticatedShellOrWizard()), ou ouvert
-// manuellement depuis Système ("Relancer l'assistant"). Conteneur entièrement construit au moment
-// de l'ouverture (comme les autres assistants du projet -- pairshade, link/unlink), et non pré-écrit
-// en HTML statique. Contrairement à ces assistants-là il n'a NI stepper (ui.wizSetStep() et le
-// marqueur .wizard associé ne le concernent pas : un seul panneau, pas d'étapes), NI le chrome
-// .inst-overlay/.modal-overlay habituel -- c'est un écran plein, sans nav ni header, au même
-// niveau que #divAuthenticated/#divUnauthenticated.
+
+// Liste des réseaux proches, la même dans l'assistant de première connexion et dans l'onglet Wi-Fi.
+// nets : undefined = pas encore cherché, null = recherche en cours, [] = rien trouvé.
+// /scanaps est bloquant côté appareil (~3 s, HTTP gelé), et coupe la station si le point d'accès
+// est ouvert : on ne le lance donc jamais tout seul depuis la page Connexion.
+class WifiNear {
+    constructor(boxId, { picked, onPick }) {
+        this.boxId = boxId;
+        this.picked = picked;
+        this.onPick = onPick;
+        this.nets = undefined;
+    }
+    scan() {
+        if (this.nets === null) return;
+        this.nets = null;
+        this.render();
+        getJSON('/scanaps', (err, aps) => {
+            if (err) logger.error('Wi-Fi scan failed:', err);
+            this.nets = err ? [] : wifi.groupAPs(aps);
+            this.render();
+        });
+    }
+    render() {
+        const box = get(this.boxId);
+        if (!box) return;
+        box.onclick = (e) => {
+            const b = e.target.closest('button');
+            if (!b) return;
+            if (b.dataset.act === 'scan') this.scan();
+            else if (b.dataset.act === 'hidden') this.onPick('');
+            else if (b.dataset.i) this.onPick(this.nets[parseInt(b.dataset.i, 10)].name);
+            this.render();
+        };
+        const links = `<div class="wifi-near-links">
+            <button type="button" class="wiz-link" data-act="hidden">${tr('WIFI_HIDDEN_NET')}</button>
+            <button type="button" class="wiz-link" data-act="scan">${tr('BT_RESCAN')}</button></div>`;
+        if (this.nets === undefined) {
+            box.innerHTML = `<p class="gen-tile-desc">${tr('CONNEXION_NEAR_IDLE')}</p>
+            <button type="button" class="gen-btn gen-btn-primary" data-act="scan"><svg><use href="#svg-search"></use></svg><span>${tr('CONNEXION_FIND_WIFI')}</span></button>`;
+        } else if (this.nets === null) {
+            box.innerHTML = `<p class="wifi-near-wait"><span class="wiz-spin"></span>${tr('WAIT_MSG_SCANNING')}</p>`;
+        } else if (!this.nets.length) {
+            box.innerHTML = `<p class="gen-tile-desc">${tr('ERR_NO_WIFI_FOUND')}</p>${links}`;
+        } else {
+            const cur = this.picked();
+            box.innerHTML = `<div class="wifi-near-list">${this.nets.map((ap, i) => {
+                const lvl = wifi.calcWaveStrength(ap.strength), on = ap.name === cur;
+                const q = tr(lvl >= 2 ? 'CONNEXION_SIGNAL_GOOD' : lvl === 1 ? 'CONNEXION_SIGNAL_MEDIUM' : 'CONNEXION_SIGNAL_BAD');
+                return `<button type="button" class="wifi-near-net${on ? ' on' : ''}" aria-pressed="${on}" data-i="${i}">
+                <span class="wifi-near-bars lvl-${lvl}" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                <span class="wifi-near-text"><b>${escHtml(ap.name)}</b><small>${q}</small></span></button>`;
+            }).join('')}</div>${links}`;
+        }
+    }
+}

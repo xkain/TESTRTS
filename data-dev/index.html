@@ -384,17 +384,6 @@
                                     <div class="gen-grid" role="tabpanel" data-tab="0">
                                         <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_SERVICES"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></span></header>
                                         <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="GENERAL_TILE_NAME"></h3>
-                                            <div class="gen-field">
-                                                <label class="gen-field-label" for="fldHostname" tr="GENERAL_HOSTNAME"></label>
-                                                <div class="gen-input-box dirty-target">
-                                                    <input id="fldHostname" class="gen-input" name="hostname" type="text" data-bind="general.hostname" maxlength="31" tr="GENERAL_PH_HOSTNAME" placeholder="Enter un Nom d'hôte">
-                                                    <span class="gen-input-unit">.local</span>
-                                                </div>
-                                            </div>
-                                            <p class="gen-tile-desc" tr="GENERAL_TIP_HOSTNAME"></p>
-                                        </div>
-                                        <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="GENERAL_TILE_TIME"></h3>
                                             <div class="gen-field">
                                                 <label class="gen-field-label" for="fldNtptimesever" tr="GENERAL_NTP_SERVER"></label>
@@ -938,6 +927,11 @@
                                     <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
                                         <header class="gen-sec-head"><h2 class="net-wifi-title" tr="CONNEXION_WIFI"></h2><span class="gen-sec-mini" aria-hidden="true"></span></header>
                                         <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="CONNEXION_NEAR_TITLE"></h3>
+                                            <!-- Rempli par WifiNear (50-wifi.js), le même composant que dans l'assistant. -->
+                                            <div id="netNear" class="wifi-near"></div>
+                                        </div>
+                                        <div class="gen-tile">
                                             <h3 class="gen-tile-title net-wifi-title" tr="CONNEXION_WIFI"></h3>
                                             <div class="gen-field">
                                                 <label class="gen-field-label" for="fldSsid" tr="CONNEXION_WIFI_SSID"></label>
@@ -952,7 +946,6 @@
                                                     <div class="password-eye" onclick="security.toggleFieldPassword('fldPassphrase', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
                                                 </div>
                                             </div>
-                                            <button type="button" class="gen-btn hotspot-hidden" onclick="wifi.findWifi();"><svg><use href="#svg-search"></use></svg><span tr="CONNEXION_FIND_WIFI"></span></button>
                                         </div>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="CONNEXION_TITLE_OPTIONS"></h3>
@@ -977,6 +970,17 @@
 
                                     <div class="gen-grid" role="tabpanel" data-tab="3" hidden>
                                         <header class="gen-sec-head"><h2 tr="CONNEXION_TAB_ADVANCED"></h2><span class="gen-sec-mini" aria-hidden="true"></span></header>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="CONNEXION_HOSTNAME_TILE"></h3>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="fldHostname" tr="GENERAL_HOSTNAME"></label>
+                                                <div class="gen-input-box dirty-target">
+                                                    <input id="fldHostname" class="gen-input" type="text" maxlength="31" autocomplete="off" tr="CONNEXION_HOSTNAME_PH" placeholder=" ">
+                                                    <span class="gen-input-unit">.local</span>
+                                                </div>
+                                            </div>
+                                            <p class="gen-tile-desc" tr="CONNEXION_HOSTNAME_TIP"></p>
+                                        </div>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="CONNEXION_CURRENT_IP"></h3>
                                             <div class="gen-row dirty-target">
@@ -2505,9 +2509,7 @@
             </div>
 
         </div>
-        <!-- Assistant de premier démarrage (Onboarding Wizard) -- conteneur vide, entièrement
-        rempli par onboarding.open() (index.js), même sibling que divAuthenticated/divUnauthenticated
-        donc sans nav/header : voir showAuthenticatedShellOrWizard(). -->
+        <!-- Assistant de première connexion : rempli par onboarding.open() (60-onboarding.js). -->
         <div id="divOnboardingWizard" style="display:none;"></div>
         <!-- Télécommande virtuelle : bloc unique, sans page à lui. Il réside ici, masqué, et
              openVirtualRemote() le DÉPLACE le temps d'une ouverture dans l'overlay appelé depuis

@@ -1381,25 +1381,6 @@ button[line].fw-sidebar-button:hover {
     margin-bottom:10px;
 }
 
-.no-wifi {
-    padding: 20px 10px;
-    text-align: center;
-}
-.no-wifi > div {
-    margin-bottom: 20px;
-    color: var(--color-text-warning);
-    font-weight: bold;
-    justify-content: center;
-}
-
-.loadAPScan {
-    color: var(--color-text-main) !important;
-    font-weight: 500;
-}
-
-.strength .signal {
-    width:24px; height: 24px;
-}
 .prompt-content .sub-message p.is-warning {
     color: var(--color-danger);
     font-weight: 600;
@@ -1442,39 +1423,6 @@ div.eth-setting-line label {
     min-width: 130px;
     text-align:right;
     color: var(--color-text-main);
-}
-/* Le padding horizontal habituel de .overlay-scroll-content est retiré ICI : avec un carrousel
- * qui glisse en translateX(), ce padding forme un "sas" entre le bord du track et le bord de
- * clip d'overflow-x, assez large pour y laisser dépasser un filet de la page voisine. Le padding
- * repasse donc sur .wifiChoosePage (une valeur par page), pour que le bord de clip coïncide pile
- * avec le bord de la page. */
-.wifiOverlay-content .overlay-scroll-content {
-    overflow-x: hidden;
-    padding-left: 0;
-    padding-right: 0;
-}
-#wifiCarousel {
-    display: flex;
-    width: 200%;
-    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
-}
-.wifiChoosePage {
-    display: flex;
-    flex-direction: column;
-    width: 50%;
-    flex-shrink: 0;
-    padding: 0 20px;
-}
-.blocdivApsOverlay {
-    min-height: 300px;
-    max-height: 320px;
-    overflow-y: auto;
-    margin-top: 15px;
-}
-.divbtsTButton {
-    display: flex;
-    justify-content: space-between;
-    padding: 12px 0 8px 0;
 }
 
 /* ==========================================================
@@ -3476,7 +3424,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 
 /* --- Assistants (coque wiz-) : créer un groupe, ajouter un équipement. Collés aux bords de la zone de contenu, sans
    les 16 px des fenêtres genmod- ; étapes à gauche, contenu à droite, pied sur toute la largeur. */
-.message-content.wiz-window { font-size: 16px; flex: 1; align-self: stretch; width: auto; max-width: none; max-height: none; margin: var(--topbar-height) 0 0 var(--sidebar-width); display: grid; grid-template-columns: minmax(280px, 26fr) minmax(0, 74fr); grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "side main" "foot foot"; border: 0; border-radius: 0; background: var(--bg); color: var(--text); text-align: left; }
+.message-content.wiz-window, .onb-window { font-size: 16px; flex: 1; align-self: stretch; width: auto; max-width: none; max-height: none; margin: var(--topbar-height) 0 0 var(--sidebar-width); display: grid; grid-template-columns: minmax(280px, 26fr) minmax(0, 74fr); grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "side main" "foot foot"; border: 0; border-radius: 0; background: var(--bg); color: var(--text); text-align: left; }
 .wiz-side { grid-area: side; display: flex; flex-direction: column; gap: 22px; min-height: 0; overflow: auto; padding: clamp(24px, 4vh, 44px) clamp(20px, 2.2vw, 36px); background: var(--panel); }
 .wiz-side-head { display: flex; align-items: center; gap: 12px; }
 .wiz-title { margin: 0; font-size: clamp(24px, 2.2vw, 34px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
@@ -3715,7 +3663,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 #divShadeSetup :is(.wiz-main, .genmod-body) :is(.setup-marks, .setup-mypos) { border: 0; border-radius: var(--r-3); background: var(--surface-2); }
 /* Tablette : étapes en bandeau au-dessus du contenu, croix au bout de la ligne du titre. */
 @media (max-width: 999px) {
-    .message-content.wiz-window { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "side" "main" "foot"; }
+    .message-content.wiz-window, .onb-window { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "side" "main" "foot"; }
     .wiz-side { gap: 14px; padding: 18px 24px; overflow: visible; }
     .wiz-title { font-size: var(--fs-7); }
     .wiz-close, .wiz-close:hover { display: grid; }
@@ -3746,7 +3694,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
    courante ; pied comme .genmod-foot, indication au-dessus et boutons en ligne à parts égales. */
 @media (max-width: 767px) {
     .wiz-overlay::before { inset: 0; }
-    .message-content.wiz-window { height: 100%; margin: 0; border-top: 0; border-radius: 0; box-shadow: none; overflow: hidden; animation: none; transform: none; }
+    .message-content.wiz-window, .onb-window { height: 100%; margin: 0; border-top: 0; border-radius: 0; box-shadow: none; overflow: hidden; animation: none; transform: none; }
     .wiz-side { gap: 10px; padding: 14px 16px 10px; }
     .wiz-title { font-size: var(--fs-6); }
     /* Seulement trois repères : la précédente (coche), la courante en toutes lettres, la suivante
@@ -3782,6 +3730,89 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .wiz-foot-gap { display: none; }
     .wiz-foot-hint { order: -1; flex: 1 1 100%; font-size: var(--fs-2); }
     .wiz-foot .gen-btn { flex: 1 1 0; justify-content: center; min-width: 0; padding: 0 10px; }
+}
+
+/* --- Assistant de première connexion (60-onboarding.js) : la coque wiz- dans #divOnboardingWizard
+   (main.css), déjà cadré sur la zone de contenu. Seule la colonne des étapes change : sombre comme le
+   menu latéral, dans les deux thèmes. */
+.onb-window { margin: 0; }
+@media (min-width: 1000px) {
+    .onb-window { grid-template-columns: minmax(300px, 30fr) minmax(0, 70fr); }
+}
+.onb-side { --onb-raise: #1e2228; --onb-line: #3a3f48; --onb-text-2: #c9ccd3; --onb-text-3: #7d828b; gap: 28px; background: color-mix(in srgb, var(--color-accent) 2%, #121316); color: #fff; }
+.onb-brand { display: flex; align-items: center; gap: 12px; font-size: var(--fs-5); font-weight: 800; }
+.onb-logo { flex: none; width: 36px; height: 36px; color: #fff; }
+.onb-brand span { flex: 1; min-width: 0; }
+.onb-skip-in { display: none; }
+.onb-side .wiz-title { color: #fff; }
+.onb-welcome-desc { margin: 8px 0 0; font-size: var(--fs-4); line-height: 1.45; color: var(--onb-text-2); }
+.onb-side .wiz-step { color: var(--onb-text-3); }
+.onb-side .wiz-step-n { border-color: var(--onb-line); }
+.onb-side .wiz-step.on { color: #fff; }
+.onb-side .wiz-step.on .wiz-step-n { border-color: #fff; background: #fff; color: #141619; }
+.onb-side .wiz-step.done { color: var(--onb-text-2); }
+.onb-side .wiz-pbar i { background: var(--onb-line); }
+.onb-side .wiz-pbar i.on { background: #fff; }
+.onb-ap { margin: auto 0 0; padding: 16px; border-radius: var(--r-4); background: var(--onb-raise); font-size: var(--fs-3); line-height: 1.5; color: var(--onb-text-2); }
+.onb-ap b { color: #fff; }
+.onb-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.onb-card, .onb-card:hover { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: auto; min-height: 200px; margin: 0; padding: 24px; border: 0; border-radius: var(--r-5); background: var(--surface); color: var(--text); text-align: left; text-transform: none; font-weight: 400; }
+.onb-card.on, .onb-card.on:hover { background: color-mix(in srgb, var(--color-accent) 10%, var(--surface)); }
+.onb-card-ico { display: grid; place-items: center; flex: none; width: 56px; height: 56px; border-radius: var(--r-3); background: var(--surface-2); color: var(--text-2); }
+.onb-card.on .onb-card-ico, .onb-card.on .onb-card-tag { background: var(--surface); }
+.onb-card-ico svg { width: 30px; height: 30px; fill: currentColor; }
+.onb-card b { font-size: var(--fs-6); }
+.onb-card-desc { font-size: var(--fs-3); color: var(--text-3); }
+.onb-card-tag { margin-top: auto; padding: 4px 10px; border-radius: var(--r-pill); background: var(--info-bg); color: var(--info); font-size: var(--fs-1); font-weight: 700; }
+/* La colonne des étapes est plus large que dans les autres assistants : 320 px laissent deux tuiles côte à côte. */
+.onb-window .wiz-grid { grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); }
+.onb-tile-h { display: flex; align-items: center; gap: 10px; margin: 0; font-size: var(--fs-5); font-weight: 800; line-height: 1.25; }
+.onb-tile-h .wiz-sec-n { width: 28px; height: 28px; }
+/* Une adresse ne se coupe jamais : la taille suit la largeur de la tuile et la longueur de l'URL
+   (--chars, posé par le JS ; un caractère à chasse fixe fait ~0,6 em). */
+.onb-window .gen-tile { container-type: inline-size; }
+.onb-addr { align-self: flex-start; max-width: 100%; box-sizing: border-box; font-family: ui-monospace, monospace; font-size: min(var(--fs-4), calc(100cqi / (var(--chars, 24) * 0.62))); font-weight: 700; white-space: nowrap; }
+/* Un lien, et il doit se voir sans survol (mobile) : souligné, icône de lien sortant. La place de
+   l'icône (1em + 10 px) est retirée du calcul de taille. */
+.onb-addr-big { display: inline-flex; align-items: center; gap: 10px; padding: 16px 20px; border-radius: var(--r-4); background: var(--surface-2); color: var(--color-accent); font-size: min(24px, calc((100cqi - 40px - 34px) / (var(--chars, 24) * 0.62))); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.onb-addr-big:hover { background: color-mix(in srgb, var(--color-accent) 12%, var(--surface)); }
+.onb-addr-big svg { flex: none; width: 1em; height: 1em; fill: currentColor; }
+/* Étape 3 : la consigne suit le titre, elle n'est pas un pied de tuile. */
+.onb-done .gen-tile > .gen-tile-desc:last-child { margin-top: 0; }
+.wiz-foot:empty { display: none; }
+@media (max-width: 999px) {
+    .onb-side { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 16px 28px; padding: 24px 40px 20px; }
+    .onb-welcome { flex: 1; min-width: 0; }
+    .onb-welcome .wiz-title { font-size: var(--fs-7); }
+    .onb-welcome-desc { margin-top: 4px; font-size: var(--fs-3); }
+    .onb-side .wiz-steps { width: 100%; padding-top: 14px; border-top: 1px solid var(--onb-line); }
+    .onb-side .wiz-step { padding: 0; background: none; }
+    .onb-ap { width: 100%; margin: 0; padding: 12px 14px; }
+    .onb-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .onb-card, .onb-card:hover { min-height: 0; padding: 20px; }
+}
+/* Mobile : « Ignorer » monte dans le bandeau, les cartes se couchent, icône à gauche. */
+@media (max-width: 767px) {
+    .onb-side { gap: 12px; padding: 14px 16px 12px; }
+    .onb-brand { flex: 1 1 100%; font-size: var(--fs-4); }
+    .onb-logo { width: 30px; height: 30px; }
+    .onb-skip-in, .onb-skip-in:hover { display: block; min-height: 40px; color: var(--onb-text-2); }
+    .onb-window .wiz-foot .onb-quit { display: none; }
+    /* « Retour » à sa largeur, l'action principale prend le reste : à parts égales, son libellé
+       ne tenait pas. */
+    .onb-window .wiz-foot .gen-btn { flex: 0 0 auto; padding: 0 16px; }
+    .onb-window .wiz-foot .gen-btn-primary { flex: 1 1 auto; }
+    /* Étape 1 : « Ignorer » est dans le bandeau, le pied n'a plus rien à porter. */
+    .onb-window .wiz-foot:not(:has(.gen-btn:not(.onb-quit))) { display: none; }
+    .onb-welcome { display: none; }
+    .onb-side .wiz-steps { padding-top: 12px; }
+    .onb-ap { padding: 10px 12px; font-size: var(--fs-2); }
+    .onb-cards { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .onb-card, .onb-card:hover { display: grid; grid-template-columns: 48px minmax(0, 1fr); column-gap: 14px; row-gap: 4px; padding: 16px; border-radius: var(--r-5); }
+    .onb-card-ico { grid-row: span 3; width: 48px; height: 48px; }
+    .onb-card b { font-size: var(--fs-5); }
+    .onb-card-tag { justify-self: start; margin-top: 6px; }
+    .onb-addr-big { padding: 12px 14px; font-size: min(20px, calc((100cqi - 28px - 30px) / (var(--chars, 24) * 0.62))); }
 }
 
 /* =======================================================================

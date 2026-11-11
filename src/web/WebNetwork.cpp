@@ -176,6 +176,9 @@ namespace WebNetwork {
       JsonObject obj = doc.as<JsonObject>();
       WebRequestMethodComposite method = request->method();
       if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
+        // Le nom d'hôte appartient à /setNetwork (validé, appliqué au réseau) : retiré ici pour que
+        // fromJSON() ne le pose pas par un second chemin sans contrôle.
+        obj.remove("hostname");
         if(obj.containsKey("ledPin")) {
           int ledPin = obj["ledPin"].as<int>();
           #if LED_PROFILE_FIXED
@@ -260,14 +263,13 @@ namespace WebNetwork {
         // Cette liste doit couvrir TOUTES les clés que ConfigSettings::fromJSON() sait traiter,
         // sinon un corps ne contenant qu'une clé absente d'ici est ignoré en silence -- avec un
         // 200 « Successfully set General Settings » pour couronner le tout. L'interface ne le
-        // verrait pas : elle poste toujours le panneau entier, donc `hostname` est toujours présent
-        // et la condition passe toujours ; seul un client REST ciblé sur une seule clé tomberait
-        // dessus.
-        // `connType` et `language`, également lues par fromJSON(), sont VOLONTAIREMENT absentes :
-        // elles ont des routes dédiées (/setNetwork, /setLang) qui font davantage que poser le
-        // champ -- reconfiguration de l'interface réseau, validation du code langue et purge de
-        // pendingLang. Les accepter ici ouvrirait un second chemin incomplet.
-        if (obj.containsKey("hostname") || obj.containsKey("ssdpBroadcast") || obj.containsKey("checkForUpdate") || obj.containsKey("enableDebugLogs")
+        // verrait pas : elle poste toujours le panneau entier ; seul un client REST ciblé sur une
+        // seule clé tomberait dessus.
+        // `hostname`, `connType` et `language`, également lues par fromJSON(), sont VOLONTAIREMENT
+        // absentes : elles ont des routes dédiées (/setNetwork, /setLang) qui font davantage que
+        // poser le champ -- contrôle et application du nom au réseau, reconfiguration de
+        // l'interface réseau, validation du code langue et purge de pendingLang.
+        if (obj.containsKey("ssdpBroadcast") || obj.containsKey("checkForUpdate") || obj.containsKey("enableDebugLogs")
             || obj.containsKey("ledPin") || obj.containsKey("ledActiveLow") || obj.containsKey("ledRfBlink")
             || obj.containsKey("ledAddressable")
             || obj.containsKey("ledColorActivity")
@@ -281,7 +283,6 @@ namespace WebNetwork {
           settings.fromJSON(obj);
           settings.save();
           if(settings.checkForUpdate != checkForUpdate) FwInfo::emit();
-          if(obj.containsKey("hostname")) net.updateHostname();
           if(obj.containsKey("ledPin") || obj.containsKey("ledActiveLow")
              || obj.containsKey("ledAddressable")
              || obj.containsKey("ledColorActivity")
@@ -320,7 +321,28 @@ namespace WebNetwork {
       JsonObject obj = doc.as<JsonObject>();
       WebRequestMethodComposite method = request->method();
       if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
+        // Contrôlé avant toute écriture : un refus ne doit rien laisser à moitié enregistré.
+        // parseValueString() couperait sans prévenir au-delà de 31 caractères (char hostname[32]).
+        const char *host = obj.containsKey("hostname") ? (obj["hostname"] | "") : nullptr;
+        if(host) {
+          size_t n = strlen(host);
+          const char *code = n == 0 ? "INVALID_HOSTNAME" : n >= sizeof(settings.hostname) ? "HOSTNAME_LENGTH" : nullptr;
+          for(size_t i = 0; !code && i < n; i++)
+            if(!isalnum((unsigned char)host[i]) && host[i] != '-') code = "HOSTNAME_CHARS";
+          if(code) {
+            char body[160];
+            snprintf(body, sizeof(body), "{\"status\":\"ERROR\",\"code\":\"%s\",\"desc\":\"The host name must be 1 to 31 letters, digits or hyphens.\"}", code);
+            request->send(400, "application/json", body);
+            return;
+          }
+        }
         bool reboot = false;
+        // Enregistré avant le type de connexion : un redémarrage programmé plus bas le reprend.
+        if(host && strcmp(host, settings.hostname) != 0) {
+          strlcpy(settings.hostname, host, sizeof(settings.hostname));
+          settings.save();
+          net.updateHostname();
+        }
         if(obj.containsKey("connType") && obj["connType"].as<uint8_t>() != static_cast<uint8_t>(settings.connType)) {
           settings.connType = static_cast<conn_types_t>(obj["connType"].as<uint8_t>());
           settings.save();

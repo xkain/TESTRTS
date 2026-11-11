@@ -31,7 +31,7 @@ class General {
         this._bindGeneralPage();
         if (sockIsOpen && ui.isConfigOpen()) socket.send('join:0');
         ui.toElement(get('divSystemSettings'), {
-            general: { hostname: 'ESPSomfyRTS', username: '', password: '', posixZone: 'UTC0', ntpServer: 'pool.ntp.org' }
+            general: { username: '', password: '', posixZone: 'UTC0', ntpServer: 'pool.ntp.org' }
         });
 
         this.initialized = true;
@@ -55,7 +55,6 @@ class General {
             input.dispatchEvent(new Event('input', { bubbles: true }));
             input.dispatchEvent(new Event('change', { bubbles: true }));
         });
-        get('fldHostname').addEventListener('input', () => this._renderHero());
         get('selTimeZone').addEventListener('change', () => this._renderHero());
         // Après _markDirty (écouteur posé par watchDirty sur l'ancêtre #divSystemSettings, donc
         // appelé APRÈS celui-ci) : différé d'un tour pour compter le champ qui vient d'être marqué.
@@ -87,7 +86,6 @@ class General {
         const fbStyle = (on, style) => on ? (style === 'flash' ? 'flash' : 'scale') : 'off';
         const field = (label, els, saved, now, show = (v) => v, same = (a, b) => a === b) => ({ label, els, saved, now, show, same });
         return [
-            field('GENERAL_HOSTNAME', [get('fldHostname')], s.hostname || '', get('fldHostname').value),
             field('GENERAL_NTP_SERVER', [get('fldNtptimesever')], s.ntpServer || '', get('fldNtptimesever').value),
             field('GENERAL_UPNP', [get('cbSsdpBroadcast')], !!s.ssdpBroadcast, get('cbSsdpBroadcast').checked, yesNo),
             field('GENERAL_TIMEZONE', [tz], s.posixZone || '', tz.value, tzText),
@@ -138,9 +136,14 @@ class General {
         if (!scope || scope.contains(get('divSystemOptions'))) this.revertGeneral();
         else this.revertClientPreviews(scope);
     }
+    onHostnameSaved(host) {
+        this._lastSettings = Object.assign(this._lastSettings || {}, { hostname: host });
+        this._renderHero();
+    }
     _renderHero() {
         const set = (id, v) => { const el = get(id); if (el) el.textContent = v; };
-        const host = get('fldHostname')?.value || '';
+        // Le nom d'hôte se règle dans Réseau › Connexion : ici on montre la valeur enregistrée.
+        const host = (this._lastSettings && this._lastSettings.hostname) || window.__currentHostname || '';
         set('genHeroHost', host);
         set('genHeroUrl', host ? `http://${host.toLowerCase()}.local` : '');
         set('genChipLang', get('currentLangDisplay')?.textContent || '');
@@ -537,18 +540,6 @@ class General {
         logger.setDebugEnabled(obj.enableDebugLogs);
         const msg = tr('ERR_HOSTNAME');
 
-        if (typeof obj.hostname === 'undefined' || !obj.hostname || obj.hostname === '') {
-            ui.errorMessage(msg, tr('ERR_INVALID_HOSTNAME'));
-            valid = false;
-        }
-        if (valid && !/^[a-zA-Z0-9-]+$/.test(obj.hostname)) {
-            ui.errorMessage(msg, tr('ERR_HOSTNAME_CHARS'));
-            valid = false;
-        }
-        if (valid && obj.hostname.length > 32) {
-            ui.errorMessage(msg, tr('ERR_HOSTNAME_LENGTH'));
-            valid = false;
-        }
         if (valid && typeof obj.ntpServer === 'string' && obj.ntpServer.length > 64) {
             ui.errorMessage(msg, tr('ERR_NTP_LENGTH'));
             valid = false;
