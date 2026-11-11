@@ -212,7 +212,7 @@
                 <span tr="TAB_DASHBOARD">Tableau de bord</span>
             </a>
             <div class="nav-section" data-section="divSomfySettings">
-                <div class="nav-section-title"><span class="nav-section-label" tr="TAB_SOMFY">Somfy</span></div>
+                <div class="nav-section-title"><span class="nav-section-label" tr="TAB_SOMFY">Installation</span></div>
                 <a class="sub-nav-item" data-grpid="divSomfyMotors"><svg class="nav-icon"><use href="#svg-indicShutter"></use></svg><span tr="SUBTAB_DEVICES">Équipements</span></a>
                 <a class="sub-nav-item" data-grpid="divSomfyGroups"><svg class="nav-icon"><use href="#svg-group"></use></svg><span tr="SUBTAB_GROUPS">Groupes</span></a>
                 <a class="sub-nav-item" data-grpid="divSomfyRooms"><svg class="nav-icon"><use href="#svg-navRoom"></use></svg><span tr="SUBTAB_ROOMS">Pièces</span></a>
@@ -220,20 +220,23 @@
             </div>
             <div class="nav-section" data-section="divRadioSettings">
                 <div class="nav-section-title"><span class="nav-section-label" tr="TAB_RADIO">Radio</span></div>
-                <a class="sub-nav-item" data-grpid="divTransceiverSettings"><svg class="nav-icon"><use href="#svg-antenna"></use></svg><span tr="SUBTAB_RADIO">Configuration</span></a>
-                <a class="sub-nav-item" data-grpid="divListener"><svg class="nav-icon"><use href="#svg-remote"></use></svg><span tr="SUBTAB_LISTENERS">Télécommandes</span></a>
+                <a class="sub-nav-item" data-grpid="divTransceiverSettings"><svg class="nav-icon"><use href="#svg-antenna"></use></svg><span tr="SUBTAB_RADIO">Réglages radio</span></a>
                 <a class="sub-nav-item" data-grpid="divRepeater"><svg class="nav-icon"><use href="#svg-repeater"></use></svg><span tr="SUBTAB_REPEATER">Répéteur</span></a>
-                <a class="sub-nav-item" data-grpid="divFrameLog"><svg class="nav-icon"><use href="#svg-list"></use></svg><span tr="SUBTAB_LOGS">Journaux</span></a>
+                <a class="sub-nav-item" data-grpid="divFrameLog"><svg class="nav-icon"><use href="#svg-list"></use></svg><span tr="SUBTAB_LOGS">Journal radio</span></a>
             </div>
             <div class="nav-section" data-section="divNetworkSettings">
                 <div class="nav-section-title"><span class="nav-section-label" tr="TAB_NETWORK">Réseau</span></div>
                 <a class="sub-nav-item" data-grpid="divNetAdapter"><svg class="nav-icon"><use href="#svg-tabReseau"></use></svg><span tr="SUBTAB_CONNECTION">Connexion</span></a>
-                <a class="sub-nav-item" data-grpid="divMQTT"><svg class="nav-icon"><use href="#svg-mqtt"></use></svg><span tr="SUBTAB_MQTT">MQTT</span></a>
+            </div>
+            <div class="nav-section" data-section="divIntegrationSettings">
+                <div class="nav-section-title"><span class="nav-section-label" tr="TAB_INTEGRATIONS">Intégrations</span></div>
+                <a class="sub-nav-item" data-grpid="divMQTT"><svg class="nav-icon"><use href="#svg-mqtt"></use></svg><span tr="SUBTAB_MQTT">MQTT &amp; Home Assistant</span></a>
+                <a class="sub-nav-item" data-grpid="divListener"><svg class="nav-icon"><use href="#svg-remote"></use></svg><span tr="SUBTAB_LISTENERS">Déclencheurs</span></a>
             </div>
             <div class="nav-section" data-section="divSystemSettings">
                 <div class="nav-section-title"><span class="nav-section-label" tr="TAB_SYSTEM">Système</span></div>
                 <a class="sub-nav-item" data-grpid="divSystemOptions"><svg class="nav-icon"><use href="#svg-tabSystem"></use></svg><span tr="SUBTAB_GENERAL">Général</span></a>
-                <a class="sub-nav-item" data-grpid="divFirmware"><svg class="nav-icon"><use href="#svg-navFirmware"></use></svg><span tr="SUBTAB_DEVICE">Appareil</span></a>
+                <a class="sub-nav-item" data-grpid="divFirmware"><svg class="nav-icon"><use href="#svg-navFirmware"></use></svg><span tr="SUBTAB_DEVICE">Maintenance</span></a>
             </div>
         </nav>
         <div class="sidebar-footer">
@@ -288,15 +291,6 @@
                 </div>
             </div>
             <div id="divConfigPnl" style="display:none;">
-                <!-- .tab-container + le .subtab-container de la section active (déplacé ici par
-                     _mountMobileSubtab() dans index.js) partagent UN SEUL bloc sticky
-                     (#divMobileStickyNav), pour qu'ils se repeignent ensemble pendant le scroll
-                     sans décalage entre deux position:sticky indépendants. Sur desktop, ce
-                     déplacement est sans effet visuel : .subtab-container y est déjà masqué
-                     (remplacé par le fil d'Ariane). -->
-                <div id="divMobileBreadcrumbSlot">
-                    <a class="crumb-back" onclick="confirmDiscardChanges(() => activateGrpid('divSettingsPnl'));"><svg><use href="#svg-arrowLeft"></use></svg><span tr="SETTINGS_TITLE">Réglages</span></a>
-                </div>
                 <div id="divSettingsPnl" style="display:none;">
                     <div class="settings-head">
                         <h2 class="settings-title" tr="SETTINGS_TITLE">Réglages</h2>
@@ -312,14 +306,17 @@
                     <div class="settings-sec" tr="TAB_RADIO"></div>
                     <div class="settings-list">
                         <a class="settings-row" data-grpid="divTransceiverSettings"><span class="uniblocSvg-F"><svg><use href="#svg-antenna"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_RADIO"></b><span class="settings-row-desc" tr="SETTINGS_DESC_TRANSCEIVER"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divListener"><span class="uniblocSvg-F"><svg><use href="#svg-remote"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_LISTENERS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_LISTENERS"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
                         <a class="settings-row" data-grpid="divRepeater"><span class="uniblocSvg-F"><svg><use href="#svg-repeater"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_REPEATER"></b><span class="settings-row-desc" tr="SETTINGS_DESC_REPEATER"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
                         <a class="settings-row" data-grpid="divFrameLog"><span class="uniblocSvg-F"><svg><use href="#svg-list"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_LOGS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_FRAMELOG"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
                     </div>
                     <div class="settings-sec" tr="TAB_NETWORK"></div>
                     <div class="settings-list">
                         <a class="settings-row" data-grpid="divNetAdapter"><span class="uniblocSvg-F"><svg><use href="#svg-tabReseau"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_CONNECTION"></b><span class="settings-row-desc" tr="SETTINGS_DESC_CONNECTION"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                    </div>
+                    <div class="settings-sec" tr="TAB_INTEGRATIONS"></div>
+                    <div class="settings-list">
                         <a class="settings-row" data-grpid="divMQTT"><span class="uniblocSvg-F"><svg><use href="#svg-mqtt"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_MQTT"></b><span class="settings-row-desc" tr="SETTINGS_DESC_MQTT"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" data-grpid="divListener"><span class="uniblocSvg-F"><svg><use href="#svg-remote"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_LISTENERS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_LISTENERS"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
                     </div>
                     <div class="settings-sec" tr="TAB_SYSTEM"></div>
                     <div class="settings-list">
@@ -329,26 +326,6 @@
                     <div class="button-container-footerHtml">
                         <button type="button" line onclick="general.rebootDevice();"><svg><use href="#svg-restart"></use></svg><span tr="BT_REBOOT">Redémarrer</span></button>
                     </div>
-                </div>
-                <div id="divMobileStickyNav">
-                    <div class="tab-container">
-                        <span class="animScale" data-grpid="divHomePnl" tr="TAB_DASHBOARD" title="">
-                            <svg class="tab-icon"><use href="#svg-tabHome"></use></svg>
-                        </span>
-                        <span class="animScale" data-grpid="divNetworkSettings" tr="TAB_NETWORK" title="">
-                            <svg class="tab-icon"><use href="#svg-tabReseau"></use></svg>
-                        </span>
-                        <span class="animScale" data-grpid="divRadioSettings" tr="TAB_RADIO" title="">
-                            <svg class="tab-icon"><use href="#svg-tabRadio"></use></svg>
-                        </span>
-                        <span class="animScale" data-grpid="divSomfySettings" tr="TAB_SOMFY" title="">
-                            <svg class="tab-icon"><use href="#svg-indicShutter"></use></svg>
-                        </span>
-                        <span class="selected animScale" data-grpid="divSystemSettings" tr="TAB_SYSTEM" title="">
-                            <svg class="tab-icon"><use href="#svg-tabSystem"></use></svg>
-                        </span>
-                    </div>
-                    <div id="divMobileSubtabSlot"></div>
                 </div>
 
                 <div id="divSystemSettings">
@@ -375,16 +352,27 @@
 
                             <div class="gen-body">
                                 <nav id="genTabs" class="gen-tabs" role="tablist">
-                                    <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="GENERAL_TITLE_SERVICES"></button>
-                                    <button type="button" class="gen-tab" role="tab" data-tab="1" tr="GENERAL_TITLE_REGION"></button>
-                                    <button type="button" class="gen-tab" role="tab" data-tab="2" tr="GENERAL_TITLE_LOOK"></button>
-                                    <button type="button" class="gen-tab" role="tab" data-tab="3" tr="GENERAL_TITLE_SECURITY"></button>
+                                    <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="GENERAL_TITLE_REGION"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="1" tr="GENERAL_TITLE_LOOK"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="2" tr="GENERAL_TITLE_SECURITY"></button>
                                 </nav>
                                 <div id="genPanels" class="gen-panels">
                                     <div class="gen-grid" role="tabpanel" data-tab="0">
-                                        <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_SERVICES"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></span></header>
+                                        <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_REGION"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i></span></header>
                                         <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="GENERAL_TILE_TIME"></h3>
+                                            <h3 class="gen-tile-title" tr="GENERAL_TILE_LANG"></h3>
+                                            <div id="currentLangDisplay" class="gen-tile-value"></div>
+                                            <button id="btnOpenLangManager" type="button" class="gen-btn" onclick="general.openLangManager()"><svg><use href="#svg-language"></use></svg><span tr="GENERAL_LANGUAGE"></span></button>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GENERAL_TILE_DATETIME"></h3>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="selTimeZone" tr="GENERAL_TIMEZONE"></label>
+                                                <div class="gen-input-box dirty-target">
+                                                    <select id="selTimeZone" class="gen-input" name="timeZone" data-bind="general.posixZone"></select>
+                                                </div>
+                                            </div>
+                                            <p class="gen-tile-desc" tr="GENERAL_TIMEZONE_DESC"></p>
                                             <div class="gen-field">
                                                 <label class="gen-field-label" for="fldNtptimesever" tr="GENERAL_NTP_SERVER"></label>
                                                 <div class="gen-input-box dirty-target">
@@ -392,35 +380,6 @@
                                                 </div>
                                             </div>
                                             <p class="gen-tile-desc" tr="GENERAL_NTP_DESC"></p>
-                                        </div>
-                                        <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="GENERAL_TILE_SERVICES"></h3>
-                                            <div class="gen-row dirty-target">
-                                                <span class="gen-row-text"><b tr="GENERAL_UPNP"></b><span tr="GENERAL_UPNP_DESC"></span></span>
-                                                <span class="gen-seg gen-seg-bool">
-                                                    <input id="cbSsdpBroadcast" name="ssdpBroadcast" type="checkbox" data-bind="general.ssdpBroadcast">
-                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
-                                                    <span class="gen-seg-no" tr="BT_NO"></span>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="gen-grid" role="tabpanel" data-tab="1" hidden>
-                                        <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_REGION"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i></span></header>
-                                        <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="GENERAL_TILE_LANG"></h3>
-                                            <div id="currentLangDisplay" class="gen-tile-value"></div>
-                                            <button id="btnOpenLangManager" type="button" class="gen-btn" onclick="general.openLangManager()"><svg><use href="#svg-language"></use></svg><span tr="GENERAL_LANGUAGE"></span></button>
-                                        </div>
-                                        <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="GENERAL_TIMEZONE"></h3>
-                                            <div class="gen-field">
-                                                <div class="gen-input-box dirty-target">
-                                                    <select id="selTimeZone" class="gen-input" name="timeZone" data-bind="general.posixZone"></select>
-                                                </div>
-                                            </div>
-                                            <p class="gen-tile-desc" tr="GENERAL_TIMEZONE_DESC"></p>
                                         </div>
                                         <div class="gen-tile hotspot-hidden">
                                             <h3 class="gen-tile-title" tr="GENERAL_GEO_TITLE"></h3>
@@ -449,8 +408,8 @@
                                         </div>
                                     </div>
 
-                                    <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
-                                        <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_LOOK"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i><i></i></span></header>
+                                    <div class="gen-grid" role="tabpanel" data-tab="1" hidden>
+                                        <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_LOOK"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="GENERAL_DISPLAY_MODE"></h3>
                                             <div class="gen-seg dirty-target">
@@ -522,22 +481,14 @@
                                         </div>
                                     </div>
 
-                                    <div class="gen-grid" role="tabpanel" data-tab="3" hidden>
-                                        <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_SECURITY"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i></span></header>
+                                    <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
+                                        <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_SECURITY"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i></span></header>
                                         <div id="genSecTile" class="gen-tile">
                                             <h3 class="gen-tile-title" tr="GENERAL_SECURITY"></h3>
                                             <div id="genSecBody" class="gen-sec-body"></div>
                                             <div class="gen-sec-foot">
                                                 <span class="gen-tile-desc" tr="GENERAL_SECURITY_SEPARATE"></span>
                                                 <button id="btnGenSecApply" type="button" class="gen-btn gen-btn-primary" onclick="general.saveSecurity();" disabled><svg><use href="#svg-lock"></use></svg><span tr="BT_APPLY"></span></button>
-                                            </div>
-                                        </div>
-                                        <div class="gen-tile hotspot-hidden">
-                                            <h3 class="gen-tile-title" tr="HACS"></h3>
-                                            <p class="gen-tile-desc" tr="GENERAL_HA_TILE_DESC"></p>
-                                            <div class="gen-btn-row">
-                                                <button type="button" class="gen-btn" onclick="general.showHAOverlay()"><svg><use href="#svg-homeAssistant0"></use></svg><span tr="GENERAL_HA_OPEN"></span></button>
-                                                <button type="button" class="gen-btn" onclick="confirmDiscardChanges(() => activateGrpid('divMQTT'));"><svg><use href="#svg-mqtt"></use></svg><span tr="GENERAL_HA_MQTT"></span></button>
                                             </div>
                                         </div>
                                     </div>
@@ -571,12 +522,13 @@
                                 <nav id="fwTabs" class="gen-tabs" role="tablist">
                                     <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="FW_UPDATE_GIT"></button>
                                     <button type="button" class="gen-tab" role="tab" data-tab="1" tr="FW_TAB_STATUS"></button>
-                                    <button type="button" class="gen-tab" role="tab" data-tab="2" tr="FW_TITLE_MAINTAIN"></button>
-                                    <button type="button" class="gen-tab" role="tab" data-tab="3" tr="FW_TAB_ABOUT"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="2" tr="FW_TAB_BACKUP"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="3" tr="FW_TILE_TROUBLESHOOT"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="4" tr="FW_TAB_ABOUT"></button>
                                 </nav>
                                 <div id="fwPanels" class="gen-panels">
                                     <div class="gen-grid" role="tabpanel" data-tab="0">
-                                        <header class="gen-sec-head"><h2 tr="FW_UPDATE_GIT"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></span></header>
+                                        <header class="gen-sec-head"><h2 tr="FW_UPDATE_GIT"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></span></header>
                                         <p class="fw-tip"><svg><use href="#svg-info"></use></svg><span><b tr="SETUP_TIP_TITLE"></b> · <span tr="FW_TIP_BACKUP"></span></span></p>
                                         <div id="divFwUpd" class="gen-tile fw-upd" data-state="idle">
                                             <h3 class="gen-tile-title" tr="FIRMWARE_MT_INSTALLED"></h3>
@@ -630,7 +582,7 @@
                                     </div>
 
                                     <div class="gen-grid" role="tabpanel" data-tab="1" hidden>
-                                        <header class="gen-sec-head"><h2 tr="FW_TAB_STATUS"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i></span></header>
+                                        <header class="gen-sec-head"><h2 tr="FW_TAB_STATUS"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i><i></i></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="FW_RAM"></h3>
                                             <div class="fw-big-line"><span id="spanFreeMemory" class="fw-big">--</span><span class="gen-tile-desc" tr="FW_AVAILABLE"></span></div>
@@ -675,7 +627,7 @@
                                     </div>
 
                                     <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
-                                        <header class="gen-sec-head"><h2 tr="FW_TITLE_MAINTAIN"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i><i></i></span></header>
+                                        <header class="gen-sec-head"><h2 tr="FW_TAB_BACKUP"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i><i></i><i></i></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="FIRMWARE_MT_SAVE_BACKUP"></h3>
                                             <p class="gen-tile-desc" tr="FW_BACKUP_DESC"></p>
@@ -686,8 +638,12 @@
                                             <p class="gen-tile-desc" tr="FW_RESTORE_DESC"></p>
                                             <button type="button" class="gen-btn" onclick="firmware.restore();"><svg><use href="#svg-upload"></use></svg><span tr="FW_RESTORE"></span></button>
                                         </div>
+                                    </div>
+
+                                    <div class="gen-grid" role="tabpanel" data-tab="3" hidden>
+                                        <header class="gen-sec-head"><h2 tr="FW_TILE_TROUBLESHOOT"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i><i></i></span></header>
                                         <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="FW_TILE_TROUBLESHOOT"></h3>
+                                            <h3 class="gen-tile-title" tr="FW_TILE_DEBUG"></h3>
                                             <div class="gen-row">
                                                 <span class="gen-row-text"><b tr="FW_DEBUG_LOGS"></b><span tr="FW_DEBUG_LOGS_DESC"></span></span>
                                                 <span class="gen-seg gen-seg-bool">
@@ -711,8 +667,8 @@
                                         </div>
                                     </div>
 
-                                    <div class="gen-grid" role="tabpanel" data-tab="3" hidden>
-                                        <header class="gen-sec-head"><h2 tr="FW_TAB_ABOUT"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i></span></header>
+                                    <div class="gen-grid" role="tabpanel" data-tab="4" hidden>
+                                        <header class="gen-sec-head"><h2 tr="FW_TAB_ABOUT"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i></i><i class="on"></i></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="FW_TILE_HELP"></h3>
                                             <div class="fw-acts">
@@ -754,7 +710,7 @@
                     </div>
                 </div>
                 <div id="divNetworkSettings" style="display:none;">
-                    <div id="subtabContainer-divNetworkSettings" class="subtab-container"><span class="selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION"></span><span data-grpid="divMQTT" tr="SUBTAB_MQTT" ></span></div>
+                    <div id="subtabContainer-divNetworkSettings" class="subtab-container"><span class="selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION"></span></div>
                     <div id="divNetAdapter" class="subtab-content">
                         <div class="gen-layout">
                             <section id="netHero" class="gen-hero net-hero">
@@ -1047,6 +1003,9 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                <div id="divIntegrationSettings" style="display:none;">
+                    <div id="subtabContainer-divIntegrationSettings" class="subtab-container"><span class="selected" data-grpid="divMQTT" tr="SUBTAB_MQTT"></span><span data-grpid="divListener" tr="SUBTAB_LISTENERS"></span></div>
                     <div id="divMQTT" class="subtab-content" style="display:none;">
                         <div class="gen-layout">
                             <section class="gen-hero">
@@ -1075,7 +1034,7 @@
                                 <div class="gen-panels">
                                     <p id="mqttOffNote" class="gen-tile-desc is-warning" tr="MQTT_OFF_NOTE" hidden></p>
                                     <div class="gen-grid">
-                                        <header class="gen-sec-head"><h2 tr="MQTT_TITLE_BROKER"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i></span></header>
+                                        <header class="gen-sec-head"><h2 tr="MQTT_TITLE_BROKER"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="MQTT_BROKER_ADDR"></h3>
                                             <div class="mqtt-addr">
@@ -1123,7 +1082,7 @@
                                     </div>
 
                                     <div class="gen-grid">
-                                        <header class="gen-sec-head"><h2 tr="MQTT_TITLE_TOPICS"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i></span></header>
+                                        <header class="gen-sec-head"><h2 tr="MQTT_TITLE_TOPICS"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="MQTT_TILE_NAMING"></h3>
                                             <div class="gen-field">
@@ -1150,7 +1109,7 @@
                                     </div>
 
                                     <div class="gen-grid">
-                                        <header class="gen-sec-head"><h2 tr="MQTT_DISCOVERY"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i></span></header>
+                                        <header class="gen-sec-head"><h2 tr="MQTT_DISCOVERY"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i><i></i></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="MQTT_TILE_DISCOVERY"></h3>
                                             <div class="gen-row dirty-target">
@@ -1175,8 +1134,58 @@
                                             <p id="mqttPrevDiscoOff" class="gen-tile-desc" tr="MQTT_DISCO_OFF_NOTE" hidden></p>
                                             <p class="gen-tile-desc" tr="MQTT_DISCO_RESTART"></p>
                                         </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="MQTT_TILE_LAN"></h3>
+                                            <div class="gen-row">
+                                                <span class="gen-row-text"><b tr="MQTT_UPNP"></b><span tr="MQTT_UPNP_DESC"></span></span>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbSsdpBroadcast" name="ssdpBroadcast" type="checkbox" data-bind="general.ssdpBroadcast" oninput="event.stopPropagation();" onchange="event.stopPropagation(); firmware.setOption('ssdpBroadcast', this);">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
+                                                </span>
+                                            </div>
+                                            <p class="gen-tile-desc" tr="MQTT_UPNP_NOW"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="gen-grid hotspot-hidden">
+                                        <header class="gen-sec-head"><h2 tr="HACS"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i></span></header>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="HACS"></h3>
+                                            <p class="gen-tile-desc" tr="MQTT_HA_DESC"></p>
+                                            <button type="button" class="gen-btn gen-btn-link" onclick="general.showHAOverlay()"><svg><use href="#svg-homeAssistant0"></use></svg><span tr="MQTT_HA_INSTALL"></span></button>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="divListener" style="display:none;" class="subtab-content">
+                        <div id="divListenerPage" class="gen-layout rx-page">
+                            <section class="gen-hero">
+                                <span class="gen-hero-halo rx-halo"><svg><use href="#svg-remote"></use></svg></span>
+                                <div class="gen-hero-text">
+                                    <span class="gen-hero-state" tr="SUBTAB_LISTENERS"></span>
+                                    <h2 id="spanListenerHero" class="gen-hero-title"></h2>
+                                    <p class="gen-hero-desc" tr="LISTENER_PAGE_DESC"></p>
+                                </div>
+                                <div class="rx-stats">
+                                    <div class="rx-stat"><b id="spanListenerLast">—</b><span tr="LISTENER_LAST_PRESS"></span></div>
+                                    <div class="rx-stat"><b id="spanListenerPresses">0</b><span tr="LISTENER_PRESSES"></span></div>
+                                </div>
+                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                <p class="gen-tile-desc is-info rx-tip" tr="LISTENER_TIP"></p>
+                            </section>
+                            <div class="gen-body">
+                                <header class="rx-head rx-head-list">
+                                    <h2 class="rx-head-title" tr="LISTENER_PAGE_TITLE"></h2>
+                                    <p class="rx-head-desc"><span tr="LISTENER_LIST_DESC"></span> <span tr="RX_APPLY_NOW"></span></p>
+                                </header>
+                                <header class="rx-head rx-head-empty">
+                                    <h2 class="rx-head-title" tr="EMPTY_LISTENER_TITLE"></h2>
+                                    <p class="rx-head-desc" tr="EMPTY_LISTENER_DESC"></p>
+                                </header>
+                                <div id="divListenList" class="rx-tiles"></div>
                             </div>
                         </div>
                     </div>
@@ -1735,7 +1744,6 @@
                 <div id="divRadioSettings" style="display:none;">
                     <div id="subtabContainer-divRadioSettings" class="subtab-container">
                         <span class="selected" data-grpid="divTransceiverSettings" tr="SUBTAB_RADIO"></span>
-                        <span data-grpid="divListener" tr="SUBTAB_LISTENERS"></span>
                         <span data-grpid="divRepeater" tr="SUBTAB_REPEATER"></span>
                         <span data-grpid="divFrameLog" tr="SUBTAB_LOGS"></span>
                     </div>
@@ -1814,13 +1822,13 @@
 
                             <div class="gen-body">
                                 <nav id="rdcTabs" class="gen-tabs" role="tablist">
-                                    <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="RADIO_REMOTES_TITLE"></button>
-                                    <button type="button" class="gen-tab" role="tab" data-tab="1" tr="RADIO_TAB_FREQ"></button>
+                                    <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="RADIO_TAB_RX"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="1" tr="RADIO_TAB_TX"></button>
                                     <button type="button" class="gen-tab" role="tab" data-tab="2" tr="RADIO_TAB_HARDWARE"></button>
                                 </nav>
                                 <div id="rdcPanels" class="gen-panels">
                                     <div class="gen-grid" data-tab="0">
-                                        <header class="gen-sec-head"><h2 tr="RADIO_REMOTES_TITLE"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i></span></header>
+                                        <header class="gen-sec-head"><h2 tr="RADIO_TAB_RX"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="RADIO_FLEET_TESTED"></h3>
                                             <div id="divRadioFleet" class="rd-fleet"></div>
@@ -1831,10 +1839,118 @@
                                             <p class="gen-tile-desc" tr="RADIO_SCAN_HINT_DESC"></p>
                                             <button id="btnScanFrequency" type="button" class="gen-btn" onclick="somfy.scanFrequency(true);"><svg><use href="#svg-scan"></use></svg><span tr="RADIO_SCAN_BTN"></span></button>
                                         </div>
+                                        <div class="gen-tile rdc-sliders">
+                                            <h3 class="gen-tile-title" tr="RADIO_GROUP_RX"></h3>
+                                            <div class="blocradio dirty-target">
+                                                <div class="blocRadioHeader">
+                                                    <div class="blocRadioHeaderTitle">
+                                                        <label id="lblRadioRxFrequency" for="slidRxFrequency" tr="RADIO_RX_FREQUENCY">Fréquence d'écoute</label>
+                                                    </div>
+                                                    <div class="radioNumberfield">
+                                                        <span>
+                                                            <input type="number" id="inputRxFrequency" aria-labelledby="lblRadioRxFrequency" class="custom-number-input" min="433.000" max="434.399" step="0.001" data-bind="transceiver.config.rxFrequency" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.000" onchange="somfy.rxFrequencyInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
+                                                            <span tr="UNIT_MHZ">MHz</span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="blocRadioSlider">
+                                                    <div class="radio-slider-range-wrapper">
+                                                        <div class="radio-slider-ticks-labels">
+                                                            <span>433</span>
+                                                            <span>434.399</span>
+                                                        </div>
+                                                        <div class="radio-slider-container">
+                                                            <div class="radio-slider-ticks">
+                                                                <span></span><span></span><span></span><span></span><span></span>
+                                                                <span></span><span></span><span></span><span></span><span></span>
+                                                                <span></span><span></span><span></span><span></span><span></span>
+                                                            </div>
+                                                            <input id="slidRxFrequency" class="radio-slider customized-rules" name="rxFrequency" type="range" min="433000" max="434399" step="1" data-bind="transceiver.config.rxFrequency" data-setonly="true" data-datatype="float" data-mult="1000" oninput="somfy.rxFrequencyChanged(this);" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="radioBlocMinPlus">
+                                                        <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidRxFrequency', -1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidRxFrequency', -1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
+                                                            <svg class="radioArrowSvg"><use href="#svg-min"></use></svg>
+                                                        </button>
+                                                        <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidRxFrequency', 1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidRxFrequency', 1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
+                                                            <svg class="radioArrowSvg"><use href="#svg-add"></use></svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="blocradio dirty-target">
+                                                <div class="blocRadioHeader">
+                                                    <div class="blocRadioHeaderTitle">
+                                                        <label id="lblRadioRxBandwidth" for="slidRxBandwidth" tr="RADIO_RX_BANDWIDTH">Largeur bande RX</label>
+                                                    </div>
+                                                    <div class="radioNumberfield">
+                                                        <span>
+                                                            <input type="number" id="inputRxBandwidth" aria-labelledby="lblRadioRxBandwidth" class="custom-number-input" min="58.03" max="812.50" step="0.01" data-bind="transceiver.config.rxBandwidth" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.00" onchange="somfy.rxBandwidthInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
+                                                            <span tr="UNIT_KHZ">kHz</span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="blocRadioSlider">
+                                                    <div class="radio-slider-range-wrapper">
+                                                        <div class="radio-slider-ticks-labels">
+                                                            <span>58.03</span>
+                                                            <span>812.50</span>
+                                                        </div>
+                                                        <div class="radio-slider-container">
+                                                            <div class="radio-slider-ticks">
+                                                                <span></span><span></span><span></span><span></span><span></span>
+                                                                <span></span><span></span><span></span><span></span><span></span>
+                                                                <span></span>
+                                                            </div>
+                                                            <input id="slidRxBandwidth" class="radio-slider customized-rules" name="rxBandwidth" type="range" min="5803" max="81250" step="1" data-bind="transceiver.config.rxBandwidth" data-setonly="true" data-datatype="float" data-mult="100" oninput="somfy.rxBandwidthChanged(this);" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="radioBlocMinPlus">
+                                                        <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidRxBandwidth', -1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidRxBandwidth', -1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
+                                                            <svg class="radioArrowSvg"><use href="#svg-min"></use></svg>
+                                                        </button>
+                                                        <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidRxBandwidth', 1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidRxBandwidth', 1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
+                                                            <svg class="radioArrowSvg"><use href="#svg-add"></use></svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p class="gen-tile-desc" tr="RADIO_GROUP_RX_DESC"></p>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="RADIO_DECODE_TITLE"></h3>
+                                            <div class="gen-field-pair">
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="selRadioProto" tr="PROTOCOL"></label>
+                                                    <div class="gen-input-box dirty-target">
+                                                        <select id="selRadioProto" class="gen-input" name="radioProto" data-bind="transceiver.config.proto" data-datatype="int">
+                                                            <option value="0" tr="RTS"></option>
+                                                            <option value="1" tr="RTW"></option>
+                                                            <option value="2" tr="RTV"></option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div id="divRadioBitLength" class="gen-field">
+                                                    <label class="gen-field-label" for="selRadioType" tr="BIT"></label>
+                                                    <div class="gen-input-box dirty-target">
+                                                        <select id="selRadioType" class="gen-input" name="radioType" data-bind="transceiver.config.type" data-datatype="int">
+                                                            <option value="56" tr="56BIT"></option>
+                                                            <option value="80" tr="80BIT"></option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p class="gen-tile-desc" tr="RADIO_DECODE_DESC"></p>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="RADIO_RESET_TITLE"></h3>
+                                            <p class="gen-tile-desc" tr="RADIO_RESET_DESC"></p>
+                                            <button id="btnRadioReset" type="button" class="gen-btn" onclick="somfy.resetRadioSettings();"><svg><use href="#svg-restore"></use></svg><span tr="BT_RESET"></span></button>
+                                        </div>
                                     </div>
 
                                     <div class="gen-grid" data-tab="1" hidden>
-                                        <header class="gen-sec-head"><h2 tr="RADIO_TAB_FREQ"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i></span></header>
+                                        <header class="gen-sec-head"><h2 tr="RADIO_TAB_TX"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i></span></header>
                                         <div class="gen-tile rdc-sliders">
                                             <h3 class="gen-tile-title" tr="RADIO_GROUP_TX"></h3>
                                             <div class="blocradio dirty-target">
@@ -1916,114 +2032,6 @@
                                                 </div>
                                             </div>
                                             <p class="gen-tile-desc" tr="RADIO_GROUP_TX_DESC"></p>
-                                        </div>
-                                        <div class="gen-tile rdc-sliders">
-                                            <h3 class="gen-tile-title" tr="RADIO_GROUP_RX"></h3>
-                                            <div class="blocradio dirty-target">
-                                                <div class="blocRadioHeader">
-                                                    <div class="blocRadioHeaderTitle">
-                                                        <label id="lblRadioRxFrequency" for="slidRxFrequency" tr="RADIO_RX_FREQUENCY">Fréquence d'écoute</label>
-                                                    </div>
-                                                    <div class="radioNumberfield">
-                                                        <span>
-                                                            <input type="number" id="inputRxFrequency" aria-labelledby="lblRadioRxFrequency" class="custom-number-input" min="433.000" max="434.399" step="0.001" data-bind="transceiver.config.rxFrequency" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.000" onchange="somfy.rxFrequencyInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
-                                                            <span tr="UNIT_MHZ">MHz</span>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="blocRadioSlider">
-                                                    <div class="radio-slider-range-wrapper">
-                                                        <div class="radio-slider-ticks-labels">
-                                                            <span>433</span>
-                                                            <span>434.399</span>
-                                                        </div>
-                                                        <div class="radio-slider-container">
-                                                            <div class="radio-slider-ticks">
-                                                                <span></span><span></span><span></span><span></span><span></span>
-                                                                <span></span><span></span><span></span><span></span><span></span>
-                                                                <span></span><span></span><span></span><span></span><span></span>
-                                                            </div>
-                                                            <input id="slidRxFrequency" class="radio-slider customized-rules" name="rxFrequency" type="range" min="433000" max="434399" step="1" data-bind="transceiver.config.rxFrequency" data-setonly="true" data-datatype="float" data-mult="1000" oninput="somfy.rxFrequencyChanged(this);" />
-                                                        </div>
-                                                    </div>
-                                                    <div class="radioBlocMinPlus">
-                                                        <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidRxFrequency', -1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidRxFrequency', -1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
-                                                            <svg class="radioArrowSvg"><use href="#svg-min"></use></svg>
-                                                        </button>
-                                                        <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidRxFrequency', 1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidRxFrequency', 1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
-                                                            <svg class="radioArrowSvg"><use href="#svg-add"></use></svg>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="blocradio dirty-target">
-                                                <div class="blocRadioHeader">
-                                                    <div class="blocRadioHeaderTitle">
-                                                        <label id="lblRadioRxBandwidth" for="slidRxBandwidth" tr="RADIO_RX_BANDWIDTH">Largeur bande RX</label>
-                                                    </div>
-                                                    <div class="radioNumberfield">
-                                                        <span>
-                                                            <input type="number" id="inputRxBandwidth" aria-labelledby="lblRadioRxBandwidth" class="custom-number-input" min="58.03" max="812.50" step="0.01" data-bind="transceiver.config.rxBandwidth" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.00" onchange="somfy.rxBandwidthInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
-                                                            <span tr="UNIT_KHZ">kHz</span>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="blocRadioSlider">
-                                                    <div class="radio-slider-range-wrapper">
-                                                        <div class="radio-slider-ticks-labels">
-                                                            <span>58.03</span>
-                                                            <span>812.50</span>
-                                                        </div>
-                                                        <div class="radio-slider-container">
-                                                            <div class="radio-slider-ticks">
-                                                                <span></span><span></span><span></span><span></span><span></span>
-                                                                <span></span><span></span><span></span><span></span><span></span>
-                                                                <span></span>
-                                                            </div>
-                                                            <input id="slidRxBandwidth" class="radio-slider customized-rules" name="rxBandwidth" type="range" min="5803" max="81250" step="1" data-bind="transceiver.config.rxBandwidth" data-setonly="true" data-datatype="float" data-mult="100" oninput="somfy.rxBandwidthChanged(this);" />
-                                                        </div>
-                                                    </div>
-                                                    <div class="radioBlocMinPlus">
-                                                        <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidRxBandwidth', -1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidRxBandwidth', -1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
-                                                            <svg class="radioArrowSvg"><use href="#svg-min"></use></svg>
-                                                        </button>
-                                                        <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidRxBandwidth', 1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidRxBandwidth', 1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
-                                                            <svg class="radioArrowSvg"><use href="#svg-add"></use></svg>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p class="gen-tile-desc" tr="RADIO_GROUP_RX_DESC"></p>
-                                        </div>
-                                        <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="COMMUNICATION"></h3>
-                                            <div class="gen-field-pair">
-                                                <div class="gen-field">
-                                                    <label class="gen-field-label" for="selRadioProto" tr="PROTOCOL"></label>
-                                                    <div class="gen-input-box dirty-target">
-                                                        <select id="selRadioProto" class="gen-input" name="radioProto" data-bind="transceiver.config.proto" data-datatype="int">
-                                                            <option value="0" tr="RTS"></option>
-                                                            <option value="1" tr="RTW"></option>
-                                                            <option value="2" tr="RTV"></option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div id="divRadioBitLength" class="gen-field">
-                                                    <label class="gen-field-label" for="selRadioType" tr="BIT"></label>
-                                                    <div class="gen-input-box dirty-target">
-                                                        <select id="selRadioType" class="gen-input" name="radioType" data-bind="transceiver.config.type" data-datatype="int">
-                                                            <option value="56" tr="56BIT"></option>
-                                                            <option value="80" tr="80BIT"></option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p class="gen-tile-desc" tr="RADIO_DECODE_DESC"></p>
-                                        </div>
-                                        <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="RADIO_RESET_TITLE"></h3>
-                                            <p class="gen-tile-desc" tr="RADIO_RESET_DESC"></p>
-                                            <button id="btnRadioReset" type="button" class="gen-btn" onclick="somfy.resetRadioSettings();"><svg><use href="#svg-restore"></use></svg><span tr="BT_RESET"></span></button>
                                         </div>
                                     </div>
 
@@ -2152,36 +2160,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <div id="divListener" style="display:none;" class="subtab-content">
-                        <div id="divListenerPage" class="gen-layout rx-page">
-                            <section class="gen-hero">
-                                <span class="gen-hero-halo rx-halo"><svg><use href="#svg-remote"></use></svg></span>
-                                <div class="gen-hero-text">
-                                    <span class="gen-hero-state" tr="SUBTAB_LISTENERS"></span>
-                                    <h2 id="spanListenerHero" class="gen-hero-title"></h2>
-                                    <p class="gen-hero-desc" tr="LISTENER_PAGE_DESC"></p>
-                                </div>
-                                <div class="rx-stats">
-                                    <div class="rx-stat"><b id="spanListenerLast">—</b><span tr="LISTENER_LAST_PRESS"></span></div>
-                                    <div class="rx-stat"><b id="spanListenerPresses">0</b><span tr="LISTENER_PRESSES"></span></div>
-                                </div>
-                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
-                                <p class="gen-tile-desc is-info rx-tip" tr="LISTENER_TIP"></p>
-                            </section>
-                            <div class="gen-body">
-                                <header class="rx-head rx-head-list">
-                                    <h2 class="rx-head-title" tr="LISTENER_PAGE_TITLE"></h2>
-                                    <p class="rx-head-desc"><span tr="LISTENER_LIST_DESC"></span> <span tr="RX_APPLY_NOW"></span></p>
-                                </header>
-                                <header class="rx-head rx-head-empty">
-                                    <h2 class="rx-head-title" tr="EMPTY_LISTENER_TITLE"></h2>
-                                    <p class="rx-head-desc" tr="EMPTY_LISTENER_DESC"></p>
-                                </header>
-                                <div id="divListenList" class="rx-tiles"></div>
-                            </div>
-                        </div>
-                    </div>
                     <div id="divRepeater" style="display:none;" class="subtab-content">
                         <div id="divRepeaterPage" class="gen-layout rx-page">
                             <section class="gen-hero">
@@ -2216,7 +2194,7 @@
                             <section class="gen-hero">
                                 <span id="divLogLiveState" class="gen-hero-halo lg-halo" data-state="live"><svg><use href="#svg-wave"></use></svg></span>
                                 <div class="gen-hero-text">
-                                    <span class="gen-hero-state" tr="LOG_TITLE"></span>
+                                    <span class="gen-hero-state" tr="SUBTAB_LOGS"></span>
                                     <h2 id="spanLogLiveText" class="gen-hero-title" tr="LOG_LIVE"></h2>
                                     <p class="gen-hero-desc" tr="LOG_DESC"></p>
                                 </div>
@@ -2362,7 +2340,7 @@
                         <button id="btnWelcomeCta" class="home-cta-btn" type="button" onclick="somfy.welcomeNextStep();"><span tr="BT_SETUP_RADIO"></span><svg class="home-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
                         <button class="home-guide-btn" type="button"><svg class="home-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h12a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4z"/><path d="M8 9h8M8 13h6"/></svg><span tr="BT_SEE_GUIDE"></span></button>
                     </div>
-                    <p class="home-alt-text"><span tr="WELCOME_REPLACE"></span> <a href="#" onclick="firmware.restore(); return false;" tr="WELCOME_RESTORE_LINK"></a> · <a href="#" onclick="ui.showSystemConfig(); return false;" tr="BT_CUSTOMIZE"></a></p>
+                    <p class="home-alt-text"><span tr="WELCOME_REPLACE"></span> <a href="#" onclick="firmware.restore(); return false;" tr="WELCOME_RESTORE_LINK"></a> · <a href="#" onclick="ui.showSystemConfig(); return false;" tr="WELCOME_SYSTEM_LINK"></a></p>
                 </div>
                 <div class="home-art" aria-hidden="true">
                     <svg class="home-house-svg" viewBox="0 0 600 430">

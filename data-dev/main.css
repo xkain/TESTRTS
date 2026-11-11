@@ -737,48 +737,9 @@ body.fw-update .sub-nav-item[data-grpid="divFirmware"]::after {
     border-top: 1px solid #22262d;
 }
 .sidebar-footer button { font-size: 0.85em; justify-content: center; }
-.tab-container { display: none; }
-/*SubTab*/
+/* Jamais affiché : source de l'ordre des sous-onglets et de leurs libellés (20-shell.js). */
 .subtab-container {
-    display: inline-flex !important;
-    width: 100%;
-    overflow: hidden;
-    gap: 2px;
-    padding: 10px;
-}
-.subtab-container > span {
-    display: flex;
-    justify-content: center;
-    padding: 4px 8px;
-    font-size: 12px;
-    cursor: pointer;
-}
-.subtab-container > span.selected {
-    color: var(--color-accent);
-}
-body.fw-update .tab-container > span[data-grpid="divSystemSettings"] {
-    position: relative;
-}
-body.fw-update .tab-container > span[data-grpid="divSystemSettings"]::after {
-    content: "";
-    position: absolute;
-    top: 2px;
-    right: calc(50% - 26px);
-    width: 9px;
-    height: 9px;
-    border-radius: var(--radius-full);
-    background: var(--color-danger);
-    box-shadow: 0 0 0 2px var(--color-bg-page);
-}
-body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
-    content: "";
-    flex: none;
-    align-self: center;
-    width: 6px;
-    height: 6px;
-    margin-left: 5px;
-    border-radius: var(--radius-full);
-    background: var(--color-danger);
+    display: none;
 }
 .subtab-content {
     display: flex;
@@ -1430,26 +1391,22 @@ body.is-home-welcome .container {
 /* Fondus latéraux, posés par initHorizontalScroll() selon la position du défilement :
    à droite au départ, des deux côtés au milieu, à gauche en fin de course, et
    aucun si tout tient à l'écran. */
-.room-nav-container.mask-right,
-#divMobileSubtabSlot.mask-right > .subtab-container {
+.room-nav-container.mask-right {
     -webkit-mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
     mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
 }
 
-.room-nav-container.mask-both,
-#divMobileSubtabSlot.mask-both > .subtab-container {
+.room-nav-container.mask-both {
     -webkit-mask-image: linear-gradient(to right, transparent 0, black 30px, black calc(100% - 40px), transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, black 30px, black calc(100% - 40px), transparent 100%);
 }
 
-.room-nav-container.mask-left,
-#divMobileSubtabSlot.mask-left > .subtab-container {
+.room-nav-container.mask-left {
     -webkit-mask-image: linear-gradient(to right, transparent 0, black 30px, black 100%);
     mask-image: linear-gradient(to right, transparent 0, black 30px, black 100%);
 }
 
-.room-nav-container.mask-none,
-#divMobileSubtabSlot.mask-none > .subtab-container {
+.room-nav-container.mask-none {
     -webkit-mask-image: none;
     mask-image: none;
 }
@@ -1837,6 +1794,7 @@ body.is-home-welcome .container {
 #divFirmware [hidden],
 #divNetAdapter [hidden],
 #divMQTT [hidden],
+#divListener [hidden],
 #divRadioSettings [hidden],
 #somfyGroup [hidden],
 #somfyShade [hidden] {
@@ -1846,8 +1804,8 @@ body.is-home-welcome .container {
 .container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divSystemOptions:not([style*="none"])),
 .container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divFirmware:not([style*="none"])),
 .container:has(#divConfigPnl:not([style*="none"]) > #divNetworkSettings:not([style*="none"]) > #divNetAdapter:not([style*="none"])),
-.container:has(#divConfigPnl:not([style*="none"]) > #divNetworkSettings:not([style*="none"]) > #divMQTT:not([style*="none"])),
-.container:has(#divConfigPnl:not([style*="none"]) > #divRadioSettings:not([style*="none"]) > :is(#divListener, #divRepeater, #divFrameLog, #divTransceiverSettings):not([style*="none"])) {
+.container:has(#divConfigPnl:not([style*="none"]) > #divIntegrationSettings:not([style*="none"]) > :is(#divMQTT, #divListener):not([style*="none"])),
+.container:has(#divConfigPnl:not([style*="none"]) > #divRadioSettings:not([style*="none"]) > :is(#divRepeater, #divFrameLog, #divTransceiverSettings):not([style*="none"])) {
     background: var(--bg);
 }
 .gen-layout {
@@ -5173,9 +5131,6 @@ div.frame-pulses {
         animation: slideUpFooter 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards;
     }
 }
-#divMobileBreadcrumbSlot {
-    display: none;
-}
 #divSettingsPnl {
     max-width: 720px;
     margin: 0 auto;
@@ -5359,9 +5314,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     display: none;
 }
 @media (min-width: 768px) {
-    .subtab-container {
-        display: none !important;
-    }
     .top-bar {
         justify-content: flex-start;
     }
@@ -5372,62 +5324,11 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     .sidebar {
         display: none;
     }
-    #divMobileStickyNav {
-        display: none;
-    }
     .header {
         position: sticky;
         top: 0;
         z-index: 1000;
         background: var(--color-bg-page);
-    }
-    #divMobileBreadcrumbSlot {
-        position: sticky;
-        top: var(--mobile-header-height);
-        z-index: 999;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        min-height: 40px;
-        padding: 0 8px 0 14px;
-        box-sizing: border-box;
-        background: var(--color-bg-page);
-        border-bottom: 1px solid var(--color-border);
-    }
-    #divMobileBreadcrumbSlot:not(:has(.section-breadcrumb-parent:not(:empty))) {
-        display: none;
-    }
-    .crumb-back {
-        display: flex;
-        align-items: center;
-        gap: 2px;
-        flex: none;
-        padding-right: 10px;
-        border-right: 1px solid var(--color-border);
-        color: var(--color-accent);
-        font-size: 0.8rem;
-        font-weight: 600;
-        cursor: pointer;
-    }
-    .crumb-back svg {
-        width: 16px;
-        height: 16px;
-    }
-    #divMobileBreadcrumbSlot .section-breadcrumb {
-        flex: 1;
-        min-width: 0;
-        overflow: hidden;
-        font-size: 0.8rem;
-    }
-    #divMobileBreadcrumbSlot .section-breadcrumb > span {
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    #divMobileBreadcrumbSlot .section-breadcrumb[data-depth="3"] .section-breadcrumb-parent,
-    #divMobileBreadcrumbSlot .section-breadcrumb[data-depth="3"] .section-breadcrumb-parent + .section-breadcrumb-sep {
-        display: none;
     }
     #divSettingsPnl .sidebar-status {
         padding: 0;
@@ -5452,25 +5353,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
         color: var(--color-text-secondary);
         opacity: 0.6;
     }
-    #divMobileBreadcrumbSlot .top-bar-help {
-        width: 34px;
-        padding: 0;
-        justify-content: center;
-        border-color: transparent;
-        background: none;
-        color: var(--color-text-secondary);
-    }
-    #divMobileBreadcrumbSlot .top-bar-help-ext {
-        display: none;
-    }
-    #divMobileBreadcrumbSlot .top-bar-help-label {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
-    }
     .container {
         margin: 0 auto;
         background: var(--color-bg-page);
@@ -5480,10 +5362,8 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
         display: flex;
         flex-direction: column !important;
         min-height: 100vh;
-        /* La règle desktop (.container { padding: 1px; }) n'est jamais réinitialisée ici :
-           #divMobileStickyNav se retrouve donc décalé de 1px "au repos" (dans le flux normal),
-           mais épinglé pile à top:0 (relatif au viewport) dès qu'il devient sticky -- d'où le
-           saut visuel d'1px constaté dès le tout premier pixel de scroll. */
+        /* Sans ce zéro, la règle desktop (.container { padding: 1px; }) décale d'1px les blocs
+           sticky mobiles au premier pixel de scroll. */
         padding: 0;
     }
     .container:has(.inst-overlay) {
@@ -5634,6 +5514,7 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     }
     #divGetStarted,
     #divNetworkSettings,
+    #divIntegrationSettings,
     #divRadioSettings {
         padding-bottom: 65px;
     }
@@ -5644,130 +5525,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     .welcomeCard-content p {
         font-size: 0.75rem;
         margin: 0;
-    }
-    /* --- TEST navigation sticky mobile : .tab-container ET le .subtab-container de la section
-       active partagent maintenant UN SEUL bloc sticky (#divMobileStickyNav, voir index.html/
-       _mountMobileSubtab(), 20-shell.js) au lieu de deux position:sticky indépendants -- ceux-ci
-       pouvaient se repeindre à des instants légèrement différents pendant le scroll (décalage
-       visuel de 1-2px signalé en test). Le rétrécissement au scroll a été essayé puis abandonné
-       (rendu non concluant) : le tab-container garde sa taille naturelle en permanence. À retirer
-       si non retenu. --- */
-    #divMobileStickyNav {
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        background: var(--color-bg-page);
-        /* Calque composité dédié : le navigateur déplace le bloc entier ensemble pendant le
-           scroll, sans recalcul de layout séparé pour chacun de ses deux enfants. */
-        transform: translateZ(0);
-        will-change: transform;
-    }
-    .tab-container {
-        display: flex !important;;
-        padding: 0 5px;
-    }
-    .tab-container span {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        flex: 1;
-        color: var(--color-text-secondary);
-        cursor: pointer;
-        transition: color 0.5s ease;
-        padding: 2px;
-    }
-    .tab-icon {
-        width: 42px;
-        height: 42px;
-        margin-bottom: 0;
-        fill: currentColor;
-    }
-    .tab-container span * {
-        pointer-events: none
-    }
-    .tab-container span[data-grpid="divRadioSettings"].radio-error {
-        position: relative;
-    }
-    .tab-container span[data-grpid="divRadioSettings"].radio-error::after {
-        content: "";
-        position: absolute;
-        top: 22px;
-        left: 50%;
-        width: 45px;
-        height: 4px;
-        background: var(--color-text-warning);
-        transform: translate(-50%, -50%) rotate(-45deg);
-        box-shadow: 0 0 1px 2px var(--color-bg-card);
-        border-radius: 4px;
-    }
-    .tab-container span[data-grpid="divRadioSettings"].radio-error .tab-icon {
-        opacity: 0.5;
-        filter: grayscale(1);
-    }
-    .tab-container > span.selected {
-        font-weight: bold;
-        color: var(--color-accent);
-        border-bottom: 3px solid var(--color-accent);
-    }
-    /* Sous-onglets : rangée défilante (initHorizontalScroll(), 70-somfy.js, appelée par
-       _mountMobileSubtab()). Les six de l'onglet Somfy demandent ~450-520 px selon la langue.
-       Le fond est porté par le slot et non par .subtab-container : le masque des fondus
-       s'applique à ce dernier et estomperait sinon le bandeau et sa bordure avec le texte. */
-    #divMobileSubtabSlot {
-        position: relative;
-    }
-    #divMobileSubtabSlot:not(:empty) {
-        background: var(--color-accent-94);
-        box-shadow: var(--shadow-card);
-        border-bottom: 1px solid var(--color-border);
-    }
-    .subtab-container {
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: none;
-        -webkit-overflow-scrolling: touch;
-        padding: 6px 10px;
-    }
-    .subtab-container::-webkit-scrollbar {
-        display: none;
-    }
-    /* Centré quand tout tient, calé à gauche dès que ça déborde : justify-content:center
-       rendrait le débordement de gauche inaccessible au défilement. */
-    .subtab-container > span:first-child { margin-left: auto; }
-    .subtab-container > span:last-child { margin-right: auto; }
-    .subtab-container > span {
-        flex: none;
-        white-space: nowrap;
-        padding: 6px 10px;
-        border-radius: 10px;
-    }
-    .subtab-container > span.selected {
-        background: color-mix(in srgb, var(--color-accent) 15%, transparent);
-        font-weight: 700;
-    }
-    /* Chevrons du côté où il reste des sous-onglets, pilotés par les mêmes classes mask-*
-       que les fondus. Le fondu seul signale mal la suite à 350 px. */
-    #divMobileSubtabSlot::before,
-    #divMobileSubtabSlot::after {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        display: flex;
-        align-items: center;
-        font-size: 22px;
-        line-height: 1;
-        color: var(--color-accent);
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-    }
-    #divMobileSubtabSlot::before { content: "\2039"; left: 6px; }
-    #divMobileSubtabSlot::after { content: "\203A"; right: 6px; }
-    #divMobileSubtabSlot.mask-left::before,
-    #divMobileSubtabSlot.mask-both::before,
-    #divMobileSubtabSlot.mask-right::after,
-    #divMobileSubtabSlot.mask-both::after {
-        opacity: 1;
     }
     .welcomeTop {
         display: block;
@@ -5820,10 +5577,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     .subtab-content {
         padding-left:14px;
         padding-right:14px;
-    }
-    .subtab-container > span {
-        font-size: 10px;
-        padding: 4px 8px;
     }
     .gpioRadio-container {
         font-size: 0.7em;

@@ -848,13 +848,11 @@ window.addEventListener('beforeunload', (e) => {
 // _resolveDefaultChild ci-dessous) comme le premier <span data-grpid> réellement présent dans le
 // .subtab-container de la section, pour que la navigation suive toujours l'ordre visuel du HTML
 // -- y compris après une réorganisation manuelle des onglets, sans synchronisation JS à refaire.
-const ROUTE_TOP_LEVEL_IDS = new Set(['divSystemSettings', 'divNetworkSettings', 'divSomfySettings', 'divRadioSettings']);
+const ROUTE_TOP_LEVEL_IDS = new Set(['divSystemSettings', 'divNetworkSettings', 'divIntegrationSettings', 'divSomfySettings', 'divRadioSettings']);
 function _resolveDefaultChild(grpid) {
     if (!ROUTE_TOP_LEVEL_IDS.has(grpid)) return grpid;
-    // Recherche par id stable (subtabContainer-<grpid>), pas par position dans le DOM : sur
-    // mobile, _mountMobileSubtab() déplace le .subtab-container de la section active hors de son
-    // parent d'origine (voir plus bas), donc `:scope > .subtab-container` ne le retrouverait plus
-    // dès la 2e visite de cette section.
+    // Le .subtab-container n'est affiché nulle part : il ne sert plus que de source pour l'ordre
+    // des sous-onglets et pour leurs libellés (fil d'Ariane).
     const subtabContainer = get('subtabContainer-' + grpid);
     const firstSpan = subtabContainer ? subtabContainer.querySelector('span[data-grpid]') : null;
     return firstSpan ? firstSpan.getAttribute('data-grpid') : grpid;
@@ -863,13 +861,13 @@ const ROUTE_LEAF_PARENT = {
     divSystemOptions: 'divSystemSettings',
     divFirmware: 'divSystemSettings',
     divNetAdapter: 'divNetworkSettings',
-    divMQTT: 'divNetworkSettings',
+    divMQTT: 'divIntegrationSettings',
     divSomfyRooms: 'divSomfySettings',
     divSomfyMotors: 'divSomfySettings',
     divSomfyGroups: 'divSomfySettings',
     divSomfySchedules: 'divSomfySettings',
     divTransceiverSettings: 'divRadioSettings',
-    divListener: 'divRadioSettings',
+    divListener: 'divIntegrationSettings',
     divRepeater: 'divRadioSettings',
     divFrameLog: 'divRadioSettings',
 };
@@ -1163,18 +1161,16 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
         }
         if (topId === 'divNetworkSettings' && typeof wifi !== 'undefined') wifi.loadNetwork();
 
-        // Sections de premier niveau : sidebar (.nav-item + son .submenu) et onglets (.tab-container).
+        // Sections de premier niveau : sidebar (.nav-item + son .submenu), puis leurs panneaux.
         document.querySelectorAll('.nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === topId));
         document.querySelectorAll('.nav-section[data-section]').forEach(s => s.classList.toggle('active', s.getAttribute('data-section') === topId));
-        document.querySelectorAll('.tab-container > span[data-grpid]').forEach(t => {
-            const id = t.getAttribute('data-grpid');
-            t.classList.toggle('selected', id === topId);
+        ['divHomePnl', ...ROUTE_TOP_LEVEL_IDS].forEach(id => {
             const panel = get(id);
             if (panel) panel.style.display = (id === topId) ? '' : 'none';
         });
         get('divSettingsPnl').style.display = (topId === 'divSettingsPnl') ? '' : 'none';
 
-        // Sous-onglet réellement visible : sidebar (.sub-nav-item) et .subtab-container de la section active.
+        // Sous-onglet actif : sidebar (.sub-nav-item), puis les panneaux listés par .subtab-container.
         document.querySelectorAll('.sub-nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === leafId));
         document.querySelectorAll('.subtab-container > span[data-grpid]').forEach(t => {
             const id = t.getAttribute('data-grpid');
@@ -1186,7 +1182,6 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
         currentLeafId = leafId;
         if (ROUTE_EDITORS[leafId] && editor != null) activeEditor = editor;
         _updateBreadcrumb(topId, leafId, activeEditor == null ? null : ROUTE_EDITORS[leafId].label(activeEditor));
-        _mountMobileSubtab(topId);
     }
 
     if (typeof somfy !== 'undefined') {
@@ -1210,34 +1205,6 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
     return slug;
 }
 
-// .tab-container et le .subtab-container de la section active partagent UN SEUL bloc sticky
-// (#divMobileStickyNav, voir main.css). Chaque section garde son propre .subtab-container
-// (identifié par un id stable, subtabContainer-<grpid>) : on le déplace dans le slot partagé --
-// appendChild() le détache automatiquement de son ancien parent, pas besoin de le replacer
-// manuellement quand on quitte la section, il suffit de toujours le retrouver par id.
-function _mountMobileSubtab(topId) {
-    const slot = get('divMobileSubtabSlot');
-    if (!slot) return;
-    // Renvoie tout ce qui occupe déjà le slot vers sa section d'origine avant d'y déposer celui
-    // de la section active : sans ça, les .subtab-container s'empileraient au fil des
-    // navigations au lieu de n'en garder qu'un seul à la fois dans le bloc sticky.
-    Array.from(slot.children).forEach(child => {
-        const ownerGrpid = child.id.replace('subtabContainer-', '');
-        const owner = get(ownerGrpid);
-        if (owner) owner.prepend(child);
-    });
-    const subtab = get('subtabContainer-' + topId);
-    if (!subtab) return;
-    slot.appendChild(subtab);
-    // Six sous-onglets ne tiennent pas en largeur sous ~500 px (onglet Somfy) : même rangée
-    // défilante que la barre des pièces, fondus posés sur le slot (voir main.css).
-    if (typeof somfy !== 'undefined') somfy.initHorizontalScroll(subtab);
-    // L'onglet actif peut être hors de l'écran (entrée directe par l'URL, retour arrière) :
-    // ramené au centre, comme la pastille de pièce sélectionnée.
-    const active = subtab.querySelector('span.selected');
-    if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-}
-
 // Le tooltip d'uptime s'ouvre au :hover en CSS, ce qui suffit sur desktop. Sur tactile, :hover est
 // à la fois imprévisible et collant (il reste actif après le toucher), d'où cette bascule explicite
 // au clic sur la version mobile -- le CSS desktop reste inchangé.
@@ -1258,18 +1225,12 @@ function _placeMobileParts(mq) {
     const status = document.querySelector('.sidebar-status');
     const statusAnchor = mq.matches ? document.querySelector('#divSettingsPnl .settings-head') : document.querySelector('.sidebar-brand');
     if (status && statusAnchor && status.previousElementSibling !== statusAnchor) statusAnchor.after(status);
-    const bc = get('divSectionBreadcrumb'), help = get('btnPageHelp');
-    const host = mq.matches ? get('divMobileBreadcrumbSlot') : document.querySelector('.top-bar');
-    if (!host) return;
-    const back = host.querySelector('.crumb-back');
-    if (bc && bc.parentElement !== host) back ? back.after(bc) : host.prepend(bc);
-    if (help && help.parentElement !== host) host.append(help);
 }
 function bindNavigation() {
     const mq = window.matchMedia('(max-width: 767px)');
     _placeMobileParts(mq);
     mq.addEventListener('change', () => _placeMobileParts(mq));
-    document.querySelectorAll('.nav-item, .sub-nav-item, .tab-container > span, .subtab-container > span, .settings-row').forEach(item => {
+    document.querySelectorAll('.nav-item, .sub-nav-item, .settings-row').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const grpid = item.getAttribute('data-grpid');
@@ -1499,7 +1460,7 @@ function bindGenSections(page) {
         raf = 0;
         const heads = page.querySelectorAll('.gen-sec-head');
         if (!mq.matches || !page.offsetParent) return heads.forEach(h => h.classList.remove('is-stuck'));
-        const top = Math.max(0, ...['appHeader', 'divMobileBreadcrumbSlot', 'divMobileStickyNav'].map(id => get(id)).filter(Boolean)
+        const top = Math.max(0, ...['appHeader'].map(id => get(id)).filter(Boolean)
             .map(e => e.getBoundingClientRect().bottom));
         page.style.setProperty('--gen-stick-top', top + 'px');
         heads.forEach(h => {

@@ -87,7 +87,6 @@ class General {
         const field = (label, els, saved, now, show = (v) => v, same = (a, b) => a === b) => ({ label, els, saved, now, show, same });
         return [
             field('GENERAL_NTP_SERVER', [get('fldNtptimesever')], s.ntpServer || '', get('fldNtptimesever').value),
-            field('GENERAL_UPNP', [get('cbSsdpBroadcast')], !!s.ssdpBroadcast, get('cbSsdpBroadcast').checked, yesNo),
             field('GENERAL_TIMEZONE', [tz], s.posixZone || '', tz.value, tzText),
             field('GEO_LAT', [get('inputGeoLat')], geoSet ? geo.geoLat.toFixed(2) : '', get('inputGeoLat').value.trim(), undefined, (a, b) => num(a) === num(b)),
             field('GEO_LON', [get('inputGeoLon')], geoSet ? geo.geoLon.toFixed(2) : '', get('inputGeoLon').value.trim(), undefined, (a, b) => num(a) === num(b)),
@@ -489,6 +488,8 @@ class General {
             this._generalReady = false;
             loadLang(() => {
                 ui.toElement(pnl, { general: settings });
+                // uPnP vit dans la page MQTT, hors de #divSystemSettings : toElement ne l'atteint pas.
+                get('cbSsdpBroadcast').checked = !!settings.ssdpBroadcast;
 
                 this.populateLangSelect(settings.language);
                 this._renderHero();
@@ -606,7 +607,7 @@ class General {
         const rawLat = get('inputGeoLat').value.trim(), rawLon = get('inputGeoLon').value.trim();
         if (rawLat === '' && rawLon === '') return { geoLat: 99, geoLon: 0 };
         const lat = parseFloat(rawLat), lon = parseFloat(rawLon);
-        const fail = (key) => { this.showGeneralTab(1); ui.errorMessage(tr('GENERAL_GEO_TITLE'), tr(key)); return null; };
+        const fail = (key) => { this.showGeneralTab(0); ui.errorMessage(tr('GENERAL_GEO_TITLE'), tr(key)); return null; };
         if (isNaN(lat) || lat < -90 || lat > 90) return fail('ERR_GEO_LAT_INVALID');
         if (isNaN(lon) || lon < -180 || lon > 180) return fail('ERR_GEO_LON_INVALID');
         return { geoLat: lat, geoLon: lon };
@@ -615,7 +616,7 @@ class General {
     // modification non enregistrée, l'utilisateur vérifie puis enregistre lui-même.
     applyGeoPrefill(pos) {
         if (currentLeafId !== 'divSystemOptions') activateGrpid('divSystemOptions');
-        this.showGeneralTab(1);
+        this.showGeneralTab(0);
         [['inputGeoLat', pos.lat], ['inputGeoLon', pos.lon]].forEach(([id, v]) => {
             const el = get(id);
             el.value = Number(v).toFixed(2);

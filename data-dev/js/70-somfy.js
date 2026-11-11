@@ -297,8 +297,7 @@ class Somfy {
 
     setRadioEnabled(isEnabled) {
         const txtStatus = get('divRadioEnableStatus');
-        const radioTab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
-        const isActuallyEnabled = radioTab && !radioTab.classList.contains('radio-error');
+        const isActuallyEnabled = !this.radioOff;
         if (txtStatus) {
             if (isEnabled === isActuallyEnabled) {
                 txtStatus.textContent = isEnabled ? tr('RADIO_ENABLED') : tr('RADIO_DISABLED');
@@ -387,7 +386,6 @@ class Somfy {
                 // --- NOUVELLE LOGIQUE INITIALISATION DU SWITCH RADIO (CHECKBOX) ---
                 const cbEnableRadio = get('cbEnableRadio');
                 const row = get('divRadioEnableColor');
-                const radioTab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
 
                 // On initialise l'état de la checkbox suivant la configuration reçue
                 const isConfigEnabled = !!(somfy.transceiver && somfy.transceiver.config && somfy.transceiver.config.enabled);
@@ -397,11 +395,9 @@ class Somfy {
                 }
         
                 const isRadioInit = somfy.transceiver?.config?.radioInit;
-                if (radioTab) {
-                    radioTab.classList.toggle('radio-error', !isRadioInit);
-                    setSidebarRadioState(!!isRadioInit);
-                    if (row) row.classList.toggle('radioOn', !!isRadioInit);
-                }
+                this.radioOff = !isRadioInit;
+                setSidebarRadioState(!!isRadioInit);
+                if (row) row.classList.toggle('radioOn', !!isRadioInit);
                 this.renderRadioFleet();
                 this.updateWelcomeSteps();
                 this.setVRRadioState(isConfigEnabled && !!isRadioInit);
@@ -536,14 +532,11 @@ class Somfy {
                     this.updateRadioGraph();
 
                     const init = res.config.radioInit,
-                    tab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]'),
                             cb = get('cbEnableRadio');
 
-                            if (tab) {
-                                tab.classList.toggle('radio-error', !init);
-                                setSidebarRadioState(!!init);
-                                get('divRadioEnableColor').classList.toggle('radioOn', !!init);
-                            }
+                            this.radioOff = !init;
+                            setSidebarRadioState(!!init);
+                            get('divRadioEnableColor').classList.toggle('radioOn', !!init);
                             this.updateWelcomeSteps();
 
                             // Comparaison simple et directe avec l'état de la checkbox d'origine
@@ -2990,15 +2983,13 @@ class Somfy {
     //     aurait parfaitement fonctionne.
     // La case ne dit donc que le CONSEIL a donner, jamais la permission.
     //
-    // SOURCE DE L'ETAT REEL : la classe .radio-error de l'onglet, posee depuis config.radioInit
-    // rapporte par le boitier. C'est la seule fiable ici -- somfy.transceiver n'est PAS toujours
-    // peuple cote client (constate : absent alors meme que la page radio etait affichee), et un
-    // `=== false` sur un undefined ne se declenche jamais. C'est deja la source qu'utilise
-    // setRadioEnabled() pour son "isActuallyEnabled".
-    // Onglet introuvable -> on laisse passer : dans le doute, ne pas empecher un geste legitime.
+    // SOURCE DE L'ETAT REEL : this.radioOff, pose depuis config.radioInit rapporte par le boitier.
+    // C'est la seule fiable ici -- somfy.transceiver n'est PAS toujours peuple cote client
+    // (constate : absent alors meme que la page radio etait affichee), et un `=== false` sur un
+    // undefined ne se declenche jamais. Etat encore inconnu (undefined) -> on laisse passer :
+    // dans le doute, ne pas empecher un geste legitime.
     radioPrete() {
-        const onglet = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
-        if (!onglet || !onglet.classList.contains('radio-error')) return true;
+        if (!this.radioOff) return true;
         const cb = get('cbEnableRadio');
         ui.infoMessage('RADIO_DISABLED', (cb && cb.checked) ? 'RADIO_OFF_UNSAVED' : 'RADIO_OFF_MSG');
         return false;
@@ -3444,8 +3435,7 @@ class Somfy {
         const box = get('divRadioFleet');
         if (!box) return;
         const f = this.radioFleet && this.radioFleet.remotes.length ? this.radioFleet : null;
-        const tab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
-        const off = !!tab && tab.classList.contains('radio-error');
+        const off = !!this.radioOff;
         const verdict = (cls, ico, t, d, action, key) => `<div class="rd-verdict ${cls}">${ico}<div><b>${t}</b><span>${d}</span></div>${
             action ? `<button type="button" class="rd-verdict-btn" onclick="somfy.${action}">${tr(key)}</button>` : ''}</div>`;
         const svg = (id) => `<svg><use href="#svg-${id}"></use></svg>`;
@@ -3958,7 +3948,7 @@ class Somfy {
         document.addEventListener('pointerdown', close, true);
     }
     cfgNoteAction(kind) {
-        if (kind === 'schedule') return confirmDiscardChanges(() => { activateGrpid('divSystemOptions'); general.showGeneralTab(1); });
+        if (kind === 'schedule') return confirmDiscardChanges(() => { activateGrpid('divSystemOptions'); general.showGeneralTab(0); });
         confirmDiscardChanges(() => { activateGrpid('divHomePnl'); this.startDashEdit(); });
     }
     cfgSortMode(kind) {
@@ -4079,8 +4069,7 @@ class Somfy {
         this.initHorizontalScroll(slider);
     }
     // Rangée défilante horizontalement : fondus latéraux posés sur le parent (classes mask-*),
-    // molette et glisser à la souris. Sert à la barre des pièces (#divRoomSelector) et aux
-    // sous-onglets mobiles (.subtab-container, appelé par _mountMobileSubtab() dans 20-shell.js).
+    // molette et glisser à la souris. Sert à la barre des pièces (#divRoomSelector).
     initHorizontalScroll(c) {
         if (!c) return;
 
@@ -4094,10 +4083,6 @@ class Somfy {
 
             // Gestion dynamique du masque selon la position du scroll. Rangée sur l'élément
             // pour rester rappelable (resize, rendu suivant) sans réattacher les écouteurs.
-            // Parent relu à chaque calcul : les .subtab-container changent de parent (déplacés
-            // dans #divMobileSubtabSlot puis rendus à leur section). Figé au premier appel, celui
-            // d'un sous-onglet masqué (largeur nulle) poserait mask-none sur le slot partagé au
-            // moindre resize, à la place du sous-onglet affiché.
             c._updateScrollMasks = () => {
                 const parent = c.parentElement;
                 if (!parent) return;
@@ -4972,7 +4957,7 @@ class Somfy {
         <button type="button" class="sheet-link-btn" onclick="somfy.closeCardSheet(); somfy.openVirtualRemote('${kind}', ${id});"><svg><use href="#svg-remote"></use></svg><span>${tr('SUBTAB_VIRTUAL_REMOTE_S')}</span></button>
         <button type="button" class="sheet-link-btn" onclick="somfy.closeCardSheet(); somfy.openCardEditor('${kind}', ${id});"><svg><use href="#svg-edit"></use></svg><span>${tr('BT_EDIT')}</span></button>
         <button type="button" class="sheet-link-btn" onclick="somfy.closeCardSheet(); somfy.openAddScheduleInline('${kind}', ${id});"><svg><use href="#svg-schedule"></use></svg><span>${tr('CARD_ADD_SCHEDULE')}</span></button>
-        ${kind === 'shade' ? `<button type="button" class="sheet-link-btn" onclick="somfy.openCardRadioLog(${id});"><svg><use href="#svg-wave"></use></svg><span>${tr('LOG_TITLE')}</span></button>` : ''}
+        ${kind === 'shade' ? `<button type="button" class="sheet-link-btn" onclick="somfy.openCardRadioLog(${id});"><svg><use href="#svg-wave"></use></svg><span>${tr('SUBTAB_LOGS')}</span></button>` : ''}
         </div></div>
         <p class="card-sheet-hint">${tr('CARD_PREFS_LOCAL_HINT')}</p>`;
     }
