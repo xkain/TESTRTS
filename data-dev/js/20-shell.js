@@ -565,6 +565,7 @@ function watchDirty(container) {
 // "Quitter sans enregistrer" depuis une autre page.
 function _notifyDirtyCount() {
     if (typeof general !== 'undefined' && general.initialized) general.updateDirtyCount();
+    if (typeof wifi !== 'undefined' && wifi.initialized) wifi.updateDirtyCount();
 }
 // À appeler après une sauvegarde réussie ou un clic explicite sur Annuler/Fermer (Quitter sans
 // enregistrer inclus). Sans argument : remet à zéro l'état visuel ET l'alerte pour TOUS les
@@ -635,6 +636,7 @@ function confirmDiscardChanges(onLeave, onStay, options) {
     };
     div.querySelector('#btnUnsavedLeave').onclick = () => {
         if (typeof general !== 'undefined' && general.initialized) general.discardChanges(scope);
+        if (typeof wifi !== 'undefined' && wifi.initialized && (!scope || scope.contains(get('divNetAdapter')))) wifi.revertPage();
         clearDirty(scope || undefined);
         closeOverlay(div);
         onLeave();
@@ -1472,7 +1474,8 @@ function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
 function bindGenTabs(page, ids) {
     const strip = get(ids.tabs), panels = get(ids.panels), pager = get(ids.pager);
     const mq = window.matchMedia('(max-width: 767px)');
-    const tabs = () => strip.querySelectorAll('.gen-tab');
+    // Un onglet masqué (page Connexion : selon le type choisi) sort de la navigation.
+    const tabs = () => Array.from(strip.querySelectorAll('.gen-tab')).filter(t => !t.hidden);
     let current = 0, raf = 0;
     const stick = () => {
         raf = 0;
@@ -1490,12 +1493,12 @@ function bindGenTabs(page, ids) {
     const update = () => {
         if (!panels.offsetParent) return;
         sections();
-        const list = tabs();
-        [[ids.prev, current - 1], [ids.next, current + 1]].forEach(([id, n]) => {
+        const list = tabs(), pos = list.findIndex(t => parseInt(t.dataset.tab, 10) === current);
+        [[ids.prev, pos - 1], [ids.next, pos + 1]].forEach(([id, n]) => {
             const btn = get(id);
             btn.hidden = n < 0 || n >= list.length;
             if (btn.hidden) return;
-            btn.dataset.tab = n;
+            btn.dataset.tab = list[n].dataset.tab;
             btn.querySelector('span').textContent = list[n].textContent;
         });
         pager.hidden = panels.getBoundingClientRect().bottom + window.scrollY <= window.innerHeight;
@@ -1505,7 +1508,7 @@ function bindGenTabs(page, ids) {
     const store = 'genTab:' + ids.tabs;
     let key = '';
     const show = (i) => {
-        if (i < 0 || i >= tabs().length) return;
+        if (!tabs().some(t => parseInt(t.dataset.tab, 10) === i)) return false;
         current = i;
         try { sessionStorage.setItem(store, JSON.stringify({ key, i })); } catch (e) { /* stockage indisponible */ }
         tabs().forEach(t => {
@@ -1517,6 +1520,7 @@ function bindGenTabs(page, ids) {
         });
         panels.querySelectorAll(':scope > [data-tab]').forEach(p => { p.hidden = parseInt(p.dataset.tab, 10) !== i; });
         update();
+        return true;
     };
     strip.addEventListener('click', (e) => {
         const tab = e.target.closest('.gen-tab');
@@ -1535,7 +1539,7 @@ function bindGenTabs(page, ids) {
         key = k;
         let i = 0;
         try { const v = JSON.parse(sessionStorage.getItem(store) || 'null'); if (v && v.key === k) i = v.i; } catch (e) { /* stockage indisponible */ }
-        show(i);
+        if (!show(i)) show(parseInt(tabs()[0].dataset.tab, 10));
     };
     if (!ids.keyed) restore('');
     return { show, update, restore, current: () => current };

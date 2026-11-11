@@ -6,14 +6,6 @@
  *  MODE HOTSPOT (bandeau affiché avant configuration réseau initiale)
  *  ======================================================================= */
 
-.hotspot-only {
-    display: none !important;
-}
-body.mode-hotspot .hotspot-banner-alert.hotspot-only,
-body.mode-hotspot .information.hotspot-only,
-body.mode-hotspot .uniRow.hotspot-only {
-    display: flex !important;
-}
 .hotspot-hidden {
 }
 body.mode-hotspot .hotspot-hidden {
@@ -2015,7 +2007,8 @@ body.is-home-welcome .container {
 
 /* --- Pages Général et Appareil (#divSystemOptions, #divFirmware, maquette A2) : colonne d'identité, onglets, tuiles --- */
 #divSystemOptions.subtab-content,
-#divFirmware.subtab-content {
+#divFirmware.subtab-content,
+#divNetAdapter.subtab-content {
     max-width: none;
     margin: 0;
     padding: 0;
@@ -2027,13 +2020,15 @@ body.is-home-welcome .container {
 }
 #divSystemOptions [hidden],
 #divFirmware [hidden],
+#divNetAdapter [hidden],
 #somfyGroup [hidden],
 #somfyShade [hidden] {
     display: none;
 }
 /* Sans ça, le fond s'arrête sous la dernière tuile quand l'onglet affiché est court (mobile). */
 .container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divSystemOptions:not([style*="none"])),
-.container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divFirmware:not([style*="none"])) {
+.container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divFirmware:not([style*="none"])),
+.container:has(#divConfigPnl:not([style*="none"]) > #divNetworkSettings:not([style*="none"]) > #divNetAdapter:not([style*="none"])) {
     background: var(--bg);
 }
 .gen-layout {
@@ -2602,6 +2597,7 @@ label.gen-row {
     .gen-hero-chips,
     .gen-tabs,
     #genPager,
+    #netPager,
     #grpPager,
     #shdPager {
         display: none;
@@ -2621,6 +2617,7 @@ label.gen-row {
     }
     #divSystemOptions .gen-grid[hidden],
     #divFirmware .gen-grid[hidden],
+    #divNetAdapter .gen-grid[hidden],
     #somfyGroup .gen-grid[hidden],
     #somfyShade .gen-grid[hidden] {
         display: grid;
@@ -3051,155 +3048,6 @@ button.fw-act:hover .fw-act-chev {
 /* =======================================================================
  *  PAGE RÉSEAU - CONNEXION & MQTT
  *  ======================================================================= */
-
-/* bloc mode hotspot wifi */
-.hotspot-banner-alert {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    background: linear-gradient(90deg, rgba(234, 179, 8, 0.15) 0%, var(--color-bg-card) 100%);
-    border-radius: var(--radius-row);
-    padding: 16px 20px;
-    margin-bottom: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border:1px solid #eab3088c;
-    border-left: 5px solid #eab308;
-}
-.hotspot-banner-info-group {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-grow: 1;
-}
-.hotspot-banner-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(234, 179, 8, 0.2);
-    color: #eab308;
-    width: 44px;
-    height: 44px;
-    padding: 8px;
-    border-radius:var(--radius-icon-badge);
-    flex-shrink: 0;
-    animation: pulseGlow 2s infinite;
-}
-.hotspot-banner-icon svg {
-    width: 24px;
-    height: 24px;
-}
-.hotspot-banner-content {
-    flex-grow: 1;
-}
-.hotspot-banner-title {
-    color: #eab308;
-    font-size: 1.1em;
-    font-weight: 600;
-    margin: 0 0 4px 0;
-}
-.hotspot-banner-text {
-    color: var(--color-text-secondary);
-    font-size: 0.95em;
-    margin: 0;
-    line-height: 1.4;
-}
-.hotspot-banner-text strong {
-    color: var(--color-text-main);
-}
-.hotspot-banner-action {
-    flex-shrink: 0;
-}
-.hotspot-redirect-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #eab308;
-    color: #242425;
-    border: none;
-    padding: 10px 18px;
-    font-weight: 600;
-    font-size: 0.9em;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-.hotspot-redirect-btn:hover {
-    background: #facc15;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
-}
-/*États couleur wifi/ethernet*/
-#spanEthernetSpeedVal.sig-good {
-    color: var(--color-signal-good) !important;
-    font-weight: bold;
-}
-#spanEthernetSpeedVal.sig-medium {
-    color: var(--color-signal-medium) !important;
-    font-weight: bold;
-}
-#divEthernetStatus.sig-good .uniblocSvg-S svg,
-.wifi-dbm-value.sig-good {
-    color: var(--color-signal-good) !important;
-}
-.wifi-dbm-value.sig-medium {
-    color: var(--color-signal-medium) !important;
-}
-.wifi-dbm-value.sig-bad {
-    color: var(--color-signal-bad) !important;
-}
-#divWiFiStrength.sig-good use.active {
-    fill: var(--color-signal-good) !important;
-}
-#divWiFiStrength.sig-medium use.active {
-    fill: var(--color-signal-medium) !important;
-}
-#divWiFiStrength.sig-bad use.active {
-    fill: var(--color-signal-bad) !important;
-}
-/*carte wifi*/
-.wifi-ssid-green {
-    color: #069800;
-    font-size: 0.95em;
-    font-weight: bold;
-}
-.label.wifi-second-line{
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-}
-.wifi-canal-white {
-    color: var(--color-text-main);
-    opacity: 0.9;
-}
-.wifi-separator {
-    margin: 0 2px;
-    opacity: 0.5;
-}
-.wifi-dbm-value {
-    font-weight: bold;
-}
-.wifi-dbm-unit {
-    font-size: 0.9em;
-    opacity: 0.7;
-}
-#divRoaming.is-disabled {
-    cursor: not-allowed;
-}
-#divRoaming.is-disabled .uniLeft {
-    opacity: 0.6;
-    pointer-events: none;
-}
-#divRoaming.is-disabled .uniRight {
-    opacity: 0.4;
-    pointer-events: none;
-}
-
-.wifi-value {
-    color: var(--color-text-secondary);
-    margin-left: 5px;
-}
 
 span.ssid {
     font-size: 14px;
@@ -5525,43 +5373,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     .welcomeTop {
         display: block;
     }
-    .hotspot-banner-alert {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-        padding: 16px;
-    }
-    .hotspot-banner-info-group {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-        width: 100%;
-        position: relative;
-    }
-    .hotspot-banner-icon {
-        position: absolute;
-        top: 0;
-        left: 0;
-    }
-    .hotspot-banner-content {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-    .hotspot-banner-title {
-        margin-left: 54px;
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-    }
-    .hotspot-banner-action {
-        width: 100%;
-    }
-    .hotspot-redirect-btn {
-        width: 100%;
-        justify-content: center;
-        padding: 12px;
-    }
     .main-header {
         padding: 20px 15px 10px 15px;
     }
@@ -5726,12 +5537,12 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     #divShadeSetup .setup-chip { display: flex; align-items: center; justify-content: center; min-height: 32px; text-align: center; }
 }
 #divShadeSetup .setup-single .setup-task-b { padding: 14px; }
-:is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap, :is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-side, :is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-cols { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
-:is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
-:is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title { display: flex; align-items: center; gap: 10px; }
-:is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
-:is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
-:is(#divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
+:is(#divFirmware, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap, :is(#divFirmware, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-side, :is(#divFirmware, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-cols { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+:is(#divFirmware, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
+:is(#divFirmware, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title { display: flex; align-items: center; gap: 10px; }
+:is(#divFirmware, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
+:is(#divFirmware, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
+:is(#divFirmware, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
 /* Survol et clic restent dans l'orange du badge : sans quoi button:hover/:active (base.css) le
  * repeignent à la couleur d'accent. */
 .setup-badge:hover, .setup-badge:active { background: color-mix(in srgb, var(--color-warning), transparent 78%); border-color: color-mix(in srgb, var(--color-warning), transparent 55%); }
@@ -5743,58 +5554,279 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 .uniRow:focus-within .field-pen path { fill: var(--color-accent); }
 .uniRow:has(> .field-pen) .inputAndSelect:focus { outline: none; }
 }
-:is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
-:is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
-:is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) { padding-bottom: 70px; }
-body:has(.inst-overlay, .modal-overlay) :is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { display: none; }
+:is(#divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
+:is(#divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
+:is(#divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) { padding-bottom: 70px; }
+body:has(.inst-overlay, .modal-overlay) :is(#divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { display: none; }
 @media (min-width: 768px) {
-    :is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { left: var(--sidebar-width); }
+    :is(#divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { left: var(--sidebar-width); }
 }
 @media (max-width: 767px) {
-    :is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
-    :is(#divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
+    :is(#divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
+    :is(#divMQTT, #divTransceiverSettings, #divFrameLog, #divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
 }
-#divNetAdapter .tile-wrap .unibloc-container { margin: 0; }
-#divNetAdapter .tile-tip { display: none; }
-#divNetAdapter .net-iface, #divNetAdapter .net-iface > .baseFlexCol { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
-#divNetAdapter #divWiFiMode .uniblocRow { flex-direction: column; }
-#divNetAdapter .net-addr { display: flex; flex-direction: column; gap: 10px; }
-#divNetAdapter .net-card { margin: 0; width: 100%; }
-#divNetAdapter .net-grid > .unibloc-container > .uniRow { flex: none; }
-#divNetAdapter .net-sel { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-#divNetAdapter .net-sel input { display: none; }
-#divNetAdapter .ns-opt { all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 22px 16px 18px; color: var(--color-text-main); border: 1.5px solid var(--color-border); border-radius: var(--radius-row); background: var(--color-bg-row); transition: border-color .2s, background .2s, box-shadow .2s; }
-#divNetAdapter .ns-opt:hover { border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); }
-#divNetAdapter .ns-opt:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-#divNetAdapter .ns-opt b { font-size: 1.05em; }
-#divNetAdapter .ns-opt small { color: var(--color-text-secondary); font-size: .82em; line-height: 1.4; }
-#divNetAdapter .ns-diag { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-#divNetAdapter .ns-dev { width: 48px; height: 48px; flex: none; fill: var(--color-text-secondary); }
-#divNetAdapter .ns-ico { width: 56px; height: 56px; flex: none; fill: var(--color-text-secondary); color: var(--color-text-secondary); transition: fill .2s; }
-#divNetAdapter .ns-link { width: 56px; height: 0; border-top: 3px solid var(--color-text-secondary); opacity: .5; }
-#divNetAdapter .ns-wifi .ns-link { border-top: 4px dotted var(--color-text-secondary); }
-.net-sel:not(.sel-pending) > #cbHardwired:not(:checked) ~ .ns-wifi, .net-sel:not(.sel-pending) > #cbHardwired:checked ~ .ns-eth { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg-row)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent); }
-.net-sel:not(.sel-pending) > #cbHardwired:not(:checked) ~ .ns-wifi .ns-ico, .net-sel:not(.sel-pending) > #cbHardwired:checked ~ .ns-eth .ns-ico { fill: var(--color-accent); color: var(--color-accent); }
-.net-sel:not(.sel-pending) > #cbHardwired:not(:checked) ~ .ns-wifi .ns-link, .net-sel:not(.sel-pending) > #cbHardwired:checked ~ .ns-eth .ns-link { border-top-color: var(--color-accent); opacity: 1; }
-.net-sel:not(.sel-pending) > #cbHardwired:not(:checked) ~ .ns-wifi .ns-dev, .net-sel:not(.sel-pending) > #cbHardwired:checked ~ .ns-eth .ns-dev { fill: var(--color-text-main); }
-@media (max-width: 600px) {
-    #divNetAdapter .ns-link { width: 24px; }
-    #divNetAdapter .ns-dev { width: 34px; height: 34px; }
-    #divNetAdapter .ns-ico { width: 40px; height: 40px; }
+/* --- Page Connexion (#divNetAdapter) sur le gabarit Général : tête d'état, types, résumé --- */
+#divNetAdapter .net-off {
+    display: none !important;
 }
-@media (min-width: 1000px) {
-    .subtab-content#divNetAdapter { max-width: 1440px; }
-    #divNetAdapter .tile-cols.net-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
-    #divNetAdapter .net-grid > .net-wiz, #divNetAdapter .net-grid > .net-type { grid-column: 1 / -1; }
-    #divNetAdapter .net-state .uniblocRow { flex-wrap: wrap; }
+.net-hero-state {
+    display: block;
+    margin-bottom: 8px;
+    font-size: var(--fs-1);
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-3);
 }
-@media (min-width: 1600px) {
-    #divNetAdapter .tile-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; grid-template-areas: "cols side"; }
-    #divNetAdapter .tile-side { grid-area: side; }
-    #divNetAdapter .tile-cols { grid-area: cols; }
-    #divNetAdapter .net-state .uniblocRow { flex-direction: column; }
-    #divNetAdapter .net-state .uniRow { width: 100%; }
-    #divNetAdapter .tile-tip { display: flex; flex-direction: column; }
+.net-hero-halo {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: clamp(96px, min(9vw, 17vh), 160px);
+    height: clamp(96px, min(9vw, 17vh), 160px);
+    border-radius: 50%;
+    background: var(--ok-bg);
+    color: var(--ok);
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--ok) 14%, transparent);
+}
+.net-hero-halo.is-medium,
+.net-hero-halo.is-ap {
+    background: var(--warn-bg);
+    color: var(--warn);
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--warn) 16%, transparent);
+}
+.net-hero-halo.is-bad {
+    background: var(--danger-bg);
+    color: var(--danger);
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--danger) 14%, transparent);
+}
+.net-hero-halo > svg {
+    width: 54%;
+    height: 54%;
+    fill: currentColor;
+}
+.net-hero-wave use {
+    fill: currentColor;
+    opacity: .25;
+}
+.net-hero-wave use.on {
+    opacity: 1;
+}
+.net-hero-quality {
+    display: block;
+    margin-top: 8px;
+    font-size: var(--fs-3);
+    font-weight: 700;
+    color: var(--ok);
+}
+.net-hero-quality.is-medium {
+    color: var(--warn);
+}
+.net-hero-quality.is-bad {
+    color: var(--danger);
+}
+.net-hero-quality[hidden] {
+    display: none;
+}
+.net-hero-facts {
+    width: 100%;
+    max-width: 340px;
+    text-align: left;
+}
+.net-hero-btn,
+.net-hero-btn:hover,
+.net-hero-btn:active {
+    align-self: center;
+    background: var(--on-fill);
+    color: var(--on-fill-text);
+}
+.gen-grid > .net-type-tile {
+    grid-column: 1 / -1;
+}
+.net-type-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+.net-type-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    min-height: 64px;
+    margin: 0;
+    padding: 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--r-3);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    text-transform: none;
+    cursor: pointer;
+}
+.net-type-btn:hover,
+.net-type-btn:active {
+    background: var(--surface-2);
+    color: var(--text);
+}
+.net-type-btn.selected {
+    border-color: var(--color-accent);
+}
+.net-type-btn > svg {
+    width: 28px;
+    height: 28px;
+    fill: currentColor;
+    color: var(--text-3);
+}
+.net-type-btn.selected > svg {
+    color: var(--color-accent);
+}
+.net-type-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.net-type-text > b {
+    font-size: var(--fs-3);
+}
+.net-type-text > span {
+    font-size: var(--fs-2);
+    line-height: 1.4;
+    color: var(--text-3);
+}
+.net-type-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: none;
+    padding: 3px 10px;
+    border-radius: var(--r-pill);
+    background: var(--ok-bg);
+    color: var(--ok);
+    font-size: var(--fs-1);
+    font-weight: 700;
+}
+.net-type-btn.is-active .net-type-badge {
+    display: inline-block;
+}
+/* Trop étroit pour trois cartes côte à côte : une par ligne, icône à gauche. */
+@container (max-width: 620px) {
+    .net-type-list {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .net-type-btn {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 14px;
+    }
+    .net-type-badge {
+        position: static;
+    }
+}
+.net-sum-list {
+    display: flex;
+    flex-direction: column;
+}
+.net-sum-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    margin: 0;
+    padding: 10px 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-3);
+    text-align: left;
+    text-transform: none;
+    cursor: pointer;
+}
+.net-sum-row:first-child {
+    border-top: 0;
+}
+.net-sum-row:hover,
+.net-sum-row:active {
+    background: transparent;
+    color: var(--color-accent);
+}
+.net-sum-row > span {
+    color: var(--text-3);
+}
+.net-sum-row > b {
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+.net-sum-row > svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--color-accent);
+}
+.net-sum-row.is-missing > b {
+    color: var(--warn);
+}
+.net-static-ip {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+@media (max-width: 999px) {
+    .net-hero-halo {
+        width: 84px;
+        height: 84px;
+        box-shadow: 0 0 0 8px color-mix(in srgb, currentColor 14%, transparent);
+    }
+    .net-hero-facts,
+    .net-hero-btn {
+        grid-column: 1 / -1;
+        max-width: none;
+    }
+    .net-hero-btn {
+        justify-self: start;
+    }
+}
+@media (max-width: 767px) {
+    .gen-hero.net-hero .gen-hero-text {
+        display: block;
+    }
+    .net-hero-halo {
+        width: 52px;
+        height: 52px;
+        box-shadow: 0 0 0 5px color-mix(in srgb, currentColor 14%, transparent);
+    }
+    .net-hero-state {
+        margin-bottom: 2px;
+    }
+    .net-hero-quality {
+        margin-top: 2px;
+    }
+    .net-hero .net-hero-facts {
+        display: none;
+    }
+    .net-sum-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 2px 12px;
+    }
+    .net-sum-row > b {
+        grid-column: 1;
+        text-align: left;
+    }
+    .net-sum-row > svg {
+        grid-column: 2;
+        grid-row: 1 / 3;
+    }
 }
 #divMQTT .tile-wrap .unibloc-container { margin: 0; }
 #divMQTT .tile-tip { display: none; }

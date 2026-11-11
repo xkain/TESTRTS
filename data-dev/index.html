@@ -767,284 +767,86 @@
                 <div id="divNetworkSettings" style="display:none;">
                     <div id="subtabContainer-divNetworkSettings" class="subtab-container"><span class="selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION"></span><span data-grpid="divMQTT" tr="SUBTAB_MQTT" ></span></div>
                     <div id="divNetAdapter" class="subtab-content">
-                        <div class="main-header">
-                            <div class="main-headerBlock">
-                                <h2 class="main-headerTitle" tr="CONNEXION_TITLE"></h2>
-                                <p class="main-headerDesc" tr="CONNEXION_DESC"></p>
-                            </div>
-                            <div class="main-headerAmbient">
-                                <svg><use href="#svg-tabReseau"></use></svg>
-                            </div>
-                        </div>
-                        <!-- L'ASSISTANT DE CONNEXION SE LANCE DEPUIS DEUX BLOCS EXCLUSIFS (.hotspot-only
-                        ici, #divBtnWizard en .hotspot-hidden plus bas), qui appellent la MÊME chose :
-                        onboarding.relaunch(). C'est le seul point d'entrée de l'assistant, qui ne
-                        configure plus que le réseau.
-
-                        Deux blocs et non un seul rendu deux fois, parce qu'ils ne font pas le même
-                        travail. Celui-ci SIGNALE d'abord un état ("vous êtes sur 192.168.4.1, rien
-                        d'autre ne marchera tant que ce n'est pas réglé"), ce qui lui vaut l'alarme
-                        visuelle ET la tête de page : rien de ce qui suit n'a de sens avant. L'autre
-                        n'est qu'un raccourci vers le chemin guidé, il se lit et se place comme les
-                        autres entrées de navigation de la page.
-
-                        La modale de scan Wi-Fi seule (wifi.wifiOverlay) ne peut pas remplacer ce
-                        bouton : elle ne sait exprimer QUE le Wi-Fi, alors que le cas qui ramène un
-                        appareil déjà configuré sur le point d'accès est justement le lien Ethernet
-                        tombé sans repli (cf. NetManager::preferredConnType()) -- il faudrait alors
-                        "Ethernet + repli Wi-Fi", inatteignable depuis cette modale. L'assistant, lui,
-                        pose d'abord la question du mode et contient de toute façon la recherche
-                        Wi-Fi ET la saisie manuelle (cf. Onboarding._networkPanel()) : rien n'est
-                        perdu, le choix du mode est gagné. -->
-                        <div class="hotspot-banner-alert hotspot-only">
-                            <div class="hotspot-banner-info-group">
-                                <div class="hotspot-banner-icon">
-                                    <svg><use href="#svg-hotspot"></use></svg>
+                        <div class="gen-layout">
+                            <section id="netHero" class="gen-hero net-hero">
+                                <span id="netHeroHalo" class="net-hero-halo">
+                                    <svg id="netHeroWave" class="net-hero-wave"><use href="#svg-wifi-0"></use><use href="#svg-wifi-1"></use><use href="#svg-wifi-2"></use><use href="#svg-wifi-3"></use></svg>
+                                    <svg id="netHeroIconSvg"><use id="netHeroIcon" href="#svg-ethernet"></use></svg>
+                                </span>
+                                <div class="gen-hero-text">
+                                    <span id="netHeroState" class="net-hero-state"></span>
+                                    <h2 id="netHeroName" class="gen-hero-title"></h2>
+                                    <span id="netHeroQuality" class="net-hero-quality"></span>
                                 </div>
-                                <div class="hotspot-banner-content">
-                                    <h3 class="hotspot-banner-title" tr="CONNEXION_HOTSPOT_TITLE"></h3>
-                                    <p class="hotspot-banner-text">
-                                        <span tr="CONNEXION_HOTSPOT_DESC0"></span>
-                                        <strong tr="CONNEXION_HOTSPOT_DESC1"></strong>
-                                    </p>
+                                <div class="ed-ro-list net-hero-facts">
+                                    <div class="ed-ro"><span tr="CONNEXION_CURRENT_IP"></span><b id="spanCurrentIP"></b></div>
+                                    <div class="ed-ro"><span tr="CONNEXION_ADDRESSING"></span><b id="netHeroAddr"></b></div>
+                                    <div id="netHeroSignalRow" class="ed-ro"><span tr="CHANNEL"></span><b id="netHeroSignal"></b></div>
+                                    <div id="netHeroSpeedRow" class="ed-ro"><span tr="CONNEXION_ETH_SPEED"></span><b id="netHeroSpeed"></b></div>
+                                    <div class="ed-ro"><span tr="CONNEXION_MAC_ADDRESS"></span><b class="spanMacAddress">--:--:--:--:--:--</b></div>
                                 </div>
-                            </div>
-                            <div class="hotspot-banner-action feedback-card">
-                                <button id="btnHotspotWizard" type="button" class="hotspot-redirect-btn" onclick="onboarding.relaunch();">
-                                    <span tr="CONNEXION_RELAUNCH"></span>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="tile-wrap">
-                            <div class="tile-side">
-                                <div class="unibloc-container net-state">
-                                    <h3 class="unibloc-title tile-title"><span tr="CONNEXION_TITLE_INFO"></span></h3>
+                                <button type="button" class="gen-btn net-hero-btn" onclick="onboarding.relaunch();"><svg><use href="#svg-firstConnect"></use></svg><span tr="CONNEXION_RELAUNCH_DESC"></span></button>
+                            </section>
 
-                                    <div class="uniblocRow">
-                                        <div id="divWiFiStrength" class="uniRow hotspot-hidden">
-                                            <div class="uniblocSvg-S">
-                                                <svg width="24" height="24" viewBox="0 0 24 24">
-                                                    <use id="wifi_0" href="#svg-wifi-0" fill="#ccc" />
-                                                    <use id="wifi_1" href="#svg-wifi-1" fill="#ccc" />
-                                                    <use id="wifi_2" href="#svg-wifi-2" fill="#ccc" />
-                                                    <use id="wifi_3" href="#svg-wifi-3" fill="#ccc" />
-                                                </svg>
-                                            </div>
-                                            <div class="unifield-content">
-                                                <span class="uniValue">
-                                                    <span tr="CONNEXION_WIFI_NETWORK">Réseau:</span>
-                                                    <span id="spanNetworkSSID" class="wifi-ssid-green">-------------</span>
-                                                </span>
-                                                <span class="label wifi-second-line">
-                                                    <span class="wifi-canal-white" tr="CONNEXION_WIFI_CHANNEL">Canal:</span>
-                                                    <span id="spanNetworkChannel" class="uniValue">--</span>
-                                                    <span class="wifi-separator">•</span>
-                                                    <span id="spanNetworkStrength" class="wifi-dbm-value">---</span><span class="wifi-dbm-unit" tr="UNIT_DBM">dBm</span>
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div id="divEthernetStatus" class="uniRow hotspot-hidden" style="display:none;">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-ethernet0"></use></svg></div>
-                                            <div class="unifield-content">
-                                                <span class="uniValue">
-                                                    <span tr="CONNEXION_ETH_STATUS"></span>
-                                                    <span id="spanEthernetStatus" class="wifi-value">-------------</span>
-                                                </span>
-                                                <span class="label wifi-second-line">
-                                                    <span tr="CONNEXION_ETH_SPEED"></span>
-                                                    <span id="spanEthernetSpeed" class="wifi-value">
-                                                        <span id="spanEthernetSpeedVal">--</span><span id="spanEthernetSpeedDetails"></span>
-                                                    </span>
-                                                </span>
+                            <div class="gen-body">
+                                <nav id="netTabs" class="gen-tabs" role="tablist">
+                                    <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="CONNEXION_TAB_SUMMARY"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="1" tr="CONNEXION_ETHERNET"></button>
+                                    <button type="button" class="gen-tab net-wifi-tab" role="tab" data-tab="2" tr="CONNEXION_WIFI"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="3" tr="CONNEXION_TAB_ADVANCED"></button>
+                                </nav>
+                                <div id="netPanels" class="gen-panels">
+                                    <div class="gen-grid" role="tabpanel" data-tab="0">
+                                        <header class="gen-sec-head"><h2 tr="CONNEXION_TAB_SUMMARY"></h2></header>
+                                        <div class="gen-tile net-type-tile ifBOX-Wifi">
+                                            <h3 class="gen-tile-title" tr="CONNEXION_TYPE"></h3>
+                                            <p id="netApNote" class="gen-tile-desc is-warning" tr="CONNEXION_AP_NOTE" hidden></p>
+                                            <div id="netTypeList" class="net-type-list">
+                                                <input id="cbHardwired" name="hardwired" type="checkbox" data-bind="ethernet.hardwired" hidden>
+                                                <input id="cbFallbackWireless" name="fallbackwireless" type="checkbox" data-bind="ethernet.wirelessFallback" hidden>
+                                                <button type="button" class="net-type-btn" data-mode="1" onclick="wifi.pickConnType(1);">
+                                                    <svg><use href="#svg-wifi"></use></svg>
+                                                    <span class="net-type-text"><b tr="CONNEXION_WIFI"></b><span tr="CONNEXION_WIFI_DESC"></span></span>
+                                                    <span class="net-type-badge" tr="IS_ACTIVE"></span>
+                                                </button>
+                                                <button type="button" class="net-type-btn" data-mode="3" onclick="wifi.pickConnType(3);">
+                                                    <svg><use href="#svg-backWireless"></use></svg>
+                                                    <span class="net-type-text"><b tr="CONNEXION_ETH_FALLBACK"></b><span tr="CONNEXION_ETH_FALLBACK_DESC"></span></span>
+                                                    <span class="net-type-badge" tr="IS_ACTIVE"></span>
+                                                </button>
+                                                <button type="button" class="net-type-btn" data-mode="2" onclick="wifi.pickConnType(2);">
+                                                    <svg><use href="#svg-ethernet"></use></svg>
+                                                    <span class="net-type-text"><b tr="CONNEXION_ETHERNET"></b><span tr="CONNEXION_ETHERNET_DESC"></span></span>
+                                                    <span class="net-type-badge" tr="IS_ACTIVE"></span>
+                                                </button>
                                             </div>
                                         </div>
-                                        <div class="uniRow hotspot-only">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-ip"></use></svg></div>
-                                            <div class="unifield-content">
-                                                <span class="label" tr="CONNEXION_CURRENT_IP"></span>
-                                                <span class="uniValue">192.168.4.1</span>
-                                            </div>
-                                        </div>
-                                        <div class="uniRow hotspot-hidden">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-ip"></use></svg></div>
-                                            <div class="unifield-content">
-                                                <span class="label" tr="CONNEXION_CURRENT_IP"></span>
-                                                <span class="uniValue" id="spanCurrentIP"></span>
-                                            </div>
-                                        </div>
-                                        <div class="uniRow">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-mac"></use></svg></div>
-                                            <div class="unifield-content">
-                                                <span class="label" tr="CONNEXION_MAC_ADDRESS"></span>
-                                                <span class="uniValue spanMacAddress">--:--:--:--:--:--</span>
-                                            </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="CONNEXION_TILE_SUMMARY"></h3>
+                                            <div id="netSummary" class="net-sum-list"></div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="unibloc-container tile-tip">
-                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
-                                    <p class="tile-tip-text" tr="CONNEXION_TIP_AP"></p>
-                                </div>
-                            </div>
-                            <div class="tile-cols net-grid">
-                                <div class="unibloc-container net-wiz hotspot-hidden">
-                                    <h3 class="unibloc-title tile-title"><span tr="CONNEXION_TITLE_GUIDED"></span></h3>
-                                    <div id="divBtnWizard" class="uniblocCol feedback-card net-card">
-                                        <button id="btnRelaunchOnboarding" onclick="onboarding.relaunch();" class="buttonUpdate" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-firstConnect"></use></svg>
-                                                </div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="CONNEXION_RELAUNCH"></div>
-                                                    <div class="uniStatus" tr="CONNEXION_RELAUNCH_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="unibloc-container ifBOX-Wifi net-type">
-                                    <h3 class="unibloc-title tile-title"><span tr="CONNEXION_TYPE"></span></h3>
 
-                                    <div class="net-sel sel-pending">
-            <input id="cbHardwired" name="hardwired" type="checkbox" data-bind="ethernet.hardwired" onclick="wifi.setConnectionType(this.checked)">
-            <button type="button" class="ns-opt ns-wifi" onclick="wifi.pickConnType(false);">
-                <span class="ns-diag"><svg class="ns-dev"><use href="#svg-logo"></use></svg><span class="ns-link"></span><svg class="ns-ico"><use href="#svg-wifi"></use></svg></span>
-                <b tr="CONNEXION_WIFI"></b>
-                <small tr="CONNEXION_WIFI_DESC"></small>
-            </button>
-            <button type="button" class="ns-opt ns-eth" onclick="wifi.pickConnType(true);">
-                <span class="ns-diag"><svg class="ns-dev"><use href="#svg-logo"></use></svg><span class="ns-link"></span><svg class="ns-ico"><use href="#svg-ethernet"></use></svg></span>
-                <b tr="CONNEXION_ETHERNET"></b>
-                <small tr="CONNEXION_ETHERNET_DESC"></small>
-            </button>
-        </div>
-                                </div>
-                                <div class="net-iface">
-                                    <!-- Options Ethernet, remontées AVANT #divWiFiMode : l'interrupteur de repli
-                                    commande les réglages Wi-Fi ci-dessous, il doit donc les précéder. Le bloc
-                                    vit hors de #divEthernetSection pour cette seule raison d'ordre -- les deux
-                                    s'affichent et se masquent ensemble (cf. Wifi.useEthernetClicked). En mode
-                                    Wi-Fi il est masqué, et l'ordre à l'écran est alors inchangé. -->
-                                    <div id="divEthernetOptions" class="baseFlexCol" style="display: none;">
-                                        <div class="unibloc-container">
-                                            <h3 class="unibloc-title tile-title"><span tr="CONNEXION_TITLE_OPTIONS"></span></h3>
-
-                                            <div id="divFallbackWireless">
-                                                <label class="uniRow dirty-target" for="cbFallbackWireless">
-                                                    <div class="uniLeft">
-                                                        <div class="uniblocSvg-S"><svg><use href="#svg-backWireless"></use></svg></div>
-                                                        <div class="uniText">
-                                                            <div class="uniLabel" tr="CONNEXION_WIFI_FALLBACK"></div>
-                                                            <div class="uniStatus" tr="CONNEXION_WIFI_FALLBACK_DESC"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="uniRight">
-                                                        <span class="switch">
-                                                            <input id="cbFallbackWireless" name="fallbackwireless" type="checkbox" data-bind="ethernet.wirelessFallback" onclick="wifi.useEthernetClicked();">
-                                                            <div></div>
-                                                        </span>
-                                                    </div>
-                                                </label>
+                                    <div class="gen-grid" role="tabpanel" data-tab="1" hidden>
+                                        <header class="gen-sec-head"><h2 tr="CONNEXION_ETHERNET"></h2></header>
+                                        <div id="divETHConfigBlock" class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="CONNEXION_ETH_BOARD"></h3>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="selETHBoardType" tr="SETTINGS_BOARD_TYPE"></label>
+                                                <div class="gen-input-box dirty-target">
+                                                    <select id="selETHBoardType" class="gen-input" name="ethBoardType" data-datatype="int" data-bind="ethernet.boardType" onchange="wifi.onETHBoardTypeChanged(this);"></select>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div id="divWiFiMode" class="baseFlexCol">
-                                        <div class="unibloc-container">
-                                            <h3 class="unibloc-title tile-title"><span tr="CONNEXION_TITLE_WIFI"></span></h3>
-
-                                            <div class="baseFlexCol">
-                                                <div class="uniRow flex1 hotspot-hidden feedback-card">
-                                                    <button class="buttonUpdate unibuttonPad" type="button" onclick="wifi.wifiOverlay('CONNEXION_FIND_WIFI', false);">
-                                                        <div class="uniLeft">
-                                                            <div class="uniblocSvg-S"><svg><use href="#svg-addWifiAuto"></use></svg></div>
-                                                            <div class="devButtonUpdate">
-                                                                <div tr="CONNEXION_FIND_WIFI"></div>
-                                                                <div class="uniStatus"  tr="CONNEXION_FIND_WIFI_DESC"></div>
-                                                            </div>
-                                                        </div>
-                                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                                    </button>
-                                                </div>
-                                                <div class="uniRow flex1 feedback-card">
-                                                    <button  class="buttonUpdate unibuttonPad" type="button" onclick="wifi.wifiOverlay('CONNEXION_MODAL_SELECT_M_TITLE', true);">
-                                                        <div class="uniLeft">
-                                                            <div class="uniblocSvg-S"><svg><use href="#svg-addWifiManuel"></use></svg></div>
-                                                            <div class="devButtonUpdate">
-                                                                <div tr="CONNEXION_ADD_WIFI_MANUAL"></div>
-                                                                <div class="uniStatus" tr="CONNEXION_ADD_WIFI_MANUAL_DESC"></div>
-                                                            </div>
-                                                        </div>
-                                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <!-- SSID caché et itinérance rejoignent le bloc "Réseau Wi-Fi" plutôt que
-                                                 de vivre dans un bloc "Options" à eux : ils ne qualifient que ce réseau-là.
-                                                 Séparés, leur titre entrait en collision avec celui des options Ethernet dès
-                                                 que les deux sections s'affichaient ensemble (Ethernet + repli Wi-Fi) -- deux
-                                                 "Options Réseau" à l'écran, séparés par le bloc qu'ils commentaient. -->
-                                            <div class="uniblocRow">
-                                                <label id="divHiddenSSID" class="uniRow dirty-target" for="cbHiddenSSID">
-                                                    <div class="uniLeft">
-                                                        <div class="uniblocSvg-S"><svg><use href="#svg-hiddenSSID"></use></svg></div>
-                                                        <div class="uniText">
-                                                            <div class="uniLabel" tr="CONNEXION_HIDDEN_SSID"></div>
-                                                            <div class="uniStatus" tr="CONNEXION_HIDDEN_SSID_DESC"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="uniRight">
-                                                        <span class="switch">
-                                                            <input id="cbHiddenSSID" type="checkbox" data-bind="wifi.hidden" onclick="wifi.hiddenSSIDClicked();">
-                                                            <div></div>
-                                                        </span>
-                                                    </div>
-                                                </label>
-                                                <label id="divRoaming" class="uniRow dirty-target" for="cbRoaming">
-                                                    <div class="uniLeft">
-                                                        <div class="uniblocSvg-S"><svg><use href="#svg-roaming"></use></svg></div>
-                                                        <div class="uniText">
-                                                            <div class="uniLabel" tr="CONNEXION_ROAMING"></div>
-                                                            <div class="uniStatus" tr="CONNEXION_ROAMING_DESC"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="uniRight">
-                                                        <span class="switch">
-                                                            <input id="cbRoaming" type="checkbox" name="roaming" data-bind="wifi.roaming" onclick="wifi.hiddenSSIDClicked();">
-                                                            <div></div>
-                                                        </span>
-                                                    </div>
-                                                </label>
-                                            </div>
-                                            <input type="hidden" name="ssid" id="fldSsid" data-bind="wifi.ssid">
-                                            <input type="hidden" name="passphrase" id="fldPassphrase" data-bind="wifi.passphrase">
+                                        <div id="netEthPresetTile" class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="CONNEXION_ETH_PRESET"></h3>
+                                            <p class="gen-tile-desc" tr="CONNEXION_ETH_PRESET_DESC"></p>
+                                            <div id="netEthDetail" class="ed-ro-list" hidden></div>
+                                            <button id="btnNetEthDetail" type="button" class="gen-btn" onclick="wifi.toggleEthDetail();"><span></span></button>
                                         </div>
-                                    </div>
-                                    <div id="divEthernetSection" class="baseFlexCol" style="display: none;">
-                                        <!-- Configuration matérielle : masquée sur BOX-ETH (main.css, section des
-                                             profils), où le type de carte est déjà celui du boîtier et n'a aucune
-                                             raison d'être changé. Se révèle par cinq clics sur le titre de la page,
-                                             même déverrouillage `show-expert-gpio` que les broches de la radio (cf.
-                                             Wifi.init). Masquage par le CSS et non par un style en ligne : rien ici
-                                             ne doit dépendre de l'ordre d'exécution de useEthernetClicked(). -->
-                                        <div id="divETHConfigBlock" class="unibloc-container">
-                                            <h3 class="unibloc-title tile-title"><span tr="CONNEXION_TITLE_CONFIG"></span></h3>
-
-                                            <div class="uniRow">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
-                                                    <div class="unifield-content">
-                                                        <label class="label" for="selETHBoardType" tr="SETTINGS_BOARD_TYPE"></label>
-                                                        <select id="selETHBoardType" class="inputAndSelect" name="ethBoardType" placeholder="Type de carte" data-datatype="int" data-bind="ethernet.boardType" onchange="wifi.onETHBoardTypeChanged(this);"></select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div id="divEthernetMode" style="display:none;">
+                                        <div id="netEthManualTile" class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="CONNEXION_ETH_MANUAL"></h3>
+                                            <div id="divEthernetMode">
                                                 <div id="divETHSettings">
                                                     <div class="gpio-main-wrapper">
                                                         <div class="gpio-group-block">
@@ -1132,51 +934,113 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="unibloc-container net-addr">
-                                    <h3 class="unibloc-title tile-title"><span tr="CONNEXION_TITLE_ADDR"></span></h3>
-                                    <div id="divBtnDHCP" class="uniblocCol feedback-card net-card">
-                                        <button onclick="wifi.DHCPOverlay();" class="buttonUpdate" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-ip0"></use></svg>
-                                                </div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="CONNEXION_DHCP">Configuration IP</div>
-                                                    <div id="badgeDHCPState" class="status-simple state-pin">Réseau</div>
-                                                    <div class="uniStatus" tr="CONNEXION_DHCP_DESC">Gérer le DHCP et l'adressage IP</div>
+
+                                    <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
+                                        <header class="gen-sec-head"><h2 class="net-wifi-title" tr="CONNEXION_WIFI"></h2></header>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title net-wifi-title" tr="CONNEXION_WIFI"></h3>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="fldSsid" tr="CONNEXION_WIFI_SSID"></label>
+                                                <div class="gen-input-box dirty-target">
+                                                    <input id="fldSsid" class="gen-input" name="ssid" type="text" maxlength="32" data-bind="wifi.ssid" tr="CONNEXION_WIFI_ENTER_SSID" placeholder=" ">
                                                 </div>
                                             </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="fldPassphrase" tr="SECURITY_PASSWORD"></label>
+                                                <div class="gen-input-box dirty-target">
+                                                    <input id="fldPassphrase" class="gen-input" name="passphrase" type="password" maxlength="64" autocomplete="new-password" data-bind="wifi.passphrase">
+                                                    <div class="password-eye" onclick="security.toggleFieldPassword('fldPassphrase', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
+                                                </div>
                                             </div>
-                                        </button>
+                                            <button type="button" class="gen-btn hotspot-hidden" onclick="wifi.findWifi();"><svg><use href="#svg-search"></use></svg><span tr="CONNEXION_FIND_WIFI"></span></button>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="CONNEXION_TITLE_OPTIONS"></h3>
+                                            <div class="gen-row dirty-target">
+                                                <span class="gen-row-text"><b tr="CONNEXION_HIDDEN_SSID"></b><span tr="CONNEXION_HIDDEN_SSID_DESC"></span></span>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbHiddenSSID" type="checkbox" data-bind="wifi.hidden" onclick="wifi.hiddenSSIDClicked();">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
+                                                </span>
+                                            </div>
+                                            <div id="divRoaming" class="gen-row dirty-target">
+                                                <span class="gen-row-text"><b tr="CONNEXION_ROAMING"></b><span tr="CONNEXION_ROAMING_DESC"></span></span>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbRoaming" type="checkbox" name="roaming" data-bind="wifi.roaming">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div id="divBtnAPPassword" class="uniblocCol feedback-card net-card">
-                                        <button onclick="wifi.apPasswordOverlay();" class="buttonUpdate" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-hotspot"></use></svg>
+
+                                    <div class="gen-grid" role="tabpanel" data-tab="3" hidden>
+                                        <header class="gen-sec-head"><h2 tr="CONNEXION_TAB_ADVANCED"></h2></header>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="CONNEXION_CURRENT_IP"></h3>
+                                            <div class="gen-row dirty-target">
+                                                <span class="gen-row-text"><b tr="CONNEXION_ADDRESSING"></b></span>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbNetDhcp" type="checkbox" data-bind="ip.dhcp">
+                                                    <span class="gen-seg-yes" tr="CONNEXION_IP_AUTO"></span>
+                                                    <span class="gen-seg-no" tr="CONNEXION_IP_STATIC"></span>
+                                                </span>
+                                            </div>
+                                            <p id="netIpTip" class="gen-tile-desc" tr="CONNEXION_IP_TIP"></p>
+                                            <div id="netStaticIp" class="net-static-ip" hidden>
+                                                <div class="gen-field-pair">
+                                                    <div class="gen-field">
+                                                        <label class="gen-field-label" for="fldIPAddress" tr="DHCP_OVERLAY_STATIC_IP"></label>
+                                                        <div class="gen-input-box dirty-target"><input id="fldIPAddress" class="gen-input" type="text" maxlength="15" data-bind="ip.ip" placeholder="0.0.0.0"></div>
+                                                    </div>
+                                                    <div class="gen-field">
+                                                        <label class="gen-field-label" for="fldSubnetMask" tr="DHCP_OVERLAY_SUBNET_MASK"></label>
+                                                        <div class="gen-input-box dirty-target"><input id="fldSubnetMask" class="gen-input" type="text" maxlength="15" data-bind="ip.subnet" placeholder="0.0.0.0"></div>
+                                                    </div>
+                                                    <div class="gen-field">
+                                                        <label class="gen-field-label" for="fldGateway" tr="DHCP_OVERLAY_GATEWAY"></label>
+                                                        <div class="gen-input-box dirty-target"><input id="fldGateway" class="gen-input" type="text" maxlength="15" data-bind="ip.gateway" placeholder="0.0.0.0"></div>
+                                                    </div>
+                                                    <div class="gen-field">
+                                                        <label class="gen-field-label" for="fldDNS1" tr="DHCP_OVERLAY_DNS1"></label>
+                                                        <div class="gen-input-box dirty-target"><input id="fldDNS1" class="gen-input" type="text" maxlength="15" data-bind="ip.dns1" placeholder="0.0.0.0"></div>
+                                                    </div>
+                                                    <div class="gen-field">
+                                                        <label class="gen-field-label" for="fldDNS2" tr="DHCP_OVERLAY_DNS2"></label>
+                                                        <div class="gen-input-box dirty-target"><input id="fldDNS2" class="gen-input" type="text" maxlength="15" data-bind="ip.dns2" placeholder="0.0.0.0"></div>
+                                                    </div>
                                                 </div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="CONNEXION_AP_PASSWORD"></div>
-                                                    <div id="badgeAPState" class="status-simple"></div>
-                                                    <div class="uniStatus" tr="CONNEXION_AP_PASSWORD_DESC"></div>
+                                                <p class="gen-tile-desc is-warning" tr="DHCP_OVERLAY_REBOOT_INFO"></p>
+                                            </div>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="CONNEXION_AP_TITLE"></h3>
+                                            <p class="gen-tile-desc" tr="CONNEXION_TIP_AP"></p>
+                                            <div class="gen-row dirty-target">
+                                                <span class="gen-row-text"><b tr="CONNEXION_AP_PASSWORD"></b><span tr="CONNEXION_AP_PASSWORD_DESC"></span></span>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbNetApProtect" type="checkbox">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
+                                                </span>
+                                            </div>
+                                            <div id="netApPwdField" class="gen-field" hidden>
+                                                <label class="gen-field-label" for="fldAPPassword" tr="SECURITY_PASSWORD"></label>
+                                                <div class="gen-input-box dirty-target">
+                                                    <input id="fldAPPassword" class="gen-input" type="password" minlength="8" autocomplete="new-password" tr="SECURITY_PASSWORD_PLH_SIMPLE" placeholder=" ">
+                                                    <div class="password-eye" onclick="security.toggleFieldPassword('fldAPPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
                                                 </div>
                                             </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                            </div>
-                                        </button>
+                                            <p id="netApWarning" class="gen-tile-desc is-warning"></p>
+                                        </div>
                                     </div>
                                 </div>
+                                <nav id="netPager" class="gen-pager" hidden>
+                                    <button type="button" id="btnNetPrev" class="gen-btn gen-pager-btn"><svg><use href="#svg-arrowLeft"></use></svg><span></span></button>
+                                    <button type="button" id="btnNetNext" class="gen-btn gen-pager-btn gen-pager-next"><span></span><svg><use href="#svg-arrowRight"></use></svg></button>
+                                </nav>
                             </div>
-                        </div>
-                        <div class="button-container-footerHtml">
-                            <button id="btnSaveNetwork" type="button"  onclick="wifi.saveNetwork();">
-                                <svg><use href="#svg-save"></use></svg>
-                                <span tr="BT_SAVE"></span>
-                            </button>
                         </div>
                     </div>
                     <div id="divMQTT" class="subtab-content" style="display:none;">
