@@ -262,16 +262,18 @@ class UIBinder {
                 return val;
         }
     }
-    // msgKey (optionnel) : clé de traduction affichée SOUS le spinner, pour dire à l'utilisateur ce
-    // qui est en cours plutôt que de le laisser devant une animation muette. Le libellé peut être
-    // changé en cours de route via ui.setWaitMessage() quand une opération enchaîne plusieurs
-    // phases (ex: enregistrement puis attente de bascule réseau).
-    waitMessage(el, msgKey) {
+    // Attente longue, qui couvre l'écran. msgKey : ce qui est en cours, sous l'indicateur ; il peut
+    // changer en route (ui.setWaitMessage). opts.steps : [[clé, 'done' | 'cur' | 'todo'], ...],
+    // les étapes d'une opération qui coupe l'interface ; opts.note : une consigne sous les étapes.
+    waitMessage(el, msgKey, opts = {}) {
         let div = document.createElement('div');
+        const steps = (opts.steps || []).map(([k, st]) => `<li class="is-${st}">${tr(k)}</li>`).join('');
         div.innerHTML = `
         <div class="wait-overlay-inner">
         <svg class="wait-spinner" viewBox="25 25 50 50"><circle class="wait-spinner-track" cx="50" cy="50" r="20" fill="none" stroke-width="3"/><circle class="wait-spinner-arc" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/></svg>
         <div class="wait-overlay-text"></div>
+        ${steps ? `<ul class="wait-overlay-steps">${steps}</ul>` : ''}
+        ${opts.note ? `<p class="wait-overlay-note">${tr(opts.note)}</p>` : ''}
         </div>`;
         div.classList.add('wait-overlay');
         if (typeof el === 'undefined') el = get('divContainer');
@@ -292,6 +294,24 @@ class UIBinder {
         if (!txt) return;
         txt.textContent = msgKey ? tr(msgKey) : '';
         txt.style.display = msgKey ? '' : 'none';
+        // Sans texte, une simple pastille ; avec, une vraie fenêtre (feuille du bas sur mobile).
+        overlay.classList.toggle('has-text', !!msgKey);
+    }
+    // Attente courte, dans le bouton qui l'a déclenchée : il garde sa largeur, sa couleur et son
+    // libellé, et affiche un indicateur. aria-disabled et non disabled, que base.css grise en
+    // !important ; les clics, clavier compris, sont arrêtés dans 10-core-utils.js.
+    busy(btn) {
+        if (!btn || btn.classList.contains('is-busy')) return () => {};
+        btn.style.minWidth = btn.offsetWidth + 'px';
+        btn.classList.add('is-busy');
+        btn.setAttribute('aria-busy', 'true');
+        btn.setAttribute('aria-disabled', 'true');
+        return () => {
+            btn.classList.remove('is-busy');
+            btn.removeAttribute('aria-busy');
+            btn.removeAttribute('aria-disabled');
+            btn.style.minWidth = '';
+        };
     }
     // Texte d'une erreur de requête dans la langue de l'interface (HTML : ce qui vient d'une saisie,
     // owner par exemple, est échappé ici). Sert au bandeau et aux fenêtres à onConfirm.
@@ -487,22 +507,22 @@ class UIBinder {
             div._onClosed = () => finish('cancel');
             foot.onclick = async (e) => {
                 const btn = e.target.closest('button');
-                if (!btn || btn.disabled) return;
+                if (!btn || btn.disabled || btn.classList.contains('is-busy')) return;
                 // onConfirm asynchrone : la fenêtre reste ouverte, bouton occupé, et affiche
                 // l'erreur sur place si l'appareil refuse, au lieu d'en ouvrir une seconde.
                 if (btn.dataset.id !== 'cancel' && typeof o.onConfirm === 'function') {
-                    const btns = foot.querySelectorAll('button');
+                    const others = [...foot.querySelectorAll('button')].filter(b => b !== btn);
                     const err = win.querySelector('.msg-error');
-                    btns.forEach(b => { b.disabled = true; });
+                    others.forEach(b => { b.disabled = true; });
                     win.classList.add('is-busy');
-                    btn.classList.add('is-busy');
+                    const release = this.busy(btn);
                     err.hidden = true;
                     try { await o.onConfirm(btn.dataset.id); }
                     catch (x) {
-                        btns.forEach(b => { b.disabled = false; });
+                        others.forEach(b => { b.disabled = false; });
                         if (check && o.check.required) gate();
                         win.classList.remove('is-busy');
-                        btn.classList.remove('is-busy');
+                        release();
                         err.innerHTML = this.errorText(x) || this.errorTitle(x);
                         err.hidden = false;
                         return;

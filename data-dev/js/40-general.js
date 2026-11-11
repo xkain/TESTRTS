@@ -1325,6 +1325,10 @@ class General {
     }
     async rebootDevice() {
         if (!await ui.confirm({ icon: 'svg-reboot', title: tr('PROMPT_REBOOT_CONFIRM_TITLE'), desc: `<p>${tr('PROMPT_REBOOT_CONFIRM_SUB')}</p>`, confirm: tr('BT_REBOOT') })) return;
+        // socket-wait : c'est cette attente que socket.onopen retire au retour de l'appareil.
+        ui.waitMessage(get('divContainer'), 'WAIT_MSG_REBOOTING', {
+            steps: [['WAIT_STEP_REBOOT', 'cur'], ['WAIT_STEP_RECONNECT', 'todo']]
+        }).classList.add('socket-wait');
         if (typeof socket !== 'undefined') socket.close(3000, 'reboot');
         putJSONSync('/reboot', {}, (err, response) => {
             logger.debug('Reboot requested:', response);

@@ -1020,8 +1020,28 @@ function getJSON(url, cb) {
     xhr.onerror = () => cb(_xhrError(xhr, 'GET', url), null);
     xhr.send();
 }
+// Bouton pressé à l'instant : c'est lui qui porte l'attente d'une requête « Sync » qu'il lance.
+// Un clic ne donne pas le focus au bouton sous Safari, d'où l'écoute du clic plutôt que du focus.
+let _lastPress = null;
+document.addEventListener('click', (e) => {
+    const b = e.target instanceof Element ? e.target.closest('button') : null;
+    // Bouton occupé (ui.busy) : aucun second envoi, ni à la souris ni par Entrée.
+    if (b && b.classList.contains('is-busy')) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+    _lastPress = b ? { b, t: Date.now() } : null;
+}, true);
+// Dans le bouton s'il est encore à l'écran (pas celui d'une fenêtre qui se ferme), sinon l'écran
+// d'attente : tout de suite pour un enregistrement, après `delay` ms pour une lecture rapide.
+function _syncWait(msgKey, delay) {
+    const p = _lastPress;
+    if (p && Date.now() - p.t < 1000 && p.b.isConnected && p.b.getClientRects().length && !p.b.closest('.overlay-exit'))
+        return ui.busy(p.b);
+    let overlay = null;
+    const show = () => { overlay = ui.waitMessage(get('divContainer'), msgKey); };
+    const t = delay ? setTimeout(show, delay) : show();
+    return () => { clearTimeout(t); if (overlay) overlay.remove(); };
+}
 function getJSONSync(url, cb) {
-    let overlay = ui.waitMessage(get('divContainer'), 'WAIT_MSG_LOADING');
+    const done = _syncWait('WAIT_MSG_LOADING', 400);
     try {
         let xhr = new XMLHttpRequest();
         logger.debug('GET', url);
@@ -1029,17 +1049,15 @@ function getJSONSync(url, cb) {
         // finally : le callback s'exécute DANS ce gestionnaire, et toute exception qui en sort
         // sautait le retrait du bandeau -- l'attente restait alors affichée pour de bon, sans que
         // rien ne vienne jamais la relever.
+        // done() d'abord : le rappel peut lui-même désactiver le bouton qui portait l'attente.
         xhr.onload = () => {
-            try {
-                if (xhr.status !== 200) cb(_xhrError(xhr, 'GET', url), null);
-                else if (_jsonUnreadable(xhr)) cb(_malformedError(xhr, 'GET', url), null);
-                else cb(null, xhr.response);
-            } finally { overlay.remove(); }
+            done();
+            if (xhr.status !== 200) cb(_xhrError(xhr, 'GET', url), null);
+            else if (_jsonUnreadable(xhr)) cb(_malformedError(xhr, 'GET', url), null);
+            else cb(null, xhr.response);
         };
-        xhr.onerror = () => {
-            try { cb(_xhrError(xhr, 'GET', url), null); } finally { overlay.remove(); }
-        };
-        xhr.onabort = () => overlay.remove();
+        xhr.onerror = () => { done(); cb(_xhrError(xhr, 'GET', url), null); };
+        xhr.onabort = done;
         xhr.open('GET', baseUrl.length > 0 ? `${baseUrl}${url}` : url, true);
         xhr.setRequestHeader('apikey', security.apiKey);
         xhr.send();
@@ -1066,7 +1084,7 @@ function putJSON(url, data, cb) {
     xhr.send(JSON.stringify(data));
 }
 function putJSONSync(url, data, cb) {
-    let overlay = ui.waitMessage(get('divContainer'), 'WAIT_MSG_SAVING');
+    const done = _syncWait('WAIT_MSG_SAVING', 0);
     try {
         let xhr = new XMLHttpRequest();
         logger.debug('PUT', url, data);
@@ -1076,15 +1094,15 @@ function putJSONSync(url, data, cb) {
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('apikey', security.apiKey);
         xhr.onload = () => {
-            try {
-                if (xhr.status !== 200) cb(_xhrError(xhr, 'PUT', url, data), null);
-                else if (_jsonUnreadable(xhr)) cb(_malformedError(xhr, 'PUT', url, data), null);
-                else cb(null, xhr.response);
-            } finally { overlay.remove(); }   // cf. getJSONSync
+            done();   // cf. getJSONSync
+            if (xhr.status !== 200) cb(_xhrError(xhr, 'PUT', url, data), null);
+            else if (_jsonUnreadable(xhr)) cb(_malformedError(xhr, 'PUT', url, data), null);
+            else cb(null, xhr.response);
         };
         xhr.onerror = () => {
             logger.error('PUT failed:', url, xhr.status, xhr.statusText);
-            try { cb(_xhrError(xhr, 'PUT', url, data), null); } finally { overlay.remove(); }
+            done();
+            cb(_xhrError(xhr, 'PUT', url, data), null);
         };
         xhr.send(JSON.stringify(data));
     } catch (err) { ui.serviceError(get('divContainer'), err); }

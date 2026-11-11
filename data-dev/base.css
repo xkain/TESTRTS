@@ -346,6 +346,8 @@
     /* Message bref : plaque sombre dans les deux thèmes, un cran plus claire en sombre. */
     --toast-bg: #17181c;
     --toast-border: #17181c;
+    --wait-bg: #141619;
+    --wait-border: #141619;
     /* Voile de la page derrière une fenêtre : assombrit la zone de contenu seule, pour
        que la page recule et que la fenêtre s'en détache même à couleur égale. */
     --scrim-page: rgba(0, 0, 0, .14);
@@ -388,6 +390,8 @@
     --shadow-window: 0 14px 34px rgba(0, 0, 0, .6);
     --toast-bg: #2e343e;
     --toast-border: #3d4551;
+    --wait-bg: #0a0b0d;
+    --wait-border: #2f353f;
     --scrim-page: rgba(0, 0, 0, .35);
 }
 

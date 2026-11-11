@@ -1287,9 +1287,11 @@ class Firmware {
                 // services comme sur le chemin GitHub).
                 general.reloadApp = true;
                 closeOverlay(get('divUploadFile'));
-                const sockWait = document.querySelector('.socket-wait');
-                if (sockWait) ui.setWaitMessage(sockWait, 'WAIT_MSG_UPDATE_REBOOTING');
-                else ui.waitMessage(get('divContainer'), 'WAIT_MSG_UPDATE_REBOOTING').classList.add('socket-wait');
+                document.querySelectorAll('.socket-wait').forEach(w => w.remove());
+                ui.waitMessage(get('divContainer'), 'WAIT_MSG_UPDATE_REBOOTING', {
+                    steps: [['WAIT_STEP_INSTALL', 'done'], ['WAIT_STEP_REBOOT', 'cur'], ['WAIT_STEP_RECONNECT', 'todo']],
+                    note: 'WAIT_MSG_DONT_UNPLUG'
+                }).classList.add('socket-wait');
             }
         };
         xhr.onerror = () => {

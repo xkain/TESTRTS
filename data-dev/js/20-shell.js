@@ -19,12 +19,9 @@ async function initSockets() {
     connecting = true;
     if (tConnect) clearTimeout(tConnect);
     tConnect = null;
-    let wms = document.getElementsByClassName('socket-wait');
-    for (let i = 0; i < wms.length; i++) {
-        wms[i].remove();
-    }
-    // Connexion perdue après chargement : le bandeau suffit, la page reste lisible.
-    if (!document.body.classList.contains('is-offline'))
+    // Une attente déjà posée (redémarrage, fin de mise à jour) garde son texte et ses étapes
+    // jusqu'au retour de l'appareil ; connexion perdue après chargement : le bandeau suffit.
+    if (!document.querySelector('.socket-wait') && !document.body.classList.contains('is-offline'))
         ui.waitMessage(get('divContainer'), 'WAIT_MSG_CONNECTING').classList.add('socket-wait');
     let host = isDevHost ? hst : window.location.hostname;
     try {

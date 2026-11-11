@@ -128,20 +128,60 @@ div.wait-overlay.overlay-entered {
         transform: scale(1);
     }
 }
+/* Plaque sombre dans les deux thèmes (JETONS A2) : une pastille sans texte, une fenêtre avec. */
 .wait-overlay-inner {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     z-index: 1000;
-}
-.wait-overlay-text {
-    max-width: 280px;
+    box-sizing: border-box;
+    padding: 20px;
+    border: 1px solid var(--wait-border);
+    border-radius: var(--r-5);
+    background: var(--wait-bg);
+    color: #fff;
+    box-shadow: var(--shadow-window);
+    font-size: 16px;
     text-align: center;
-    font-size: 0.9em;
-    line-height: 1.4;
-    color: var(--color-text-main);
-    text-shadow: 0 1px 3px var(--color-bg-page);
+}
+.wait-overlay.has-text .wait-overlay-inner {
+    width: min(420px, calc(100% - 32px));
+    padding: 28px;
+}
+.wait-overlay-inner .wait-spinner { --wait-spinner-size: 44px; color: #fff; }
+.wait-overlay-inner .wait-spinner-track { stroke: #fff; }
+.wait-overlay-text {
+    font-size: var(--fs-5);
+    font-weight: 700;
+    line-height: 1.35;
+}
+.wait-overlay-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-3);
+    text-align: left;
+    color: #c9ccd3;
+}
+.wait-overlay-steps li::before { content: '○  '; }
+.wait-overlay-steps .is-done { color: #7bd17f; }
+.wait-overlay-steps .is-done::before { content: '✓  '; }
+.wait-overlay-steps .is-cur { color: #fff; font-weight: 700; }
+.wait-overlay-steps .is-cur::before { content: '●  '; }
+.wait-overlay-note { margin: 0; font-size: var(--fs-2); color: #9a999e; }
+@media (max-width: 767px) {
+    /* Feuille du bas, sans poignée ni fermeture : on ne la ferme pas pendant l'attente. */
+    div.wait-overlay.has-text { align-items: flex-end; }
+    .wait-overlay.has-text .wait-overlay-inner {
+        width: 100%;
+        padding: 26px 20px 32px;
+        border-radius: var(--r-5) var(--r-5) 0 0;
+    }
 }
 div.wait-overlay > .wait-spinner,
 div.wait-overlay .wait-overlay-inner > .wait-spinner {
@@ -691,15 +731,6 @@ body.modal-open {
 .msg-btn-short {
     display: none;
 }
-.msg-foot .gen-btn.is-busy::before {
-    content: '';
-    width: 14px;
-    height: 14px;
-    border: 3px solid currentColor;
-    border-top-color: transparent;
-    border-radius: 50%;
-    animation: wait-spinner-rotate 1s linear infinite;
-}
 /* Occupée, la fenêtre ne se ferme plus par la poignée : l'action est déjà partie. */
 .msg-window.is-busy .modalHeader-handle {
     pointer-events: none;
@@ -744,6 +775,26 @@ body.modal-open {
     }
     .msg-btn-long:has(+ .msg-btn-short) { display: none; }
     .msg-btn-short { display: inline; }
+}
+
+/* =======================================================================
+ *  ATTENTE COURTE DANS UN BOUTON (ui.busy, 30-ui-binder.js)
+ *  ======================================================================= */
+button.is-busy {
+    cursor: progress;
+}
+button.is-busy::before {
+    content: '';
+    flex: none;
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    vertical-align: -2px;
+    animation: wait-spinner-rotate .8s linear infinite;
 }
 
 /* =======================================================================
