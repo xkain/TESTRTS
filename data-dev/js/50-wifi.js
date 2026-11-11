@@ -231,9 +231,9 @@ class Wifi {
         // Le serveur ne renvoie jamais les secrets, seulement s'ils sont définis.
         this._hasApPassword = !!(s.wifi && s.wifi.hasApPassword);
         this._hasPassphrase = !!(s.wifi && s.wifi.hasPassphrase);
-        this._resetSecret(get('fldPassphrase'), this._hasPassphrase);
+        resetSecretField(get('fldPassphrase'), this._hasPassphrase);
         get('cbNetApProtect').checked = this._hasApPassword;
-        this._resetSecret(get('fldAPPassword'), this._hasApPassword);
+        resetSecretField(get('fldAPPassword'), this._hasApPassword);
         get('divETHSettings').style.display = s.ethernet && s.ethernet.boardType === 0 ? '' : 'none';
 
         this.updateStatusBadge(s);
@@ -242,24 +242,6 @@ class Wifi {
         this._renderAp();
         this.useEthernetClicked();
         this._renderHero();
-    }
-    // initSecretField() pose ses écouteurs : une seule fois par champ, puis on ne fait que
-    // remettre le masque ou vider.
-    _resetSecret(input, hasValue) {
-        if (!input) return;
-        if (input.dataset.secretInit !== 'true') {
-            input.dataset.secretInit = 'true';
-            initSecretField(input, hasValue);
-            return;
-        }
-        clearSecretField(input);
-        if (hasValue) {
-            input.value = SECRET_DUMMY_TEXT;
-            input.dataset.secretDummy = 'true';
-            input.dataset.hadValue = 'true';
-            const eye = input.parentElement && input.parentElement.querySelector('.password-eye');
-            if (eye) eye.style.display = 'none';
-        }
     }
     // Pose le type de connexion sur l'en-tête : libellé du badge Wi-Fi/AP, badge allumé parmi
     // WIFI/LAN/POE, et indicateur réseau mobile. Séparé de updateStatusBadge() parce que ce dernier
@@ -378,6 +360,7 @@ class Wifi {
             get('netTabs').querySelector(`[data-tab="${i}"]`).hidden = !on;
             get('netPanels').querySelector(`:scope > [data-tab="${i}"]`).classList.toggle('net-off', !on);
         });
+        fillGenSecMini(Array.from(get('netPanels').children).filter(p => !p.classList.contains('net-off')));
         if (this._tabs) {
             const cur = get('netTabs').querySelector(`[data-tab="${this._tabs.current()}"]`);
             if (!cur || cur.hidden) this._tabs.show(0);
@@ -578,7 +561,7 @@ class Wifi {
             .then(() => {
                 this._hasApPassword = protect && (apPwd.length > 0 || this._hasApPassword);
                 this._settings.wifi = Object.assign({}, this._settings.wifi, { hasApPassword: this._hasApPassword });
-                this._resetSecret(get('fldAPPassword'), this._hasApPassword);
+                resetSecretField(get('fldAPPassword'), this._hasApPassword);
             });
         if (has('ip')) chain = chain
             .then(() => put('/setIP', ip))
@@ -635,7 +618,7 @@ class Wifi {
         // Le halo prend la couleur du signal et n'allume que les arcs atteints.
         const lvl = this._wifiLinkUp ? this.calcWaveStrength(this._wifiRssi) : -1;
         get('netHeroWave').querySelectorAll('use').forEach((u, i) => u.classList.toggle('on', i <= lvl));
-        get('netHeroHalo').className = 'net-hero-halo ' + (ap ? 'is-ap' : qCls);
+        get('netHeroHalo').className = 'gen-hero-halo ' + (ap ? 'is-ap' : qCls);
         const q = get('netHeroQuality');
         q.hidden = !qKey;
         q.className = 'net-hero-quality ' + qCls;

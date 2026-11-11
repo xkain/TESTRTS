@@ -315,7 +315,7 @@ class IconPacks {
         const inst = this.installed ? this.installed.id : '';
         const sel = this._selected;
         const tag = id => id === inst ? `<span class="lang-catalog-badge active">${tr('ICONS_INSTALLED')}</span>`
-            : id === sel ? `<span class="lang-catalog-badge">${tr('ICONS_PREVIEW')}</span>` : '';
+            : id === sel ? `<span class="lang-catalog-badge">${tr('PREVIEW')}</span>` : '';
         const name = id => id ? ((this._packs[id] && this._packs[id].name) || (this._catalog && this._catalog[id] && this._catalog[id].name) || id) : tr('ICONS_DEFAULT');
         // Grille
         const packs = Object.assign({}, this._catalog || {});

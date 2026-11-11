@@ -10,39 +10,91 @@ class MQTT {
     // et un champ resté vide se lit comme "le vide a été enregistré", ce qu'il n'a pas été.
     // Cette valeur sert à remettre le champ en accord avec le firmware sur un refus.
     storedRootTopic = '';
-    init() { this.initialized = true; }
+    init() {
+        this.initialized = true;
+        const page = get('divMQTT');
+        bindGenSections(page);
+        // Différé d'un tour : _markDirty (watchDirty) passe après cet écouteur.
+        ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateDirtyCount(), 0)));
+        this._saveBar = new SaveBar(page, { onSave: () => this.connectMQTT(), onRevert: () => this.revertPage() });
+    }
 
     async loadMQTT() {
         getJSONSync('/mqttsettings', (err, settings) => {
             if (err) {
                 ui.serviceError(err);
             } else {
+                this._settings = settings;
                 this.storedRootTopic = settings.rootTopic || '';
-                ui.toElement(get('divMQTT'), { mqtt: settings });
-                // Le serveur ne renvoie jamais le mot de passe existant, seulement s'il est défini :
-                // masque factice si déjà configuré, jamais de pré-remplissage avec le vrai secret.
-                initSecretField(get('fldMqttPassword'), settings.hasPassword);
-                get('divDiscoveryTopic').style.display = settings.pubDisco ? '' : 'none';
+                this._applySettings();
                 watchDirty(get('divMQTT'));
-                if (!this._previewBound) {
-                    this._previewBound = true;
-                    get('divMQTT').addEventListener('input', () => this.paintPreview());
-                    get('divMQTT').addEventListener('change', () => this.paintPreview());
-                }
-                this.paintPreview();
+                this.updateDirtyCount();
             }
         });
     }
-
-    paintPreview() {
+    // Remet à l'écran l'état enregistré : au chargement, après un enregistrement et sur « Annuler ».
+    _applySettings() {
+        const s = this._settings;
+        ui.toElement(get('divMQTT'), { mqtt: s });
+        // Le serveur ne renvoie jamais le mot de passe existant, seulement s'il est défini :
+        // masque factice si déjà configuré, jamais de pré-remplissage avec le vrai secret.
+        resetSecretField(get('fldMqttPassword'), s.hasPassword);
+        this._render();
+    }
+    // Tête d'état et aperçus suivent la saisie, avant tout enregistrement.
+    _render() {
+        const on = get('cbMqttEnabled').checked, disco = get('cbPubDisco').checked;
         const root = get('fldMqttTopic').value.trim() || '…';
-        const disco = get('fldDiscoTopic').value.trim() || '…';
+        const dTopic = get('fldDiscoTopic').value.trim() || '…';
+        const user = get('fldMqttUsername').value.trim();
+        get('mqttHeroHalo').classList.toggle('is-off', !on);
+        get('mqttHeroTitle').textContent = tr(on ? 'ENABLED' : 'IS_DISABLED');
+        get('mqttHeroBroker').textContent = `mqtt://${get('fldMqttHost').value.trim() || '…'}:${get('fldMqttPort').value.trim() || '…'}`;
+        get('mqttHeroRoot').textContent = root;
+        get('mqttHeroDisco').textContent = disco ? tr('MQTT_HERO_DISCO_ON').replace('{TOPIC}', dTopic) : tr('MQTT_HERO_DISCO_OFF');
+        get('mqttHeroCred').textContent = user ? tr('MQTT_HERO_CRED_USER').replace('{USER}', user) : tr('NONE');
+        get('mqttOffNote').hidden = on;
+        get('divMQTT').classList.toggle('mqtt-off', !on);
         get('codeMqttStatus').textContent = root + '/status';
         get('codeMqttPos').textContent = root + '/shades/1/position';
         get('codeMqttCmd').textContent = root + '/shades/1/target/set';
-        get('codeMqttDisco').textContent = disco + '/cover/1/config';
-        get('divMqttPrevDisco').style.display = get('cbPubDisco').checked ? '' : 'none';
-        get('divMQTT').classList.toggle('mqtt-off', !get('cbMqttEnabled').checked);
+        get('codeMqttDisco').textContent = dTopic + '/cover/1/config';
+        get('mqttPrevDisco').hidden = !disco;
+        get('mqttPrevDiscoOff').hidden = disco;
+        get('fldDiscoTopic').disabled = !disco;
+    }
+    _fields() {
+        const s = this._settings || {};
+        const yesNo = (v) => tr(v ? 'BT_YES' : 'BT_NO');
+        const field = (label, id, saved, now, show = (v) => v, secret = false) => ({ label, el: get(id), saved, now, show, secret });
+        const val = (id) => get(id).value;
+        return [
+            field('MQTT_HERO_ENABLE', 'cbMqttEnabled', !!s.enabled, get('cbMqttEnabled').checked, yesNo),
+            field('MQTT_HOST', 'fldMqttHost', s.hostname || '', val('fldMqttHost')),
+            field('MQTT_PORT', 'fldMqttPort', String(s.port ?? ''), val('fldMqttPort')),
+            field('SECURITY_USERNAME', 'fldMqttUsername', s.username || '', val('fldMqttUsername')),
+            field('SECURITY_PASSWORD', 'fldMqttPassword', '', secretValue(get('fldMqttPassword')), undefined, true),
+            field('MQTT_ROOT_TOPIC', 'fldMqttTopic', s.rootTopic || '', val('fldMqttTopic')),
+            field('MQTT_CLIENT_ID', 'fldMqttClientId', s.clientId || '', val('fldMqttClientId')),
+            field('MQTT_PUB_DISCOVERY', 'cbPubDisco', !!s.pubDisco, get('cbPubDisco').checked, yesNo),
+            field('MQTT_DISCOVERY_TOPIC', 'fldDiscoTopic', s.discoTopic || '', val('fldDiscoTopic'))
+        ].filter(f => String(f.saved) !== String(f.now));
+    }
+    updateDirtyCount() {
+        const page = get('divMQTT');
+        if (!this._saveBar || !this._settings || !page.offsetParent) return;
+        page.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+        const diffs = this._fields();
+        diffs.forEach(f => f.el.classList.add('is-dirty'));
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        this._saveBar.update(diffs.map(f => ({ label: tr(f.label), from: f.show(f.saved), to: f.show(f.now), secret: f.secret })));
+        this._render();
+    }
+    revertPage() {
+        if (!this._settings) return;
+        this._applySettings();
+        this.updateDirtyCount();
     }
 
     connectMQTT() {
@@ -119,7 +171,10 @@ class MQTT {
                 // Le firmware renvoie les réglages tels qu'il vient de les enregistrer : c'est la
                 // seule valeur qui fasse foi pour un refus ultérieur.
                 if (response && typeof response.rootTopic === 'string') this.storedRootTopic = response.rootTopic;
-                clearDirty();
+                if (response && typeof response.hostname === 'string') this._settings = response;
+                this._applySettings();
+                clearDirty(get('divMQTT'));
+                this.updateDirtyCount();
             }
         });
     }

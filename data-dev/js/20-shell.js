@@ -566,6 +566,7 @@ function watchDirty(container) {
 function _notifyDirtyCount() {
     if (typeof general !== 'undefined' && general.initialized) general.updateDirtyCount();
     if (typeof wifi !== 'undefined' && wifi.initialized) wifi.updateDirtyCount();
+    if (typeof mqtt !== 'undefined' && mqtt.initialized) mqtt.updateDirtyCount();
 }
 // À appeler après une sauvegarde réussie ou un clic explicite sur Annuler/Fermer (Quitter sans
 // enregistrer inclus). Sans argument : remet à zéro l'état visuel ET l'alerte pour TOUS les
@@ -637,6 +638,7 @@ function confirmDiscardChanges(onLeave, onStay, options) {
     div.querySelector('#btnUnsavedLeave').onclick = () => {
         if (typeof general !== 'undefined' && general.initialized) general.discardChanges(scope);
         if (typeof wifi !== 'undefined' && wifi.initialized && (!scope || scope.contains(get('divNetAdapter')))) wifi.revertPage();
+        if (typeof mqtt !== 'undefined' && mqtt.initialized && (!scope || scope.contains(get('divMQTT')))) mqtt.revertPage();
         clearDirty(scope || undefined);
         closeOverlay(div);
         onLeave();
@@ -1395,6 +1397,24 @@ function clearSecretField(input) {
     input.dataset.hadValue = 'false';
     if (eye) eye.style.display = '';
 }
+// initSecretField() pose ses écouteurs : une seule fois par champ, puis on ne fait que remettre
+// le masque ou vider.
+function resetSecretField(input, hasValue) {
+    if (!input) return;
+    if (input.dataset.secretInit !== 'true') {
+        input.dataset.secretInit = 'true';
+        initSecretField(input, hasValue);
+        return;
+    }
+    clearSecretField(input);
+    if (hasValue) {
+        input.value = SECRET_DUMMY_TEXT;
+        input.dataset.secretDummy = 'true';
+        input.dataset.hadValue = 'true';
+        const eye = input.parentElement && input.parentElement.querySelector('.password-eye');
+        if (eye) eye.style.display = 'none';
+    }
+}
 // Valeur réelle d'un champ secret : chaîne vide tant que le masque factice n'a pas été effacé,
 // même si l'utilisateur n'a jamais cliqué dedans (ex: sauvegarde sans avoir touché au champ).
 function secretValue(input) {
@@ -1467,16 +1487,12 @@ function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
     </div>`;
 }
 
-// --- Onglets d'une page migrée (Général, Appareil : classes gen-, main.css) ---------------
-// Sous 768 px les onglets deviennent des sections empilées dont le titre se colle sous la
-// navigation : le filet ne se pose que sur le titre effectivement collé, d'où le calcul au
-// défilement. L'onglet précédent/suivant n'apparaît que si l'onglet affiché dépasse de l'écran.
-function bindGenTabs(page, ids) {
-    const strip = get(ids.tabs), panels = get(ids.panels), pager = get(ids.pager);
+// --- Sections d'une page migrée (classes gen-, main.css) ----------------------------------
+// Sous 768 px les titres de section se collent sous la navigation : le filet ne se pose que sur
+// le titre effectivement collé, d'où le calcul au défilement.
+function bindGenSections(page) {
     const mq = window.matchMedia('(max-width: 767px)');
-    // Un onglet masqué (page Connexion : selon le type choisi) sort de la navigation.
-    const tabs = () => Array.from(strip.querySelectorAll('.gen-tab')).filter(t => !t.hidden);
-    let current = 0, raf = 0;
+    let raf = 0;
     const stick = () => {
         raf = 0;
         const heads = page.querySelectorAll('.gen-sec-head');
@@ -1490,6 +1506,28 @@ function bindGenTabs(page, ids) {
         });
     };
     const sections = () => { if (!raf) raf = requestAnimationFrame(stick); };
+    window.addEventListener('scroll', sections, { passive: true });
+    window.addEventListener('resize', sections);
+    return sections;
+}
+
+// Points de position des titres de section quand leur nombre varie (Connexion : selon le type).
+function fillGenSecMini(sections) {
+    sections.forEach((s, i) => {
+        const mini = s.querySelector(':scope > .gen-sec-head > .gen-sec-mini');
+        if (mini) mini.innerHTML = sections.map((_, j) => j === i ? '<i class="on"></i>' : '<i></i>').join('');
+    });
+}
+
+// --- Onglets d'une page migrée (Général, Appareil, Connexion) -----------------------------
+// Sous 768 px les onglets deviennent des sections empilées (bindGenSections). L'onglet
+// précédent/suivant n'apparaît que si l'onglet affiché dépasse de l'écran.
+function bindGenTabs(page, ids) {
+    const strip = get(ids.tabs), panels = get(ids.panels), pager = get(ids.pager);
+    // Un onglet masqué (page Connexion : selon le type choisi) sort de la navigation.
+    const tabs = () => Array.from(strip.querySelectorAll('.gen-tab')).filter(t => !t.hidden);
+    const sections = bindGenSections(page);
+    let current = 0;
     const update = () => {
         if (!panels.offsetParent) return;
         sections();
@@ -1534,7 +1572,6 @@ function bindGenTabs(page, ids) {
     // La hauteur de l'onglet change au chargement, à l'affichage de la page, à la rotation.
     if (window.ResizeObserver) new ResizeObserver(update).observe(panels);
     window.addEventListener('resize', update);
-    window.addEventListener('scroll', sections, { passive: true });
     const restore = (k = '') => {
         key = k;
         let i = 0;

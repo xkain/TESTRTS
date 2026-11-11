@@ -769,16 +769,16 @@
                     <div id="divNetAdapter" class="subtab-content">
                         <div class="gen-layout">
                             <section id="netHero" class="gen-hero net-hero">
-                                <span id="netHeroHalo" class="net-hero-halo">
+                                <span id="netHeroHalo" class="gen-hero-halo">
                                     <svg id="netHeroWave" class="net-hero-wave"><use href="#svg-wifi-0"></use><use href="#svg-wifi-1"></use><use href="#svg-wifi-2"></use><use href="#svg-wifi-3"></use></svg>
                                     <svg id="netHeroIconSvg"><use id="netHeroIcon" href="#svg-ethernet"></use></svg>
                                 </span>
                                 <div class="gen-hero-text">
-                                    <span id="netHeroState" class="net-hero-state"></span>
+                                    <span id="netHeroState" class="gen-hero-state"></span>
                                     <h2 id="netHeroName" class="gen-hero-title"></h2>
                                     <span id="netHeroQuality" class="net-hero-quality"></span>
                                 </div>
-                                <div class="ed-ro-list net-hero-facts">
+                                <div class="ed-ro-list gen-hero-facts">
                                     <div class="ed-ro"><span tr="CONNEXION_CURRENT_IP"></span><b id="spanCurrentIP"></b></div>
                                     <div class="ed-ro"><span tr="CONNEXION_ADDRESSING"></span><b id="netHeroAddr"></b></div>
                                     <div id="netHeroSignalRow" class="ed-ro"><span tr="CHANNEL"></span><b id="netHeroSignal"></b></div>
@@ -797,7 +797,7 @@
                                 </nav>
                                 <div id="netPanels" class="gen-panels">
                                     <div class="gen-grid" role="tabpanel" data-tab="0">
-                                        <header class="gen-sec-head"><h2 tr="CONNEXION_TAB_SUMMARY"></h2></header>
+                                        <header class="gen-sec-head"><h2 tr="CONNEXION_TAB_SUMMARY"></h2><span class="gen-sec-mini" aria-hidden="true"></span></header>
                                         <div class="gen-tile net-type-tile ifBOX-Wifi">
                                             <h3 class="gen-tile-title" tr="CONNEXION_TYPE"></h3>
                                             <p id="netApNote" class="gen-tile-desc is-warning" tr="CONNEXION_AP_NOTE" hidden></p>
@@ -828,7 +828,7 @@
                                     </div>
 
                                     <div class="gen-grid" role="tabpanel" data-tab="1" hidden>
-                                        <header class="gen-sec-head"><h2 tr="CONNEXION_ETHERNET"></h2></header>
+                                        <header class="gen-sec-head"><h2 tr="CONNEXION_ETHERNET"></h2><span class="gen-sec-mini" aria-hidden="true"></span></header>
                                         <div id="divETHConfigBlock" class="gen-tile">
                                             <h3 class="gen-tile-title" tr="CONNEXION_ETH_BOARD"></h3>
                                             <div class="gen-field">
@@ -936,7 +936,7 @@
                                     </div>
 
                                     <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
-                                        <header class="gen-sec-head"><h2 class="net-wifi-title" tr="CONNEXION_WIFI"></h2></header>
+                                        <header class="gen-sec-head"><h2 class="net-wifi-title" tr="CONNEXION_WIFI"></h2><span class="gen-sec-mini" aria-hidden="true"></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title net-wifi-title" tr="CONNEXION_WIFI"></h3>
                                             <div class="gen-field">
@@ -976,7 +976,7 @@
                                     </div>
 
                                     <div class="gen-grid" role="tabpanel" data-tab="3" hidden>
-                                        <header class="gen-sec-head"><h2 tr="CONNEXION_TAB_ADVANCED"></h2></header>
+                                        <header class="gen-sec-head"><h2 tr="CONNEXION_TAB_ADVANCED"></h2><span class="gen-sec-mini" aria-hidden="true"></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="CONNEXION_CURRENT_IP"></h3>
                                             <div class="gen-row dirty-target">
@@ -1044,158 +1044,136 @@
                         </div>
                     </div>
                     <div id="divMQTT" class="subtab-content" style="display:none;">
-                        <div class="main-header">
-                            <div class="main-headerBlock">
-                                <h2 class="main-headerTitle" tr="MQTT_TITLE"></h2>
-                                <p class="main-headerDesc" tr="MQTT_DESC"></p>
-                            </div>
-                            <div class="main-headerAmbient">
-                                <svg><use href="#svg-mqtt"></use></svg>
-                            </div>
-                        </div>
-                        <div class="tile-wrap">
-                            <div class="tile-side">
-                                <div class="unibloc-container mqtt-prev">
-                                    <h3 class="unibloc-title tile-title"><span tr="MQTT_TITLE_PREVIEW"></span></h3>
-                                    <div class="mqtt-p"><span tr="MQTT_P_STATUS"></span><code id="codeMqttStatus"></code><small>online / offline</small></div>
-                                    <div class="mqtt-p"><span tr="MQTT_P_POS"></span><code id="codeMqttPos"></code></div>
-                                    <div class="mqtt-p"><span tr="MQTT_P_CMD"></span><code id="codeMqttCmd"></code></div>
-                                    <div id="divMqttPrevDisco" class="mqtt-p"><span tr="MQTT_P_DISCO"></span><code id="codeMqttDisco"></code></div>
+                        <div class="gen-layout">
+                            <section class="gen-hero">
+                                <span id="mqttHeroHalo" class="gen-hero-halo"><svg><use href="#svg-mqtt"></use></svg></span>
+                                <div class="gen-hero-text">
+                                    <span class="gen-hero-state" tr="MQTT_TITLE_CLIENT"></span>
+                                    <h2 id="mqttHeroTitle" class="gen-hero-title"></h2>
                                 </div>
-                                <div class="unibloc-container tile-tip">
-                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
-                                    <p class="tile-tip-text" tr="MQTT_TIP_CLEAR"></p>
+                                <div class="mqtt-hero-switch dirty-target">
+                                    <b tr="MQTT_HERO_ENABLE"></b>
+                                    <span class="gen-seg gen-seg-bool">
+                                        <input id="cbMqttEnabled" type="checkbox" name="mqtt-enabled" data-bind="mqtt.enabled">
+                                        <span class="gen-seg-yes" tr="BT_YES"></span>
+                                        <span class="gen-seg-no" tr="BT_NO"></span>
+                                    </span>
                                 </div>
-                            </div>
-                            <div class="tile-cols mqtt-grid">
-                                <div class="unibloc-container mqtt-client">
-                                    <h3 class="unibloc-title tile-title"><span tr="MQTT_TITLE_CLIENT"></span></h3>
-                                    <div class="mqtt-row">
-                                        <label class="uniRow dirty-target" for="cbMqttEnabled">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-connection"></use></svg></div>
-                                                <div class="uniText">
-                                                    <div class="uniLabel" tr="MQTT_ENABLE"></div>
-                                                    <div class="uniStatus" tr="MQTT_ENABLE_DESC"></div>
+                                <div class="ed-ro-list gen-hero-facts">
+                                    <div class="ed-ro"><span tr="MQTT_TITLE_BROKER"></span><b id="mqttHeroBroker" class="mqtt-mono"></b></div>
+                                    <div class="ed-ro"><span tr="MQTT_ROOT_TOPIC"></span><b id="mqttHeroRoot" class="mqtt-mono"></b></div>
+                                    <div class="ed-ro"><span tr="MQTT_DISCOVERY"></span><b id="mqttHeroDisco"></b></div>
+                                    <div class="ed-ro"><span tr="MQTT_CREDENTIALS"></span><b id="mqttHeroCred"></b></div>
+                                </div>
+                            </section>
+
+                            <div class="gen-body">
+                                <div class="gen-panels">
+                                    <p id="mqttOffNote" class="gen-tile-desc is-warning" tr="MQTT_OFF_NOTE" hidden></p>
+                                    <div class="gen-grid">
+                                        <header class="gen-sec-head"><h2 tr="MQTT_TITLE_BROKER"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i></span></header>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="MQTT_BROKER_ADDR"></h3>
+                                            <div class="mqtt-addr">
+                                                <div class="gen-field mqtt-addr-proto">
+                                                    <span class="gen-field-label" tr="PROTOCOL"></span>
+                                                    <!-- Pas de MQTTS : MQTT.cpp ouvre un WiFiClient nu. value explicite, sans quoi
+                                                         l'option vaudrait son texte traduit dans le JSON envoyé. -->
+                                                    <select name="mqtt-protocol" hidden data-bind="mqtt.protocol"><option value="mqtt://">mqtt://</option></select>
+                                                    <div class="gen-input-box"><span class="mqtt-proto mqtt-mono">mqtt://</span></div>
+                                                </div>
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="fldMqttHost" tr="MQTT_HOST"></label>
+                                                    <div class="gen-input-box dirty-target">
+                                                        <input id="fldMqttHost" class="gen-input mqtt-mono" name="mqtt-host" type="text" maxlength="64" data-bind="mqtt.hostname">
+                                                    </div>
+                                                </div>
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="fldMqttPort" tr="MQTT_PORT"></label>
+                                                    <div class="gen-input-box dirty-target">
+                                                        <input id="fldMqttPort" class="gen-input mqtt-mono" name="mqtt-port" type="text" inputmode="numeric" maxlength="5" data-bind="mqtt.port" data-datatype="int">
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="uniRight">
-                                                <span class="switch">
-                                                    <input id="cbMqttEnabled" type="checkbox" name="mqtt-enabled" data-bind="mqtt.enabled"/>
-                                                    <div></div>
-                                                </span>
-                                            </div>
-                                        </label>
-                                        <label class="uniRow dirty-target" for="cbPubDisco">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-publish"></use></svg></div>
-                                                <div class="uniText">
-                                                    <div class="uniLabel" tr="MQTT_PUB_DISCOVERY"></div>
-                                                    <div class="uniStatus" tr="MQTT_PUB_DISCOVERY_DESC"></div>
+                                            <p class="gen-tile-desc" tr="MQTT_BROKER_ADDR_DESC"></p>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="MQTT_CREDENTIALS"></h3>
+                                            <div class="gen-field-pair">
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="fldMqttUsername" tr="SECURITY_USERNAME"></label>
+                                                    <div class="gen-input-box dirty-target">
+                                                        <input id="fldMqttUsername" class="gen-input" name="mqtt-username" type="text" maxlength="32" autocomplete="off" data-bind="mqtt.username">
+                                                    </div>
+                                                </div>
+                                                <div class="gen-field">
+                                                    <label class="gen-field-label" for="fldMqttPassword" tr="SECURITY_PASSWORD"></label>
+                                                    <div class="gen-input-box dirty-target">
+                                                        <input id="fldMqttPassword" class="gen-input" name="mqtt-password" type="password" maxlength="32" autocomplete="new-password">
+                                                        <div class="password-eye" onclick="security.toggleFieldPassword('fldMqttPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="uniRight">
-                                                <span class="switch">
-                                                    <input id="cbPubDisco" type="checkbox" name="pub-disco" data-bind="mqtt.pubDisco" onclick="document.getElementById('divDiscoveryTopic').style.display = this.checked ? '' : 'none';"/>
-                                                    <div></div>
+                                            <p class="gen-tile-desc is-warning" tr="MQTT_TIP_CLEAR"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="gen-grid">
+                                        <header class="gen-sec-head"><h2 tr="MQTT_TITLE_TOPICS"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i></span></header>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="MQTT_TILE_NAMING"></h3>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="fldMqttTopic" tr="MQTT_ROOT_TOPIC"></label>
+                                                <div class="gen-input-box dirty-target">
+                                                    <input id="fldMqttTopic" class="gen-input mqtt-mono" name="mqtt-topic" type="text" maxlength="64" data-bind="mqtt.rootTopic">
+                                                </div>
+                                                <p class="gen-tile-desc" tr="MQTT_ROOT_TOPIC_DESC"></p>
+                                            </div>
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="fldMqttClientId" tr="MQTT_CLIENT_ID"></label>
+                                                <div class="gen-input-box dirty-target">
+                                                    <input id="fldMqttClientId" class="gen-input mqtt-mono" name="mqtt-clientid" type="text" maxlength="64" data-bind="mqtt.clientId" tr="MQTT_CLIENT_ID_PLH" placeholder=" ">
+                                                </div>
+                                                <p class="gen-tile-desc" tr="MQTT_CLIENT_ID_DESC"></p>
+                                            </div>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="MQTT_TITLE_PREVIEW"></h3>
+                                            <div class="gen-field"><span class="gen-field-label" tr="MQTT_P_STATUS"></span><code id="codeMqttStatus" class="mqtt-code"></code></div>
+                                            <div class="gen-field"><span class="gen-field-label" tr="MQTT_P_POS"></span><code id="codeMqttPos" class="mqtt-code"></code></div>
+                                            <div class="gen-field"><span class="gen-field-label" tr="MQTT_P_CMD"></span><code id="codeMqttCmd" class="mqtt-code"></code></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="gen-grid">
+                                        <header class="gen-sec-head"><h2 tr="MQTT_DISCOVERY"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i></span></header>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="MQTT_TILE_DISCOVERY"></h3>
+                                            <div class="gen-row dirty-target">
+                                                <span class="gen-row-text"><b tr="MQTT_PUB_DISCOVERY"></b><span tr="MQTT_PUB_DISCOVERY_DESC"></span></span>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbPubDisco" type="checkbox" name="pub-disco" data-bind="mqtt.pubDisco">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
                                                 </span>
                                             </div>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="unibloc-container mqtt-broker">
-                                    <h3 class="unibloc-title tile-title"><span tr="MQTT_TITLE_BROKER"></span></h3>
-                                    <div class="uniRow dirty-target mqtt-addr">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-ip"></use></svg></div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="fldMqttHost" tr="MQTT_BROKER_ADDR"></label>
-                                            <div class="mqtt-addr-line">
-                                                <!-- L'option MQTTS a été retirée : le firmware n'implémente PAS de MQTT
-                                                chiffré. MQTT.cpp instancie un WiFiClient nu (pas un
-                                                WiFiClientSecure) et ne lit jamais ce champ `protocol` -- il était
-                                                saisi, persisté, réaffiché, et sans le moindre effet. Choisir
-                                                "mqtts://" donnait donc la certitude fausse d'une liaison chiffrée
-                                                alors que l'identifiant et le mot de passe du courtier partaient en
-                                                clair sur le réseau : une rétrogradation silencieuse, pire que pas
-                                                d'option du tout. Rétablir cette option suppose d'abord
-                                                d'implémenter TLS côté firmware -- au prix de ~34 Ko de tas retenus
-                                                pour toute la durée de la connexion, à arbitrer face au budget
-                                                mémoire de l'OTA (cf. GIT_TLS_MIN_HEAP_BYTES).
-                                                Le `value` de l'option est explicite et ne doit pas être retiré :
-                                                sans lui, un <option> vaut son texte, et ce texte vient de l'i18n
-                                                (SUBTAB_MQTT = "MQTT"). Le champ renvoyé au firmware valait donc
-                                                "MQTT" au lieu de "mqtt://", et changeait avec la langue. Sans
-                                                effet aujourd'hui -- le firmware ignore ce champ, devenu constante
-                                                côté MQTTSettings -- mais le JSON émis doit rester honnête. -->
-                                                <select class="dirty-target" style="display:none;" name="mqtt-protocol" tr="PROTOCOL" title="" data-bind="mqtt.protocol">
-                                                    <option value="mqtt://" tr="SUBTAB_MQTT"></option>
-                                                </select>
-                                                <span class="mqtt-scheme">mqtt://</span>
-                                                <input id="fldMqttHost" class="inputAndSelect mqtt-host dirty-target" name="mqtt-host" type="text" maxlength="64" placeholder="Host" data-bind="mqtt.hostname">
-                                                <span class="mqtt-colon">:</span>
-                                                <input id="fldMqttPort" class="inputAndSelect mqtt-port dirty-target" name="mqtt-port" type="text" maxlength="5" placeholder="Port" data-bind="mqtt.port" data-datatype="int">
+                                            <div class="gen-field">
+                                                <label class="gen-field-label" for="fldDiscoTopic" tr="MQTT_DISCOVERY_TOPIC"></label>
+                                                <div class="gen-input-box dirty-target">
+                                                    <input id="fldDiscoTopic" class="gen-input mqtt-mono" name="disco-topic" type="text" maxlength="64" data-bind="mqtt.discoTopic">
+                                                </div>
+                                                <p class="gen-tile-desc" tr="MQTT_DISCOVERY_TOPIC_DESC"></p>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-usermqtt"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="fldMqttUsername" tr="SECURITY_USERNAME"></label>
-                                            <input id="fldMqttUsername" class="inputAndSelect" name="mqtt-username" type="text" data-bind="mqtt.username" maxlength="32" tr="MQTT_USERNAME_PLH" placeholder="Identifiant de votre compte MQTT">
-                                        </div>
-                                    </div>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-lock"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="fldMqttPassword" tr="SECURITY_PASSWORD"></label>
-                                            <input id="fldMqttPassword" class="inputAndSelect" name="mqtt-password" type="password" maxlength="32" tr="SECURITY_PASSWORD_PLH" placeholder="Entrer votre Mot de passe">
-                                            <div class="password-eye" onclick="security.toggleFieldPassword('fldMqttPassword', this)">
-                                                <svg class="pwd-icon pwd-iconeye"><use id="wifiEyeIcon" href="#svg-eyeOff"></use></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="unibloc-container mqtt-topics">
-                                    <h3 class="unibloc-title tile-title"><span tr="MQTT_TITLE_TOPICS"></span></h3>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-root"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="fldMqttTopic" tr="MQTT_ROOT_TOPIC"></label>
-                                            <input id="fldMqttTopic" class="inputAndSelect" name="mqtt-topic" type="text" maxlength="64" data-bind="mqtt.rootTopic" tr="MQTT_ROOT_TOPIC_PLH" placeholder="Préfixe utilisé pour tous les messages de ce module">
-                                        </div>
-                                    </div>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-connection"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="fldMqttClientId" tr="MQTT_CLIENT_ID"></label>
-                                            <input id="fldMqttClientId" class="inputAndSelect" name="mqtt-clientid" type="text" maxlength="64" data-bind="mqtt.clientId" tr="MQTT_CLIENT_ID_PLH" placeholder="Laisser vide = ID automatique">
-                                        </div>
-                                    </div>
-                                    <div id="divDiscoveryTopic" class="uniRow dirty-target" style="display:none;">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-discovery"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="fldDiscoTopic" tr="MQTT_DISCOVERY_TOPIC"></label>
-                                            <input id="fldDiscoTopic" class="inputAndSelect" name="disco-topic" type="text" maxlength="64" data-bind="mqtt.discoTopic" tr="MQTT_DISCOVERY_TOPIC_PLH"  placeholder="Chemin utilisé pour la détection automatique par votre système, exemple: homeassistant">
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="PREVIEW"></h3>
+                                            <div id="mqttPrevDisco" class="gen-field"><span class="gen-field-label" tr="MQTT_P_DISCO"></span><code id="codeMqttDisco" class="mqtt-code"></code></div>
+                                            <p id="mqttPrevDiscoOff" class="gen-tile-desc" tr="MQTT_DISCO_OFF_NOTE" hidden></p>
+                                            <p class="gen-tile-desc" tr="MQTT_DISCO_RESTART"></p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="button-container-footerHtml">
-                            <button id="btnConnectMQTT"  type="button" onclick="mqtt.connectMQTT();">
-                                <svg><use href="#svg-save"></use></svg>
-                                <span tr="BT_SAVE"></span>
-                            </button>
                         </div>
                     </div>
                 </div>
