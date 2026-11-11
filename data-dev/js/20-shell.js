@@ -567,6 +567,7 @@ function _notifyDirtyCount() {
     if (typeof general !== 'undefined' && general.initialized) general.updateDirtyCount();
     if (typeof wifi !== 'undefined' && wifi.initialized) wifi.updateDirtyCount();
     if (typeof mqtt !== 'undefined' && mqtt.initialized) mqtt.updateDirtyCount();
+    if (typeof somfy !== 'undefined' && somfy._radioSaveBar) somfy.updateRadioDirty();
 }
 // À appeler après une sauvegarde réussie ou un clic explicite sur Annuler/Fermer (Quitter sans
 // enregistrer inclus). Sans argument : remet à zéro l'état visuel ET l'alerte pour TOUS les
@@ -639,6 +640,7 @@ function confirmDiscardChanges(onLeave, onStay, options) {
         if (typeof general !== 'undefined' && general.initialized) general.discardChanges(scope);
         if (typeof wifi !== 'undefined' && wifi.initialized && (!scope || scope.contains(get('divNetAdapter')))) wifi.revertPage();
         if (typeof mqtt !== 'undefined' && mqtt.initialized && (!scope || scope.contains(get('divMQTT')))) mqtt.revertPage();
+        if (typeof somfy !== 'undefined' && somfy._radioSaveBar && (!scope || scope.contains(get('divTransceiverSettings')))) somfy.revertRadio();
         clearDirty(scope || undefined);
         closeOverlay(div);
         onLeave();

@@ -160,7 +160,7 @@ class Somfy {
         if (this.initialized) return;
         this.bindCarouselNavFeedback();
         this.bindVRKeyboard();
-        initMultiClickToggle('#divTransceiverSettings .main-headerTitle', 'show-expert-gpio', 5);
+        initMultiClickToggle('#rdcTitle', 'show-expert-gpio', 5);
         initMultiClickToggle('.sidebar-brand', () => this.screenShade(), 5);
         this.initialized = true;
     }
@@ -280,29 +280,25 @@ class Somfy {
 
         get('divManualSafety').style.display = isM ? 'block' : 'none';
         divS.style.display = target ? 'block' : 'none';
-        divG.style.display = target ? 'none' : 'inline-block';
+        divG.style.display = target ? 'none' : '';
         this.updateRadioPins();
     }
     updateRadioPins() {
-        const det = get('divRadioPins'), chips = get('divRadioPinChips'), sel = get('selRadioBoardType');
-        if (!det || !chips || !sel) return;
+        const tile = get('divRadioPins'), sel = get('selRadioBoardType');
+        if (!tile || !sel) return;
         const manual = parseInt(sel.value, 10) === 255;
-        det.style.display = manual ? '' : 'none';
-        chips.style.display = manual ? '' : 'none';
-        if (!manual) { this._pinsAutoOpened = false; return; }
-        const cb = get('cbManualSafety');
-        if (cb && !cb.checked && !this._pinsAutoOpened) { det.open = true; this._pinsAutoOpened = true; }
-        chips.innerHTML = [['SCK', 'SCKPin'], ['CSN', 'CSNPin'], ['MOSI', 'MOSIPin'], ['MISO', 'MISOPin'], ['TX', 'TXPin'], ['RX', 'RXPin']].map(([l, k]) => {
-            const v = parseInt((get('inputTrans' + k) || {}).value, 10);
-            return `<span><small>${l}</small><b>${isNaN(v) ? '--' : 'GPIO' + v}</b></span>`;
-        }).join('');
+        tile.hidden = !manual;
+        const cb = get('cbManualSafety'), ap = this._radioApplied;
+        // Même règle que saveRadio() : un câblage manuel déjà en service n'a plus à être confirmé.
+        const trusted = !!ap?.enabled && ap.radioBoardType === 255;
+        get('rdcSafetyNote').hidden = !manual || trusted || !!cb?.checked;
+        genGridSpan(tile.parentElement);
     }
 
     setRadioEnabled(isEnabled) {
         const txtStatus = get('divRadioEnableStatus');
         const radioTab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
         const isActuallyEnabled = radioTab && !radioTab.classList.contains('radio-error');
-
         if (txtStatus) {
             if (isEnabled === isActuallyEnabled) {
                 txtStatus.textContent = isEnabled ? tr('RADIO_ENABLED') : tr('RADIO_DISABLED');
@@ -310,6 +306,10 @@ class Somfy {
                 txtStatus.textContent = tr('RADIO_SAVE_REQUIRED');
             }
         }
+        // Le titre suit le choix affiché, le halo ce que le boîtier exécute réellement.
+        get('rdcTitle').textContent = tr(isEnabled ? 'ENABLED' : 'IS_DISABLED');
+        get('rdcHalo').classList.toggle('is-off', !isActuallyEnabled);
+        this.updateRadioDirty();
     }
 
     async loadSomfy() {
@@ -522,7 +522,6 @@ class Somfy {
 
                     ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                     clearDirty();
-                    get('btnSaveRadio').classList.remove('disabled');
 
                     // La reference de ce que la CARTE execute vient de changer : sans cette mise
                     // a jour, le recapitulatif continuait de comparer aux anciennes valeurs et
@@ -530,6 +529,7 @@ class Somfy {
                     // jusqu'au prochain rechargement de page. La reponse du boitier fait foi --
                     // on prend res.config et non le formulaire, qui n'est qu'une intention.
                     this._radioApplied = Object.assign({}, res.config);
+                    this.updateRadioDirty();
                     this.radioFleet = null;
                     this._radioAfterWiz = !!this._wizPending;
                     this._wizPending = false;
@@ -548,7 +548,7 @@ class Somfy {
 
                             // Comparaison simple et directe avec l'état de la checkbox d'origine
                             if (cb) {
-                                get('divRadioEnableStatus').textContent = tr(cb.checked === init ? (cb.checked ? 'RADIO_ENABLED' : 'RADIO_DISABLED') : 'RADIO_SAVE_REQUIRED');
+                                this.setRadioEnabled(cb.checked);
                                 this.renderRadioFleet();
                             }
                 });
@@ -2893,7 +2893,19 @@ class Somfy {
             this._wizPending = false;
             this.renderRadioFleet();
             this.updateRadioGraph();
+            this.syncRadioHardwareTab();
         });
+    }
+    // Profil BOX : la carte est connue et figée, l'onglet Matériel n'a rien à proposer (même règle
+    // que #divRadioBoardType dans main.css), sauf en mode expert.
+    syncRadioHardwareTab() {
+        if (!this._radioTabs) return;
+        const profile = get('divContainer').getAttribute('data-hardwareprofile') || '';
+        const off = profile.startsWith('BOX') && !document.body.classList.contains('show-expert-gpio');
+        get('rdcTabs').querySelector('[data-tab="2"]').hidden = off;
+        get('rdcPanels').querySelector(':scope > [data-tab="2"]').classList.toggle('rdc-off', off);
+        if (off && this._radioTabs.current() === 2) this._radioTabs.show(0);
+        this._radioTabs.update();
     }
 
     // Un SEUL ecouteur pour tout le panneau, plutot que la meme ligne recopiee dans les six
@@ -2903,14 +2915,66 @@ class Somfy {
         const panneau = get('divTransceiverSettings');
         if (!panneau || this._radioEditWatched) return;
         this._radioEditWatched = true;
+        this._radioTabs = bindGenTabs(panneau, { tabs: 'rdcTabs', panels: 'rdcPanels', pager: 'rdcPager', prev: 'btnRdcPrev', next: 'btnRdcNext' });
+        this._radioSaveBar = new SaveBar(panneau, { onSave: () => this.saveRadio(), onRevert: () => this.revertRadio() });
         const signaler = () => {
             const st = get('divRadioEnableStatus');
             if (st) st.textContent = tr('RADIO_SAVE_REQUIRED');
-            this.updateRadioCurrent();
             this.updateRadioPins();
+            // Différé d'un tour : _markDirty (watchDirty) passe après cet écouteur.
+            setTimeout(() => this.updateRadioDirty(), 0);
         };
         panneau.addEventListener('input', signaler);
         panneau.addEventListener('change', signaler);
+    }
+    // Différences avec ce que la carte exécute (_radioApplied), pour la barre d'enregistrement.
+    _radioFields() {
+        const a = this._radioApplied;
+        if (!a) return [];
+        const num = (id, div) => parseFloat(get(id).value) / div;
+        const optText = (id, v) => { const o = [...get(id).options].find(x => parseInt(x.value, 10) === v); return o ? o.text : String(v); };
+        const f = (label, id, saved, now, show = (v) => v) => ({ label, el: get(id), saved, now, show });
+        const mhz = (v) => v.toFixed(3) + ' ' + tr('UNIT_MHZ');
+        const list = [
+            f('TAB_RADIO', 'cbEnableRadio', !!a.enabled, get('cbEnableRadio').checked, (v) => tr(v ? 'BT_YES' : 'BT_NO')),
+            f('RADIO_TX_FREQUENCY', 'slidFrequency', +a.frequency.toFixed(3), +num('slidFrequency', 1000).toFixed(3), mhz),
+            f('RADIO_TX_POWER', 'slidTxPower', a.txPower, this.txPowerLevels[parseInt(get('slidTxPower').value, 10)], (v) => v + ' ' + tr('UNIT_DBM')),
+            f('RADIO_RX_FREQUENCY', 'slidRxFrequency', +(a.rxFrequency ?? a.frequency).toFixed(3), +num('slidRxFrequency', 1000).toFixed(3), mhz),
+            f('RADIO_RX_BANDWIDTH', 'slidRxBandwidth', +a.rxBandwidth.toFixed(2), +num('slidRxBandwidth', 100).toFixed(2), (v) => v.toFixed(2) + ' ' + tr('UNIT_KHZ')),
+            f('PROTOCOL', 'selRadioProto', a.proto, parseInt(get('selRadioProto').value, 10), (v) => optText('selRadioProto', v)),
+            f('BIT', 'selRadioType', a.type, parseInt(get('selRadioType').value, 10), (v) => optText('selRadioType', v)),
+            f('RADIO_GPIO_BOARD_ASSIGN', 'selRadioBoardType', a.radioBoardType || 0, parseInt(get('selRadioBoardType').value, 10), (v) => optText('selRadioBoardType', v))
+        ];
+        if (parseInt(get('selRadioBoardType').value, 10) === 255) {
+            [['SCK', 'SCKPin'], ['CSN', 'CSNPin'], ['MOSI', 'MOSIPin'], ['MISO', 'MISOPin'], ['TX', 'TXPin'], ['RX', 'RXPin']].forEach(([l, k]) =>
+                list.push({ label: l, el: get('inputTrans' + k), saved: a[k], now: parseInt(get('inputTrans' + k).value, 10), show: (v) => 'GPIO' + v, raw: true }));
+        }
+        return list.filter(d => String(d.saved) !== String(d.now));
+    }
+    updateRadioDirty() {
+        const page = get('divTransceiverSettings');
+        if (!this._radioSaveBar || !page.offsetParent) return;
+        page.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+        const diffs = this._radioFields();
+        diffs.forEach(d => (d.el.closest('.dirty-target') || d.el).classList.add('is-dirty'));
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        this._radioSaveBar.update(diffs.map(d => ({ label: d.raw ? d.label : tr(d.label), from: d.show(d.saved), to: d.show(d.now) })));
+    }
+    // « Annuler » de la barre et « Quitter sans enregistrer » : retour à ce que la carte exécute.
+    revertRadio() {
+        const a = this._radioApplied, page = get('divTransceiverSettings');
+        if (!a) return;
+        ui.toElement(page, { transceiver: { config: a } });
+        get('cbEnableRadio').checked = !!a.enabled;
+        const sel = get('selRadioBoardType');
+        sel.value = a.radioBoardType || 0;
+        this.onRadioBoardTypeChanged(sel);
+        const cb = get('cbManualSafety');
+        if (cb) cb.checked = false;
+        clearDirty(page);
+        this.setRadioEnabled(!!a.enabled);
+        this.updateRadioGraph();
     }
     // GARDE-FOU : radio eteinte, NI le test NI l'assistant NI le balayage ne peuvent aboutir.
     // Cote firmware, beginFrequencyScan() commence par `if(this->config.enabled)` et aucune trame
@@ -3376,28 +3440,6 @@ class Somfy {
         this.wizAbandon();
         if (div) closeOverlay(div);
     }
-    updateRadioCurrent() {
-        const fr = get('slidFrequency'), rf = get('slidRxFrequency'), bw = get('slidRxBandwidth'), tx = get('slidTxPower');
-        if (!fr || !rf || !bw || !tx) return;
-        const v = { frequency: parseFloat(fr.value) / 1000, rxFrequency: parseFloat(rf.value) / 1000, rxBandwidth: parseFloat(bw.value) / 100, txPower: this.txPowerLevels[parseInt(tx.value, 10)] };
-        const dec = { frequency: 3, rxFrequency: 3, rxBandwidth: 2, txPower: 0 };
-        const mhz = (f) => isFinite(f) ? f.toFixed(3) + ' ' + tr('UNIT_MHZ') : '--';
-        if (get('spanRadioTxFreq')) get('spanRadioTxFreq').textContent = mhz(v.frequency);
-        if (get('spanRadioRxFreq')) get('spanRadioRxFreq').textContent = mhz(v.rxFrequency);
-        if (get('spanRadioBw')) get('spanRadioBw').textContent = isFinite(v.rxBandwidth) ? v.rxBandwidth.toFixed(2) + ' ' + tr('UNIT_KHZ') : '--';
-        if (get('spanRadioPwr')) get('spanRadioPwr').textContent = v.txPower === undefined ? '--' : v.txPower + ' ' + tr('UNIT_DBM');
-        const a = this.radioApplied, box = get('divRadioPending');
-        if (!box) return;
-        const pending = !!a && Object.keys(dec).some(k => typeof a[k] === 'number' && isFinite(v[k]) && Math.abs(v[k] - a[k]) > Math.pow(10, -dec[k]) / 2);
-        box.style.display = pending ? '' : 'none';
-        if (pending) box.textContent = tr('RADIO_FREQ_PENDING')
-            .replace('{f}', a.frequency.toFixed(3)).replace('{rx}', (a.rxFrequency ?? a.frequency).toFixed(3)).replace('{bw}', a.rxBandwidth.toFixed(2)).replace('{tx}', a.txPower);
-    }
-    pickRadioEnabled(on) {
-        const cb = get('cbEnableRadio');
-        if (cb) cb.parentElement.classList.remove('sel-pending');
-        if (cb && cb.checked !== on) cb.click();
-    }
     renderRadioFleet() {
         const box = get('divRadioFleet');
         if (!box) return;
@@ -3564,10 +3606,6 @@ class Somfy {
                 .replace('{bande}', bandeKHz.toFixed(2))
                 .replace('{tx}', freqTx.toFixed(3));
         }
-        // Accroche ici plutot qu'aux quatre gestionnaires de curseur : updateRadioGraph() est
-        // deja appelee par TOUS les chemins qui changent un reglage -- curseurs, Reinitialiser,
-        // assistant, chargement de la page. Un seul point d'appel, donc aucun moyen d'oublier.
-        this.updateRadioCurrent();
     }
     // ==========================================================================
     // CHANGER LE SLIDER -> MET À JOUR L'INPUT NUMBER
