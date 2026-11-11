@@ -2182,58 +2182,5 @@ class General {
     secError(title, desc) {
         ui.errorMessage(tr(title), tr(desc));
     }
-
-    showHAOverlay() {
-        const div = document.createElement('div');
-        div.id = 'divHAConfig';
-        div.className = 'inst-overlay';
-
-        div.innerHTML = `
-        <div class="instructions-content showHAOverlay-content">
-        ${overlayHeader('MARKETP', 'MARKETP_DESC', 'svg-homeAssistant', {
-            subtitle: "MARKETP_DESC"
-        })}
-        <div class="overlay-scroll-content">
-        <p><strong>${tr('MARKETP_PURPOSE_TITLE')}</strong></p>
-        <p>${tr('MARKETP_PURPOSE_TEXT_1')}</p>
-        <p>${tr('MARKETP_PURPOSE_TEXT_2')}</p>
-        <p class="ha-section-title"><strong>${tr('MARKETP_INSTALL_TITLE')}</strong></p>
-        <ol class="ha-install-list">
-        <li>${tr('MARKETP_INSTALL_STEP_1')}</li>
-        <li>${tr('MARKETP_INSTALL_STEP_2')}</li>
-        <li>${tr('MARKETP_INSTALL_STEP_3')}</li>
-        </ol>
-        <div class="warning">
-        <div class="warning-header">
-        <svg><use href="#svg-warning"></use></svg>
-        <b>${tr('MSG_WARNING')}</b>
-        </div>
-        <div class="information-text">
-        <span>
-        ${tr('MARKETP_REQ_START')}
-        <a href="https://www.home-assistant.io" target="_blank" style="color: inherit; text-decoration: underline;"><strong>Home Assistant</strong></a>
-        ${tr('MARKETP_REQ_MID')}
-        <a href="https://hacs.xyz" target="_blank" style="color: inherit; text-decoration: underline;"><strong>HACS</strong></a>${tr('MARKETP_REQ_END')}
-        </span>
-        </div>
-        </div>
-        <div class="ha-badge-container">
-        <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-enhanced&category=integration" target="_blank" class="ha-badge-button">
-        <span class="ha-badge-text-main">Open in Marketplace on</span>
-        <span class="ha-badge-pill"><span class="ha-badge-text-pill">MY</span><svg width="18" height="18"><use href="#svg-homeAssistant"></use></svg></span>
-        </a>
-        <p class="ha-github-link-container">
-        ${tr('MARKETP_OR_VISIT')} <a href="https://github.com/xkain/ESPSomfy-RTS-enhanced" target="_blank" class="ha-github-link">${tr('MARKETP_GITHUB_LINK')}</a>
-        </p>
-        </div>
-        </div>
-        <div class="hrDivFooter-Instruc"></div>
-         <div class="button-container-overlay">
-        <button id="btnCloseHA" type="button" onclick="closeOverlay(get('divHAConfig'))">${tr('BT_CLOSE')}</button>
-        </div>
-        </div>`;
-
-        shOverlay(div);
-    }
 }
 var general = new General();

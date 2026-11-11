@@ -1930,6 +1930,11 @@ body.is-home-welcome .container {
     color: var(--danger);
     box-shadow: 0 0 0 12px color-mix(in srgb, var(--danger) 14%, transparent);
 }
+.gen-hero-halo.is-ha {
+    background: var(--ha-bg);
+    color: var(--ha);
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--ha) 14%, transparent);
+}
 .gen-hero-halo.is-off {
     background: var(--surface-2);
     color: var(--text-3);
@@ -5927,6 +5932,255 @@ body:has(.inst-overlay, .modal-overlay) :is(#divSettingsPnl) > .button-container
     .net-sum-row > svg {
         grid-column: 2;
         grid-row: 1 / 3;
+    }
+}
+/* --- Page Home Assistant (#divHomeAssistant) : l'intégration recommandée en tête, la découverte MQTT en retrait --- */
+.ha-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    /* Le bouton Marketplace se règle sur la largeur de la colonne d'identité (unités cqi). */
+    container-type: inline-size;
+}
+.ha-reco-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+    background: var(--ok-bg);
+    color: var(--ok);
+    font-size: var(--fs-1);
+    font-weight: 800;
+}
+.ha-reco-chip svg {
+    width: 14px;
+    height: 14px;
+}
+.ha-market-btn {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    height: clamp(36px, 13cqi, 56px);
+    padding: 0 clamp(5px, 1.8cqi, 9px) 0 clamp(12px, 6cqi, 26px);
+    border-radius: var(--r-pill);
+    background: var(--ha);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .15);
+    text-decoration: none;
+}
+.ha-market-btn:hover {
+    opacity: .9;
+}
+.ha-market-text {
+    margin-right: clamp(8px, 3.6cqi, 16px);
+    color: var(--ha-on);
+    font-size: clamp(10.5px, 4.1cqi, 17px);
+    font-weight: 700;
+    letter-spacing: clamp(.3px, .25cqi, 1px);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.ha-market-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: clamp(26px, 9.6cqi, 40px);
+    padding: 0 clamp(7px, 2.8cqi, 13px);
+    border-radius: var(--r-pill);
+    background: var(--ha-pill);
+    color: var(--ha);
+    font-size: clamp(11px, 3.9cqi, 16px);
+    font-weight: 700;
+}
+.ha-market-pill svg {
+    width: clamp(14px, 5cqi, 22px);
+    height: clamp(14px, 5cqi, 22px);
+    fill: currentColor;
+}
+.ha-cta-desc {
+    margin: 0;
+    max-width: 34ch;
+    font-size: var(--fs-2);
+    line-height: 1.5;
+    color: var(--text-3);
+}
+.ha-cta-desc a {
+    color: var(--accent);
+    font-weight: 700;
+}
+#divHomeAssistant .gen-span {
+    grid-column: 1 / -1;
+}
+.ha-feature {
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ha) 55%, transparent);
+}
+.ha-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 26px;
+}
+.ha-col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+.ha-sub {
+    margin: 0;
+    font-size: var(--fs-4);
+    font-weight: 800;
+    color: var(--text);
+}
+.ha-benefit-list,
+.ha-auto-list,
+.ha-step-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.ha-benefit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.ha-benefit-list li {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 12px;
+    align-items: start;
+    font-size: var(--fs-3);
+    line-height: 1.45;
+    color: var(--text-2);
+}
+.ha-benefit-list b {
+    display: block;
+    margin-bottom: 1px;
+    font-size: var(--fs-4);
+    color: var(--text);
+}
+.ha-benefit-icon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--r-3);
+    background: var(--ha-bg);
+    color: var(--ha);
+}
+.ha-benefit-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+.ha-auto-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.ha-auto-list li {
+    padding: 10px 12px;
+    border-radius: var(--r-3);
+    background: var(--surface-2);
+    font-size: var(--fs-3);
+    line-height: 1.45;
+    color: var(--text-2);
+}
+.ha-auto-when {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 1px 8px;
+    border-radius: var(--r-pill);
+    background: var(--ha-bg);
+    color: var(--ha);
+    font-size: var(--fs-1);
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+.ha-auto-then {
+    display: block;
+    margin-top: 3px;
+    font-weight: 700;
+    color: var(--text);
+}
+.ha-auto-then::before {
+    content: "→ ";
+}
+.ha-step-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+.ha-step-list li {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 12px;
+    font-size: var(--fs-3);
+    line-height: 1.5;
+    color: var(--text-2);
+}
+.ha-step-num {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-fill-text);
+    font-size: var(--fs-2);
+    font-weight: 700;
+}
+.ha-gh-desc {
+    margin: 0;
+    font-size: var(--fs-2);
+    color: var(--text-3);
+}
+.ha-gh-desc a {
+    color: var(--accent);
+    font-weight: 700;
+    text-decoration: none;
+}
+.ha-alt-head {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    margin: 10px 2px -4px;
+}
+.ha-alt-head h3 {
+    margin: 0;
+    font-size: var(--fs-5);
+    font-weight: 800;
+}
+.ha-alt-head p {
+    margin: 0;
+    font-size: var(--fs-3);
+    color: var(--text-3);
+}
+@media (max-width: 999px) {
+    .ha-cta {
+        grid-column: 1 / -1;
+        align-items: flex-start;
+    }
+}
+/* Sur la largeur des tuiles et non de l'écran : à 1000 px, la colonne d'identité en garde 300. */
+@container (max-width: 619px) {
+    .ha-cols,
+    .ha-step-list {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+}
+@media (max-width: 767px) {
+    /* Le titre de section mobile (.gen-sec-head) dit déjà « Découverte MQTT ». */
+    .ha-alt-head h3 {
+        display: none;
+    }
+    .ha-alt-head {
+        margin: 0 2px 12px;
     }
 }
 /* --- Page MQTT (#divMQTT) sur le gabarit Général : sans onglets, sections sur mobile seulement --- */

@@ -1020,27 +1020,60 @@
                     <div id="divHomeAssistant" class="subtab-content" style="display:none;">
                         <div class="gen-layout">
                             <section class="gen-hero">
-                                <span class="gen-hero-halo"><svg><use href="#svg-homeAssistant0"></use></svg></span>
+                                <span class="gen-hero-halo is-ha"><svg><use href="#svg-homeAssistant0"></use></svg></span>
                                 <div class="gen-hero-text">
                                     <span class="gen-hero-state" tr="MARKETP"></span>
-                                    <h2 class="gen-hero-title" tr="HA_PAGE_TITLE"></h2>
-                                    <p class="gen-hero-desc" tr="HA_PAGE_DESC"></p>
+                                    <h2 class="gen-hero-title" tr="MARKETP_DESC"></h2>
+                                    <p class="gen-hero-desc" tr="HA_HERO_DESC"></p>
+                                </div>
+                                <div class="ha-cta hotspot-hidden">
+                                    <span class="ha-reco-chip"><svg><use href="#svg-check"></use></svg><span tr="HA_RECOMMENDED"></span></span>
+                                    <a class="ha-market-btn" href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&amp;repository=ESPSomfy-RTS-enhanced&amp;category=integration" target="_blank" rel="noopener"><span class="ha-market-text">Open in Marketplace on</span><span class="ha-market-pill">MY<svg><use href="#svg-homeAssistant0"></use></svg></span></a>
+                                    <p class="ha-cta-desc"><span tr="HA_REQ"></span> <a href="https://hacs.xyz" target="_blank" rel="noopener">HACS</a><span tr="HA_REQ_END"></span></p>
                                 </div>
                             </section>
 
                             <div class="gen-body">
                                 <div class="gen-panels">
-                                    <div class="gen-grid hotspot-hidden">
+                                    <div class="gen-grid">
                                         <header class="gen-sec-head"><h2 tr="HA_SEC_INTEGRATION"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i></span></header>
-                                        <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="MARKETP_DESC"></h3>
-                                            <p class="gen-tile-desc" tr="HA_INTEGRATION_DESC"></p>
-                                            <button type="button" class="gen-btn gen-btn-link" onclick="general.showHAOverlay()"><svg><use href="#svg-homeAssistant0"></use></svg><span tr="HA_INSTALL"></span></button>
+                                        <div class="gen-tile gen-span ha-feature">
+                                            <h3 class="gen-tile-title" tr="MARKETP_PURPOSE_TITLE"></h3>
+                                            <div class="ha-cols">
+                                                <div class="ha-col">
+                                                    <p class="ha-sub" tr="HA_BENEFITS_TITLE"></p>
+                                                    <ul class="ha-benefit-list">
+                                                    <li><span class="ha-benefit-icon"><svg><use href="#svg-indicShutter"></use></svg></span><span><b tr="HA_BENEFIT_1"></b><span tr="HA_BENEFIT_1_DESC"></span></span></li>
+                                                    <li><span class="ha-benefit-icon"><svg><use href="#svg-remote"></use></svg></span><span><b tr="HA_BENEFIT_2"></b><span tr="HA_BENEFIT_2_DESC"></span></span></li>
+                                                    <li><span class="ha-benefit-icon"><svg><use href="#svg-tabHome"></use></svg></span><span><b tr="HA_BENEFIT_3"></b><span tr="HA_BENEFIT_3_DESC"></span></span></li>
+                                                    </ul>
+                                                </div>
+                                                <div class="ha-col">
+                                                    <p class="ha-sub" tr="HA_AUTO_TITLE"></p>
+                                                    <ul class="ha-auto-list">
+                                                    <li><span class="ha-auto-when" tr="HA_WHEN"></span><span tr="HA_AUTO_1"></span><span class="ha-auto-then" tr="HA_AUTO_1_THEN"></span></li>
+                                                    <li><span class="ha-auto-when" tr="HA_WHEN"></span><span tr="HA_AUTO_2"></span><span class="ha-auto-then" tr="HA_AUTO_2_THEN"></span></li>
+                                                    <li><span class="ha-auto-when" tr="HA_WHEN"></span><span tr="HA_AUTO_3"></span><span class="ha-auto-then" tr="HA_AUTO_3_THEN"></span></li>
+                                                    <li><span class="ha-auto-when" tr="HA_DURING"></span><span tr="HA_AUTO_4"></span><span class="ha-auto-then" tr="HA_AUTO_4_THEN"></span></li>
+                                                    <li><span class="ha-auto-when" tr="HA_WHEN"></span><span tr="HA_AUTO_5"></span><span class="ha-auto-then" tr="HA_AUTO_5_THEN"></span></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="gen-tile gen-span ha-feature hotspot-hidden">
+                                            <h3 class="gen-tile-title" tr="MARKETP_INSTALL_TITLE"></h3>
+                                            <ol class="ha-step-list">
+                                                <li><span class="ha-step-num">1</span><span tr="HA_STEP_1"></span></li>
+                                                <li><span class="ha-step-num">2</span><span tr="MARKETP_INSTALL_STEP_2"></span></li>
+                                                <li><span class="ha-step-num">3</span><span tr="HA_STEP_3"></span></li>
+                                            </ol>
+                                            <p class="ha-gh-desc"><span tr="MARKETP_OR_VISIT"></span> <a href="https://github.com/xkain/ESPSomfy-RTS-enhanced" target="_blank" rel="noopener" tr="MARKETP_GITHUB_LINK"></a></p>
                                         </div>
                                     </div>
 
                                     <div class="gen-grid">
                                         <header class="gen-sec-head"><h2 tr="HA_SEC_MQTT"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i></span></header>
+                                        <div class="ha-alt-head"><h3 tr="HA_ALT_TITLE"></h3><p tr="HA_ALT_DESC"></p></div>
                                         <div id="haMqttOffTile" class="gen-tile" hidden>
                                             <p class="gen-tile-desc is-warning" tr="HA_MQTT_OFF"></p>
                                             <button type="button" class="gen-btn gen-btn-link" onclick="confirmDiscardChanges(() => activateGrpid('divMQTT'));"><svg><use href="#svg-mqtt"></use></svg><span tr="HA_OPEN_MQTT"></span></button>

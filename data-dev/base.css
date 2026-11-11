@@ -324,6 +324,12 @@
     --danger: #b3261e;
     --ok-bg: #e3f3e5;
     --ok: #1f6b24;
+    /* Bleu de la marque Home Assistant (bouton « Open in Marketplace »). */
+    --ha: #03a9f4;
+    --ha-bg: #e8f4fa;
+    /* Le badge garde ses couleurs de marque dans les deux thèmes. */
+    --ha-on: #ffffff;
+    --ha-pill: #e8f4fa;
     /* Illustration de l'appareil, page Appareil (svg-fwDevice). */
     --fw-dev-top: #ffffff;
     --fw-dev-bottom: #d5d9dd;
@@ -364,6 +370,10 @@
     --danger: #ff8a80;
     --ok-bg: #16301a;
     --ok: #7bd17f;
+    --ha: #03a9f4;
+    --ha-bg: #16303f;
+    --ha-on: #ffffff;
+    --ha-pill: #e8f4fa;
     --fw-dev-top: #3a4049;
     --fw-dev-bottom: #262b33;
     --fw-dev-edge: rgba(255, 255, 255, .12);
