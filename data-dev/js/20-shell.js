@@ -559,6 +559,15 @@ function watchDirty(container) {
     }
     container.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
     _recomputeIsDirty();
+    _notifyDirtyCount();
+}
+// Le compteur de la page Général lit les .is-dirty : il doit suivre tout nettoyage, y compris
+// "Quitter sans enregistrer" depuis une autre page.
+function _notifyDirtyCount() {
+    if (typeof general !== 'undefined' && general.initialized) general.updateDirtyCount();
+    if (typeof wifi !== 'undefined' && wifi.initialized) wifi.updateDirtyCount();
+    if (typeof mqtt !== 'undefined' && mqtt.initialized) mqtt.updateDirtyCount();
+    if (typeof somfy !== 'undefined' && somfy._radioSaveBar) somfy.updateRadioDirty();
 }
 // À appeler après une sauvegarde réussie ou un clic explicite sur Annuler/Fermer (Quitter sans
 // enregistrer inclus). Sans argument : remet à zéro l'état visuel ET l'alerte pour TOUS les
@@ -571,11 +580,13 @@ function clearDirty(container) {
         container.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
         _recomputeIsDirty();
         if (!isDirty) document.body.classList.remove('dirty-alerted');
+        _notifyDirtyCount();
         return;
     }
     _dirtyWatchContainers.forEach(c => c.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty')));
     document.body.classList.remove('dirty-alerted');
     isDirty = false;
+    _notifyDirtyCount();
 }
 
 /**
@@ -626,11 +637,93 @@ function confirmDiscardChanges(onLeave, onStay, options) {
         if (typeof onStay === 'function') onStay();
     };
     div.querySelector('#btnUnsavedLeave').onclick = () => {
-        if (typeof general !== 'undefined' && typeof general.revertClientPreviews === 'function') general.revertClientPreviews(scope);
+        if (typeof general !== 'undefined' && general.initialized) general.discardChanges(scope);
+        if (typeof wifi !== 'undefined' && wifi.initialized && (!scope || scope.contains(get('divNetAdapter')))) wifi.revertPage();
+        if (typeof mqtt !== 'undefined' && mqtt.initialized && (!scope || scope.contains(get('divMQTT')))) mqtt.revertPage();
+        if (typeof somfy !== 'undefined' && somfy._radioSaveBar && (!scope || scope.contains(get('divTransceiverSettings')))) somfy.revertRadio();
         clearDirty(scope || undefined);
         closeOverlay(div);
         onLeave();
     };
+}
+
+// =========================================================================
+// SECTION : BARRE D'ENREGISTREMENT
+// =========================================================================
+// N'existe à l'écran que tant qu'une valeur diffère de la valeur enregistrée. La page lui passe la
+// liste des différences { label, from, to, secret } : elle seule sait lire et comparer ses champs.
+class SaveBar {
+    constructor(host, { onSave, onRevert }) {
+        this.diffs = [];
+        this.onSave = onSave;
+        this.onRevert = onRevert;
+        const el = this.el = document.createElement('div');
+        el.className = 'save-bar';
+        el.inert = true;
+        el.innerHTML = `
+    <button type="button" class="save-bar-list-btn"><svg><use href="#svg-list"></use></svg><i class="save-bar-badge"></i></button>
+    <span class="save-bar-text"></span>
+    <span class="save-bar-short"></span>
+    <button type="button" class="save-bar-revert-btn"></button>
+    <button type="button" class="save-bar-save-btn"><svg><use href="#svg-save"></use></svg><span></span></button>`;
+        host.appendChild(el);
+        el.querySelector('.save-bar-list-btn').onclick = () => this.showList();
+        el.querySelector('.save-bar-revert-btn').onclick = () => this.onRevert();
+        el.querySelector('.save-bar-save-btn').onclick = () => this.onSave();
+    }
+    static _value(d, v) {
+        if (d.secret) return '••••';
+        return v === '' || v == null ? tr('SAVEBAR_EMPTY') : String(v);
+    }
+    static detail(d) {
+        return tr('SAVEBAR_DETAIL').replace('{LABEL}', d.label).replace('{FROM}', SaveBar._value(d, d.from)).replace('{TO}', SaveBar._value(d, d.to));
+    }
+    static count(n) {
+        return n === 1 ? tr('SAVEBAR_DIRTY_ONE') : tr('SAVEBAR_DIRTY_MANY').replace('{N}', n);
+    }
+    update(diffs) {
+        this.diffs = diffs;
+        const el = this.el, n = diffs.length;
+        el.classList.toggle('shown', n > 0);
+        el.inert = n === 0;
+        // Vidée, la barre garde son dernier texte le temps de redescendre.
+        if (n === 0) return;
+        el.classList.toggle('many', n > 2);
+        el.querySelector('.save-bar-badge').textContent = n;
+        el.querySelector('.save-bar-list-btn').setAttribute('aria-label', tr('SAVEBAR_SHOW_LIST'));
+        el.querySelector('.save-bar-text').textContent = n === 1 ? SaveBar.detail(diffs[0])
+            : n === 2 ? tr('SAVEBAR_DIRTY_LIST').replace('{N}', n).replace('{LIST}', diffs.map(d => d.label).join(', '))
+            : SaveBar.count(n);
+        el.querySelector('.save-bar-short').textContent = n === 1 ? tr('SAVEBAR_SHORT_ONE') : tr('SAVEBAR_SHORT_MANY').replace('{N}', n);
+        el.querySelector('.save-bar-revert-btn').textContent = tr('BT_CANCEL');
+        el.querySelector('.save-bar-save-btn span').textContent = tr('BT_SAVE');
+    }
+    showList() {
+        const div = document.createElement('div');
+        div.className = 'modal-overlay';
+        div.innerHTML = `
+    <div class="message-content save-bar-sheet">
+    ${modalHeader('', 'svg-save', { type: 'small' })}
+    <div class="sub-message"><p>${tr('SAVEBAR_PENDING_DESC')}</p><ul class="save-bar-sheet-list"></ul></div>
+    <div class="button-container-row">
+    <button type="button" class="save-bar-sheet-stay-btn" line>${tr('BT_STAY_PAGE')}</button>
+    <button type="button" class="save-bar-sheet-revert-btn" line>${tr('BT_REVERT')}</button>
+    <button type="button" class="save-bar-sheet-save-btn">${tr('BT_SAVE')}</button>
+    </div>
+    </div>`;
+        // Libellés et valeurs viennent des champs saisis : textContent, jamais innerHTML.
+        div.querySelector('.modalHeader-title').textContent = SaveBar.count(this.diffs.length);
+        const list = div.querySelector('.save-bar-sheet-list');
+        this.diffs.forEach(d => {
+            const li = document.createElement('li');
+            li.textContent = SaveBar.detail(d);
+            list.appendChild(li);
+        });
+        shOverlay(div);
+        div.querySelector('.save-bar-sheet-stay-btn').onclick = () => closeOverlay(div);
+        div.querySelector('.save-bar-sheet-revert-btn').onclick = () => { closeOverlay(div); this.onRevert(); };
+        div.querySelector('.save-bar-sheet-save-btn').onclick = () => { closeOverlay(div); this.onSave(); };
+    }
 }
 
 // =========================================================================
@@ -654,6 +747,7 @@ function confirmDiscardChanges(onLeave, onStay, options) {
 //    où laisser croire à l'utilisateur qu'il a annulé serait trompeur et sans retour possible.
 function setOverlayLock(div, mode, opts = {}) {
     if (!div) return;
+    genModalBusy(div, true);
     div.dataset.lockMode = mode;
     div.dataset.lockTitleKey = opts.titleKey || 'PROMPT_ACTION_IN_PROGRESS_TITLE';
     div.dataset.lockMsgKey = opts.msgKey || 'PROMPT_ACTION_IN_PROGRESS_MSG';
@@ -661,6 +755,7 @@ function setOverlayLock(div, mode, opts = {}) {
 }
 function clearOverlayLock(div) {
     if (!div) return;
+    genModalBusy(div, false);
     delete div.dataset.lockMode;
     delete div.dataset.lockTitleKey;
     delete div.dataset.lockMsgKey;
@@ -1304,6 +1399,24 @@ function clearSecretField(input) {
     input.dataset.hadValue = 'false';
     if (eye) eye.style.display = '';
 }
+// initSecretField() pose ses écouteurs : une seule fois par champ, puis on ne fait que remettre
+// le masque ou vider.
+function resetSecretField(input, hasValue) {
+    if (!input) return;
+    if (input.dataset.secretInit !== 'true') {
+        input.dataset.secretInit = 'true';
+        initSecretField(input, hasValue);
+        return;
+    }
+    clearSecretField(input);
+    if (hasValue) {
+        input.value = SECRET_DUMMY_TEXT;
+        input.dataset.secretDummy = 'true';
+        input.dataset.hadValue = 'true';
+        const eye = input.parentElement && input.parentElement.querySelector('.password-eye');
+        if (eye) eye.style.display = 'none';
+    }
+}
 // Valeur réelle d'un champ secret : chaîne vide tant que le masque factice n'a pas été effacé,
 // même si l'utilisateur n'a jamais cliqué dedans (ex: sauvegarde sans avoir touché au champ).
 function secretValue(input) {
@@ -1374,6 +1487,155 @@ function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
 
     <div class="modalHeader-right">${rightContent}</div>
     </div>`;
+}
+
+// --- Sections d'une page migrée (classes gen-, main.css) ----------------------------------
+// Sous 768 px les titres de section se collent sous la navigation : le filet ne se pose que sur
+// le titre effectivement collé, d'où le calcul au défilement.
+function bindGenSections(page) {
+    const mq = window.matchMedia('(max-width: 767px)');
+    let raf = 0;
+    const stick = () => {
+        raf = 0;
+        const heads = page.querySelectorAll('.gen-sec-head');
+        if (!mq.matches || !page.offsetParent) return heads.forEach(h => h.classList.remove('is-stuck'));
+        const top = Math.max(0, ...['appHeader', 'divMobileBreadcrumbSlot', 'divMobileStickyNav'].map(id => get(id)).filter(Boolean)
+            .map(e => e.getBoundingClientRect().bottom));
+        page.style.setProperty('--gen-stick-top', top + 'px');
+        heads.forEach(h => {
+            const r = h.getBoundingClientRect(), p = h.parentElement.getBoundingClientRect();
+            h.classList.toggle('is-stuck', r.top <= top + 1 && r.bottom > top && p.top + 9 < r.top);
+        });
+    };
+    const sections = () => { if (!raf) raf = requestAnimationFrame(stick); };
+    window.addEventListener('scroll', sections, { passive: true });
+    window.addEventListener('resize', sections);
+    return sections;
+}
+
+// Points de position des titres de section quand leur nombre varie (Connexion : selon le type).
+function fillGenSecMini(sections) {
+    sections.forEach((s, i) => {
+        const mini = s.querySelector(':scope > .gen-sec-head > .gen-sec-mini');
+        if (mini) mini.innerHTML = sections.map((_, j) => j === i ? '<i class="on"></i>' : '<i></i>').join('');
+    });
+}
+
+// --- Onglets d'une page migrée (Général, Appareil, Connexion) -----------------------------
+// Sous 768 px les onglets deviennent des sections empilées (bindGenSections). L'onglet
+// précédent/suivant n'apparaît que si l'onglet affiché dépasse de l'écran.
+function bindGenTabs(page, ids) {
+    const strip = get(ids.tabs), panels = get(ids.panels), pager = get(ids.pager);
+    // Un onglet masqué (page Connexion : selon le type choisi) sort de la navigation.
+    const tabs = () => Array.from(strip.querySelectorAll('.gen-tab')).filter(t => !t.hidden);
+    const sections = bindGenSections(page);
+    let current = 0;
+    const update = () => {
+        if (!panels.offsetParent) return;
+        sections();
+        const list = tabs(), pos = list.findIndex(t => parseInt(t.dataset.tab, 10) === current);
+        [[ids.prev, pos - 1], [ids.next, pos + 1]].forEach(([id, n]) => {
+            const btn = get(id);
+            btn.hidden = n < 0 || n >= list.length;
+            if (btn.hidden) return;
+            btn.dataset.tab = list[n].dataset.tab;
+            btn.querySelector('span').textContent = list[n].textContent;
+        });
+        pager.hidden = panels.getBoundingClientRect().bottom + window.scrollY <= window.innerHeight;
+    };
+    // Onglet mémorisé pour la session de l'onglet du navigateur : un rechargement y revient. `key`
+    // distingue l'élément affiché (fiche d'un équipement, d'un groupe) ; vide pour les pages fixes.
+    const store = 'genTab:' + ids.tabs;
+    let key = '';
+    const show = (i) => {
+        if (!tabs().some(t => parseInt(t.dataset.tab, 10) === i)) return false;
+        current = i;
+        try { sessionStorage.setItem(store, JSON.stringify({ key, i })); } catch (e) { /* stockage indisponible */ }
+        tabs().forEach(t => {
+            const on = parseInt(t.dataset.tab, 10) === i;
+            t.classList.toggle('selected', on);
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+            // Bande défilante : on ne bouge qu'elle, jamais la page.
+            if (on && strip.scrollWidth > strip.clientWidth) strip.scrollLeft = t.offsetLeft - strip.offsetLeft - (strip.clientWidth - t.offsetWidth) / 2;
+        });
+        panels.querySelectorAll(':scope > [data-tab]').forEach(p => { p.hidden = parseInt(p.dataset.tab, 10) !== i; });
+        update();
+        return true;
+    };
+    strip.addEventListener('click', (e) => {
+        const tab = e.target.closest('.gen-tab');
+        if (tab) show(parseInt(tab.dataset.tab, 10));
+    });
+    [ids.prev, ids.next].forEach(id => get(id).addEventListener('click', (e) => {
+        show(parseInt(e.currentTarget.dataset.tab, 10));
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        strip.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+    }));
+    // La hauteur de l'onglet change au chargement, à l'affichage de la page, à la rotation.
+    if (window.ResizeObserver) new ResizeObserver(update).observe(panels);
+    window.addEventListener('resize', update);
+    const restore = (k = '') => {
+        key = k;
+        let i = 0;
+        try { const v = JSON.parse(sessionStorage.getItem(store) || 'null'); if (v && v.key === k) i = v.i; } catch (e) { /* stockage indisponible */ }
+        if (!show(i)) show(parseInt(tabs()[0].dataset.tab, 10));
+    };
+    if (!ids.keyed) restore('');
+    return { show, update, restore, current: () => current };
+}
+
+// Grille gen- dont le JS masque des tuiles : nth-of-type (main.css) les compte quand même. On pose
+// .gen-span sur la dernière tuile visible quand leur nombre est impair, à la place de cette règle.
+function genGridSpan(grid) {
+    grid.classList.add('js-span');
+    const tiles = [...grid.children].filter(e => e.tagName === 'DIV');
+    tiles.forEach(t => t.classList.remove('gen-span'));
+    const vis = tiles.filter(t => getComputedStyle(t).display !== 'none');
+    if (vis.length % 2) vis[vis.length - 1].classList.add('gen-span');
+}
+
+// --- Coque des fenêtres de la page Général (classes genmod-, overlays.css) ---------------
+// Deux colonnes : à gauche ce que fait l'appareil (icône, titre, état courant), à droite ce
+// qu'on lui demande. Partagée par le gestionnaire de langues et celui des packs d'icônes :
+// un seul gabarit en mémoire plutôt que deux chaînes jumelles.
+// `id` sert de préfixe aux parties que le JS réécrit ensuite : <id>State, <id>Chips, <id>Hint.
+function genModalState(keyLabel, value, note = '') {
+    return `<span class="genmod-state-key">${keyLabel}</span>
+    <span class="genmod-state-val">${value}${note ? `<small>${note}</small>` : ''}</span>`;
+}
+function genModalShell(o) {
+    const close = () => `<button type="button" class="genmod-close" data-genmod-close
+    aria-label="${tr('BT_CLOSE')}"><svg><use href="#svg-close"></use></svg></button>`;
+    return `
+    <section class="genmod-side">
+    <div class="modalHeader-handle" onclick="handleMobileDismiss(this)"></div>
+    <svg class="genmod-side-icon"><use href="#${o.icon}"></use></svg>
+    <div>
+    <h2 class="genmod-side-title">${tr(o.titleKey)}</h2>
+    <p class="genmod-side-desc">${tr(o.descKey)}</p>
+    </div>
+    ${/* Placée ici et pas en fin de section : en tablette la grille l'attend en 3e colonne
+         de la 1re rangée, et l'état qui suit s'étale sur toute la largeur. */ ''}
+    ${close()}
+    <div class="genmod-state" id="${o.id}State">${genModalState(o.stateKey, o.stateValue, o.stateNote)}</div>
+    ${o.sideExtra || ''}
+    </section>
+    <div class="genmod-main">
+    <div class="genmod-head"><span class="genmod-head-title">${tr(o.sectionKey)}</span>${close()}</div>
+    <div class="genmod-body">${o.bodyHtml}</div>
+    <div class="genmod-foot">
+    <span class="genmod-foot-hint" id="${o.id}Hint">${tr(o.hintKey)}</span>
+    <div class="genmod-foot-btns" id="${o.footId}"></div>
+    </div>
+    </div>`;
+}
+// Verrou en vol : la croix et les moyens d'import cessent de répondre. Appelée par
+// setOverlayLock / clearOverlayLock, donc tout chemin qui pose ou lève un verrou est couvert
+// sans avoir à y penser. Sans effet hors des fenêtres genmod-.
+function genModalBusy(div, busy) {
+    if (!div || !div.querySelector('.genmod-window')) return;
+    div.querySelectorAll('.genmod-close').forEach(b => { b.disabled = !!busy; });
+    div.querySelectorAll('.icon-pack-import, .file-drop').forEach(e => { e.style.display = busy ? 'none' : ''; });
 }
 
 function fileDropZone(inputId, titleKey, titleId = '') {

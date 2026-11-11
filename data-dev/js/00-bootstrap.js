@@ -34,7 +34,7 @@ const GEO_HELPER_ORIGIN = new URL(GEO_HELPER_URL).origin;
 const DOC_BASE_URL = 'https://xkain.github.io/TESTRTS/guide/v3/';
 // Capturé au tout premier chargement de script, avant même que le DOM/general.init() n'existent :
 // si l'utilisateur revient depuis GEO_HELPER_URL avec ?lat=..&lon=.., on le garde de côté pour
-// pré-remplir general.GeoOverlay() dès que les réglages généraux seront chargés (cf. loadGeneral).
+// pré-remplir la position de la page Général dès que ses réglages seront chargés (cf. loadGeneral).
 // L'URL est nettoyée immédiatement (historique réécrit) pour qu'un simple rechargement de page
 // ne la réapplique pas indéfiniment.
 // Ce repli par URL ne sert plus qu'aux cas où postMessage est indisponible (cf. écouteur 'message'
@@ -57,10 +57,7 @@ let _pendingGeoFromUrl = null;
 // Chemin normal de retour depuis GEO_HELPER_URL : l'onglet externe nous poste directement les
 // coordonnées puis se referme (cf. sendToESP() dans docs/js/geo.js), au lieu de naviguer et de
 // laisser un onglet ESP dupliqué. Origine vérifiée pour n'accepter que notre propre page GitHub
-// Pages. La modale, si déjà ouverte (l'utilisateur ne l'a pas refermée avant d'aller sur l'onglet
-// externe), est mise à jour sur place ; sinon on la rouvre pré-remplie -- l'utilisateur ayant
-// forcément déjà ouvert general.GeoOverlay() une première fois pour atteindre btnGeoExternal, les
-// réglages généraux sont nécessairement déjà chargés ici.
+// Pages. Les champs de la page Général sont remplis comme une saisie, à enregistrer ensuite.
 // L'accusé de réception ('espsomfy-geo-ack') est ce qui permet à l'onglet externe de savoir qu'il
 // peut se refermer en toute sécurité (cf. sendToESP()) : docs/ et le firmware se déploient
 // indépendamment, sans lui un firmware pas encore à jour laisserait l'onglet se refermer sans
@@ -72,12 +69,7 @@ window.addEventListener('message', (event) => {
     const lat = Number(d.lat), lon = Number(d.lon);
     if (!Number.isFinite(lat) || lat < -90 || lat > 90) return;
     if (!Number.isFinite(lon) || lon < -180 || lon > 180) return;
-    if (get('inputGeoLat') && get('inputGeoLon')) {
-        get('inputGeoLat').value = lat.toFixed(2);
-        get('inputGeoLon').value = lon.toFixed(2);
-    } else {
-        general.GeoOverlay({ lat, lon });
-    }
+    general.applyGeoPrefill({ lat, lon });
     event.source?.postMessage({ source: 'espsomfy-geo-ack' }, event.origin);
 });
 // Manifeste de découverte des langues (Phase 3 i18n) : fichier statique maintenu indépendamment

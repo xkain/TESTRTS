@@ -10,7 +10,7 @@
 
 // Commandes RF Somfy (protocole/transceiver) : /shadeCommand, /groupCommand, /tiltCommand,
 // /repeatCommand, /setPositions, /setSensor, /setMyPosition, /setRollingCode, /setPaired,
-// /unpairShade, /linkRepeater, /unlinkRepeater, /linkListener, /renameListener, /unlinkListener,
+// /unpairShade, /linkRepeater, /renameRepeater, /unlinkRepeater, /linkListener, /renameListener, /unlinkListener,
 // /unlinkRemote, /linkRemote, /sendRemoteCommand, /beginFrequencyScan, /endFrequencyScan,
 // /saveRadio, /getRadio.
 // handleShadeCommand/handleGroupCommand/handleTiltCommand/handleRepeatCommand/handleSetPositions/

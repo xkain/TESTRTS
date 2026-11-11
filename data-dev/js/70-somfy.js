@@ -160,7 +160,7 @@ class Somfy {
         if (this.initialized) return;
         this.bindCarouselNavFeedback();
         this.bindVRKeyboard();
-        initMultiClickToggle('#divTransceiverSettings .main-headerTitle', 'show-expert-gpio', 5);
+        initMultiClickToggle('#rdcTitle', 'show-expert-gpio', 5);
         initMultiClickToggle('.sidebar-brand', () => this.screenShade(), 5);
         this.initialized = true;
     }
@@ -280,29 +280,25 @@ class Somfy {
 
         get('divManualSafety').style.display = isM ? 'block' : 'none';
         divS.style.display = target ? 'block' : 'none';
-        divG.style.display = target ? 'none' : 'inline-block';
+        divG.style.display = target ? 'none' : '';
         this.updateRadioPins();
     }
     updateRadioPins() {
-        const det = get('divRadioPins'), chips = get('divRadioPinChips'), sel = get('selRadioBoardType');
-        if (!det || !chips || !sel) return;
+        const tile = get('divRadioPins'), sel = get('selRadioBoardType');
+        if (!tile || !sel) return;
         const manual = parseInt(sel.value, 10) === 255;
-        det.style.display = manual ? '' : 'none';
-        chips.style.display = manual ? '' : 'none';
-        if (!manual) { this._pinsAutoOpened = false; return; }
-        const cb = get('cbManualSafety');
-        if (cb && !cb.checked && !this._pinsAutoOpened) { det.open = true; this._pinsAutoOpened = true; }
-        chips.innerHTML = [['SCK', 'SCKPin'], ['CSN', 'CSNPin'], ['MOSI', 'MOSIPin'], ['MISO', 'MISOPin'], ['TX', 'TXPin'], ['RX', 'RXPin']].map(([l, k]) => {
-            const v = parseInt((get('inputTrans' + k) || {}).value, 10);
-            return `<span><small>${l}</small><b>${isNaN(v) ? '--' : 'GPIO' + v}</b></span>`;
-        }).join('');
+        tile.hidden = !manual;
+        const cb = get('cbManualSafety'), ap = this._radioApplied;
+        // Même règle que saveRadio() : un câblage manuel déjà en service n'a plus à être confirmé.
+        const trusted = !!ap?.enabled && ap.radioBoardType === 255;
+        get('rdcSafetyNote').hidden = !manual || trusted || !!cb?.checked;
+        genGridSpan(tile.parentElement);
     }
 
     setRadioEnabled(isEnabled) {
         const txtStatus = get('divRadioEnableStatus');
         const radioTab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
         const isActuallyEnabled = radioTab && !radioTab.classList.contains('radio-error');
-
         if (txtStatus) {
             if (isEnabled === isActuallyEnabled) {
                 txtStatus.textContent = isEnabled ? tr('RADIO_ENABLED') : tr('RADIO_DISABLED');
@@ -310,6 +306,10 @@ class Somfy {
                 txtStatus.textContent = tr('RADIO_SAVE_REQUIRED');
             }
         }
+        // Le titre suit le choix affiché, le halo ce que le boîtier exécute réellement.
+        get('rdcTitle').textContent = tr(isEnabled ? 'ENABLED' : 'IS_DISABLED');
+        get('rdcHalo').classList.toggle('is-off', !isActuallyEnabled);
+        this.updateRadioDirty();
     }
 
     async loadSomfy() {
@@ -352,9 +352,7 @@ class Somfy {
                 this.maxRooms = somfy.maxRooms;
                 this.maxShades = somfy.maxShades;
                 this.maxGroups = somfy.maxGroups;
-                this.setCfgCount('shade', (this.shades || []).length);
-                this.setCfgCount('group', (this.groups || []).length);
-                this.setCfgCount('room', Math.max(0, _rooms.length - 1));
+                ['shade', 'group', 'room'].forEach(k => this.renderCfgPage(k));
 
                 // Persisté (contrairement à maxRooms/Shades/Groups ci-dessus, seulement utilisés
                 // ponctuellement pour ces spans) : consommé plus tard par _openEditScheduleGroup() et
@@ -417,7 +415,7 @@ class Somfy {
                 this.setShadesList(somfy.shades);
                 this.setGroupsList(somfy.groups);
                 this.maxRepeaters = somfy.maxRepeaters || 7;
-                this.setRepeaterList(somfy.repeaters);
+                this.setRepeaterList(somfy);
                 this.maxListeners = somfy.maxListeners || 14;
                 this.maxLinkedRemotes = somfy.maxLinkedRemotes || 15;
                 this.setListenerList(somfy.listeners);
@@ -524,7 +522,6 @@ class Somfy {
 
                     ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                     clearDirty();
-                    get('btnSaveRadio').classList.remove('disabled');
 
                     // La reference de ce que la CARTE execute vient de changer : sans cette mise
                     // a jour, le recapitulatif continuait de comparer aux anciennes valeurs et
@@ -532,6 +529,7 @@ class Somfy {
                     // jusqu'au prochain rechargement de page. La reponse du boitier fait foi --
                     // on prend res.config et non le formulaire, qui n'est qu'une intention.
                     this._radioApplied = Object.assign({}, res.config);
+                    this.updateRadioDirty();
                     this.radioFleet = null;
                     this._radioAfterWiz = !!this._wizPending;
                     this._wizPending = false;
@@ -550,7 +548,7 @@ class Somfy {
 
                             // Comparaison simple et directe avec l'état de la checkbox d'origine
                             if (cb) {
-                                get('divRadioEnableStatus').textContent = tr(cb.checked === init ? (cb.checked ? 'RADIO_ENABLED' : 'RADIO_DISABLED') : 'RADIO_SAVE_REQUIRED');
+                                this.setRadioEnabled(cb.checked);
                                 this.renderRadioFleet();
                             }
                 });
@@ -1286,37 +1284,45 @@ class Somfy {
     }
 
     updateWelcomeSteps() {
-        const root = get('divEmptyHome');
+        const root = get('divGetStarted');
         if (!root) return;
         const net = typeof wifi !== 'undefined' ? wifi : {};
-        const hotspot = !!net.isHotspot;
+        const netOk = !net.isHotspot;
         const eth = net._netType === 'lan' || net._netType === 'poe';
-        const radioOn = !!this._radioApplied?.radioInit;
-        const steps = [
-            ['Net', hotspot ? 'todo' : 'done', hotspot ? 'WELCOME_ST_TODO' : 'WELCOME_ST_NET_OK', hotspot ? '' : (eth ? 'Ethernet' : (net._wifiSsid || ''))],
-            ['Radio', radioOn ? 'done' : 'warn', radioOn ? 'WELCOME_ST_RAD_OK' : 'WELCOME_ST_RAD_OFF', ''],
-            ['Device', radioOn ? 'todo' : 'wait', radioOn ? 'WELCOME_ST_READY' : 'WELCOME_ST_WAIT', '']
-        ];
-        const icons = { done: 'svg-succes', warn: 'svg-warning', todo: 'svg-arrowRight', wait: 'svg-lock' };
-        const current = (steps.find(s => s[1] !== 'done') || steps[2])[0];
-        for (const [id, state, key, extra] of steps) {
-            const card = get('divWelcome' + id);
-            const dot = root.querySelector(`.welcome-dot[data-step="${id}"]`);
-            if (dot) {
-                dot.classList.toggle('is-done', state === 'done');
-                dot.classList.toggle('is-current', id === current);
-            }
+        const radioOn = this._isRadioOn();
+        const stage = !netOk ? 'net' : (radioOn ? 'ready' : 'radio');
+        root.dataset.stage = stage;
+        const setKey = (el, key) => { if (el) { el.setAttribute('tr', key); el.textContent = tr(key); } };
+        const [kick, lead, cta] = {
+            net: ['WELCOME_KICK_NET', 'WELCOME_LEAD_NET', 'BT_SETUP_NETWORK'],
+            radio: ['WELCOME_KICK_RADIO', 'WELCOME_LEAD_RADIO', 'BT_SETUP_RADIO'],
+            ready: ['WELCOME_KICK_READY', 'WELCOME_LEAD_READY', 'BT_ADD_FIRST_DEVICE']
+        }[stage];
+        setKey(get('spanWelcomeKick'), kick);
+        setKey(get('pWelcomeLead'), lead);
+        setKey(get('btnWelcomeCta').firstElementChild, cta);
+        const steps = {
+            Net: [netOk ? 'done' : 'current', netOk ? (eth ? 'WELCOME_NET_DONE_ETH' : 'WELCOME_NET_DONE_WIFI') : 'WELCOME_NET_DESC'],
+            Radio: [radioOn ? 'done' : (netOk ? 'current' : 'waiting'), radioOn ? 'WELCOME_RAD_DONE' : 'WELCOME_RAD_DESC'],
+            Device: [stage === 'ready' ? 'current' : 'waiting', 'WELCOME_ADD_DEVICE_DESC']
+        };
+        for (const [id, [state, key]] of Object.entries(steps)) {
+            const card = root.querySelector(`.home-step-card[data-step="${id}"]`);
             if (!card) continue;
             card.dataset.state = state;
-            card.classList.toggle('is-current', id === current);
-            const chip = card.querySelector('.welcome-state');
-            if (!chip) continue;
-            chip.querySelector('use').setAttribute('href', '#' + icons[state]);
-            const label = chip.children[1];
-            label.setAttribute('tr', key);
-            label.textContent = tr(key);
-            chip.children[2].textContent = extra;
+            setKey(card.querySelector('.home-step-desc > span'), key);
         }
+        const ssid = root.querySelector('.home-step-ssid');
+        if (ssid) ssid.textContent = netOk && !eth ? (net._wifiSsid || '') : '';
+    }
+    // Lu au clic, pas depuis data-stage : la radio peut s'allumer après le dernier rendu de l'accueil.
+    welcomeNextStep() {
+        if (get('divGetStarted')?.dataset.stage === 'net') ui.showNetworkConfig();
+        else if (this._isRadioOn()) ui.showShadeConfig();
+        else ui.showRadioConfig();
+    }
+    _isRadioOn() {
+        return !!(this._radioApplied?.radioInit ?? this.transceiver?.config?.radioInit);
     }
     checkEmptyState() {
         // #divGetStarted est un SIBLING de #divAuthenticated dans le DOM (pas un descendant) --
@@ -1336,10 +1342,6 @@ class Somfy {
         if (!this.dataLoaded) return;
         const getEl = id => get(id);
         const setDisp = (el, show, style = 'block') => { if (el) el.style.display = show ? style : 'none'; };
-        const togglePair = (hasData, emptyId, contentId) => {
-            setDisp(getEl(emptyId), !hasData);
-            setDisp(getEl(contentId), hasData);
-        };
 
         const divShadeControls = getEl('divShadeControls');
         const divGroupControls = getEl('divGroupControls');
@@ -1356,14 +1358,6 @@ class Somfy {
         const hasRooms = _rooms.length > 1;
         const totalDevices = shades.length + groups.length;
 
-        setDisp(getEl('divRoomEmptyState'), !hasRooms);
-        setDisp(getEl('divGroupEmptyState'), groups.length === 0);
-        setDisp(getEl('divShadeEmptyState'), shades.length === 0);
-
-        const divRepeatList = getEl('divRepeatList');
-        togglePair(divRepeatList && divRepeatList.children.length > 0, 'divRepeaterEmptyState', 'divRepeaterListContent');
-        const divListenList = getEl('divListenList');
-        togglePair(divListenList && divListenList.children.length > 0, 'divListenerEmptyState', 'divListenerListContent');
 
         let visibleShadesCount = 0, visibleGroupsCount = 0;
         shades.forEach(el => { if (currentRoomId === 0 || parseInt(el.getAttribute('data-roomid'), 10) === currentRoomId) visibleShadesCount++; });
@@ -1391,6 +1385,7 @@ class Somfy {
             if (divShadeControls) divShadeControls.style.display = isConfigOpen ? 'none' : '';
             if (divGroupControls) divGroupControls.style.display = isConfigOpen ? 'none' : '';
         }
+        document.body.classList.toggle('is-home-welcome', isEmptyState && !isConfigOpen);
 
         // Colonne Groupes masquée / Équipements pleine largeur + centrée si aucun groupe n'est
         // visible dans la room active (couvre à la fois "0 groupe globalement" et "0 groupe dans
@@ -1870,7 +1865,7 @@ class Somfy {
     // Rafraîchit en direct le badge de signal d'une télécommande liée affichée dans la fenêtre des
     // télécommandes (tâche « remote »), depuis le RSSI de la trame : aucun aller-retour serveur.
     _updateLiveRemoteSignal(frame) {
-        document.querySelectorAll(`#divShadeSetup .somfyLinkedRemote[data-remoteaddress="${frame.address}"], #divShadeSetupList .somfyLinkedRemote[data-remoteaddress="${frame.address}"]`).forEach(row => {
+        document.querySelectorAll(`#divShadeSetup .tw-rt[data-remoteaddress="${frame.address}"], #divShadeRemotes .cfg-tile[data-remoteaddress="${frame.address}"]`).forEach(row => {
             const signalEl = row.querySelector('.linkedRemote-signal');
             if (signalEl) signalEl.outerHTML = this.remoteSignalHtml(frame.rssi, frame.address);
         });
@@ -2130,7 +2125,7 @@ class Somfy {
         const rssi = get('spanLogRssi');
         if (rssi) {
             rssi.textContent = last ? last.rssi : '--';
-            rssi.className = `log-metric-value sig-${last ? this.rssiLevel(last.rssi) : 'unknown'}`;
+            rssi.className = `sig-${last ? this.rssiLevel(last.rssi) : 'unknown'}`;
         }
         const state = get('divLogLiveState');
         const text = get('spanLogLiveText');
@@ -2169,20 +2164,18 @@ class Somfy {
         this.frameFilter = raw.trim().toLowerCase();
         const fld = get('fldLogFilter');
         if (fld && fld.value !== raw) fld.value = raw;
-        const clear = get('btnLogFilterClear');
-        if (clear) clear.style.display = this.frameFilter ? '' : 'none';
         this.renderFrameLog();
     }
     toggleFrameValidOnly() {
         this.frameValidOnly = !this.frameValidOnly;
         const btn = get('btnLogValidOnly');
-        if (btn) btn.classList.toggle('active', this.frameValidOnly);
+        if (btn) btn.setAttribute('aria-pressed', this.frameValidOnly);
         this.renderFrameLog();
     }
     toggleFrameLogPause() {
         this.frameLogPaused = !this.frameLogPaused;
         const btn = get('btnLogPause');
-        if (btn) btn.classList.toggle('active', this.frameLogPaused);
+        if (btn) btn.setAttribute('aria-pressed', this.frameLogPaused);
         const icon = get('svgLogPause');
         if (icon && icon.firstElementChild) icon.firstElementChild.setAttribute('href', this.frameLogPaused ? '#svg-play' : '#svg-stop');
         const label = get('spanLogPause');
@@ -2516,50 +2509,42 @@ class Somfy {
     // volontaire -- il ne change pas d'un évènement à l'autre. Un état socket seul ne le porte donc
     // pas, d'où le repli sur le cache `shades`, alimenté par /shades (toJSON, qui lui l'inclut) et
     // tenu à jour par procShadeState.
-    // Dans l'éditeur, le sélecteur prime sur la valeur enregistrée : changer le vocabulaire doit
-    // se voir tout de suite sur la ligne d'état, sans passer par un enregistrement -- même
-    // principe que l'icône d'ambiance et le reste de onShadeTypeChanged.
-    editorVocab(shade) {
-        const el = get('selShadeStateVocab');
-        if (el && el.value !== '') return parseInt(el.value, 10) || 0;
-        return this.shadeVocabOf(shade);
-    }
     shadeVocabOf(shade) {
         if (!shade) return 0;
         if (typeof shade.stateVocab === 'number') return shade.stateVocab;
         const full = (this.shades || []).find(s => s.shadeId === shade.shadeId);
         return (full && typeof full.stateVocab === 'number') ? full.stateVocab : 0;
     }
-    // Ligne de haut de l'éditeur (#labelPosContainer, dans le bloc Contrôle) : « Position actuelle
-    // ... 60 % » pour un équipement positionné, « État ... Marche » pour un contact sec. Le « % »
-    // vit hors de #valPos dans le gabarit -- d'où le span dédié qu'on masque plutôt qu'un texte
-    // recomposé. L'attribut `tr` suit le texte, pour le prochain passage du traducteur.
-    applyEditorStateRow(shadeType) {
-        const row = get('labelPosContainer');
-        if (!row) return;
-        const isDry = this.dryContactShadeTypes.includes(shadeType);
-        const title = row.querySelector('.editDevice-info-title');
-        if (title) {
-            const cle = isDry ? 'IS_STATE' : 'DEVICE_POS';
-            title.setAttribute('tr', cle);
-            title.innerText = tr(cle);
+    // Tuile Récapitulatif de Général : les réglages enregistrés, en lecture seule.
+    renderShadeSummary(shade) {
+        const box = get('shdSummary');
+        if (!box || !shade) return;
+        const type = shade.shadeType, st = this.shadeTypes.find(x => x.type === type) || {};
+        const tt = st.tilt ? (shade.tiltType || 0) : 0, isDry = this.dryContactShadeTypes.includes(type);
+        const setup = typeof shadeSetup !== 'undefined' ? shadeSetup : null;
+        const opt = (id, v) => Array.from(get(id).options).find(o => o.value === String(v))?.text ?? '';
+        const yn = (v) => tr(v ? 'BT_YES' : 'BT_NO'), sec = (ms) => `${(ms / 1000).toFixed(1)} s`;
+        const rows = [];
+        const add = (label, val) => rows.push(`<div class="ed-ro"><span>${escHtml(label)}</span><b>${escHtml(val)}</b></div>`);
+        add(tr('DEVICE_TYPE'), opt('selShadeType', type) + (tt ? ` · ${opt('selTiltType', tt)}` : ''));
+        add(tr('ROOM'), (_rooms.find(r => r.roomId === shade.roomId) || { name: tr('HOME') }).name);
+        this.renderShadeHero();
+        add(tr('PROTOCOL'), get('shdChipRadio').textContent);
+        if (setup) add(setup.titleFor(shade, 'dir'), setup.valueFor(shade, 'dir'));
+        if (st.lift && tt !== 3 && shade.upTime > 0) add(setup ? setup.titleFor(shade, 'cal') : '', `${sec(shade.upTime)} / ${sec(shade.downTime)}`);
+        if (tt > 0 && shade.tiltTimeUp > 0) add(setup ? setup.titleFor(shade, 'tilt') : '', `${sec(shade.tiltTimeUp)} / ${sec(shade.tiltTimeDown)}`);
+        if (this.shadeTypeSupportsMy(type) && setup) {
+            const my = shade.myPos >= 0 ? setup.t(shade.simMy ? 'SETUP_S_MY_SIM' : 'SETUP_S_MY', { pos: shade.myPos }) + (tt && shade.myTiltPos >= 0 ? ` · ${setup.t('SETUP_S_MY_TILT', { tilt: shade.myTiltPos })}` : '') : tr('CARD_MY_NONE');
+            add(tr('SETMYPOS_TITLE'), my);
         }
-        const unit = get('valPosUnit');
-        if (unit) unit.style.display = isDry ? 'none' : '';
-    }
-    setEditorPosValue(shadeType, position, flipPosition, vocab) {
-        const val = get('valPos');
-        if (!val) return;
-        const isDry = this.dryContactShadeTypes.includes(shadeType);
-        val.innerText = isDry ? this.shadeStateLabel(position, flipPosition, vocab) : position;
-        const track = get('barPosTrack'), bar = get('barPos');
-        if (track) track.style.display = isDry ? 'none' : '';
-        if (bar) bar.style.width = `${Math.max(0, Math.min(100, position || 0))}%`;
-    }
-    setEditorTiltValue(tilt) {
-        const val = get('valTilt'), bar = get('barTilt');
-        if (val) val.innerText = tilt;
-        if (bar) bar.style.width = `${Math.max(0, Math.min(100, tilt || 0))}%`;
+        if (isDry) add(tr('DEVICE_OUTPUT_MODE_DESC'), opt('selShadeOutputMode', shade.outputMode ?? 0));
+        if (st.fpos) add(tr(isDry ? 'DEVICE_FLIP_STATE' : 'DEVICE_FLIP_POSITION'), yn(shade.flipPosition));
+        if (st.sun) add(tr('DEVICE_SUN_SENSOR'), yn(shade.sunSensor));
+        add(tr('REPEAT_COMMANDS'), opt('selRepeatCommands', shade.repeats ?? 1));
+        if (typeof window.__ledPin === 'number' && window.__ledPin >= 0) add(tr('LED_FEEDBACK'), yn(shade.ledFeedback));
+        add(tr('SUBTAB_REMOTES'), `${(shade.linkedRemotes || []).length}/${this.maxLinkedRemotes || 15}`);
+        add(tr('SUBTAB_SCHEDULES'), String((this.schedules || []).filter(sc => sc.targetType === 'shade' && sc.targetId === shade.shadeId).length));
+        box.innerHTML = rows.join('');
     }
     // Un contact sec ne connaît que deux ou trois commandes (cf. le tableau de rstrouse : Toggle
     // pour le 1-bouton, Up/Down pour le 2-boutons). Les appuis combinés (MyUp, MyDown, UpDown,
@@ -2908,7 +2893,19 @@ class Somfy {
             this._wizPending = false;
             this.renderRadioFleet();
             this.updateRadioGraph();
+            this.syncRadioHardwareTab();
         });
+    }
+    // Profil BOX : la carte est connue et figée, l'onglet Matériel n'a rien à proposer (même règle
+    // que #divRadioBoardType dans main.css), sauf en mode expert.
+    syncRadioHardwareTab() {
+        if (!this._radioTabs) return;
+        const profile = get('divContainer').getAttribute('data-hardwareprofile') || '';
+        const off = profile.startsWith('BOX') && !document.body.classList.contains('show-expert-gpio');
+        get('rdcTabs').querySelector('[data-tab="2"]').hidden = off;
+        get('rdcPanels').querySelector(':scope > [data-tab="2"]').classList.toggle('rdc-off', off);
+        if (off && this._radioTabs.current() === 2) this._radioTabs.show(0);
+        this._radioTabs.update();
     }
 
     // Un SEUL ecouteur pour tout le panneau, plutot que la meme ligne recopiee dans les six
@@ -2918,14 +2915,66 @@ class Somfy {
         const panneau = get('divTransceiverSettings');
         if (!panneau || this._radioEditWatched) return;
         this._radioEditWatched = true;
+        this._radioTabs = bindGenTabs(panneau, { tabs: 'rdcTabs', panels: 'rdcPanels', pager: 'rdcPager', prev: 'btnRdcPrev', next: 'btnRdcNext' });
+        this._radioSaveBar = new SaveBar(panneau, { onSave: () => this.saveRadio(), onRevert: () => this.revertRadio() });
         const signaler = () => {
             const st = get('divRadioEnableStatus');
             if (st) st.textContent = tr('RADIO_SAVE_REQUIRED');
-            this.updateRadioCurrent();
             this.updateRadioPins();
+            // Différé d'un tour : _markDirty (watchDirty) passe après cet écouteur.
+            setTimeout(() => this.updateRadioDirty(), 0);
         };
         panneau.addEventListener('input', signaler);
         panneau.addEventListener('change', signaler);
+    }
+    // Différences avec ce que la carte exécute (_radioApplied), pour la barre d'enregistrement.
+    _radioFields() {
+        const a = this._radioApplied;
+        if (!a) return [];
+        const num = (id, div) => parseFloat(get(id).value) / div;
+        const optText = (id, v) => { const o = [...get(id).options].find(x => parseInt(x.value, 10) === v); return o ? o.text : String(v); };
+        const f = (label, id, saved, now, show = (v) => v) => ({ label, el: get(id), saved, now, show });
+        const mhz = (v) => v.toFixed(3) + ' ' + tr('UNIT_MHZ');
+        const list = [
+            f('TAB_RADIO', 'cbEnableRadio', !!a.enabled, get('cbEnableRadio').checked, (v) => tr(v ? 'BT_YES' : 'BT_NO')),
+            f('RADIO_TX_FREQUENCY', 'slidFrequency', +a.frequency.toFixed(3), +num('slidFrequency', 1000).toFixed(3), mhz),
+            f('RADIO_TX_POWER', 'slidTxPower', a.txPower, this.txPowerLevels[parseInt(get('slidTxPower').value, 10)], (v) => v + ' ' + tr('UNIT_DBM')),
+            f('RADIO_RX_FREQUENCY', 'slidRxFrequency', +(a.rxFrequency ?? a.frequency).toFixed(3), +num('slidRxFrequency', 1000).toFixed(3), mhz),
+            f('RADIO_RX_BANDWIDTH', 'slidRxBandwidth', +a.rxBandwidth.toFixed(2), +num('slidRxBandwidth', 100).toFixed(2), (v) => v.toFixed(2) + ' ' + tr('UNIT_KHZ')),
+            f('PROTOCOL', 'selRadioProto', a.proto, parseInt(get('selRadioProto').value, 10), (v) => optText('selRadioProto', v)),
+            f('BIT', 'selRadioType', a.type, parseInt(get('selRadioType').value, 10), (v) => optText('selRadioType', v)),
+            f('RADIO_GPIO_BOARD_ASSIGN', 'selRadioBoardType', a.radioBoardType || 0, parseInt(get('selRadioBoardType').value, 10), (v) => optText('selRadioBoardType', v))
+        ];
+        if (parseInt(get('selRadioBoardType').value, 10) === 255) {
+            [['SCK', 'SCKPin'], ['CSN', 'CSNPin'], ['MOSI', 'MOSIPin'], ['MISO', 'MISOPin'], ['TX', 'TXPin'], ['RX', 'RXPin']].forEach(([l, k]) =>
+                list.push({ label: l, el: get('inputTrans' + k), saved: a[k], now: parseInt(get('inputTrans' + k).value, 10), show: (v) => 'GPIO' + v, raw: true }));
+        }
+        return list.filter(d => String(d.saved) !== String(d.now));
+    }
+    updateRadioDirty() {
+        const page = get('divTransceiverSettings');
+        if (!this._radioSaveBar || !page.offsetParent) return;
+        page.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+        const diffs = this._radioFields();
+        diffs.forEach(d => (d.el.closest('.dirty-target') || d.el).classList.add('is-dirty'));
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        this._radioSaveBar.update(diffs.map(d => ({ label: d.raw ? d.label : tr(d.label), from: d.show(d.saved), to: d.show(d.now) })));
+    }
+    // « Annuler » de la barre et « Quitter sans enregistrer » : retour à ce que la carte exécute.
+    revertRadio() {
+        const a = this._radioApplied, page = get('divTransceiverSettings');
+        if (!a) return;
+        ui.toElement(page, { transceiver: { config: a } });
+        get('cbEnableRadio').checked = !!a.enabled;
+        const sel = get('selRadioBoardType');
+        sel.value = a.radioBoardType || 0;
+        this.onRadioBoardTypeChanged(sel);
+        const cb = get('cbManualSafety');
+        if (cb) cb.checked = false;
+        clearDirty(page);
+        this.setRadioEnabled(!!a.enabled);
+        this.updateRadioGraph();
     }
     // GARDE-FOU : radio eteinte, NI le test NI l'assistant NI le balayage ne peuvent aboutir.
     // Cote firmware, beginFrequencyScan() commence par `if(this->config.enabled)` et aucune trame
@@ -3391,28 +3440,6 @@ class Somfy {
         this.wizAbandon();
         if (div) closeOverlay(div);
     }
-    updateRadioCurrent() {
-        const fr = get('slidFrequency'), rf = get('slidRxFrequency'), bw = get('slidRxBandwidth'), tx = get('slidTxPower');
-        if (!fr || !rf || !bw || !tx) return;
-        const v = { frequency: parseFloat(fr.value) / 1000, rxFrequency: parseFloat(rf.value) / 1000, rxBandwidth: parseFloat(bw.value) / 100, txPower: this.txPowerLevels[parseInt(tx.value, 10)] };
-        const dec = { frequency: 3, rxFrequency: 3, rxBandwidth: 2, txPower: 0 };
-        const mhz = (f) => isFinite(f) ? f.toFixed(3) + ' ' + tr('UNIT_MHZ') : '--';
-        if (get('spanRadioTxFreq')) get('spanRadioTxFreq').textContent = mhz(v.frequency);
-        if (get('spanRadioRxFreq')) get('spanRadioRxFreq').textContent = mhz(v.rxFrequency);
-        if (get('spanRadioBw')) get('spanRadioBw').textContent = isFinite(v.rxBandwidth) ? v.rxBandwidth.toFixed(2) + ' ' + tr('UNIT_KHZ') : '--';
-        if (get('spanRadioPwr')) get('spanRadioPwr').textContent = v.txPower === undefined ? '--' : v.txPower + ' ' + tr('UNIT_DBM');
-        const a = this.radioApplied, box = get('divRadioPending');
-        if (!box) return;
-        const pending = !!a && Object.keys(dec).some(k => typeof a[k] === 'number' && isFinite(v[k]) && Math.abs(v[k] - a[k]) > Math.pow(10, -dec[k]) / 2);
-        box.style.display = pending ? '' : 'none';
-        if (pending) box.textContent = tr('RADIO_FREQ_PENDING')
-            .replace('{f}', a.frequency.toFixed(3)).replace('{rx}', (a.rxFrequency ?? a.frequency).toFixed(3)).replace('{bw}', a.rxBandwidth.toFixed(2)).replace('{tx}', a.txPower);
-    }
-    pickRadioEnabled(on) {
-        const cb = get('cbEnableRadio');
-        if (cb) cb.parentElement.classList.remove('sel-pending');
-        if (cb && cb.checked !== on) cb.click();
-    }
     renderRadioFleet() {
         const box = get('divRadioFleet');
         if (!box) return;
@@ -3467,7 +3494,7 @@ class Somfy {
             ['RADIO_RX_FREQUENCY',   'RADIO_HELP_RX_FREQUENCY'],
             ['RADIO_RX_BANDWIDTH',   'RADIO_HELP_RX_BANDWIDTH']
         ];
-        // MEME PATRON QUE LES AUTRES MODALES DE CONTENU (DashboardPrefsOverlay, FeedbackOverlay) :
+        // MEME PATRON QUE LES AUTRES MODALES DE CONTENU (DashboardPrefsOverlay) :
         // en-tete, corps defilant, filet, pied. La premiere version empruntait celui des messages
         // (.info-content + .sub-message + .button-container-row), qui est taille pour UNE phrase :
         // trois explications n'y defilaient pas et debordaient sur petit ecran, et le bouton n'etait
@@ -3579,10 +3606,6 @@ class Somfy {
                 .replace('{bande}', bandeKHz.toFixed(2))
                 .replace('{tx}', freqTx.toFixed(3));
         }
-        // Accroche ici plutot qu'aux quatre gestionnaires de curseur : updateRadioGraph() est
-        // deja appelee par TOUS les chemins qui changent un reglage -- curseurs, Reinitialiser,
-        // assistant, chargement de la page. Un seul point d'appel, donc aucun moyen d'oublier.
-        this.updateRadioCurrent();
     }
     // ==========================================================================
     // CHANGER LE SLIDER -> MET À JOUR L'INPUT NUMBER
@@ -3792,42 +3815,220 @@ class Somfy {
                 : shades.filter(s => s.roomId === roomId).length + groups.filter(g => g.roomId === roomId).length;
             countEl.innerText = count;
         });
-        document.querySelectorAll('#divRoomList .cfg-tile').forEach(tile => {
-            const roomId = parseInt(tile.dataset.roomid, 10);
-            const set = (kind, n) => { const b = tile.querySelector(`.cfg-tile-stat[data-kind="${kind}"] b`); if (b) b.textContent = n; };
-            set('shade', shades.filter(s => s.roomId === roomId).length);
-            set('group', groups.filter(g => g.roomId === roomId).length);
+        this.renderCfgPage('room');
+    }
+
+    // =====================================================================
+    // SECTION : PAGES-LISTES (Équipements, Groupes, Pièces, Plannings)
+    // =====================================================================
+    // Un seul moteur pour les quatre pages : chacune fournit ses éléments (_cfgItems), le moteur
+    // applique filtre, recherche et tri, puis remplit la colonne d'identité (capacité, filtres).
+    _cfgConf(kind) {
+        return {
+            shade: { root: 'divShadeListContainer', list: 'divShadeList', max: this.maxShades ? this.maxShades - 2 : 0, modes: ['az', 'room'] },
+            group: { root: 'divGroupListContainer', list: 'divGroupList', max: this.maxGroups ? this.maxGroups - 2 : 0, modes: ['az', 'room'] },
+            room: { root: 'divRoomListContainer', list: 'divRoomList', max: this.maxRooms ? this.maxRooms - 2 : 0, modes: ['az'] },
+            schedule: { root: 'divScheduleListContainer', list: 'divScheduleList', max: this.maxSchedules || 30, modes: ['az', 'time'] }
+        }[kind];
+    }
+    _cfgStateOf(kind) {
+        if (!this._cfgState) this._cfgState = {};
+        return this._cfgState[kind] || (this._cfgState[kind] = { q: '', filter: 'all' });
+    }
+    _cfgRoomName(roomId) {
+        return (_rooms.find(r => r.roomId === roomId) || { name: tr('HOME') }).name;
+    }
+    _cfgItems(kind) {
+        if (kind === 'shade') return (this.shades || []).map(s => ({
+            name: s.name || '', roomId: s.roomId,
+            filters: [String(s.roomId)].concat(typeof shadeSetup !== 'undefined' && shadeSetup.missingSteps(s) ? ['todo'] : []),
+            text: `${s.name} ${this._cfgRoomName(s.roomId)} ${tr(this.shadeTypeKey(s.shadeType) || '')}`,
+            html: () => this.shadeTileHtml(s)
+        }));
+        if (kind === 'group') return (this.groups || []).map(g => ({
+            name: g.name || '', roomId: g.roomId, filters: [String(g.roomId)],
+            text: `${g.name} ${this._cfgRoomName(g.roomId)} ${this.groupMemberNames(g).join(' ')}`,
+            html: () => this.groupTileHtml(g)
+        }));
+        if (kind === 'room') return _rooms.filter(r => r.roomId !== 0).map(r => {
+            const nS = (this.shades || []).filter(s => s.roomId === r.roomId).length;
+            const nG = (this.groups || []).filter(g => g.roomId === r.roomId).length;
+            return { name: r.name || '', filters: [nS + nG ? 'used' : 'empty'], text: r.name || '', html: () => this.roomTileHtml(r, nS, nG) };
+        });
+        return this._groupSchedules(this.schedules).map(g => {
+            const target = this.scheduleTargetName(g);
+            return {
+                name: target, group: g,
+                filters: [...new Set(g.steps.map(({ sc }) => sc.timeRef === 'sunrise' || sc.timeRef === 'sunset' ? 'sun' : 'time'))],
+                text: `${target} ${g.name} ${g.steps.map(({ effectiveMinutes }) => formatMinutesOfDay(effectiveMinutes).main).join(' ')}`,
+                html: () => this.scheduleTileHtml(g)
+            };
         });
     }
-    cfgTileMenu(editJs, deleteJs) {
+    _cfgFilters(kind, items) {
+        const count = (key) => items.filter(it => it.filters.includes(key)).length;
+        const all = { key: 'all', label: tr(kind === 'schedule' ? 'LIST_FILTER_ALL_M' : 'LIST_FILTER_ALL_F'), n: items.length };
+        if (kind === 'room') return [all, { key: 'used', label: tr('LIST_FILTER_USED'), n: count('used'), dot: 'accent' }, { key: 'empty', label: tr('LIST_FILTER_EMPTY'), n: count('empty') }];
+        if (kind === 'schedule') return [all, { key: 'time', label: tr('SCHEDULE_TIME_REF_CLOCK'), n: count('time'), dot: 'accent' }, { key: 'sun', label: tr('VR_SUN'), n: count('sun'), dot: 'sun' }];
+        const rooms = _rooms.map(r => r.roomId).filter(id => items.some(it => it.roomId === id));
+        const list = [all].concat(rooms.map(id => ({ key: String(id), label: this._cfgRoomName(id), n: count(String(id)) })));
+        if (kind === 'shade' && count('todo')) list.push({ key: 'todo', label: tr('LIST_FILTER_TODO'), n: count('todo'), warn: true });
+        return list;
+    }
+    _cfgBody(kind, items, mode) {
+        const az = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
+        const head = (label, n, icon) => `<div class="cfg-tiles-title">${icon ? `<svg><use href="${icon}"></use></svg>` : ''}${escHtml(label)}<span>${n}</span></div>`;
+        if (kind === 'schedule') {
+            if (mode === 'time') return items.map(it => it.html()).join('');
+            const byTarget = new Map();
+            items.forEach(it => { if (!byTarget.has(it.name)) byTarget.set(it.name, []); byTarget.get(it.name).push(it); });
+            return [...byTarget.keys()].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })).map(name => {
+                const g = byTarget.get(name);
+                return head(name, g.length, this._scheduleTargetIcon(g[0].group)) + g.map(it => it.html()).join('');
+            }).join('');
+        }
+        if (mode !== 'room') return items.slice().sort(az).map(it => it.html()).join('');
+        const titled = _rooms.length > 1;
+        return _rooms.map(r => r.roomId).concat([...new Set(items.map(it => it.roomId))].filter(id => !_rooms.some(r => r.roomId === id))).map(id => {
+            const g = items.filter(it => it.roomId === id).sort(az);
+            return g.length ? (titled ? head(this._cfgRoomName(id), g.length) : '') + g.map(it => it.html()).join('') : '';
+        }).join('');
+    }
+    renderCfgPage(kind) {
+        const conf = this._cfgConf(kind);
+        const root = get(conf.root), list = get(conf.list);
+        if (!root || !list) return;
+        const st = this._cfgStateOf(kind);
+        const items = this._cfgItems(kind);
+        const filters = this._cfgFilters(kind, items);
+        if (!filters.some(f => f.key === st.filter && f.n)) st.filter = 'all';
+        const q = st.q.trim().toLowerCase();
+        const vis = items.filter(it => (st.filter === 'all' || it.filters.includes(st.filter)) && (!q || it.text.toLowerCase().includes(q)));
+        const mode = this.syncCfgSort(kind);
+        const n = items.length, max = conf.max;
+        const body = n && !vis.length
+            ? `<div class="cfg-nomatch"><b>${tr('LIST_NOMATCH_TITLE')}</b><span>${tr('LIST_NOMATCH_DESC')}</span><button type="button" class="gen-btn" onclick="somfy.resetCfgFilters('${kind}');">${tr('BT_SHOW_ALL')}</button></div>`
+            : this._cfgBody(kind, vis, mode);
+        list.innerHTML = this.cfgAddTileHtml(kind, max && n >= max) + body;
+        list.classList.toggle('cfg-sort-az', mode === 'az');
+        root.classList.toggle('is-empty', n === 0);
+
+        const left = Math.max(0, max - n);
+        root.querySelector('.gen-cap-n').innerHTML = max ? `${n} <small>${tr('LIST_CAP_OF').replace('{MAX}', max)}</small>` : `${n}`;
+        root.querySelector('.gen-cap-left').textContent = max ? tr(left === 1 ? 'LIST_CAP_FREE_ONE' : 'LIST_CAP_FREE_MANY').replace('{N}', left) : '';
+        root.querySelector('.gen-cap').classList.toggle('is-full', !!max && left === 0);
+        root.querySelector('.gen-meter i').style.width = max ? `${Math.min(100, Math.round(n / max * 100))}%` : '0';
+        root.querySelector('.gen-filters-list').innerHTML = filters.map(f => `<button type="button" class="gen-filter${f.warn ? ' is-warn' : ''}${st.filter === f.key ? ' on' : ''}" data-dot="${f.key === 'all' ? 'all' : f.dot || ''}" aria-pressed="${st.filter === f.key}" onclick="somfy.setCfgFilter('${kind}', '${f.key}');"><i class="gen-filter-dot"></i>${escHtml(f.label)}<span class="gen-filter-n">${f.n}</span></button>`).join('');
+        // Plannings : la note n'a de sens que tant que la position géographique manque.
+        if (kind === 'schedule') root.querySelector('.gen-hero-note').hidden = !!this._sunTimesToday();
+        root.querySelector('.gen-hero-menu').classList.toggle('has-query', !!q);
+    }
+    setCfgFilter(kind, key) {
+        const st = this._cfgStateOf(kind);
+        st.filter = st.filter === key && key !== 'all' ? 'all' : key;
+        this.renderCfgPage(kind);
+    }
+    setCfgSearch(kind, value) {
+        this._cfgStateOf(kind).q = value;
+        this.renderCfgPage(kind);
+    }
+    resetCfgFilters(kind) {
+        const st = this._cfgStateOf(kind);
+        st.q = '';
+        st.filter = 'all';
+        const input = get(this._cfgConf(kind).root).querySelector('.gen-search-input');
+        if (input) input.value = '';
+        this.renderCfgPage(kind);
+    }
+    // Mobile : recherche et tri vivent dans un menu ⋮ au bout de la ligne du titre.
+    toggleCfgTools(kind) {
+        const root = get(this._cfgConf(kind).root);
+        const btn = root.querySelector('.gen-hero-menu');
+        const open = !root.classList.contains('tools-open');
+        root.classList.toggle('tools-open', open);
+        btn.setAttribute('aria-expanded', open);
+        if (!open) return;
+        root.querySelector('.gen-search-input').focus();
+        const close = (e) => {
+            if (root.querySelector('.gen-tools').contains(e.target) || btn.contains(e.target)) return;
+            root.classList.remove('tools-open');
+            btn.setAttribute('aria-expanded', false);
+            document.removeEventListener('pointerdown', close, true);
+        };
+        document.addEventListener('pointerdown', close, true);
+    }
+    cfgNoteAction(kind) {
+        if (kind === 'schedule') return confirmDiscardChanges(() => { activateGrpid('divSystemOptions'); general.showGeneralTab(1); });
+        confirmDiscardChanges(() => { activateGrpid('divHomePnl'); this.startDashEdit(); });
+    }
+    cfgSortMode(kind) {
+        let mode = null;
+        try { mode = localStorage.getItem('cfgSort.' + kind); } catch (e) { mode = null; }
+        const modes = this._cfgConf(kind).modes;
+        return modes.includes(mode) ? mode : modes[0];
+    }
+    setCfgSort(kind, mode) {
+        try { localStorage.setItem('cfgSort.' + kind, mode); } catch (e) { }
+        this.renderCfgPage(kind);
+    }
+    syncCfgSort(kind) {
+        const mode = this.cfgSortMode(kind);
+        document.querySelectorAll(`.cfg-sort[data-kind="${kind}"] button`).forEach(b => {
+            const on = b.dataset.sort === mode;
+            b.classList.toggle('on', on);
+            b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        return mode;
+    }
+    // La tuile entière ouvre la fiche : le menu ne porte que ce qu'un clic sur la tuile ne fait pas.
+    cfgTileMenu(deleteJs, extraHtml = '', deleteKey = 'BT_DELETE') {
         return `<div class="cfg-tile-menu overlayHeader-dropdown-container" onclick="event.stopPropagation();">
         <button type="button" class="cfg-tile-more" title="${tr('OPTION')}" onclick="somfy.toggleTileMenu(this);"><svg><use href="#svg-menuVertical"></use></svg></button>
         <div class="overlayHeader-dropdown-menu">
-        <div class="dropdown-item" onclick="this.parentElement.classList.remove('show'); ${editJs};"><svg><use href="#svg-edit"></use></svg>${tr('BT_EDIT')}</div>
-        <div class="dropdown-item is-danger" onclick="this.parentElement.classList.remove('show'); ${deleteJs};"><svg><use href="#svg-trash"></use></svg>${tr('BT_DELETE')}</div>
+        ${extraHtml}
+        <div class="dropdown-item is-danger" onclick="this.parentElement.classList.remove('show'); ${deleteJs};"><svg><use href="#svg-trash"></use></svg>${tr(deleteKey)}</div>
         </div>
         </div>`;
     }
+    shadeTypeKey(shadeType) {
+        return document.querySelector(`#selShadeType option[value="${shadeType}"]`)?.getAttribute('tr') || '';
+    }
+    shadeTileState(shade) {
+        return this.shadeStateText(shade) + (shade.tiltType ? ` · ∠ ${shade.tiltPosition}%` : '');
+    }
     shadeTileHtml(shade) {
         const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { indic: 'svg-indicRoller' };
-        const typeKey = document.querySelector(`#selShadeType option[value="${shade.shadeType}"]`)?.getAttribute('tr');
+        const typeKey = this.shadeTypeKey(shade.shadeType);
         return `<div class="cfg-tile" data-roomid="${shade.roomId}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-shadetype="${shade.shadeType}" onclick="somfy.openEditShade(${shade.shadeId});">
-        <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#${st.indic}"></use></svg></span>${this.cfgTileMenu(`somfy.openEditShade(${shade.shadeId})`, `somfy.deleteShade(${shade.shadeId})`)}</div>
+        <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#${st.indic}"></use></svg></span>${this.cfgTileMenu(`somfy.deleteShade(${shade.shadeId})`)}</div>
         <div class="cfg-tile-name"><span class="name-text">${escHtml(shade.name)}</span>${typeKey ? `<span class="cfg-tile-sub">${tr(typeKey)}</span>` : ''}</div>
-        <div class="cfg-tile-foot"><span class="cfg-tile-id">${tr('ID')}${shade.remoteAddress}</span>${this.cfgTileRoomHtml(shade.roomId)}${typeof shadeSetup !== 'undefined' ? shadeSetup.badgeHtml(shade) : ''}</div>
+        <div class="cfg-tile-state">${this.shadeTileState(shade)}</div>
+        <div class="cfg-tile-foot">${this.cfgTileRoomHtml(shade.roomId)}${typeof shadeSetup !== 'undefined' ? shadeSetup.badgeHtml(shade) : ''}<span class="cfg-tile-id">${shade.remoteAddress}</span></div>
         </div>`;
+    }
+    groupMemberNames(group) {
+        return (group.linkedShades || []).map(m => ((this.shades || []).find(x => x.shadeId === m.shadeId) || m).name || '');
     }
     groupTileHtml(group) {
         const members = group.linkedShades || [];
+        const names = this.groupMemberNames(group);
         const icons = members.slice(0, 3).map(m => {
             const sh = (this.shades || []).find(x => x.shadeId === m.shadeId);
             const st = this.shadeTypes.find(x => x.type === (sh ? sh.shadeType : m.shadeType)) || { indic: 'svg-indicRoller' };
             return `<span><svg><use href="#${st.indic}"></use></svg></span>`;
         }).join('') + (members.length > 3 ? `<span class="cfg-tile-more-n">+${members.length - 3}</span>` : '');
         return `<div class="cfg-tile" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});">
-        <div class="cfg-tile-top">${members.length ? `<span class="cfg-tile-stack">${icons}</span>` : `<span class="cfg-tile-icon"><svg><use href="#svg-group"></use></svg></span>`}${this.cfgTileMenu(`somfy.openEditGroup(${group.groupId})`, `somfy.deleteGroup(${group.groupId})`)}</div>
+        <div class="cfg-tile-top">${members.length ? `<span class="cfg-tile-stack">${icons}</span>` : `<span class="cfg-tile-icon"><svg><use href="#svg-group"></use></svg></span>`}${this.cfgTileMenu(`somfy.deleteGroup(${group.groupId})`)}</div>
         <div class="cfg-tile-name"><span class="name-text">${escHtml(group.name)}</span><span class="cfg-tile-sub">${tr('GROUP_LINKED_COUNT').replace('{n}', members.length)}</span></div>
-        <div class="cfg-tile-foot"><span class="cfg-tile-id">${tr('ID')}${group.remoteAddress}</span>${this.cfgTileRoomHtml(group.roomId)}</div>
+        ${names.length ? `<div class="cfg-tile-state">${escHtml(names.slice(0, 3).join(', '))}${names.length > 3 ? ` +${names.length - 3}` : ''}</div>` : ''}
+        <div class="cfg-tile-foot">${this.cfgTileRoomHtml(group.roomId)}<span class="cfg-tile-id">${group.remoteAddress}</span></div>
+        </div>`;
+    }
+    roomTileHtml(room, nShades, nGroups) {
+        return `<div class="cfg-tile" data-roomid="${room.roomId}" onclick="somfy.openEditRoom(${room.roomId});">
+        <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#svg-navRoom"></use></svg></span>${this.cfgTileMenu(`somfy.deleteRoom(${room.roomId})`)}</div>
+        <div class="cfg-tile-name"><span class="name-text">${escHtml(room.name)}</span></div>
+        <div class="cfg-tile-state">${nShades + nGroups ? tr('LIST_ROOM_STATS').replace('{S}', nShades).replace('{G}', nGroups) : tr('LIST_ROOM_EMPTY')}</div>
         </div>`;
     }
     toggleTileMenu(btn) {
@@ -3835,77 +4036,21 @@ class Somfy {
         document.querySelectorAll('.overlayHeader-dropdown-menu.show').forEach(m => { if (m !== menu) m.classList.remove('show'); });
         menu.classList.toggle('show');
     }
-    cfgTilesByRoom(items, html) {
-        const byRoom = new Map();
-        items.forEach(it => { if (!byRoom.has(it.roomId)) byRoom.set(it.roomId, []); byRoom.get(it.roomId).push(html(it)); });
-        const order = _rooms.map(r => r.roomId).filter(id => byRoom.has(id));
-        byRoom.forEach((v, id) => { if (!order.includes(id)) order.push(id); });
-        const titled = _rooms.length > 1;
-        return order.map(id => {
-            const room = _rooms.find(r => r.roomId === id) || { name: tr('HOME') };
-            return (titled ? `<div class="cfg-tiles-title">${escHtml(room.name)}<span>${byRoom.get(id).length}</span></div>` : '') + byRoom.get(id).join('');
-        }).join('');
-    }
-
-    cfgSortMode(kind) {
-        let mode = null;
-        try { mode = localStorage.getItem('cfgSort.' + kind); } catch (e) { mode = null; }
-        const modes = kind === 'schedule' ? ['time', 'target'] : ['room', 'az'];
-        return modes.includes(mode) ? mode : (kind === 'group' ? 'az' : modes[0]);
-    }
-    setCfgSort(kind, mode) {
-        try { localStorage.setItem('cfgSort.' + kind, mode); } catch (e) { }
-        if (kind === 'schedule') this.setScheduleList(this.schedules);
-        else this.renderCfgList(kind);
-    }
-    syncCfgSort(kind, count) {
-        const mode = this.cfgSortMode(kind);
-        document.querySelectorAll(`.cfg-sort[data-kind="${kind}"]`).forEach(seg => {
-            seg.style.display = count > 1 ? '' : 'none';
-            seg.querySelectorAll('button').forEach(b => {
-                const on = b.dataset.sort === mode;
-                b.classList.toggle('on', on);
-                b.setAttribute('aria-pressed', on ? 'true' : 'false');
-            });
-        });
-        return mode;
-    }
-    renderCfgList(kind) {
-        const isShade = kind === 'shade';
-        const items = (isShade ? this.shades : this.groups) || [];
-        const html = isShade ? (it => this.shadeTileHtml(it)) : (it => this.groupTileHtml(it));
-        const mode = this.cfgSortMode(kind);
-        const list = get(isShade ? 'divShadeList' : 'divGroupList');
-        const body = mode === 'az'
-            ? items.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base', numeric: true })).map(html).join('')
-            : this.cfgTilesByRoom(items, html);
-        list.innerHTML = this.cfgAddTileHtml(kind) + body;
-        list.classList.toggle('cfg-sort-az', mode === 'az');
-        this.syncCfgSort(kind, items.length);
-        this.setCfgCount(kind, items.length);
-    }
-    setCfgCount(kind, n) {
-        const el = get({ shade: 'spanShadeCount', group: 'spanGroupCount', room: 'spanRoomCount' }[kind]);
-        if (!el) return;
-        const max = { shade: this.maxShades, group: this.maxGroups, room: this.maxRooms }[kind];
-        el.textContent = max ? `${n}/${max - 2}` : `${n}`;
-    }
-    cfgAddTileHtml(kind) {
+    cfgAddTileHtml(kind, full) {
         const conf = {
-            shade: ['shadeSetup.open();', `<span tr="BT_ADD_DEVICE">${tr('BT_ADD_DEVICE')}</span>`],
-            group: ['groupSetup.open();', `<span tr="BT_ADD_GROUP">${tr('BT_ADD_GROUP')}</span>`],
-            room: ['somfy.openEditRoom();', `<span tr="BT_ADD_ROOM">${tr('BT_ADD_ROOM')}</span>`]
+            shade: ['shadeSetup.open();', `<span tr="BT_ADD_DEVICE">${tr('BT_ADD_DEVICE')}</span><small tr="LIST_ADD_DEVICE_DESC">${tr('LIST_ADD_DEVICE_DESC')}</small>`],
+            group: ['groupSetup.open();', `<span tr="BT_ADD_GROUP">${tr('BT_ADD_GROUP')}</span><small tr="LIST_ADD_GROUP_DESC">${tr('LIST_ADD_GROUP_DESC')}</small>`],
+            room: ['somfy.openEditRoom();', `<span tr="BT_ADD_ROOM">${tr('BT_ADD_ROOM')}</span><small tr="LIST_ADD_ROOM_DESC">${tr('LIST_ADD_ROOM_DESC')}</small>`],
+            schedule: ['somfy.openEditScheduleGroup();', `<span tr="SCHEDULE_ADD">${tr('SCHEDULE_ADD')}</span><small tr="LIST_ADD_SCHEDULE_DESC">${tr('LIST_ADD_SCHEDULE_DESC')}</small>`]
         }[kind];
-        return `<button type="button" class="cfg-tile cfg-tile-add" onclick="${conf[0]}"><span class="cfg-tile-plus"><svg><use href="#svg-add"></use></svg></span>${conf[1]}</button>`;
+        return `<button type="button" class="cfg-tile cfg-tile-add" onclick="${conf[0]}"${full ? ' disabled' : ''}><svg><use href="#svg-add"></use></svg>${conf[1]}</button>`;
     }
     cfgTileRoomHtml(roomId) {
-        const room = _rooms.find(r => r.roomId === roomId) || { name: tr('HOME') };
-        return `<span class="cfg-tile-room"><svg><use href="#svg-navRoom"></use></svg>${escHtml(room.name)}</span>`;
+        return `<span class="cfg-tile-room">${escHtml(this._cfgRoomName(roomId))}</span>`;
     }
 
     setRoomsList(rooms) {
         if (this.dashEditing) { this._dashPending.rooms = rooms; return; }
-        let divCfg = '';
         const homeName = tr('HOME');
         const slider = get('divRoomSelector');
         let divPills = `<div class="room-pill active" data-roomid="0" onclick="somfy.selectRoom(0)"><span>${homeName}</span><span class="room-count">0</span></div>`;
@@ -3915,13 +4060,6 @@ class Somfy {
         rooms.sort((a, b) => a.sortOrder - b.sortOrder);
         rooms.forEach(room => {
             divPills += `<div class="room-pill animScale" data-roomid="${room.roomId}" onclick="somfy.selectRoom(${room.roomId})"><span>${escHtml(room.name)}</span><span class="room-count">0</span></div>`;
-
-            divCfg += `<div class="cfg-tile" data-roomid="${room.roomId}" onclick="somfy.openEditRoom(${room.roomId});">
-            <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#svg-navRoom"></use></svg></span>${this.cfgTileMenu(`somfy.openEditRoom(${room.roomId})`, `somfy.deleteRoom(${room.roomId})`)}</div>
-            <div class="cfg-tile-name"><span class="name-text">${escHtml(room.name)}</span></div>
-            <div class="cfg-tile-foot"><span class="cfg-tile-stat" data-kind="shade"><b>0</b> ${tr('SUBTAB_DEVICES')}</span><span class="cfg-tile-stat" data-kind="group"><b>0</b> ${tr('SUBTAB_GROUPS')}</span></div>
-            </div>`;
-
             divOpts += `<option value="${room.roomId}">${escHtml(room.name)}</option>`;
             _rooms.push(room);
         });
@@ -3932,8 +4070,6 @@ class Somfy {
         const navContainer = document.querySelector('.room-nav-container');
         if(navContainer) navContainer.style.display = rooms.length === 0 ? 'none' : 'flex';
 
-        get('divRoomList').innerHTML = this.cfgAddTileHtml('room') + divCfg;
-        this.setCfgCount('room', rooms.length);
         get('selShadeRoom').innerHTML = divOpts;
         get('selGroupRoom').innerHTML = divOpts;
 
@@ -4057,8 +4193,6 @@ class Somfy {
     showEditRoom(bShow) {
         let el = get('divLinkRepeater');
         if (el) el.remove();
-        el = get('divRollingCode');
-        if (el) el.remove();
         // Pas d'équivalent de get('somfyShade')/get('somfyGroup') ici : contrairement à l'équipement et au
         // groupe, l'édition d'une pièce se fait dans une modale construite à la volée
         // (RoomOverlay -> #divEditRoomOverlay), pas dans un panneau en place qu'il faudrait
@@ -4110,137 +4244,150 @@ class Somfy {
         }
     }
 
+    // =====================================================================
+    // SECTION : FENÊTRE PIÈCE (créer, modifier, créer depuis une fiche)
+    // =====================================================================
+    // Une pièce n'a qu'un nom : son contenu, c'est le roomId de chaque équipement et groupe. La
+    // fenêtre les présente à cocher et enregistre ensuite chaque élément déplacé avec son seul
+    // roomId (fromJSON ne touche qu'aux champs présents). `inline` : appelée par le + d'une fiche,
+    // elle ne garde que le nom et resélectionne la pièce créée dans la fiche restée derrière.
     RoomOverlay(roomId, roomData) {
         if (get('divEditRoomOverlay')) return;
-
-        // Déduction automatique : si roomId est '*' ou falsy => Mode Ajout, sinon => Mode Édition
         const isEdit = roomId && roomId !== '*';
+        const ctx = isEdit ? null : this._roomInlineReturnContext;
+        const mode = isEdit ? 'edit' : ctx ? 'inline' : 'create';
+        const rid = isEdit ? parseInt(roomId, 10) : 0;
+        const formName = ctx === 'gsetup' ? (groupSetup.c?.name || '').trim() : ctx === 'ssetup' ? (shadeSetup.c?.name || '').trim() : ctx ? (get(ctx === 'group' ? 'fldGroupName' : 'fldShadeName')?.value || '') : '';
+        const items = mode === 'inline' ? [] : [
+            ...(this.shades || []).map(s => ({ kind: 'shade', id: s.shadeId, name: s.name, roomId: s.roomId, type: tr(this.shadeTypeKey(s.shadeType) || ''), icon: (this.shadeTypes.find(x => x.type === s.shadeType) || { indic: 'svg-indicRoller' }).indic })),
+            ...(this.groups || []).map(g => ({ kind: 'group', id: g.groupId, name: g.name, roomId: g.roomId, type: tr('ROOM_WIN_GROUP'), icon: 'svg-group' }))
+        ].map(it => Object.assign(it, { on: isEdit && it.roomId === rid })).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base', numeric: true }));
+        const savedName = isEdit ? (roomData.name || '') : '';
+        const maxRooms = this.maxRooms ? this.maxRooms - 2 : 30;
+        const nRooms = _rooms.length - 1;
+        const presets = mode === 'edit' ? '' : `<div class="room-win-presets">${Array.from({ length: 8 }, (_, i) => `<button type="button" class="room-win-preset" data-preset>${tr(`ROOM_PRESET_${i}`)}</button>`).join('')}</div>`;
+        const content = mode === 'inline'
+            ? `<p class="room-win-info"><svg><use href="#svg-info"></use></svg><span id="roomWinInfo"></span></p>`
+            : `<div class="room-win-label"><b id="roomWinCount"></b><span>${tr('ROOM_WIN_CONTENT_HINT')}</span></div><div class="room-win-items" id="roomWinItems"></div>`;
 
-        const titleKey   = isEdit ? 'ROOM_TITLE_EDIT' : 'ROOM_TITLE_ADD';
-        const descKey     = isEdit ? 'ROOM_TITLE_EDIT_DESC' : 'ROOM_TITLE_ADD_DESC';
-        const buttonText = isEdit ? tr('BT_SAVE') : tr('BT_CREATE');
-        const iconHref   = isEdit ? '#svg-save' : '#svg-add';
-
-        let div = document.createElement('div');
+        const div = document.createElement('div');
         div.id = 'divEditRoomOverlay';
-        div.className = 'modal-overlay';
-        div.setAttribute('data-roomid', roomId);
+        div.className = 'modal-overlay genmod-overlay';
+        div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
+            id: 'roomWin',
+            icon: 'svg-navRoom',
+            titleKey: isEdit ? 'ROOM_TITLE_EDIT' : 'ROOM_TITLE_ADD',
+            descKey: isEdit ? 'ROOM_TITLE_EDIT_DESC' : 'ROOM_TITLE_ADD_DESC',
+            sectionKey: { edit: 'ROOM_WIN_SECTION_EDIT', create: 'ROOM_WIN_SECTION_ADD', inline: 'ROOM_WIN_SECTION_INLINE' }[mode],
+            stateKey: tr(isEdit ? 'ROOM_WIN_STATE_CONTENT' : ctx ? 'ROOM_WIN_STATE_FOR' : 'SUBTAB_ROOMS'),
+            stateValue: '',
+            hintKey: 'ROOM_WIN_HINT_NAME',
+            footId: 'roomWinFoot',
+            bodyHtml: `<div class="gen-field">
+            <label class="gen-field-label" for="fldRoomName">${tr('NAME')}</label>
+            <div class="gen-input-box dirty-target"><input id="fldRoomName" class="gen-input" type="text" maxlength="20" placeholder="${tr('ROOM_NAME_PHL')}"></div>
+            </div>${presets}${content}`
+        })}</div>`;
+        const foot = div.querySelector('#roomWinFoot');
+        foot.innerHTML = isEdit
+            ? `<button type="button" class="gen-btn genmod-btn-danger" id="btnRoomDelete">${tr('BT_DELETE')}</button><button type="button" class="gen-btn gen-btn-primary" id="btnSaveRoom">${tr('BT_SAVE')}</button>`
+            : `<button type="button" class="gen-btn" data-genmod-close>${tr('BT_CANCEL')}</button><button type="button" class="gen-btn gen-btn-primary" id="btnSaveRoom">${tr(ctx ? 'BT_CREATE_CHOOSE' : 'BT_CREATE')}</button>`;
+        const input = div.querySelector('#fldRoomName');
+        input.value = savedName;
 
-        const presetsHTML = Array.from({ length: 8 }, (_, i) =>
-        `<span class="preset-badge">${tr(`ROOM_PRESET_${i}`)}</span>`
-        ).join('');
-
-        div.innerHTML = `
-        <div class="message-content room-content">
-        ${modalHeader(titleKey, 'svg-navRoom', {
-            subtitle: descKey,
-            rightContent: `<div class="somfyMaxId"><span id="spanRoomId">${roomId}</span>/<span id="spanMaxRooms">${roomData.maxRooms || 30}</span></div>`
-        })}
-        <div class="overlay-scroll-content">
-        <div class="uniblocCol dirty-target">
-        <label class="label" for="fldRoomName">${tr('NAME')}</label>
-        <input id="fldRoomName" class="inputAndSelect" name="roomName" data-bind="name" type="text" length=20 placeholder="${tr('ROOM_NAME_PHL')}">
-        </div>
-        <div class="room-presets">
-        ${presetsHTML}
-        </div>
-        </div>
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnRoomGoBack" line type="button">${tr('BT_CLOSE')}</button>
-        <button id="btnSaveRoom" type="button">
-        <svg><use id="useSaveRoomIcon" href="${iconHref}"></use></svg>
-        <span id="btnSaveRoomText">${buttonText}</span>
-        </button>
-        </div>
-        </div>
-        </div>`;
+        // Textes : textContent seulement, noms saisis par l'utilisateur.
+        const render = () => {
+            const name = input.value.trim();
+            const inside = items.filter(it => it.on);
+            const moved = items.filter(it => it.on !== (isEdit && it.roomId === rid));
+            const changes = moved.length + (name !== savedName ? 1 : 0);
+            if (isEdit) div.querySelector('.genmod-side-title').textContent = name || tr('ROOM_TITLE_EDIT');
+            const nS = inside.filter(it => it.kind === 'shade').length;
+            const state = isEdit ? tr('LIST_ROOM_STATS').replace('{S}', nS).replace('{G}', inside.length - nS)
+                : ctx ? formName : `${nRooms} ${tr('LIST_CAP_OF').replace('{MAX}', maxRooms)}`;
+            div.querySelector('#roomWinState .genmod-state-val').textContent = state;
+            const count = div.querySelector('#roomWinCount');
+            if (count) count.textContent = tr('ROOM_WIN_CONTENT').replace('{N}', inside.length);
+            const info = div.querySelector('#roomWinInfo');
+            if (info) info.textContent = tr('ROOM_WIN_INLINE_INFO').replace('{NAME}', formName);
+            const list = div.querySelector('#roomWinItems');
+            if (list) {
+                list.innerHTML = items.map((it, i) => `<button type="button" class="room-win-item${it.on ? ' on' : ''}" data-item="${i}" aria-pressed="${it.on}">
+                <span class="room-win-item-icon"><svg><use href="#${it.icon}"></use></svg></span>
+                <span class="room-win-item-text"><b></b><small></small></span>
+                <span class="room-win-item-box"><svg><use href="#svg-check"></use></svg></span></button>`).join('');
+                items.forEach((it, i) => {
+                    const el = list.querySelector(`[data-item="${i}"]`);
+                    const home = this._cfgRoomName(0);
+                    const where = it.on
+                        ? (isEdit && it.roomId === rid ? tr('ROOM_WIN_HERE') : it.roomId ? tr('ROOM_WIN_LEAVES').replace('{ROOM}', this._cfgRoomName(it.roomId)) : tr('ROOM_WIN_COMES'))
+                        : (isEdit && it.roomId === rid ? tr('ROOM_WIN_BACK_HOME').replace('{ROOM}', home) : tr('ROOM_WIN_IN').replace('{ROOM}', this._cfgRoomName(it.roomId)));
+                    el.querySelector('b').textContent = it.name;
+                    el.querySelector('small').textContent = `${it.type} · ${where}`;
+                    el.querySelector('small').classList.toggle('is-move', moved.includes(it));
+                });
+            }
+            let hint;
+            if (!name) hint = tr('ROOM_WIN_HINT_NAME');
+            else if (isEdit) hint = changes ? tr('ROOM_WIN_HINT_CHANGES').replace('{N}', changes) : tr('ROOM_WIN_HINT_NONE');
+            else if (ctx) hint = tr('ROOM_WIN_HINT_INLINE').replace('{NAME}', formName);
+            else hint = inside.length ? tr('ROOM_WIN_HINT_FILL').replace('{N}', inside.length) : tr('ROOM_WIN_HINT_LATER');
+            div.querySelector('#roomWinHint').textContent = hint;
+            div.querySelector('#btnSaveRoom').disabled = !name || (isEdit && !changes);
+            // Le garde de sortie (requestCloseOverlay) lit .is-dirty dans la fenêtre.
+            div.querySelector('.gen-input-box').classList.toggle('is-dirty', changes > 0 || (!isEdit && !!name));
+        };
 
         shOverlay(div);
-        ui.toElement(div, roomData);
-        watchDirty(div);
-
+        render();
+        input.addEventListener('input', render);
         div.onclick = (e) => {
-            const target = e.target;
-
-            if (target.classList.contains('preset-badge')) {
-                const input = div.querySelector('#fldRoomName');
-                input.value = target.innerText;
-                // bubbles: meme raison qu'en stepValue -- watchDirty() ecoute sur `div`.
-                input.dispatchEvent(new Event('input', { bubbles: true }));
-                return;
-            }
-            if (target.id === 'btnRoomGoBack' || target.closest('#btnRoomGoBack')) {
-                confirmDiscardChanges(() => {
-                    this._roomInlineReturnContext = null;
-                    closeOverlay(div);
-                });
-                return;
-            }
-            if (target.id === 'btnSaveRoom' || target.closest('#btnSaveRoom')) {
-                this.saveRoom(div);
-                return;
-            }
+            const t = e.target;
+            if (t.closest('[data-genmod-close]')) { requestCloseOverlay(div, () => { this._roomInlineReturnContext = null; }); return; }
+            const preset = t.closest('[data-preset]');
+            if (preset) { input.value = preset.textContent; render(); return; }
+            const item = t.closest('[data-item]');
+            if (item) { const it = items[+item.dataset.item]; it.on = !it.on; render(); return; }
+            if (t.closest('#btnRoomDelete')) { closeOverlay(div); this.deleteRoom(rid); return; }
+            if (t.closest('#btnSaveRoom')) this.saveRoom(div, { isEdit, rid, ctx, items, name: input.value.trim(), nameChanged: input.value.trim() !== savedName });
         };
     }
-    saveRoom(overlayEl) {
-        if (!overlayEl) overlayEl = get('divEditRoomOverlay');
-        if (!overlayEl) return;
-
-        let roomId = parseInt(overlayEl.querySelector('#spanRoomId').innerText, 10);
-        let obj = ui.fromElement(overlayEl);
-        let valid = true;
-
-        if (valid && (typeof obj.name !== 'string' || obj.name === '' || obj.name.length > 20)) {
-            ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_NAME_INVALID'));
-            valid = false;
+    saveRoom(div, o) {
+        if (!o.name || o.name.length > 20) return ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_NAME_INVALID'));
+        const moves = (roomId) => o.items.filter(it => it.on !== (o.isEdit && it.roomId === o.rid)).map(it => ({
+            url: it.kind === 'shade' ? '/saveShade' : '/saveGroup',
+            body: Object.assign(it.kind === 'shade' ? { shadeId: it.id } : { groupId: it.id }, { roomId: it.on ? roomId : 0 })
+        }));
+        const finish = (roomId, ops) => this._putSequence(ops, (err) => {
+            if (err) ui.serviceError(err);
+            else ui.successMessage(tr(o.isEdit ? 'MSG_SAVE_SUCCESS' : 'MSG_ADD_SUCCESS'));
+            clearDirty(div);
+            closeOverlay(div);
+            const ctx = o.ctx;
+            this._roomInlineReturnContext = null;
+            this.updateRoomsList(() => {
+                if (ops.some(op => op.url === '/saveShade')) this.updateShadeList();
+                if (ops.some(op => op.url === '/saveGroup')) this.updateGroupList();
+                if (!ctx) return;
+                // Assistants « Créer un groupe » et « Ajouter un équipement » : ils redessinent leur sélecteur depuis _rooms.
+                if (ctx === 'gsetup') { if (groupSetup.c) { groupSetup.c.roomId = roomId; groupSetup.renderWiz(); } return; }
+                if (ctx === 'ssetup') { if (shadeSetup.c) { shadeSetup.c.roomId = roomId; shadeSetup.renderWiz(); } return; }
+                // Création depuis une fiche : la nouvelle option doit exister avant d'être choisie.
+                const sel = get(ctx === 'group' ? 'selGroupRoom' : 'selShadeRoom');
+                if (!sel) return;
+                sel.value = roomId;
+                sel.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        });
+        if (o.isEdit) {
+            const ops = (o.nameChanged ? [{ url: '/saveRoom', body: { roomId: o.rid, name: o.name } }] : []).concat(moves(o.rid));
+            finish(o.rid, ops);
+            return;
         }
-
-        if (valid) {
-            if (isNaN(roomId) || roomId === 0) {
-                putJSONSync('/addRoom', obj, (err, room) => {
-                    if (err) {
-                        ui.serviceError(err);
-                        logger.error('Failed to add room:', err);
-                    }
-                    else {
-                        logger.debug('Room added:', room);
-                        ui.successMessage(tr('MSG_ADD_SUCCESS'));
-                        clearDirty(overlayEl);
-                        // Création à la volée depuis un équipement/groupe : une fois les listes de
-                        // pièces rafraîchies (la nouvelle option doit exister avant qu'on puisse
-                        // la sélectionner), on resélectionne automatiquement la pièce créée dans
-                        // le formulaire d'origine, resté ouvert derrière cet overlay.
-                        const returnCtx = this._roomInlineReturnContext;
-                        this._roomInlineReturnContext = null;
-                        this.updateRoomsList(() => {
-                            if (!returnCtx) return;
-                            const sel = get(returnCtx === 'group' ? 'selGroupRoom' : 'selShadeRoom');
-                            if (!sel) return;
-                            sel.value = room.roomId;
-                            sel.dispatchEvent(new Event('change', { bubbles: true }));
-                        });
-                        closeOverlay(overlayEl);
-                    }
-                });
-            }
-            else {
-                obj.roomId = roomId;
-                putJSONSync('/saveRoom', obj, (err, room) => {
-                    if (err) {
-                        ui.serviceError(err);
-                        logger.error('Failed to save room:', err);
-                    } else {
-                        ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                        logger.debug('Room saved:', room);
-                        clearDirty(overlayEl);
-                        this.updateRoomsList();
-                        closeOverlay(overlayEl);
-                    }
-                });
-            }
-        }
+        putJSONSync('/addRoom', { name: o.name }, (err, room) => {
+            if (err) { ui.serviceError(err); return; }
+            finish(room.roomId, moves(room.roomId));
+        });
     }
     deleteRoom(roomId) {
         let valid = true;
@@ -4394,7 +4541,7 @@ class Somfy {
             divCtl += byRoom.get(id).join('');
         });
         this.syncVRLayout();
-        this.renderCfgList('shade');
+        this.renderCfgPage('shade');
         let shadeControls = get('divShadeControls');
         shadeControls.innerHTML = divCtl;
         this.checkEmptyState();
@@ -4889,14 +5036,22 @@ class Somfy {
             : `<div class="card-empty">${tr('EMPTY_SCHEDULE_TITLE')}</div>`;
         return `<div class="card-block"><div class="card-block-head"><span>${tr('SUBTAB_SCHEDULES')}</span><button type="button" class="card-link" onclick="somfy.closeCardSheet(); somfy.openAddScheduleInline('${kind}', ${id});">+ ${tr('BT_ADD')}</button></div><div class="card-sched sheet-list">${rows}</div></div>`;
     }
+    // Contact sec : Up pose la cible 0 (relais au repos), Down la cible 100 (cf. SomfyGpio::setGPIOs) ;
+    // on nomme donc l'état obtenu plutôt qu'un mouvement.
+    sentCommandLabel(shade, cmd) {
+        const type = this.shadeTypeOf(shade);
+        if (this.dryContactShadeTypes.includes(type) && (cmd === 'Up' || cmd === 'Down'))
+            return this.shadeStateLabel(cmd === 'Up' ? 0 : 100, shade.flipPosition, this.shadeVocabOf(shade));
+        const W = typeof shadeSetup !== 'undefined' ? shadeSetup.words(type) : {};
+        return { Up: W.up, Down: W.down }[cmd] || cmd || '';
+    }
     shadeSheetInfoHtml(shade) {
         const shadeId = shade.shadeId;
         const type = this.shadeTypeOf(shade);
         const kv = (k, v) => `<div class="card-kv"><span>${k}</span><b>${v}</b></div>`;
         const items = [];
         if (typeof shade.lastSentAgo === 'number') {
-            const W = typeof shadeSetup !== 'undefined' && shadeSetup.words ? shadeSetup.words(type) : {};
-            const cmd = { Up: W.up, Down: W.down }[shade.lastSentCmd] || shade.lastSentCmd || '';
+            const cmd = this.sentCommandLabel(shade, shade.lastSentCmd);
             if (typeof shade._sentAt !== 'number') shade._sentAt = shade.lastSentAgo >= 0 ? Date.now() - shade.lastSentAgo * 1000 : 0;
             items.push(kv(tr('SHADE_ACT_SENT'), shade._sentAt ? `${escHtml(cmd)} · <span class="card-ago" data-at="${shade._sentAt}">${this.cardAgoText(shade._sentAt)}</span>` : tr('SHADE_ACT_NEVER')));
         }
@@ -5173,49 +5328,6 @@ class Somfy {
         <span class="linkedRemote-signal-value sig-${level}">${valueText}</span>
         </div>`;
     }
-    modalRemotesListHtml(shade) {
-        const remotes = shade.linkedRemotes || [];
-        if (remotes.length === 0) {
-            return `
-            <div class="empty-state">
-            <svg class="empty-icon"><use href="#svg-linkRemot"></use></svg>
-            <div class="label">${tr('REMOTESLIST_EMPTY')}</div>
-            <div class="empty-subtext">${tr('REMOTESLIST_EMPTY_DESC')}</div>
-            </div>`;
-        }
-        // .linkedRemoteCard qualifie ce réemploi de .somfyLinkedRemote/.linkedWrap/.linkedContent
-        // (partagées avec setLinkedShadesList, la liste des équipements liés à un groupe) pour que
-        // l'agrandissement de l'icône, le titre mis en avant et le bouton de suppression rond ne
-        // s'appliquent QU'à cette carte-ci, sans déteindre sur cette autre liste.
-        // Carte scindée en deux blocs empilés : .remote-card-top (icône + infos + poubelle, alignés
-        // verticalement entre eux) et .remote-card-bottom (ligne signal), séparés par un filet --
-        // sans ça l'icône/la poubelle se recentraient sur toute la hauteur de la carte, signal
-        // inclus, cf. [[tooltip-unification-project]] pour le contexte de cette session de retouches.
-        return remotes.map((remote, i) => `
-        <div class="somfyLinkedRemote linkedRemoteCard" data-shadeid="${shade.shadeId}" data-remoteaddress="${remote.remoteAddress}">
-        <div class="remote-card-top">
-        <div class="linkedWrap">
-        <svg class="icon-svg"><use href="#svg-linkRemot"></use></svg>
-        </div>
-        <div class="linkedContent">
-        <div class="linkedRemote-title">${tr("REMOTESLIST_LINKED")} ${i + 1}</div>
-        <div class="linkedRemote-meta">
-        <span>${tr("ADDR")} ${remote.remoteAddress}</span>
-        <span class="linkedRemote-sep">|</span>
-        <span>${tr("CODE")} ${remote.lastRollingCode}</span>
-        </div>
-        </div>
-        <div class="linkedRemote-btn-delete" onclick="somfy.unlinkRemote(${shade.shadeId}, '${remote.remoteAddress}');">
-        <svg><use href="#svg-trash"></use></svg>
-        </div>
-        </div>
-        <div class="remote-card-bottom">
-        ${this.remoteSignalHtml(remote.lastRssi, remote.remoteAddress)}
-        </div>
-        </div>
-        `).join('');
-    }
-
     procShadeState(state) {
         const g = get, sId = state.shadeId;
         // L'évènement ne rafraîchissait que le DOM : `this.shades` gardait les valeurs du dernier
@@ -5245,25 +5357,21 @@ class Somfy {
             if (state.tiltType !== 0) ico.style.setProperty('--shade-tilt', state.tiltPosition);
         });
         if (g('spanShadeId')?.innerText == sId) {
-            this.setEditorPosValue(this.shadeTypeOf(state), state.position, state.flipPosition, this.shadeVocabOf(state));
+            this.renderShadeHeroState(state);
+            this.refreshShadeRollingCode(sId);
             const ed = typeof shadeSetup !== 'undefined' && shadeSetup.editShade && shadeSetup.editShade.shadeId === sId ? shadeSetup.editShade : null;
             if (ed) {
                 ['myPos', 'myTiltPos'].forEach(k => { if (typeof state[k] !== 'undefined') ed[k] = state[k]; });
                 this.setEditorMyValue(ed);
             }
 
-            const lTC = g('labelTiltContainer');
-            if (state.tiltType !== 0) {
-                if (lTC) lTC.style.display = 'flex';
-                this.setEditorTiltValue(state.tiltPosition);
-            } else if (lTC) {
-                lTC.style.display = 'none';
-            }
+
         }
         document.querySelectorAll(`.button-sunflag[data-shadeid="${sId}"]`).forEach(btn => {
             btn.style.display = state.sunSensor ? '' : 'none';
             btn.dataset.on = (state.flags & 0x01) === 0x01;
         });
+        document.querySelectorAll(`#divShadeList .cfg-tile[data-shadeid="${sId}"] .cfg-tile-state`).forEach(el => { el.textContent = this.shadeTileState(cached || state); });
         document.querySelectorAll(`.somfyShadeCtl[data-shadeid="${sId}"], .card-sheet[data-shadeid="${sId}"]`).forEach(d => {
             Object.assign(d.dataset, {
                 direction: state.direction,
@@ -5383,7 +5491,7 @@ class Somfy {
         isNew = g('spanShadeId').innerText === '*',
         st = this.shadeTypes.find(x => x.type === type) || { type };
 
-        ['somfyShade', 'divSomfyButtons'].forEach(id => g(id)?.setAttribute('data-shadetype', type));
+        g('somfyShade').setAttribute('data-shadetype', type);
 
         if (ico) {
 
@@ -5396,14 +5504,12 @@ class Somfy {
                 use.setAttribute('xlink:href', href);
             }
         }
-        // Icône d'ambiance de l'en-tête : suit le type sélectionné immédiatement, sans attendre
-        // l'enregistrement -- même source que les cartes et les plannings (shadeTypes[].indic).
-        const hdrUse = g('useShadeHeaderIndic');
-        if (hdrUse) {
-            const href = '#' + (st.indic || 'svg-indicShutter');
-            hdrUse.setAttribute('href', href);
-            hdrUse.setAttribute('xlink:href', href);
-        }
+        // Commandes de l'en-tête : un seul bouton pour les types à bascule, pas de My sans position favorite.
+        const isToggle = this.toggleShadeTypes.includes(type), hasMy = this.shadeTypeSupportsMy(type);
+        g('divshowSomfyButtons')?.querySelectorAll('.ed-cmd[data-cmd]').forEach(b => {
+            const c = b.dataset.cmd;
+            b.hidden = c === 'toggle' ? !isToggle : c === 'my' ? !hasMy : isToggle;
+        });
         const hasLift = !!st.lift;
         const supportsMy = this.shadeTypeSupportsMy(type);
         const curTilt = st.tilt ? tilt : 0;
@@ -5414,7 +5520,18 @@ class Somfy {
         };
 
             disp('divTiltSettings', st.tilt, 'flex');
-            disp('divShadeTimings', hasLift, 'flex');
+            disp('shdTravelTimes', hasLift && curTilt !== 3, 'grid');
+            disp('shdTiltTimes', curTilt > 0, 'grid');
+            disp('divShadeTimings', (hasLift && curTilt !== 3) || curTilt > 0, 'flex');
+            disp('divShadeMyTile', this.shadeTypeSupportsMy(type), 'flex');
+            disp('divShadeContact', this.dryContactShadeTypes.includes(type), 'flex');
+            const W = typeof shadeSetup !== 'undefined' ? shadeSetup.words(type) : null;
+            if (W) {
+                g('lblShadeUpTime').textContent = shadeSetup.t('SETUP_TIME_OF', { what: W.upN }).replace(/\s*\(s\)$/, '');
+                g('lblShadeDownTime').textContent = shadeSetup.t('SETUP_TIME_OF', { what: W.downN }).replace(/\s*\(s\)$/, '');
+            }
+            g('lblShadeTiltUp').textContent = tr('SETUP_TILT_OPEN');
+            g('lblShadeTiltDown').textContent = tr('SETUP_TILT_CLOSE');
             disp('divSunSensor', st.sun);
             disp('divFlipPosition', st.fpos);
             disp('divFlipCommands', st.fcmd);
@@ -5436,13 +5553,6 @@ class Somfy {
         disp('divShadeOutputMode', isDry, 'flex');
         disp('divShadePulseTime', isDry && g('selShadeOutputMode')?.value === '1', 'flex');
         disp('divShadeStateVocab', isDry, 'flex');
-        disp('labelPosContainer', (hasLift || isDry) && !isNew);
-        this.applyEditorStateRow(type);
-        if (!isNew) {
-            const cur = (this.shades || []).find(x => x.shadeId === parseInt(g('spanShadeId').innerText, 10));
-            if (cur) this.setEditorPosValue(type, cur.position, cur.flipPosition, this.editorVocab(cur));
-        }
-        disp('labelTiltContainer', curTilt && !isNew);
 
         // Pour un contact sec, la ligne d'inversion garde tout son sens mais ne parle pas de la même
         // chose : il n'y a pas de « % d'ouverture » à inverser, seulement l'état affiché. Le libellé
@@ -5452,8 +5562,8 @@ class Somfy {
         const fp = g('divFlipPosition');
         if (fp) {
             const isDry = this.dryContactShadeTypes.includes(type);
-            [['.uniLabel', isDry ? 'IS_STATE' : 'IS_POSITION'],
-             ['.uniStatus', isDry ? 'DEVICE_STATE_DESC' : 'DEVICE_POSITION_DESC']].forEach(([sel, cle]) => {
+            [['.gen-row-text > b', isDry ? 'DEVICE_FLIP_STATE' : 'DEVICE_FLIP_POSITION'],
+             ['.gen-row-text > span', isDry ? 'DEVICE_STATE_DESC' : 'DEVICE_POSITION_DESC']].forEach(([sel, cle]) => {
                 const el = fp.querySelector(sel);
                 if (el) { el.setAttribute('tr', cle); el.innerText = tr(cle); }
             });
@@ -5467,21 +5577,31 @@ class Somfy {
             shadeSetup.renderEditPanel(preview);
             this.setEditorMyValue(preview);
         }
+        if (this._shdLoaded) this.renderShadeHero();
+        get('shdPanels').querySelectorAll('.gen-grid').forEach(genGridSpan);
     }
     setEditorMyValue(shade) {
-        const row = get('labelMyContainer'), tiltRow = get('labelMyTiltContainer');
-        if (!row || !tiltRow) return;
-        const my = !!shade && this.shadeTypeSupportsMy(shade.shadeType);
-        const st = shade && this.shadeTypes.find(x => x.type === shade.shadeType);
-        const showPos = my && shade.myPos >= 0;
-        const showTilt = my && !!(st && st.tilt) && shade.tiltType > 0 && shade.myTiltPos >= 0;
-        row.style.display = showPos ? 'flex' : 'none';
-        tiltRow.style.display = showTilt ? 'flex' : 'none';
-        if (showPos) {
-            get('valMy').textContent = `${shade.myPos} %`;
-            get('valMyTag').textContent = shade.simMy ? tr('CTRL_MY_SIM') : 'My';
-        }
-        if (showTilt) get('valMyTilt').textContent = `${shade.myTiltPos} %`;
+        const pos = get('valShadeMyPos'), tiltRow = get('rowShadeMyTilt');
+        if (!pos || !shade) return;
+        const st = this.shadeTypes.find(x => x.type === shade.shadeType);
+        const val = (v) => typeof v === 'number' && v >= 0 ? `${v} %` : tr('CARD_MY_NONE');
+        pos.textContent = val(shade.myPos);
+        tiltRow.hidden = !(st && st.tilt) || !(shade.tiltType > 0);
+        get('valShadeMyTilt').textContent = val(shade.myTiltPos);
+    }
+    // Temps de course : en millisecondes côté firmware, en secondes dans la fiche. Hors de
+    // ui.toElement/fromElement, d'où leur suivi à part dans la barre et à l'enregistrement.
+    static SHADE_TIMES = [['fldShadeUpTime', 'upTime'], ['fldShadeDownTime', 'downTime'], ['fldShadeTiltUp', 'tiltTimeUp'], ['fldShadeTiltDown', 'tiltTimeDown']];
+    fillShadeTimes(shade) {
+        Somfy.SHADE_TIMES.forEach(([id, k]) => { get(id).value = typeof shade[k] === 'number' && shade[k] > 0 ? shade[k] / 1000 : ''; });
+    }
+    // Champs visibles dont la valeur diffère de celle chargée.
+    changedShadeTimes() {
+        if (!this._shdData) return [];
+        return Somfy.SHADE_TIMES.filter(([id, k]) => {
+            const el = get(id), was = typeof this._shdData[k] === 'number' && this._shdData[k] > 0 ? this._shdData[k] / 1000 : '';
+            return el.offsetParent !== null && el.value !== String(was);
+        }).map(([id, k]) => ({ id, k, el: get(id) }));
     }
     relayoutOptionGrids() {
         document.querySelectorAll('.options-grid').forEach(grid => {
@@ -5503,20 +5623,139 @@ class Somfy {
     showEditShade(bShow) {
         let el = get('divLinkRepeater');
         if (el) el.remove();
-        el = get('divRollingCode');
-        if (el) el.remove();
         el = get('somfyShade');
         if (el) el.style.display = bShow ? '' : 'none';
         el = get('divShadeListContainer');
         if (el) el.style.display = bShow ? 'none' : '';
         if (!bShow) {
             clearDirty();
+            if (this._shdSaveBar) this._shdSaveBar.update([]);
             routeSetEditor('divSomfyMotors', null);
         }
         if (bShow) {
             this.showEditGroup(false);
             this.showEditRoom(false);
         }
+    }
+
+    // Une fiche rechargée sur elle-même (après une fenêtre, un enregistrement) garde son onglet et
+    // son défilement ; ouverte depuis la liste ou au rechargement de la page, elle reprend l'onglet
+    // mémorisé pour cet élément (cf. bindGenTabs), sinon Général.
+    _keepView(pageId, spanId, id, tabs) {
+        const page = get(pageId), same = id !== undefined && page && page.style.display !== 'none' && get(spanId).innerText === String(id);
+        const tab = same ? tabs.current() : 0, y = window.scrollY;
+        return () => { if (same) { tabs.show(tab); window.scrollTo(0, y); } else tabs.restore(`${pageId}:${id ?? 'new'}`); };
+    }
+
+    // =====================================================================
+    // SECTION : FICHE ÉQUIPEMENT (même gabarit que la fiche groupe)
+    // =====================================================================
+    _bindShadePage() {
+        if (this._shdTabs) return;
+        const page = get('somfyShade');
+        this._shdTabs = bindGenTabs(page, { tabs: 'shdTabs', panels: 'shdPanels', pager: 'shdPager', prev: 'btnShdPrev', next: 'btnShdNext', keyed: true });
+        ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateShadeDirty(), 0)));
+        this._shdSaveBar = new SaveBar(page, { onSave: () => this.saveShade(), onRevert: () => this.revertShade() });
+    }
+    updateShadeDirty() {
+        const page = get('somfyShade');
+        if (!this._shdSaveBar || !this._shdLoaded || page.style.display === 'none') return;
+        const now = ui.fromElement(page), diffs = [];
+        const LB = { name: 'NAME', shadeType: 'DEVICE_TYPE', tiltType: 'DEVICE_TILT_TYPE', roomId: 'ROOM', proto: 'PROTOCOL', bitLength: 'BIT', remoteAddress: 'DEVICE_ID',
+            gpioUp: 'DEVICE_GPIO_UP', gpioMy: 'DEVICE_GPIO_MY', gpioDown: 'DEVICE_GPIO_DOWN', gpioLLTrigger: 'DEVICE_LL_TRIGGER', sunSensor: 'DEVICE_SUN_SENSOR',
+            flipCommands: 'DEVICE_FLIP_COMMANDS', flipPosition: 'DEVICE_FLIP_POSITION', simMy: 'DEVICE_FAVORITE_POSITION', outputMode: 'DEVICE_OUTPUT_MODE_DESC',
+            pulseTime: 'DEVICE_PULSE_TIME_DESC', stateVocab: 'DEVICE_STATE_VOCAB_DESC', repeats: 'REPEAT_COMMANDS', stepSize: 'DEVICE_STEP_SIZE_MIN', ledFeedback: 'LED_FEEDBACK' };
+        page.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+        Object.keys(LB).forEach(k => {
+            const el = page.querySelector(`[data-bind="${k}"]`);
+            if (!el || String(now[k]) === String(this._shdLoaded[k])) return;
+            el.classList.add('is-dirty');
+            const show = (v) => el.type === 'checkbox' ? tr(v ? 'BT_YES' : 'BT_NO')
+                : el.tagName === 'SELECT' ? (Array.from(el.options).find(o => o.value === String(v))?.text ?? v) : v;
+            diffs.push({ label: tr(LB[k]), from: show(this._shdLoaded[k]), to: show(now[k]) });
+        });
+        const times = this.changedShadeTimes();
+        times.forEach(({ el }) => {
+            el.classList.add('is-dirty');
+            diffs.push({ label: get(el.id.replace('fld', 'lbl')).textContent, from: el.defaultValue, to: el.value });
+        });
+        this.previewSetupSteps(now, times);
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        this._shdSaveBar.update(diffs);
+        this.renderShadeHero();
+    }
+    // Régler à la main ce qu'une étape de mise en service règle vaut cette étape : elle passe « faite »
+    // dans la tuile tout de suite, et le masque part avec l'enregistrement (cf. saveShade).
+    static STEP_OF_FIELD = { flipCommands: 'dir', upTime: 'cal', downTime: 'cal', tiltTimeUp: 'tilt', tiltTimeDown: 'tilt',
+        flipPosition: 'opts', sunSensor: 'opts', repeats: 'opts', ledFeedback: 'opts', simMy: 'opts' };
+    previewSetupSteps(now, times) {
+        const d = this._shdData;
+        if (!d || typeof shadeSetup === 'undefined' || get('spanShadeId').innerText === '*') return;
+        const loaded = d.setupSteps || 0;
+        let mask = loaded;
+        const changed = Object.keys(Somfy.STEP_OF_FIELD).filter(k => k in now && String(now[k]) !== String(this._shdLoaded[k])).concat(times.map(t => t.k));
+        changed.forEach(k => { mask |= SETUP_BIT[Somfy.STEP_OF_FIELD[k]]; });
+        const preview = Object.assign({}, d, now, { setupSteps: mask });
+        times.forEach(({ el, k }) => { const v = parseFloat(el.value); if (!isNaN(v)) preview[k] = Math.round(v * 1000); });
+        this._shdSteps = mask;
+        const sig = JSON.stringify([mask, preview.flipCommands, preview.upTime, preview.downTime, preview.tiltTimeUp, preview.tiltTimeDown, preview.sunSensor, preview.repeats]);
+        if (sig === this._shdStepsSig) return;
+        this._shdStepsSig = sig;
+        shadeSetup.renderEditPanel(preview);
+    }
+    revertShade() {
+        if (!this._shdData) return;
+        const g = get;
+        ui.toElement(g('somfyShade'), this._shdData);
+        this.fillShadeTimes(this._shdData);
+        g('somfyShade').setAttribute('data-bitlength', g('selShadeBitLength').value);
+        this.onShadeProtoChanged(g('selShadeProto'));
+        this.onShadeTypeChanged(g('selShadeType'));
+        this.updateShadeDirty();
+    }
+    renderShadeHero() {
+        const g = get, isNew = g('spanShadeId').innerText === '*';
+        const name = g('fldShadeName').value.trim();
+        const room = g('selShadeRoom').selectedOptions[0]?.text || tr('HOME');
+        const type = g('selShadeType').selectedOptions[0]?.text || '';
+        const proto = parseInt(g('selShadeProto').value, 10), protoTxt = g('selShadeProto').selectedOptions[0]?.text || '';
+        g('somfyHeaderTitle').textContent = name || tr(isNew ? 'DEVICE_CREATE_TITLE' : 'DEVICE_EDIT_TITLE');
+        g('somfyHeaderDesc').textContent = isNew ? tr('DEVICE_CREATE_DESC') : `${type} · ${room}`;
+        g('shdChipRoom').textContent = room;
+        // Les relais IO n'ont ni longueur de trame ni adresse radio utile à afficher.
+        g('shdChipRadio').textContent = proto >= 8 ? protoTxt : `${protoTxt} · ${g('selShadeBitLength').value} bits · ID ${g('fldShadeAddress').value}`;
+    }
+    renderShadeHeroState(shade) {
+        const el = get('somfyHeaderState');
+        if (el) el.textContent = shade ? this.shadeStateText(shade) : '';
+    }
+    // Même relecture que refreshGroupRollingCode : l'état diffusé ne porte pas le compteur.
+    refreshShadeRollingCode(shadeId) {
+        const page = get('somfyShade');
+        if (!page || page.style.display === 'none' || get('spanShadeId').innerText !== String(shadeId)) return;
+        clearTimeout(this._shdRollTimer);
+        this._shdRollTimer = setTimeout(() => getJSON(`/shade?shadeId=${shadeId}`, (err, shade) => {
+            if (err || !shade || typeof shade.lastRollingCode !== 'number' || get('spanShadeId').innerText !== String(shadeId)) return;
+            get('spanShadeRollingCode').textContent = shade.lastRollingCode;
+            if (this._shdData) this._shdData.lastRollingCode = shade.lastRollingCode;
+        }), 800);
+    }
+    askShadeRollingCode() {
+        const shadeId = parseInt(get('spanShadeId').innerText, 10), input = get('fldShadeRollingCode');
+        const code = parseInt(input.value, 10);
+        if (isNaN(code) || code < 0 || code > 65535) return ui.errorMessage(tr('ERR_ROLLING_CODE_INVALID'));
+        const prompt = ui.promptMessage(tr('PROMPT_DEVICE_ROLLING'), () => {
+            putJSONSync('/setRollingCode', { shadeId, rollingCode: code }, (err, shade) => {
+                prompt.remove();
+                if (err) return ui.serviceError(err);
+                get('spanShadeRollingCode').textContent = shade && typeof shade.lastRollingCode === 'number' ? shade.lastRollingCode : code;
+                input.value = '';
+                get('btnShadeRollingCode').disabled = true;
+                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            });
+        });
+        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_DEVICE_ROLLING_CONFIRM').replace('{CODE}', code).replace('{OLD}', escHtml(get('spanShadeRollingCode').textContent))}</p>`;
     }
     // Point d'entrée réel d'ouverture d'un équipement (nouveau ou existant) : garde contre la perte de
     // modifications non enregistrées si un autre équipement/groupe/planning était en cours d'édition
@@ -5532,8 +5771,7 @@ class Somfy {
     _openEditShade(shadeId, opts) {
         const g = get,
         isNew = shadeId === undefined,
-        ico = g('icoShade'),
-        btns = ['btnSetRollingCode'];
+        ico = g('icoShade');
 
         if (isNew && this.shades?.length >= 30) {
             routeSetEditor('divSomfyMotors', null, { replace: true });
@@ -5541,16 +5779,14 @@ class Somfy {
         }
 
         const s = (id, d) => { const e = g(id); if(e) e.style.display = d; };
+        this._bindShadePage();
+        const restore = this._keepView('somfyShade', 'spanShadeId', shadeId, this._shdTabs);
         this.applyLedFeedbackVisibility();
 
-        // Si c'est un nouvel équipement, on cache TOUT le bloc. Sinon on l'affiche.
-        s('divControlContent', isNew ? 'none' : 'flex');
         // Une programmation cible un shadeId existant : impossible tant que l'équipement n'est pas créé.
         s('divScheduleSectionShade', isNew ? 'none' : 'flex');
 
         s('divshowSomfyButtons', 'flex');
-        btns.forEach(id => s(id, 'none'));
-        s('labelPosContainer', 'none');
 
         getJSONSync(isNew ? '/getNextShade' : `/shade?shadeId=${shadeId}`, (err, shade) => {
             if (err) {
@@ -5566,38 +5802,14 @@ class Somfy {
                 });
             }
             if (!isNew) {
-                s('labelPosContainer', 'flex');
-                s('btnSetRollingCode', 'flex');
-
-                this.setEditorPosValue(shade.shadeType, shade.position, shade.flipPosition, this.editorVocab(shade));
                 this.setLinkedRemotesList(shade);
                 // Programmations rattachées à cet équipement (badges, bloc Options) : on recharge la
                 // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
-                this.updateScheduleList(() => this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId));
+                this.updateScheduleList(() => { this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId); this.renderShadeSummary(shade); });
             }
             if (typeof shadeSetup !== 'undefined') shadeSetup.renderEditPanel(isNew ? null : shade);
             this.setEditorMyValue(isNew ? null : shade);
 
-            // --- Gestion dynamique du Titre, Description et Badge Capacity ---
-            const hTitle = g('somfyHeaderTitle'), hDesc = g('somfyHeaderDesc');
-
-            if (hTitle && hDesc) {
-                if (isNew) {
-                    // Mode Création : Phrase brute sans badge
-                    hTitle.innerText = tr('DEVICE_CREATE_TITLE');
-                    hDesc.innerText = tr('DEVICE_CREATE_DESC');
-                } else {
-                    // Mode Édition : Titre + Phrase avec le badge de capacité globale (ex: 2/30)
-                    hTitle.innerText = tr('DEVICE_EDIT_TITLE');
-
-                    const currentCount = this.shades ? this.shades.length : 0;
-                    const formattedCapacity = `<span class="desc-highlight">${currentCount}/30</span>`;
-
-                    hDesc.innerHTML = tr('DEVICE_EDIT_DESC').replace('%s', formattedCapacity);
-                }
-            }
-
-            this.setEditorTiltValue(shade.tiltPosition || 0);
 
 
             const rev = shade.flipPosition,
@@ -5611,12 +5823,11 @@ class Somfy {
                 st.setProperty('--tilt-position', tp + '%');
                 ico.setAttribute('data-shadeid', isNew ? '*' : shadeId);
             }
-            g('btnSaveShadeText').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
-            g('useSaveShadeIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-save');
             g('spanShadeId').innerText = isNew ? '*' : shadeId;
+            // Créer passe par l'assistant ; une fiche vierge reste joignable par l'URL (cf. .ed-new).
+            g('somfyShade').classList.toggle('ed-new', isNew);
 
-            // Course, temps morts et lames n'ont plus de champ : leurs tâches de la zone « Mise en
-            // service » les règlent.
+            // Temps morts et ordre des lames n'ont pas de champ : leurs tâches de mise en service les règlent.
             ui.toElement(g('somfyShade'), shade);
             if (g('selShadeBitLength')) g('somfyShade').setAttribute('data-bitlength', g('selShadeBitLength').value);
             // data-proto ne vit que posé par onShadeProtoChanged (événement change du select) : sans ce
@@ -5626,11 +5837,28 @@ class Somfy {
             // IO-relay sans enregistrer) -- divGPIOControl restait alors affiché à tort.
             this.onShadeProtoChanged(g('selShadeProto'));
             this.onShadeTypeChanged(g('selShadeType'));
+            this._shdData = shade;
+            this._shdSteps = shade.setupSteps || 0;
+            this._shdStepsSig = '';
+            this.fillShadeTimes(shade);
+            Somfy.SHADE_TIMES.forEach(([id]) => { g(id).defaultValue = g(id).value; });
+            this._shdLoaded = ui.fromElement(g('somfyShade'));
+            const paired = g('valShadePaired');
+            paired.textContent = tr(shade.paired ? 'SETUP_PILL_PAIRED' : 'DEVICE_NOT_PAIRED');
+            paired.classList.toggle('is-ok', !!shade.paired);
+            g('valShadeInternalId').textContent = isNew ? '' : shadeId;
+            g('fldShadeRollingCode').value = '';
+            g('btnShadeRollingCode').disabled = true;
+            g('spanShadeRollingCode').textContent = shade.lastRollingCode ?? '';
+            this.renderShadeHeroState(isNew ? null : shade);
+            if (!isNew) this.renderShadeSummary(shade);
             this.showEditShade(true);
+            restore();
             routeSetEditor('divSomfyMotors', isNew ? 'new' : shadeId, { label: isNew ? tr('DEVICE_CREATE_TITLE') : shade.name });
             // Ne commence à suivre les modifications qu'une fois le formulaire rempli avec les
             // valeurs actuelles, pour ne pas marquer "modifié" ce remplissage programmatique.
             watchDirty(g('somfyShade'));
+            this.updateShadeDirty();
         });
     }
     // Doublé côté firmware (code -14) : ce contrôle n'existe que pour NOMMER le conflit. Domaine =
@@ -5651,13 +5879,21 @@ class Somfy {
         obj = ui.fromElement(g('somfyShade')),
         settings = g('divSomfySettings');
 
-        // Temps de course, temps morts, temps et ordre des lames ne partent plus d'ici : absents de
-        // la requête, ils restent tels que leurs tâches les ont enregistrés.
+        // Temps morts et ordre des lames ne partent pas d'ici : absents de la requête, ils restent
+        // tels que leurs tâches les ont enregistrés.
         // Champ de durée d'impulsion vidé : ui.fromElement remonte alors `null`, que le firmware
         // ramènerait à sa borne basse (50 ms) -- une impulsion trop courte pour bien des relais,
         // substituée en silence. On retire plutôt la clé : absente d'une requête, elle laisse la
         // valeur enregistrée inchangée, comme tout le reste de fromJSON.
         if (obj.pulseTime === null || obj.pulseTime === '' || isNaN(obj.pulseTime)) delete obj.pulseTime;
+        if (this._shdData && typeof this._shdSteps === 'number' && this._shdSteps !== (this._shdData.setupSteps || 0)) obj.setupSteps = this._shdSteps;
+        // Seuls les temps modifiés partent : les autres restent tels que l'assistant les a mesurés.
+        const times = this.changedShadeTimes();
+        for (const { el, k } of times) {
+            const v = parseFloat(el.value);
+            if (isNaN(v) || v < 0.5 || v > 180) return ui.errorMessage(settings, tr(k.startsWith('tilt') ? 'SETUP_ERR_TILT_TIMES' : 'SETUP_ERR_TIMES'));
+            obj[k] = Math.round(v * 1000);
+        }
 
         const checks = [
             [isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215, 'ERR_REMOTE_ADDRESS_INVALID'],
@@ -5690,6 +5926,7 @@ class Somfy {
             const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
             ui.successMessage(msg);
             clearDirty();
+            if (this._shdSaveBar) this._shdSaveBar.update([]);
             this.updateShadeList()
             if (typeof then === 'function') return then(shade);
             this.openEditShade(shade.shadeId);
@@ -5710,6 +5947,8 @@ class Somfy {
                     let prompt = ui.promptMessage(tr('PROMPT_DELETE_DEVICE'), () => {
                         ui.clearErrors();
                         putJSONSync('/deleteShade', { shadeId: shadeId }, (err, shade) => {
+                            if (err) ui.serviceError(err);
+                            else if (get('spanShadeId').innerText === String(shadeId)) this.showEditShade(false);
                             this.updateShadeList();
                             if (scheduleCount > 0) this.updateScheduleList();
                             prompt.remove();
@@ -5734,69 +5973,6 @@ class Somfy {
         });
     }
 
-    setRollingCode(shadeId, rollingCode) {
-        putJSONSync('/setRollingCode', { shadeId: shadeId, rollingCode: rollingCode }, (err, shade) => {
-            if (err) ui.serviceError(get('divSomfySettings'), err);
-            else {
-                let dlg = get('divRollingCode');
-                if (dlg) { clearDirty(dlg); dlg.remove(); }
-            }
-        });
-    }
-
-    openSetRollingCode(shadeId) {
-        let overlay = ui.waitMessage(get('divContainer'));
-        getJSON(`/shade?shadeId=${shadeId}`, (err, shade) => {
-            overlay.remove();
-            if (err) return ui.serviceError(err);
-
-            let div = document.createElement('div');
-            div.id = 'divRollingCode';
-            div.className = 'modal-overlay';
-
-            div.innerHTML = `
-            <div class="message-content">
-            ${modalHeader('ROLLING_CODE', 'svg-warning', {
-                subtitle: 'ROLLING_CODE_DESC',
-            })}
-            <div class="overlay-scroll-content">
-
-            <div class="error">
-            <div class="error-header">
-            <svg><use href="#svg-warning"></use></svg>
-            <b>${tr("MSG_DANGER")}</b>
-            </div>
-
-            <div class="information-text">
-            <span>${tr("ROLLING_CODE_WARNING_DESC_1")}</span>
-            </div>
-            </div>
-
-            <div class="uniblocStep">${tr("ROLLING_CODE_WARNING_DESC_2")}</div>
-            <div class="uniblocCol uniblocRollingCode dirty-target">
-            <label class="label" for="fldNewRollingCode">${tr("ROLLING_CODE")}</label>
-            <input id="fldNewRollingCode" class="inputAndSelect" min="0" max="65535" name="newRollingCode" type="number" value="${shade.lastRollingCode}">
-            </div>
-
-
-            </div>
-
-            <div class="hrModal margin0"></div>
-            <div class="button-container-modal">
-            <div class="button-content-modal">
-
-            <button id="btnChangeRollingCode" class="bouton-Danger" type="button" onclick="somfy.setRollingCode(${shadeId}, parseInt(get('fldNewRollingCode').value, 10));">${tr("BT_SET_ROLLING_CODE")}</button>
-            <button id="btnCancel" line type="button">${tr("BT_CANCEL_1")} </button>
-            </div>
-            </div>
-            </div>`;
-
-            shOverlay(div);
-            watchDirty(div);
-            div.querySelector('#btnCancel').onclick = () => requestCloseOverlay(div);
-            ui.setFocus(btnCancel, true, 'var(--color-success)');
-        });
-    }
     // Validation d'un slider du carrousel (position ou inclinaison) : envoie la cible au firmware,
     // puis REPLACE IMMÉDIATEMENT le curseur sur la dernière position réellement connue de l'équipement.
     //
@@ -5840,6 +6016,7 @@ class Somfy {
         }
         logger.debug('Sending shade command:', obj);
         putJSON('/shadeCommand', obj, (err, shade) => {
+            if (!err) this.refreshShadeRollingCode(shadeId);
             if (typeof cb === 'function') cb(err, shade);
         });
     }
@@ -5928,7 +6105,7 @@ class Somfy {
             }
         }
         this.syncVRLayout();
-        this.renderCfgList('group');
+        this.renderCfgPage('group');
         let groupControls = get('divGroupControls');
         groupControls.innerHTML = divCtl;
         this.checkEmptyState();
@@ -5956,12 +6133,12 @@ class Somfy {
     setLinkedShadesList(group) {
         const hasShades = (group.linkedShades || []).length > 0;
         get('divSomfyGroupButtons')?.classList.toggle('disabled', !hasShades);
-        get('gpMembersBlock')?.classList.toggle('gp-empty', !hasShades);
-        ui.setFocus(get('btnLinkShade'), !hasShades);
         groupSetup.renderMembers(group);
+        ui.setFocus(get('btnLinkShade'), !hasShades);
     }
     procGroupState(state) {
         logger.debug('Group state update:', state);
+        this.refreshGroupRollingCode(state.groupId);
         if (this._vrTarget && this._vrTarget.type === 'group' && this._vrTarget.id === state.groupId) {
             this.setVRSunFlag(state.flags);
             this.setVRSunSensor(!!state.sunSensor);
@@ -5979,14 +6156,13 @@ class Somfy {
     showEditGroup(bShow) {
         let el = get('divLinkRepeater');
         if (el) el.remove();
-        el = get('divRollingCode');
-        if (el) el.remove();
         el = get('somfyGroup');
         if (el) el.style.display = bShow ? '' : 'none';
         el = get('divGroupListContainer');
         if (el) el.style.display = bShow ? 'none' : '';
         if (!bShow) {
             clearDirty();
+            if (this._grpSaveBar) this._grpSaveBar.update([]);
             routeSetEditor('divSomfyGroups', null);
         }
         if (bShow) {
@@ -5995,86 +6171,117 @@ class Somfy {
         }
     }
 
+    // =====================================================================
+    // SECTION : FICHE GROUPE (gabarit de Général : onglets, barre d'enregistrement)
+    // =====================================================================
+    _bindGroupPage() {
+        if (this._grpTabs) return;
+        const page = get('somfyGroup');
+        this._grpTabs = bindGenTabs(page, { tabs: 'grpTabs', panels: 'grpPanels', pager: 'grpPager', prev: 'btnGrpPrev', next: 'btnGrpNext', keyed: true });
+        // Après _markDirty (watchDirty), comme Général : différé d'un tour.
+        ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateGroupDirty(), 0)));
+        this._grpSaveBar = new SaveBar(page, { onSave: () => this.saveGroup(), onRevert: () => this.revertGroup() });
+    }
+    // Le code tournant n'entre pas dans la barre : il s'applique à part, après confirmation.
+    updateGroupDirty() {
+        const page = get('somfyGroup');
+        if (!this._grpSaveBar || !this._grpLoaded || page.style.display === 'none') return;
+        const now = ui.fromElement(page), diffs = [];
+        const LB = { name: 'NAME', roomId: 'ROOM', proto: 'PROTOCOL', bitLength: 'BIT', remoteAddress: 'GROUP_ID', flipCommands: 'DEVICE_FLIP_COMMANDS', repeats: 'REPEAT_COMMANDS', ledFeedback: 'LED_FEEDBACK' };
+        page.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+        Object.keys(LB).forEach(k => {
+            const el = page.querySelector(`[data-bind="${k}"]`);
+            if (!el || String(now[k]) === String(this._grpLoaded[k]) || el.closest('.ledFeedbackRow')?.style.display === 'none') return;
+            el.classList.add('is-dirty');
+            const show = (v) => el.type === 'checkbox' ? tr(v ? 'BT_YES' : 'BT_NO')
+                : el.tagName === 'SELECT' ? (Array.from(el.options).find(o => o.value === String(v))?.text ?? v) : v;
+            diffs.push({ label: tr(LB[k]), from: show(this._grpLoaded[k]), to: show(now[k]) });
+        });
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        this._grpSaveBar.update(diffs);
+        this.renderGroupHero();
+    }
+    revertGroup() {
+        if (this._grpData) ui.toElement(get('somfyGroup'), this._grpData);
+        this.updateGroupDirty();
+    }
+    renderGroupHero() {
+        const g = get, isNew = g('spanGroupId').innerText === '*';
+        const name = g('fldGroupName').value.trim();
+        const room = g('selGroupRoom').selectedOptions[0]?.text || tr('HOME');
+        const n = ((this._grpData && this._grpData.linkedShades) || []).length;
+        g('somfyGroupHeaderTitle').textContent = name || tr(isNew ? 'GROUP_CREATE_TITLE' : 'GROUP_EDIT_TITLE');
+        g('somfyGroupHeaderDesc').textContent = isNew ? tr('GROUP_CREATE_DESC') : `${room} · ${tr('GROUP_LINKED_COUNT').replace('{n}', n)}`;
+        g('grpChipRoom').textContent = room;
+        g('grpChipRadio').textContent = `${this.frameProtoLabel(parseInt(g('selGroupProto').value, 10))} · ${g('selGroupBitLength').value} bits · ID ${g('fldGroupAddress').value}`;
+    }
+    // Chaque trame du groupe avance son compteur. Le socket ne le diffuse pas (c'est ce qui permet
+    // de forger une trame) : on relit le groupe, regroupé, et seulement si sa fiche est affichée.
+    refreshGroupRollingCode(groupId) {
+        const page = get('somfyGroup');
+        if (!page || page.style.display === 'none' || get('spanGroupId').innerText !== String(groupId)) return;
+        clearTimeout(this._grpRollTimer);
+        this._grpRollTimer = setTimeout(() => getJSON(`/group?groupId=${groupId}`, (err, group) => {
+            if (err || !group || typeof group.lastRollingCode !== 'number' || get('spanGroupId').innerText !== String(groupId)) return;
+            get('spanGroupRollingCode').textContent = group.lastRollingCode;
+            if (this._grpData) this._grpData.lastRollingCode = group.lastRollingCode;
+        }), 800);
+    }
+    askGroupRollingCode() {
+        const groupId = parseInt(get('spanGroupId').innerText, 10), input = get('fldGroupRollingCode');
+        const code = parseInt(input.value, 10);
+        if (isNaN(code) || code < 0 || code > 65535) return ui.errorMessage(tr('ERR_ROLLING_CODE_INVALID'));
+        const prompt = ui.promptMessage(tr('PROMPT_GROUP_ROLLING'), () => {
+            putJSONSync('/setRollingCode', { groupId, rollingCode: code }, (err, group) => {
+                prompt.remove();
+                if (err) return ui.serviceError(err);
+                get('spanGroupRollingCode').textContent = group && typeof group.lastRollingCode === 'number' ? group.lastRollingCode : code;
+                input.value = '';
+                get('btnGroupRollingCode').disabled = true;
+                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            });
+        });
+        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_GROUP_ROLLING_CONFIRM').replace('{CODE}', code).replace('{OLD}', escHtml(get('spanGroupRollingCode').textContent))}</p>`;
+    }
+
     openEditGroup(groupId, opts) { confirmDiscardChanges(() => this._openEditGroup(groupId, opts)); }
     _openEditGroup(groupId, opts) {
-        const g = get,
-        isNew = groupId === undefined,
-        elGroup = g('somfyGroup'),
-        btnSave = g('btnSaveGroup'),
-        btnContainer = g('divSomfyGroupButtons'),
-        membersBlock = g('gpMembersBlock'),
-        blocPairParent = g('blocPairGroup');
-
+        const g = get, isNew = groupId === undefined, page = g('somfyGroup');
         if (isNew && this.groups?.length >= 14) {
             routeSetEditor('divSomfyGroups', null, { replace: true });
             return ui.errorMessage(g('divSomfySettings'), tr('ERR_GROUP_LIMIT_REACHED'));
         }
-
-        const s = (idOrElem, d) => { const e = (typeof idOrElem === 'string') ? g(idOrElem) : idOrElem; if(e) e.style.display = d; };
+        this._bindGroupPage();
+        const restore = this._keepView('somfyGroup', 'spanGroupId', groupId, this._grpTabs);
         this.applyLedFeedbackVisibility();
-        this.relayoutOptionGrids();
-
-        const memberList = g('divGroupMembers');
-        if (memberList) memberList.innerHTML = '';
-
-        s(btnContainer, 'flex');
-        btnContainer?.classList.toggle('disabled', isNew);
-        s(btnSave, 'none');
-        s(blocPairParent, 'none');
-        s(membersBlock, 'none');
-        // Une programmation cible un groupId existant : impossible tant que le groupe n'est pas créé.
-        s('divScheduleSectionGroup', isNew ? 'none' : 'flex');
-
+        g('divGroupMembers').innerHTML = '';
+        g('divGroupScheduleBadges').innerHTML = '';
         getJSONSync(isNew ? '/getNextGroup' : `/group?groupId=${groupId}`, (err, group) => {
             if (err) {
                 routeSetEditor('divSomfyGroups', null, { replace: true });
                 return (opts && opts.silentError) ? undefined : ui.serviceError(err);
             }
-
-            if (isNew) {
-                Object.assign(group, {
-                    name: '', flipCommands: false, shades: []
-                });
-            }
+            // Créer passe par l'assistant ; une fiche vierge reste joignable par l'URL : sans groupe
+            // enregistré, rien à appairer ni à planifier (cf. .ed-new).
+            if (isNew) Object.assign(group, { name: '', flipCommands: false, shades: [], linkedShades: [] });
+            page.classList.toggle('ed-new', isNew);
+            g('spanGroupId').innerText = isNew ? '*' : groupId;
+            ui.toElement(page, group);
+            this._grpData = group;
+            this._grpLoaded = ui.fromElement(page);
+            g('fldGroupRollingCode').value = '';
+            g('btnGroupRollingCode').disabled = true;
+            g('spanGroupRollingCode').textContent = group.lastRollingCode ?? '';
             if (!isNew) {
-                s(blocPairParent, 'flex');
-                s(membersBlock, 'flex');
                 this.setLinkedShadesList(group);
-                // Programmations rattachées à ce groupe (badges, bloc Options) : on recharge la
-                // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
                 this.updateScheduleList(() => this.renderScheduleBadges('divGroupScheduleBadges', 'group', groupId));
             }
-
-
-            // --- Gestion dynamique du Titre et de la Description avec capacité (Style Badge) ---
-            const hTitle = g('somfyGroupHeaderTitle'), hDesc = g('somfyGroupHeaderDesc');
-
-            if (hTitle && hDesc) {
-                if (isNew) {
-                    // Mode Création : Phrase simple sans badge
-                    hTitle.innerText = tr('GROUP_CREATE_TITLE');
-                    hDesc.innerText = tr('GROUP_CREATE_DESC');
-                } else {
-                    // Mode Édition : Titre + Description agrémentée du badge de quota
-                    hTitle.innerText = tr('GROUP_EDIT_TITLE');
-
-                    const currentCount = this.groups ? this.groups.length : 0;
-                    const formattedCapacity = `<span class="desc-highlight">${currentCount}/14</span>`;
-
-                    hDesc.innerHTML = tr('GROUP_EDIT_DESC').replace('%s', formattedCapacity);
-                }
-            }
-
-            g('btnSaveGroupText').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
-            g('useSaveGroupIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-save');
-
-            s(btnSave, 'flex');
-            g('spanGroupId').innerText = isNew ? '*' : groupId;
-
-            ui.toElement(elGroup, group);
             this.showEditGroup(true);
+            restore();
             routeSetEditor('divSomfyGroups', isNew ? 'new' : groupId, { label: isNew ? tr('GROUP_CREATE_TITLE') : group.name });
-            watchDirty(elGroup);
+            watchDirty(page);
+            this.updateGroupDirty();
         });
     }
     saveGroup() {
@@ -6097,29 +6304,12 @@ class Somfy {
 
         putJSONSync(isNew ? '/addGroup' : '/saveGroup', obj, (err, group) => {
             if (err) return ui.serviceError(err);
-
-            logger.debug("Group saved:", group);
-            const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
-            ui.successMessage(msg);
+            ui.successMessage(tr(isNew ? 'MSG_ADD_SUCCESS' : 'MSG_SAVE_SUCCESS'));
             clearDirty();
-
-            // SÉCURITÉ COMPTEUR : Si c'est un nouveau groupe, on l'ajoute temporairement au tableau local
-            // pour que openEditGroup() calcule tout de suite le bon nombre.
-            if (isNew) {
-                if (!this.groups) this.groups = [];
-                // On vérifie s'il n'est pas déjà dedans pour éviter les doublons
-                if (!this.groups.some(g => g.groupId === group.groupId)) {
-                    this.groups.push(group);
-                }
-            }
-
-            // On affiche instantanément tout le bloc de contrôle (ton comportement initial parfait)
+            this._grpSaveBar.update([]);
+            if (isNew && !(this.groups || []).some(x => x.groupId === group.groupId)) (this.groups = this.groups || []).push(group);
             this.openEditGroup(group.groupId);
-
-            // On rafraîchit proprement la liste en arrière-plan depuis le serveur
-            this.updateGroupList(() => {
-                this.openEditGroup(group.groupId);
-            });
+            this.updateGroupList();
         });
     }
     deleteGroup(groupId) {
@@ -6140,6 +6330,7 @@ class Somfy {
                         let prompt = ui.promptMessage(tr('PROMPT_DELETE_GROUP'), () => {
                             putJSONSync('/deleteGroup', { groupId: groupId }, (err, g) => {
                                 if (err) ui.serviceError(err);
+                                else if (get('spanGroupId').innerText === String(groupId)) this.showEditGroup(false);
                                 this.updateGroupList();
                                 if (scheduleCount > 0) this.updateScheduleList();
                                 prompt.remove();
@@ -6183,6 +6374,7 @@ class Somfy {
         if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
         if (typeof stepSize === 'number') obj.stepSize = parseInt(stepSize);
         putJSON('/groupCommand', obj, (err, group) => {
+            if (!err) this.refreshGroupRollingCode(groupId);
             if (typeof cb === 'function') cb(err, group);
         });
     }
@@ -6193,37 +6385,86 @@ class Somfy {
     // =========================================================================
 
 
-    // Le firmware ne donne que les adresses : la dernière trame et le signal de chaque répéteur sont
-    // ceux vus par ce navigateur depuis l'ouverture de la page (cf. _onRepeaterFrame).
-    setRepeaterList(addresses) {
-        this.repeaters = Array.isArray(addresses) ? addresses.map(Number) : [];
+    // `repeaters` et `repeaterNames` au même rang, dans /controller comme dans les réponses des
+    // routes. La dernière trame et le signal de chaque répéteur sont ceux vus par ce navigateur
+    // depuis l'ouverture de la page (cf. _onRepeaterFrame).
+    setRepeaterList(data) {
+        const list = data && Array.isArray(data.repeaters) ? data.repeaters : [];
+        const names = data && Array.isArray(data.repeaterNames) ? data.repeaterNames : [];
+        this.repeaters = list.map(Number);
+        this.repeaterNames = {};
+        this.repeaters.forEach((a, i) => { this.repeaterNames[a] = names[i] || ''; });
         this._renderRepeaters();
     }
     _renderRepeaters() {
-        const seen = this._repeaterSeen || {}, list = this.repeaters || [];
+        const seen = this._repeaterSeen || {}, list = this.repeaters || [], box = get('divRepeatList');
         const recent = list.reduce((a, r) => (seen[r] && (a === null || seen[r].at > seen[a].at)) ? r : a, null);
-        get('divRepeatList').innerHTML = list.map(r => this._repeaterCardHtml(r, seen[r], r === recent)).join('');
         const max = this.maxRepeaters || 7;
-        get('spanRepeaterCount').innerText = list.length;
-        get('spanRepeaterMax').innerText = max;
-        get('spanRepeaterBadge').innerText = `${list.length} / ${max}`;
-        get('spanRepeaterHeard').innerText = list.filter(r => seen[r]).length;
-        const known = recent !== null ? this.frameAddressName(recent) : null;
-        get('spanRepeaterLast').innerText = recent !== null ? `${known ? known.name : recent} · ${seen[recent].cmd || '?'} · ${this._listenerTime(seen[recent].at)}` : '—';
-        this.checkEmptyState();
+        const keep = this._rxKeepFocus(box);
+        box.innerHTML = this._rxAddTileHtml('somfy.linkRepeatRemote()', 'REPEATER_CAPTURE', 'REPEATER_CAPTURE_DESC', list.length >= max)
+            + list.map(r => this._repeaterCardHtml(r, seen[r], r === recent)).join('');
+        keep();
+        this._rxHero('divRepeaterPage', 'spanRepeaterHero', 'REPEATER_HERO', list.length, max);
+        get('spanRepeaterFrames').innerText = this._repeaterFrames || 0;
+        get('spanRepeaterLast').innerText = recent !== null ? this._listenerTime(seen[recent].at) : '—';
     }
     _repeaterCardHtml(address, seen, recent) {
         const known = this.frameAddressName(address);
-        const name = known && !known.own ? escHtml(tr('REPEATER_OF').replace('%s', known.name)) : tr('REPEATER_ADDRESS');
-        const press = seen
-            ? `<span class="ls-cmd">${escHtml(seen.cmd || '?')}</span><small>${this._listenerTime(seen.at)}</small>`
-            : `<span class="ls-cmd none">—</span><small>${tr('REPEATER_NO_FRAME')}</small>`;
-        return `<div class="ls-row ${recent ? 'ls-flash' : (seen ? '' : 'idle')}" data-address="${address}"><div class="ls-ico"><svg><use href="#svg-repeater"></use></svg></div><div class="ls-row-t"><b>${name}</b><small>${address}</small>${this.remoteSignalHtml(seen ? seen.rssi : -128, address)}</div><div class="ls-press">${press}</div><button class="ls-del" type="button" onclick="somfy.unlinkRepeater('${address}');"><svg><use href="#svg-trash"></use></svg></button></div>`;
+        const hint = known && !known.own ? tr('REPEATER_OF').replace('%s', known.name) : tr('REPEATER_ADDRESS');
+        const last = seen ? `${escHtml(seen.cmd || '?')} · ${this._listenerTime(seen.at)}` : tr('REPEATER_NO_FRAME');
+        return `<div class="rx-tile${recent ? ' is-recent' : ''}" data-address="${address}">
+            ${this._rxNameHtml(address, (this.repeaterNames || {})[address], hint, 'somfy.renameRepeater(this)')}
+            <div class="ed-ro-list">
+                <div class="ed-ro"><span>${tr('RADIO_RX_LAST')}</span><b>${last}</b></div>
+                <div class="ed-ro"><span>${tr('M_SIGNAL')}</span><b>${this._rxSignalHtml(seen ? seen.rssi : -128, address)}</b></div>
+                <div class="ed-ro"><span>${tr('RADIO_ADDRESS')}</span><b class="rx-mono">${address}</b></div>
+            </div>
+            <button type="button" class="gen-btn gen-btn-danger" onclick="somfy.unlinkRepeater('${address}');">${tr('BT_UNREPEAT')}</button>
+        </div>`;
+    }
+    // Pages Déclencheurs et Répéteur : tuile d'ajout, titre de la colonne, jauge des places.
+    _rxAddTileHtml(onclick, label, desc, full) {
+        return `<button type="button" class="cfg-tile cfg-tile-add" onclick="${onclick};"${full ? ' disabled' : ''}><svg><use href="#svg-add"></use></svg><span>${tr(label)}</span><small>${tr(desc)}</small></button>`;
+    }
+    _rxHero(rootId, titleId, key, n, max) {
+        const root = get(rootId);
+        root.classList.toggle('is-empty', n === 0);
+        get(titleId).innerText = tr(n > 1 ? `${key}_MANY` : `${key}_ONE`).replace('{N}', n);
+        const left = Math.max(0, max - n);
+        root.querySelector('.gen-cap-n').innerHTML = `${n} <small>${tr('LIST_CAP_OF').replace('{MAX}', max)}</small>`;
+        root.querySelector('.gen-cap-left').textContent = tr(left === 1 ? 'LIST_CAP_FREE_ONE' : 'LIST_CAP_FREE_MANY').replace('{N}', left);
+        root.querySelector('.gen-cap').classList.toggle('is-full', left === 0);
+        root.querySelector('.gen-meter i').style.width = `${Math.min(100, Math.round(n / max * 100))}%`;
+    }
+    _rxNameHtml(address, name, hint, onchange) {
+        return `<div class="gen-input-box rx-name">
+                <input class="gen-input" type="text" maxlength="20" value="${escAttr(name || '')}" placeholder="${escAttr(hint)}" aria-label="${escAttr(tr('NAME'))}" data-address="${escAttr(address)}" onchange="${onchange};" onkeydown="if (event.key === 'Enter') this.blur();">
+                <svg class="rx-pen"><use href="#svg-edit"></use></svg>
+            </div>`;
+    }
+    // Un appui ou une trame redessine toute la liste : le nom en cours de saisie doit y survivre.
+    _rxKeepFocus(box) {
+        const act = box.contains(document.activeElement) ? document.activeElement : null;
+        if (!act || !act.dataset.address) return () => {};
+        const k = { addr: act.dataset.address, value: act.value, from: act.selectionStart, to: act.selectionEnd };
+        return () => {
+            const fld = box.querySelector(`input[data-address="${k.addr}"]`);
+            if (fld) { fld.value = k.value; fld.focus(); fld.setSelectionRange(k.from, k.to); }
+        };
+    }
+    _rxSignalHtml(rssi, address) {
+        if (typeof rssi === 'number' && rssi > -128) this._storeRemoteSignal(address, rssi);
+        else rssi = this._getStoredRemoteSignal(address);
+        if (typeof rssi !== 'number') return '—';
+        const n = rssi > -70 ? 4 : rssi > -80 ? 3 : 2;
+        const bars = [4, 7, 10, 14].map((h, i) => `<i${i < n ? ' class="on"' : ''} style="height:${h}px"></i>`).join('');
+        return `<span class="rx-bars sig-${this.rssiLevel(rssi)}" aria-hidden="true">${bars}</span>${rssi} ${tr('UNIT_DBM')}`;
     }
     _onRepeaterFrame(frame) {
         const addr = Number(frame.address);
         if (frame.valid === false || !(this.repeaters || []).includes(addr)) return;
         (this._repeaterSeen = this._repeaterSeen || {})[addr] = { cmd: frame.command, at: Date.now(), rssi: frame.rssi };
+        this._repeaterFrames = (this._repeaterFrames || 0) + 1;
         this._renderRepeaters();
     }
     _frameFactsHtml(frame) {
@@ -6292,6 +6533,15 @@ class Somfy {
         });
     }
 
+    renameRepeater(fld) {
+        const addr = Number(fld.dataset.address), old = (this.repeaterNames || {})[addr] || '';
+        const name = fld.value.trim();
+        if (name === old) return;
+        putJSON('/renameRepeater', { address: addr, name: name }, (err, data) => {
+            if (err) { ui.serviceError(err); fld.value = old; return; }
+            this.setRepeaterList(data);
+        });
+    }
     unlinkRepeater(address) {
         let prompt = ui.promptMessage(tr('PROMPT_UNLINK_REPEATER'), () => {
             putJSONSync('/unlinkRepeater', { address: address }, (err, repeaters) => {
@@ -6318,33 +6568,39 @@ class Somfy {
         });
         this._renderListeners();
     }
-    // Toute la liste est redessinée à chaque appui (14 lignes au plus) : le cadre « dernier appui »
-    // doit quitter la ligne précédente.
+    // Toute la liste est redessinée à chaque appui (14 tuiles au plus) : le cadre « dernier appui »
+    // doit quitter la tuile précédente. Un nom en cours de saisie survit au redessin.
     _renderListeners() {
-        const list = this.listeners;
+        const list = this.listeners, box = get('divListenList');
         const recent = list.reduce((a, l) => (l.lastRxAt && (!a || l.lastRxAt > a.lastRxAt)) ? l : a, null);
-        get('divListenList').innerHTML = list.map(l => this._listenerCardHtml(l, l === recent)).join('');
         const max = this.maxListeners || 14;
-        get('spanListenerCount').innerText = list.length;
-        get('spanListenerMax').innerText = max;
-        get('spanListenerBadge').innerText = `${list.length} / ${max}`;
+        const keep = this._rxKeepFocus(box);
+        box.innerHTML = this._rxAddTileHtml('somfy.linkListenRemote()', 'LISTENER_CAPTURE', 'LISTENER_CAPTURE_DESC', list.length >= max)
+            + list.map(l => this._listenerCardHtml(l, l === recent)).join('');
+        keep();
+        this._rxHero('divListenerPage', 'spanListenerHero', 'LISTENER_HERO', list.length, max);
         get('spanListenerPresses').innerText = this._listenerPresses || 0;
-        get('spanListenerLast').innerText = recent ? `${recent.name || recent.address} · ${recent.lastCommand || '?'} · ${this._listenerTime(recent.lastRxAt)}` : '—';
-        this.checkEmptyState();
+        get('spanListenerLast').innerText = recent ? this._listenerTime(recent.lastRxAt) : '—';
     }
     _listenerTime(t) {
         const d = new Date(t);
         return `${d.getHours().fmt('00')}:${d.getMinutes().fmt('00')}:${d.getSeconds().fmt('00')}`;
     }
     _listenerCardHtml(l, recent) {
-        const name = l.name ? escHtml(l.name) : escHtml(String(l.address));
+        const addr = escAttr(l.address);
         const shade = l.linkedShadeId !== 255 ? (this.shades || []).find(s => s.shadeId === l.linkedShadeId) : null;
-        const warn = shade ? `<em><svg><use href="#svg-warning"></use></svg>${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', shade.name))}</em>` : '';
-        const press = l.lastRxAt
-            ? `<span class="ls-cmd">${escHtml(l.lastCommand || '?')}</span><small>${this._listenerTime(l.lastRxAt)}</small>`
-            : `<span class="ls-cmd none">—</span><small>${tr('LISTENER_NEVER_HEARD')}</small>`;
-        const cls = recent ? 'ls-flash' : (shade ? 'warn' : (l.lastRxAt ? '' : 'idle'));
-        return `<div class="ls-row ${cls}" data-address="${escAttr(l.address)}" onclick="somfy.renameListenRemote('${escAttr(l.address)}');"><div class="ls-ico"><svg><use href="#svg-remote"></use></svg></div><div class="ls-row-t"><b>${name}</b><small>${escHtml(l.address)}</small>${this.remoteSignalHtml(l.lastRssi, l.address)}${warn}</div><div class="ls-press">${press}</div><button class="ls-del" type="button" onclick="event.stopPropagation(); somfy.unlinkListenRemote('${escAttr(l.address)}');"><svg><use href="#svg-trash"></use></svg></button></div>`;
+        const warn = shade ? `<p class="gen-tile-desc is-warning">${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', shade.name))}</p>` : '';
+        const last = l.lastRxAt ? `${escHtml(l.lastCommand || '?')} · ${this._listenerTime(l.lastRxAt)}` : tr('LISTENER_NEVER_HEARD');
+        return `<div class="rx-tile${recent ? ' is-recent' : ''}" data-address="${addr}">
+            ${this._rxNameHtml(l.address, l.name, String(l.address), 'somfy.renameListenRemote(this)')}
+            ${warn}
+            <div class="ed-ro-list">
+                <div class="ed-ro"><span>${tr('LISTENER_LAST_PRESS')}</span><b>${last}</b></div>
+                <div class="ed-ro"><span>${tr('M_SIGNAL')}</span><b>${this._rxSignalHtml(l.lastRssi, l.address)}</b></div>
+                <div class="ed-ro"><span>${tr('RADIO_ADDRESS')}</span><b class="rx-mono">${escHtml(l.address)}</b></div>
+            </div>
+            <button type="button" class="gen-btn gen-btn-danger" onclick="somfy.unlinkListenRemote('${addr}');">${tr('BT_UNLISTEN')}</button>
+        </div>`;
     }
     // Évènement WebSocket `listenerEvent` (SomfyShadeController::processListenerFrame) : un appui
     // retenu, déjà dédoublonné par le firmware. Le compteur d'appuis ne vaut que pour cette page.
@@ -6358,7 +6614,7 @@ class Somfy {
         this._renderListeners();
     }
 
-    // Même langage que l'ajout de télécommande d'un équipement (shadeSetup.bodyRemote) : une carte
+    // Même langage que l'ajout de télécommande d'un équipement (shadeSetup.twRemote) : une carte
     // d'état unique, l'écoute expire au bout de SETUP_LISTEN_MS.
     linkListenRemote() {
         if ((this.listeners || []).length >= (this.maxListeners || 14)) {
@@ -6432,58 +6688,15 @@ class Somfy {
         const exists = (this.listeners || []).some(x => Number(x.address) === Number(frame.address));
         this._listenerRender(div, exists ? 'already' : 'captured', frame);
     }
-    renameListenRemote(address) {
-        const l = (this.listeners || []).find(x => String(x.address) === String(address));
+    renameListenRemote(fld) {
+        const l = (this.listeners || []).find(x => String(x.address) === fld.dataset.address);
         if (!l) return;
-        let div = document.createElement('div');
-        div.className = 'inst-overlay';
-        div.id = 'divRenameListener';
-        div.dataset.address = address;
-        this._listenerNameStep(div, address, true);
-        shOverlay(div);
-    }
-    _listenerNameStep(div, address, isRename) {
-        const existing = (this.listeners || []).find(x => Number(x.address) === Number(address));
-        const known = this.frameAddressName(address);
-        // Avertissement, pas refus : l'utilisateur peut vouloir à la fois piloter un équipement et
-        // déclencher une automatisation avec la même touche.
-        const warn = known && !known.own && !existing ? `
-        <div class="warning">
-        <div class="warning-header"><svg><use href="#svg-warning"></use></svg><b>${tr("MSG_ALERT")}</b></div>
-        <div class="information-text"><span>${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', known.name))}</span></div>
-        </div>` : '';
-        div.innerHTML = `
-        <div class="instructions-content">
-        ${overlayHeader("LISTENER_TITLE", "LISTENER_NAME_DESC", "svg-remote", { subtitle: "LISTENER_NAME_DESC" })}
-        <div class="overlay-scroll-content">
-        <div class="uniRow"><div class="unifield-content"><label class="label" tr="REPEATER_ADDRESS">${tr('REPEATER_ADDRESS')}</label><span>${escHtml(address)}</span></div></div>
-        <div class="uniRow"><div class="unifield-content"><label class="label" for="fldListenerName">${tr('NAME')}</label>
-        <input id="fldListenerName" class="inputAndSelect" type="text" maxlength="20" placeholder="${escAttr(tr('ENTER_NAME'))}" value="${escAttr(existing ? existing.name : '')}"></div></div>
-        ${warn}
-        </div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="button-container-overlay">
-        <button id="btnListenerCancel" type="button" line>${tr("BT_CANCEL_1")}</button>
-        <button id="btnListenerSave" type="button">${tr("BT_SAVE")}</button>
-        </div>
-        </div>`;
-        // Contenu remplacé après shOverlay() pendant un scan : la croix d'en-tête est neuve et doit
-        // être rebranchée.
-        const closeBtn = div.querySelector('[close]');
-        if (closeBtn) closeBtn.onclick = () => requestCloseOverlay(div);
-        div.querySelector('#btnListenerCancel').onclick = () => requestCloseOverlay(div);
-        div.querySelector('#btnListenerSave').onclick = () => {
-            const name = div.querySelector('#fldListenerName').value.trim();
-            const overlay = ui.waitMessage(div);
-            putJSON(isRename ? '/renameListener' : '/linkListener', { address: Number(address), name: name }, (err, data) => {
-                overlay.remove();
-                if (err) { ui.serviceError(err); return; }
-                div.remove();
-                this.setListenerList(data);
-            });
-        };
-        const fld = div.querySelector('#fldListenerName');
-        if (fld) fld.focus();
+        const name = fld.value.trim();
+        if (name === (l.name || '')) return;
+        putJSON('/renameListener', { address: Number(l.address), name: name }, (err, data) => {
+            if (err) { ui.serviceError(err); fld.value = l.name || ''; return; }
+            this.setListenerList(data);
+        });
     }
     unlinkListenRemote(address) {
         let prompt = ui.promptMessage(tr('PROMPT_UNLINK_LISTENER'), () => {

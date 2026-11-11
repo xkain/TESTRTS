@@ -28,66 +28,160 @@ class GroupSetup {
     onClose() {
         const s = this.s, cb = s && s.changed ? s.onDone : null;
         if (s && s.changed) somfy.updateGroupList();
-        this.c = this.s = this.div = null;
+        this.c = this.s = this.div = this.w = null;
         if (typeof cb === 'function') cb();
     }
 
+    // ---------- Assistant de création : 4 étapes dans la coque wiz- (overlays.css) ----------
+    // Nom et pièce → équipements → liaison un par un → options. Le groupe est créé en quittant
+    // l'étape 2 : la liaison a besoin de son adresse. Les étapes de liaison réutilisent
+    // openMemory / holdStart / confirmLink du mode « une tâche » (fiche du groupe).
     open() {
         if (somfy.groups?.length >= 14) return ui.errorMessage(get('divSomfySettings'), tr('ERR_GROUP_LIMIT_REACHED'));
         getJSONSync('/getNextGroup', (err, next) => {
             if (err) return ui.serviceError(err);
             this.s = null;
             this.c = { name: '', roomId: 0, members: [], addr: next.remoteAddress, bits: next.bitLength || 56, proto: next.proto || 0 };
-            this.mount('GSETUP_TITLE', tr('GSETUP_STEP1_SUB'), [{ id: 'full', label: tr('SETUP_FULL_FORM'), action: 'groupSetup.fullForm()' }]);
-            this.renderCreate();
+            this.w = { step: 0 };
+            this.mountWiz();
+            this.renderWiz();
         });
     }
-    fullForm() {
-        closeOverlay(this.div);
-        this.c = this.s = this.div = null;
-        somfy.openEditGroup();
+    mountWiz() {
+        get('divGroupSetup')?.remove();
+        const div = document.createElement('div');
+        div.id = 'divGroupSetup';
+        div.className = 'modal-overlay genmod-overlay wiz-overlay';
+        div.innerHTML = `<div class="message-content wiz-window">
+            <aside class="wiz-side">
+            <div class="wiz-side-head"><h2 class="wiz-title">${tr('GSETUP_TITLE')}</h2>
+            <button type="button" class="wiz-close" data-wiz-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
+            <ol class="wiz-steps"></ol><div class="wiz-pbar" aria-hidden="true"></div>
+            <div class="wiz-sum"><span class="wiz-sum-icon"><svg><use href="#svg-group"></use></svg></span><span class="wiz-sum-text"><b></b><span></span></span></div>
+            </aside>
+            <section class="wiz-main"></section>
+            <footer class="wiz-foot"></footer></div>`;
+        this.div = div;
+        div._onClosed = () => { if (this.div === div) this.onClose(); };
+        div.onclick = (e) => { if (e.target.closest('[data-wiz-close]')) this.close(); };
+        shOverlay(div);
     }
-    renderCreate() {
-        const c = this.c, shades = somfy.shades || [];
-        const rooms = _rooms.map(r => `<option value="${r.roomId}"${r.roomId === c.roomId ? ' selected' : ''}>${escHtml(r.name)}</option>`).join('');
-        const rows = shades.map(sh => {
-            const on = c.members.includes(sh.shadeId);
-            return `<label class="gw-member${on ? ' sel' : ''}"><input type="checkbox"${on ? ' checked' : ''} onchange="groupSetup.toggle(${sh.shadeId})">
-                <svg class="gw-ico"><use href="#${this.icoOf(sh)}"></use></svg>
-                <span class="gw-name">${escHtml(sh.name)}<small>${tr(sh.paired ? 'SETUP_S_PAIRED' : 'GSETUP_S_UNPAIRED')} · ${sh.bitLength || 56} bits</small></span></label>`;
-        }).join('');
-        this.$('.setup-body').innerHTML = `
-            <div class="setup-sec"><div class="setup-fields">
-              <div class="uniRow"><div class="unifield-content"><label class="label" for="gsetupName">${tr('NAME')}</label>
-                <input id="gsetupName" class="inputAndSelect" maxlength="20" placeholder=" " value="${escAttr(c.name)}" oninput="groupSetup.c.name = this.value; groupSetup.refresh()"></div></div>
-              <div class="uniRow"><div class="unifield-content"><label class="label" for="gsetupRoom">${tr('ROOM')}</label>
-                <select id="gsetupRoom" class="inputAndSelect" onchange="groupSetup.c.roomId = parseInt(this.value, 10)">${rooms}</select></div></div>
-            </div></div>
-            <div class="setup-sec"><div class="setup-q">${tr('GSETUP_MEMBERS_Q')}</div>
-              <p class="setup-p sub">${tr(shades.length ? 'GSETUP_MEMBERS_DESC' : 'GSETUP_NO_DEVICE')}</p>
-              <div class="gw-members">${rows}</div></div>
-            <details class="setup-adv"><summary>${tr('SETUP_ADVANCED')}<span>${somfy.frameProtoLabel(c.proto)} · ${c.bits} bits · ID ${c.addr}</span></summary>
-              <div class="setup-adv-body">
-                <div class="uniRow"><div class="unifield-content"><label class="label">${tr('BIT')}</label>
-                  <select class="inputAndSelect" onchange="groupSetup.c.bits = parseInt(this.value, 10)">${[56, 80].map(v => `<option value="${v}"${c.bits === v ? ' selected' : ''}>${v}</option>`).join('')}</select></div></div>
-                <div class="uniRow"><div class="unifield-content"><label class="label">${tr('GROUP_ID')}</label>
-                  <input class="inputAndSelect" type="number" min="1" max="16777215" placeholder=" " value="${c.addr}" oninput="groupSetup.c.addr = parseInt(this.value, 10)"></div></div>
-                <div class="setup-note">${tr('GSETUP_ADV_NOTE')}</div>
+    // keepMain : appelé pendant la frappe du nom, on ne redessine que la colonne et le pied.
+    renderWiz(keepMain) {
+        const c = this.c, s = this.s, step = this.w.step, name = c.name.trim();
+        const links = s ? s.tasks : [];
+        const linked = links.filter(T => T.state === 'done').length;
+        const n = c.members.length;
+        const steps = [
+            ['GSETUP_W_STEP_NAME', name || tr('GSETUP_W_TO_CHOOSE')],
+            ['GSETUP_W_STEP_DEVICES', tr('GSETUP_W_CHOSEN').replace('{N}', n)],
+            ['GSETUP_W_STEP_LINK', tr('GSETUP_W_LINKED').replace('{N}', linked).replace('{T}', n)],
+            ['GSETUP_W_STEP_OPTS', tr('GSETUP_W_OPTS_DESC')]
+        ];
+        const bar = wizStepsHtml(steps.map(([k, d], i) => ({ title: tr(k), desc: d, state: i === step ? 'on' : i < step ? 'done' : '' })));
+        this.$('.wiz-steps').innerHTML = bar.steps;
+        this.$('.wiz-pbar').innerHTML = bar.bar;
+        this.$('.wiz-sum-text b').textContent = name || tr('GSETUP_W_NEW');
+        this.$('.wiz-sum-text span').textContent = tr('GSETUP_W_COUNT').replace('{N}', n);
+        const kick = tr('GSETUP_W_KICK').replace('{N}', step + 1);
+        const head = (title, extra = '') => `<div class="wiz-head"><div class="wiz-kick">${kick}${extra}</div><h2 class="wiz-h">${title}</h2></div>`;
+        const main = keepMain ? document.createElement('section') : this.$('.wiz-main');
+        let ok = true, hint = '';
+        if (step === 0) {
+            const rooms = _rooms.map(r => `<option value="${r.roomId}"${r.roomId === c.roomId ? ' selected' : ''}>${escHtml(r.name)}</option>`).join('');
+            main.innerHTML = `${head(tr('GSETUP_W_NAME_H'))}
+            <div class="wiz-grid">
+            <div class="gen-tile"><div class="gen-field"><label class="gen-field-label" for="gsetupName">${tr('NAME')}</label>
+              <div class="gen-input-box"><input id="gsetupName" class="gen-input" maxlength="20" placeholder="${escAttr(tr('ENTER_NAME'))}" value="${escAttr(c.name)}" oninput="groupSetup.c.name = this.value; groupSetup.renderWiz(true)"></div></div></div>
+            <div class="gen-tile"><div class="gen-field"><label class="gen-field-label" for="gsetupRoom">${tr('ROOM')}</label>
+              <div class="gen-input-box"><select id="gsetupRoom" class="gen-input" onchange="groupSetup.c.roomId = parseInt(this.value, 10)">${rooms}</select></div></div>
+              <button type="button" class="gen-btn wiz-add-room" onclick="somfy.openAddRoomInline('gsetup')"><svg><use href="#svg-add"></use></svg><span>${tr('BT_ADD_ROOM')}</span></button>
+              <p class="gen-tile-desc">${tr('GSETUP_ADV_NOTE')}</p></div>
+            </div>
+            <details class="wiz-adv"><summary>${tr('SETUP_ADVANCED')}<span>${somfy.frameProtoLabel(c.proto)} · ${c.bits} bits · ID ${c.addr}</span></summary>
+              <div class="wiz-grid">
+              <div class="gen-field"><label class="gen-field-label" for="gsetupBits">${tr('BIT')}</label><div class="gen-input-box"><select id="gsetupBits" class="gen-input" onchange="groupSetup.c.bits = parseInt(this.value, 10)">${[56, 80].map(v => `<option value="${v}"${c.bits === v ? ' selected' : ''}>${v}</option>`).join('')}</select></div></div>
+              <div class="gen-field"><label class="gen-field-label" for="gsetupAddr">${tr('GROUP_ID')}</label><div class="gen-input-box"><input id="gsetupAddr" class="gen-input" type="number" min="1" max="16777215" value="${c.addr}" oninput="groupSetup.c.addr = parseInt(this.value, 10)"></div></div>
               </div></details>`;
-        this.$('.setup-foot').innerHTML = `<button type="button" line onclick="groupSetup.close()">${tr('BT_CANCEL_1')}</button>
-            <button type="button" id="btnGsetupCreate" onclick="groupSetup.create()">${tr('BT_CREATE')}</button>`;
-        this.refresh();
+            ok = name.length > 0 && c.name.length <= 20;
+            if (!ok) hint = tr('GSETUP_W_HINT_NAME');
+        } else if (step === 1) {
+            const shades = somfy.shades || [];
+            main.innerHTML = `${head(tr('GSETUP_MEMBERS_Q'))}<p class="wiz-lead">${tr(shades.length ? 'GSETUP_MEMBERS_DESC' : 'GSETUP_NO_DEVICE')}</p>
+            <div class="wiz-grid">${shades.map(sh => {
+                const on = c.members.includes(sh.shadeId), off = !sh.paired;
+                return `<button type="button" class="wiz-check${on ? ' on' : ''}" ${off ? 'disabled' : ''} aria-pressed="${on}" onclick="groupSetup.toggle(${sh.shadeId})">
+                <span class="wiz-check-icon"><svg><use href="#${this.icoOf(sh)}"></use></svg></span>
+                <span class="wiz-check-text"><b>${escHtml(sh.name)}</b><small>${escHtml(off ? tr('GSETUP_S_UNPAIRED') : `${tr(somfy.shadeTypeKey(sh.shadeType) || 'SETUP_S_PAIRED')} · ${somfy._cfgRoomName(sh.roomId)}`)}</small></span>
+                <span class="wiz-check-box"><svg><use href="#svg-check"></use></svg></span></button>`;
+            }).join('')}</div>`;
+            ok = n > 0;
+            if (!ok) hint = tr('GSETUP_W_HINT_DEVICES');
+        } else if (step === 2) {
+            const T = s.tasks[s.cur];
+            const progress = `<div class="gen-tile"><h3 class="gen-tile-title">${tr('GSETUP_W_PROGRESS')}</h3>${links.map((L, k) => {
+                const st = L.state === 'done' ? 'done' : L.state === 'skipped' ? 'skipped' : k === s.cur ? 'cur' : '';
+                return `<div class="wiz-task ${st}"><span class="wiz-task-n">${st === 'done' ? '<svg><use href="#svg-check"></use></svg>' : k + 1}</span><b>${escHtml(L.name)}</b><span>${tr({ done: 'GSETUP_S_LINKED', skipped: 'GSETUP_W_S_SKIPPED', cur: 'GSETUP_W_S_CUR' }[st] || 'SETUP_S_TODO')}</span></div>`;
+            }).join('')}</div>`;
+            if (T) {
+                const nm = escHtml(T.name), memOk = T.sub === 'grp' || T.sub === 'grpq';
+                // Oui / Non neutres : aucun des deux ne doit paraître déjà choisi.
+                const memBody = T.sub === 'memwait' ? `<p class="gen-tile-desc">${tr('GSETUP_MEM_DESC')}</p><div class="gen-btn-row"><button type="button" class="gen-btn gen-btn-primary wiz-busy" aria-disabled="true"><span class="wiz-spin"></span>${tr('GSETUP_MEM_SENDING')}</button></div>`
+                    : T.sub === 'mem' ? `<p class="gen-tile-desc">${tr('GSETUP_MEM_DESC')}</p><div class="gen-btn-row"><button type="button" class="gen-btn gen-btn-primary" onclick="groupSetup.openMemory()">${tr('GSETUP_MEM_BTN')}</button></div>`
+                    : T.sub === 'memq' ? `<p class="wiz-q">${this.t('GSETUP_MEM_Q', { name: nm })}</p><div class="gen-btn-row"><button type="button" class="gen-btn" onclick="groupSetup.sub('memno')">${tr('BT_NO')}</button><button type="button" class="gen-btn" onclick="groupSetup.sub('grp')">${tr('BT_YES')}</button></div>`
+                    : T.sub === 'memno' ? `<p class="wiz-warn">${this.t('GSETUP_MEM_NO', { name: nm })}</p><div class="gen-btn-row"><button type="button" class="gen-btn" onclick="groupSetup.sub('mem')">${tr('BT_RETRY')}</button><button type="button" class="gen-btn" onclick="groupSetup.sub('grp')">${tr('GSETUP_MEM_OTHER')}</button></div>`
+                    : `<p class="wiz-ok"><svg><use href="#svg-check"></use></svg>${tr('GSETUP_MEM_OK')}</p>`;
+                const grpBody = T.sub === 'grpq' ? `<p class="wiz-q">${this.t('GSETUP_GRP_Q', { name: nm })}</p><div class="gen-btn-row"><button type="button" class="gen-btn" onclick="groupSetup.sub('grp')">${tr('SETUP_RETRY_NO')}</button><button type="button" class="gen-btn" onclick="groupSetup.confirmLink()">${tr('GSETUP_GRP_YES')}</button></div>`
+                    : `<p class="gen-tile-desc">${tr('GSETUP_GRP_DESC')}</p><div class="gen-btn-row"><button type="button" id="btnGsetupHold" class="gen-btn gen-btn-primary"${memOk ? '' : ' disabled'} onmousedown="groupSetup.holdStart(event)" ontouchstart="event.preventDefault(); groupSetup.holdStart()" onmouseup="groupSetup.holdEnd(event)" ontouchend="groupSetup.holdEnd()">${tr('GSETUP_GRP_BTN')}</button></div>`;
+                main.innerHTML = `${head(this.t('GSETUP_T_LINK', { name: nm }), ' · ' + tr('GSETUP_W_LINK_POS').replace('{I}', s.cur + 1).replace('{T}', links.length))}
+                <div class="wiz-grid">
+                <div class="gen-tile"><h3 class="gen-tile-title">${this.t('GSETUP_MEM_TITLE', { name: nm })}</h3>${memBody}</div>
+                <div class="gen-tile"><h3 class="gen-tile-title">${tr('GSETUP_GRP_TITLE')}</h3>${grpBody}</div>
+                ${progress}</div>`;
+                main.innerHTML += `<button type="button" class="wiz-link wiz-skip-in" onclick="groupSetup.skip()">${tr('SETUP_SKIP')}</button>`;
+            } else main.innerHTML = `${head(tr('GSETUP_W_STEP_LINK'))}<div class="wiz-grid">${progress}</div>`;
+            ok = !T;
+            if (!ok) hint = tr('GSETUP_W_HINT_LINK');
+        } else {
+            const all = links.every(T => T.state === 'done'), gname = escHtml(s.group.name);
+            const seg = (k, opts) => `<span class="gen-seg">${opts.map(([v, l]) => `<button type="button" class="wiz-opt${s[k] === v ? ' on' : ''}" aria-pressed="${s[k] === v}" onclick="groupSetup.opt('${k}','${v}')">${tr(l)}</button>`).join('')}</span>`;
+            // Normale = 1 répétition (valeur d'usine), Renforcée = 3 ; le nombre exact reste à portée,
+            // replié, pour qui sait ce qu'il veut. Dans le doute, on conseille de ne rien toucher.
+            const reach = `<span class="gen-seg"><button type="button" class="wiz-opt${s.rep <= 1 ? ' on' : ''}" aria-pressed="${s.rep <= 1}" onclick="groupSetup.setRep(1)">${tr('SETUP_REACH_NORMAL')}</button><button type="button" class="wiz-opt${s.rep > 1 ? ' on' : ''}" aria-pressed="${s.rep > 1}" onclick="groupSetup.setRep(3)">${tr('SETUP_REACH_STRONG')}</button></span>
+                <p class="gen-tile-desc">${tr('SETUP_REACH_HINT')}</p>
+                <details class="wiz-adv"${s.rep === 1 || s.rep === 3 ? '' : ' open'}><summary>${tr('SETUP_REACH_CUSTOM')}</summary>
+                <div class="gen-input-box"><select class="gen-input" aria-label="${escAttr(tr('REPEAT_COMMANDS'))}" onchange="groupSetup.setRep(parseInt(this.value, 10))">${[0, 1, 2, 3, 4, 5, 6, 7].map(v => `<option value="${v}"${s.rep === v ? ' selected' : ''}>${tr(v ? `OPT_${v}TIME` : 'OPT_NO_REPEAT')}</option>`).join('')}</select></div></details>`;
+            const led = this.hasLed() ? `<div class="gen-tile"><h3 class="gen-tile-title">${tr('LED_FEEDBACK')}</h3><p class="gen-tile-desc">${tr({ 'BOX-WIFI': 'GSETUP_LED_Q_BOX_WIFI', 'BOX-ETH': 'GSETUP_LED_Q_BOX_ETH' }[window.__hardwareProfile] || 'GSETUP_LED_Q')}</p>${seg('led', [['oui', 'BT_YES'], ['non', 'BT_NO']])}</div>` : '';
+            main.innerHTML = `${head(this.t(all ? 'GSETUP_READY' : 'GSETUP_CREATED', { name: gname }))}
+            <p class="${all ? 'wiz-ok' : 'wiz-warn'}">${all ? '<svg><use href="#svg-check"></use></svg>' : ''}${tr(all ? 'GSETUP_READY_DESC' : 'GSETUP_PARTIAL_DESC')}</p>
+            <div class="wiz-grid">
+            <div class="gen-tile"><h3 class="gen-tile-title">${tr('GSETUP_FLIP_Q')}</h3><p class="gen-tile-desc">${tr('GSETUP_FLIP_DESC')}</p>${seg('flip', [['normal', 'GSETUP_FLIP_NORMAL'], ['inv', 'GSETUP_FLIP_INV']])}</div>
+            <div class="gen-tile"><h3 class="gen-tile-title">${tr('SETUP_REACH_Q')}</h3><p class="gen-tile-desc">${tr('GSETUP_REACH_DESC')}</p>${reach}</div>
+            ${led}</div>`;
+        }
+        const created = !!s;
+        if (!keepMain) wizScrollTop(this.w, main, `${step}:${s ? s.cur : ''}`);
+        const btn = (cls, attrs, key) => `<button type="button" class="gen-btn${cls}" ${attrs}>${tr(key)}</button>`;
+        // Retour à gauche ; à droite, la sortie juste avant l'action principale, là où on la cherche.
+        this.$('.wiz-foot').innerHTML = `${step === 1 ? btn('', 'onclick="groupSetup.wizStep(0)"', 'BT_GO_BACK') : ''}
+            <span class="wiz-foot-gap"></span><span class="wiz-foot-hint">${escHtml(hint)}</span>
+            ${step === 2 && s.tasks[s.cur] ? btn(' wiz-skip', 'onclick="groupSetup.skip()"', 'SETUP_SKIP') : ''}
+            ${btn(' wiz-quit', 'data-wiz-close', created ? 'SETUP_LATER' : 'BT_CANCEL')}
+            ${btn(' gen-btn-primary', `onclick="groupSetup.wizNext()"${ok ? '' : ' disabled'}`, step === 3 ? 'SETUP_FINISH' : 'BT_CONTINUE')}`;
+    }
+    wizStep(i) { this.w.step = i; this.renderWiz(); }
+    wizNext() {
+        const step = this.w.step;
+        if (step === 0) return this.wizStep(1);
+        if (step === 1) return this.create();
+        if (step === 2) return this.wizStep(3);
+        this.finishWiz();
     }
     toggle(id) {
         const m = this.c.members, i = m.indexOf(id);
         if (i >= 0) m.splice(i, 1); else m.push(id);
         if (m.length === 1 && i < 0) this.c.bits = (somfy.shades.find(x => x.shadeId === id) || {}).bitLength || this.c.bits;
-        this.renderCreate();
-    }
-    refresh() {
-        const ok = this.c.name.trim().length > 0 && this.c.name.length <= 20 && this.c.members.length > 0;
-        const b = this.$('#btnGsetupCreate');
-        if (b) { b.disabled = !ok; b.classList.toggle('disabled', !ok); }
+        this.renderWiz();
     }
     create() {
         const c = this.c;
@@ -101,16 +195,27 @@ class GroupSetup {
             const tasks = c.members.map(id => {
                 const sh = somfy.shades.find(x => x.shadeId === id);
                 return { id: 'link', shadeId: id, name: sh ? sh.name : '', sub: 'mem', state: null };
-            }).concat([{ id: 'opts', state: null }]);
-            this.start(group, tasks, false);
+            });
+            this.s = { group, tasks, cur: 0, single: false, changed: true,
+                flip: group.flipCommands ? 'inv' : 'normal', rep: group.repeats ?? 1, led: group.ledFeedback ? 'oui' : 'non' };
+            this.wizStep(2);
+        });
+    }
+    finishWiz() {
+        const s = this.s, fields = { groupId: s.group.groupId, flipCommands: s.flip === 'inv', repeats: s.rep };
+        if (this.hasLed()) fields.ledFeedback = s.led === 'oui';
+        putJSONSync('/saveGroup', fields, (err) => {
+            if (err) return ui.serviceError(err);
+            ui.successMessage(tr('MSG_ADD_SUCCESS'));
+            this.closeDone();
         });
     }
 
     start(group, tasks, single, onDone) {
-        this.s = { group, tasks, cur: 0, single, onDone, changed: !single,
-            flip: group.flipCommands ? 'inv' : 'normal', reach: (group.repeats ?? 1) > 1 ? 'strong' : 'normal', led: group.ledFeedback ? 'oui' : 'non' };
+        this.w = null;
+        this.s = { group, tasks, cur: 0, single, onDone, changed: false };
         if (!this.div || !this.div.isConnected) this.mount('SETUP_RESUME_TITLE', '');
-        this.head(tr('SETUP_RESUME_TITLE'), single ? group.name : this.t('GSETUP_STEP2_SUB', { name: group.name }));
+        this.head(tr('SETUP_RESUME_TITLE'), group.name);
         this.$('.overlayHeader-dropdown-container')?.remove();
         this.render();
     }
@@ -139,8 +244,9 @@ class GroupSetup {
         return tr('OPTION');
     }
     render() {
+        if (this.w) return this.renderWiz();
         const s = this.s;
-        if (s.cur >= s.tasks.length) return s.single ? this.closeDone() : this.renderFinal();
+        if (s.cur >= s.tasks.length) return this.closeDone();
         this.$('.setup-body').innerHTML = `<div class="setup-tasks">${s.tasks.map((T, k) => {
             const cls = k === s.cur ? 'active' : (T.state || '');
             const n = T.state === 'done' ? '<svg><use href="#svg-check"></use></svg>' : k + 1;
@@ -152,12 +258,12 @@ class GroupSetup {
     }
     body(T) {
         if (T.id === 'pick') return this.bodyPick();
-        if (T.id === 'opts') return this.bodyOpts();
         const name = escHtml(T.name), un = T.id === 'unlink';
         if (T.sub === 'mem') return `
             <p class="setup-p"><b>${this.t('GSETUP_MEM_TITLE', { name })}</b></p>
             <p class="setup-p sub">${tr(un ? 'GSETUP_MEM_DESC_UN' : 'GSETUP_MEM_DESC')}</p>
             <div class="setup-actions"><button type="button" onclick="groupSetup.openMemory()">${tr('GSETUP_MEM_BTN')}</button></div>`;
+        if (T.sub === 'memwait') return `<p class="setup-p sub">${tr('GSETUP_MEM_SENDING')}</p>`;
         if (T.sub === 'memq') return `
             <p class="setup-p">${this.t('GSETUP_MEM_Q', { name })}</p>
             <div class="setup-actions"><button type="button" line onclick="groupSetup.sub('memno')">${tr('BT_NO')}</button><button type="button" class="btn-success" onclick="groupSetup.sub('grp')">${tr('BT_YES')}</button></div>`;
@@ -189,27 +295,16 @@ class GroupSetup {
         this.s.tasks = [{ id: 'link', shadeId: id, name: sh ? sh.name : '', sub: 'mem', state: null }];
         this.render();
     }
-    bodyOpts() {
-        const s = this.s;
-        const chip = (k, v, l) => `<div class="setup-chip${s[k] === v ? ' sel' : ''}" onclick="groupSetup.opt('${k}','${v}')">${l}</div>`;
-        let h = `<div class="setup-optq"><div class="setup-q2">${tr('GSETUP_FLIP_Q')}</div>
-            <p class="setup-p sub">${tr('GSETUP_FLIP_DESC')}</p>
-            <div class="setup-chips">${chip('flip', 'normal', tr('GSETUP_FLIP_NORMAL'))}${chip('flip', 'inv', tr('GSETUP_FLIP_INV'))}</div></div>
-            <div class="setup-optq"><div class="setup-q2">${tr('SETUP_REACH_Q')}</div>
-            <p class="setup-p sub">${tr('GSETUP_REACH_DESC')}</p>
-            <div class="setup-chips">${chip('reach', 'normal', tr('SETUP_REACH_NORMAL'))}${chip('reach', 'strong', tr('SETUP_REACH_STRONG'))}</div>
-            <p class="setup-p sub setup-why"><i>${tr('GSETUP_REACH_HINT')}</i></p></div>`;
-        if (this.hasLed()) h += `<div class="setup-optq"><div class="setup-q2">${tr({ 'BOX-WIFI': 'GSETUP_LED_Q_BOX_WIFI', 'BOX-ETH': 'GSETUP_LED_Q_BOX_ETH' }[window.__hardwareProfile] || 'GSETUP_LED_Q')}</div>
-            <div class="setup-chips">${chip('led', 'oui', tr('BT_YES'))}${chip('led', 'non', tr('BT_NO'))}</div></div>`;
-        return `${h}<div class="setup-actions"><button type="button" onclick="groupSetup.optsDone()">${tr('SETUP_VALIDATE')}</button></div>`;
-    }
     opt(k, v) { this.s[k] = v; this.render(); }
+    setRep(v) { this.s.rep = v; this.render(); }
     sub(v) { this.s.tasks[this.s.cur].sub = v; this.render(); }
     task() { return this.s.tasks[this.s.cur]; }
 
+    // L'appui long dure 2 à 4 s avant la réponse : on l'affiche tout de suite, sinon on reclique.
     openMemory() {
+        this.sub('memwait');
         putJSONSync('/shadeCommand', { shadeId: this.task().shadeId, command: 'prog', repeat: 40 }, (err) => {
-            if (err) return ui.serviceError(err);
+            if (err) { this.sub('mem'); return ui.serviceError(err); }
             this.sub('memq');
         });
     }
@@ -240,40 +335,23 @@ class GroupSetup {
             this.done(tr(un ? 'GSETUP_S_UNLINKED' : 'GSETUP_S_LINKED'));
         });
     }
-    optsDone() {
-        const s = this.s, g = s.group, rep = g.repeats ?? 1, fields = { groupId: g.groupId, flipCommands: s.flip === 'inv' };
-        fields.repeats = s.reach === 'strong' ? (rep > 1 ? rep : 3) : (rep > 1 ? 1 : rep);
-        if (this.hasLed()) fields.ledFeedback = s.led === 'oui';
-        putJSONSync('/saveGroup', fields, (err, group) => {
-            if (err) return ui.serviceError(err);
-            if (group) s.group = group;
-            s.changed = true;
-            const parts = [s.flip === 'inv' ? tr('GSETUP_S_FLIPPED') : '', tr(s.reach === 'strong' ? 'SETUP_S_REACH_STRONG' : 'SETUP_S_REACH_NORMAL'), fields.ledFeedback ? tr('SETUP_S_LED') : ''];
-            this.done(parts.filter(Boolean).join(' · '));
-        });
-    }
     done(note) { const T = this.task(); T.state = 'done'; T.note = note; this.s.cur++; this.render(); }
     skip() { this.task().state = 'skipped'; this.s.cur++; this.render(); }
     closeDone() { if (this.div) closeOverlay(this.div); }
-    renderFinal() {
-        const s = this.s, todo = s.tasks.filter(T => T.state !== 'done'), name = escHtml(s.group.name);
-        this.$('.setup-body').innerHTML = `<div class="setup-final"><svg><use href="#svg-group"></use></svg>
-            <h3>${this.t(todo.length ? 'GSETUP_CREATED' : 'GSETUP_READY', { name })}</h3>
-            <p class="setup-p sub">${tr(todo.length ? 'GSETUP_PARTIAL_DESC' : 'GSETUP_READY_DESC')}</p></div>
-            <div class="setup-tasks">${s.tasks.map((T, k) => `<div class="setup-task ${T.state || ''}"><div class="setup-task-h"><div class="setup-task-n">${T.state === 'done' ? '<svg><use href="#svg-check"></use></svg>' : k + 1}</div><div class="setup-task-t">${this.title(T)}</div><div class="setup-task-s">${T.state === 'done' ? T.note : tr(T.id === 'opts' ? 'SETUP_S_TODO' : 'GSETUP_S_NOT_LINKED')}</div></div></div>`).join('')}</div>`;
-        const gid = s.group.groupId;
-        this.$('.setup-foot').innerHTML = `<button type="button" line onclick="groupSetup.closeDone(); somfy.openEditGroup(${gid})">${tr('SETUP_OPEN_FORM')}</button><button type="button" onclick="groupSetup.closeDone()">${tr('SETUP_FINISH')}</button>`;
-    }
-
+    // Fiche groupe : tuiles des pages-listes, la tuile d'ajout en premier.
     renderMembers(group) {
         const list = get('divGroupMembers');
         if (!list) return;
-        const shades = group.linkedShades || [];
-        list.innerHTML = shades.map(sh => `<div class="somfyLinkedRemote linkedRemoteCard" data-shadeid="${sh.shadeId}"><div class="remote-card-top">
-            <div class="linkedWrap"><svg class="icon-svg"><use href="#${this.icoOf(sh)}"></use></svg></div>
-            <div class="linkedContent"><div class="linkedRemote-title">${escHtml(sh.name)}</div>
-            <div class="linkedRemote-meta"><span>${tr('ADDR')} ${sh.remoteAddress}</span><span class="linkedRemote-sep">|</span><span>${sh.bitLength || 56} bits</span></div></div>
-            <div class="linkedRemote-btn-delete" title="${escAttr(tr('GSETUP_UNLINK_TIP'))}" onclick="groupSetup.runUnlink(${group.groupId}, ${sh.shadeId})"><svg><use href="#svg-unlink"></use></svg></div></div></div>`).join('');
+        const gid = group.groupId;
+        list.innerHTML = `<button type="button" id="btnLinkShade" class="cfg-tile cfg-tile-add" onclick="groupSetup.runLink(${gid})"><svg><use href="#svg-add"></use></svg><span>${tr('BT_LINK_DEVICE')}</span><small>${tr('GROUP_LINK_DESC')}</small></button>`
+            + (group.linkedShades || []).map(sh => {
+                const typeKey = somfy.shadeTypeKey(sh.shadeType);
+                return `<div class="cfg-tile" data-shadeid="${sh.shadeId}" onclick="somfy.openEditShade(${sh.shadeId})">
+            <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#${this.icoOf(sh)}"></use></svg></span>${somfy.cfgTileMenu(`groupSetup.runUnlink(${gid}, ${sh.shadeId})`, '', 'GSETUP_UNLINK_TIP')}</div>
+            <div class="cfg-tile-name"><span class="name-text">${escHtml(sh.name)}</span>${typeKey ? `<span class="cfg-tile-sub">${tr(typeKey)}</span>` : ''}</div>
+            <div class="cfg-tile-foot"><span class="grp-paired">${tr('GSETUP_S_LINKED')}</span><span class="cfg-tile-id">${sh.remoteAddress}</span></div>
+            </div>`;
+            }).join('');
     }
 }
 const groupSetup = new GroupSetup();

@@ -21,6 +21,8 @@
 #define REPEATER_REC_SIZE 77
 #define LISTENER_HDR_VER 1
 #define LISTENER_REC_SIZE 32   // adresse (11) + nom (21)
+#define REPEATER_NAME_HDR_VER 1
+#define REPEATER_NAME_REC_SIZE 32   // adresse (11) + nom (21)
 
 extern ConfigSettings settings;
 extern ScheduleController schedule;
@@ -429,6 +431,7 @@ bool ShadeConfigFile::save(SomfyShadeController *s) {
   }
   this->writeRepeaterRecord(s);
   this->writeListenerBlock(s);
+  this->writeRepeaterNameBlock(s);
   return true;
 }
 bool ShadeConfigFile::backup(SomfyShadeController *s) {
@@ -467,6 +470,7 @@ bool ShadeConfigFile::backup(SomfyShadeController *s) {
   this->writeTransRecord(s->transceiver.config);
   this->writeScheduleBlock();
   this->writeListenerBlock(s);
+  this->writeRepeaterNameBlock(s);
   return true;
 }
 bool ShadeConfigFile::validate() {
@@ -715,6 +719,9 @@ bool ShadeConfigFile::restoreFile(SomfyShadeController *s, const char *filename,
   if(opts.shades) this->readScheduleBlock();
   else this->skipScheduleBlock();
   if(opts.listeners) this->readListenerBlock(s, true);
+  else this->skipListenerBlock();
+  // Absent d'une sauvegarde plus ancienne : linkRepeater() a déjà vidé les noms des répéteurs relus.
+  if(opts.repeaters) this->readRepeaterNameBlock(s);
   if(opts.settings || opts.network) settings.save();
   if(opts.settings) settings.NTP.save();
   if(opts.network) {
@@ -843,7 +850,6 @@ bool ShadeConfigFile::readTransRecord(transceiver_config_t &cfg) {
 }
 bool ShadeConfigFile::readSettingsRecord() {
   if(this->header.settingsRecordSize > 0) {
-    uint32_t startPos = this->file.position();
     DBG_PRINTLN("Reading settings from file...");
     char ver[24];
     this->readVarString(ver, sizeof(ver));
@@ -904,7 +910,9 @@ bool ShadeConfigFile::readSettingsRecord() {
         if(ok) strlcpy(settings.iconPack, pack, sizeof(settings.iconPack));
       }
     }
-    if(this->file.position() != startPos + this->header.settingsRecordSize) {
+    // Taille annoncée trop courte de v2.5.1 à v2.6.1 : ne drainer que si la fin de ligne n'est
+    // pas déjà lue, sinon l'enregistrement réseau est avalé et la radio jamais relue.
+    if(!this->atRecordEnd()) {
       DBG_PRINTLN("Reading to end of settings record");
       this->seekChar(CFG_REC_END);
     }
@@ -1139,6 +1147,7 @@ bool ShadeConfigFile::loadFile(SomfyShadeController *s, const char *filename) {
       this->readRepeaterRecord(s);
   }
   this->readListenerBlock(s, false);
+  this->readRepeaterNameBlock(s);
   if(opened) {
     DBG_PRINTLN("Closing shade config file");
     this->end();
@@ -1504,5 +1513,62 @@ bool ShadeConfigFile::readListenerBlock(SomfyShadeController *s, bool restoring)
   }
   s->isDirty = restoring ? true : wasDirty;
   DBG_PRINTF("Loaded %u listener(s)\n", (unsigned)s->listenerCount());
+  return true;
+}
+bool ShadeConfigFile::skipListenerBlock() {
+  uint32_t pos = this->file.position();
+  if(this->header.version < 27 || this->file.size() < pos + 14) return true;
+  uint8_t version = this->readUInt8(0);
+  uint16_t recSize = this->readUInt16(0);
+  uint8_t recCount = this->readUInt8(255);
+  if(version == 0 || version > LISTENER_HDR_VER || recSize == 0 || recSize > 255 || recCount > SOMFY_MAX_LISTENERS) {
+    this->file.seek(pos, SeekSet);
+    return false;
+  }
+  for(uint8_t i = 0; i < recCount; i++) {
+    if(!this->seekChar(CFG_REC_END)) return false;
+  }
+  return true;
+}
+// Noms des répéteurs : bloc à part, après celui des télécommandes écoutées, plutôt qu'un champ
+// de plus dans l'enregistrement des répéteurs (taille fixe, relu par les versions antérieures).
+// Seuls les répéteurs nommés y figurent ; le nom est rattaché par l'adresse, pas par le rang.
+bool ShadeConfigFile::writeRepeaterNameBlock(SomfyShadeController *s) {
+  uint8_t count = 0;
+  for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++)
+    if(s->repeaters[i] != 0 && s->repeaterNames[i][0]) count++;
+  this->writeUInt8(REPEATER_NAME_HDR_VER);
+  this->writeUInt16(REPEATER_NAME_REC_SIZE);
+  this->writeUInt8(count, CFG_REC_END);
+  for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++) {
+    if(s->repeaters[i] == 0 || !s->repeaterNames[i][0]) continue;
+    this->writeUInt32(s->repeaters[i]);
+    this->writeString(s->repeaterNames[i], sizeof(s->repeaterNames[i]), CFG_REC_END);
+  }
+  return true;
+}
+bool ShadeConfigFile::readRepeaterNameBlock(SomfyShadeController *s) {
+  uint32_t pos = this->file.position();
+  if(this->header.version < 27 || this->file.size() < pos + 14) return true;
+  uint8_t version = this->readUInt8(0);
+  uint16_t recSize = this->readUInt16(0);
+  uint8_t recCount = this->readUInt8(255);
+  if(version == 0 || version > REPEATER_NAME_HDR_VER || recSize == 0 || recSize > 255 || recCount > SOMFY_MAX_REPEATERS) {
+    Serial.printf("[CFG] bloc noms des repeteurs illisible (version %u, taille %u, nombre %u) -- ignore\n",
+      (unsigned)version, (unsigned)recSize, (unsigned)recCount);
+    this->file.seek(pos, SeekSet);
+    return false;
+  }
+  bool wasDirty = s->isDirty;
+  for(uint8_t i = 0; i < recCount; i++) {
+    uint32_t startPos = this->file.position();
+    uint32_t address = this->readUInt32(0);
+    char name[sizeof(s->repeaterNames[0])];
+    this->readString(name, sizeof(name));
+    if(this->file.position() != startPos + recSize) this->seekChar(CFG_REC_END);
+    s->renameRepeater(address, name);
+  }
+  // Restauration : opts.repeaters a déjà marqué la config à réécrire ; au chargement, rien à écrire.
+  s->isDirty = wasDirty;
   return true;
 }

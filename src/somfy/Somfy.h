@@ -547,11 +547,14 @@ class SomfyShadeController {
     bool isAnyShadeMoving();
     void compressRepeaters();
     uint32_t repeaters[SOMFY_MAX_REPEATERS] = {0};
+    // Même rang que repeaters[] : compressRepeaters() déplace les deux ensemble.
+    char repeaterNames[SOMFY_MAX_REPEATERS][21] = {};
     SomfyRoom rooms[SOMFY_MAX_ROOMS];
     SomfyShade shades[SOMFY_MAX_SHADES];
     SomfyGroup groups[SOMFY_MAX_GROUPS];
     bool linkRepeater(uint32_t address);
     bool unlinkRepeater(uint32_t address);
+    bool renameRepeater(uint32_t address, const char *name);
     somfy_listener_t listeners[SOMFY_MAX_LISTENERS];
     void compressListeners();
     // 0 si ajoutée (ou déjà présente : son nom est alors mis à jour), sinon un code de refus pris
@@ -578,6 +581,7 @@ class SomfyShadeController {
     void toJSONGroups(JsonFormatter &json);
     void toJSONGroups(JsonFormatter &json, bool secrets);
     void toJSONRepeaters(JsonFormatter &json);
+    void toJSONRepeaterNames(JsonFormatter &json);
     void toJSONListener(JsonFormatter &json, somfy_listener_t *l, bool secrets);
     void toJSONListeners(JsonFormatter &json, bool secrets);
     uint8_t repeaterCount();

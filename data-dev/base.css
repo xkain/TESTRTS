@@ -92,7 +92,6 @@
     --color-bg-badge:color-mix(in srgb, var(--color-accent) 14%, #fff);
     --color-bg-icon: color-mix(in srgb, var(--color-accent) 4%, #fff);
 
-    --color-circle-indicator:  #dcdcdd;
 
     --color-icon-border: color-mix(in srgb, var(--color-accent) 16%, #fff);
 
@@ -199,7 +198,6 @@
 
     --color-bg-badge: color-mix(in srgb, var(--color-accent) 8%, #000000);
 
-    --color-circle-indicator:  #3a3a3c;
 
     --color-bg-icon: color-mix(in srgb, var(--color-accent) 4%, #000000);
 
@@ -269,6 +267,111 @@
     --color-tooltip-bg:#1c1e21;
     --color-tooltip-link:color-mix(in srgb,var(--color-accent),#ffffff 55%);
     --opacity-logo-page:0.1;
+}
+
+/* =======================================================================
+ *  JETONS DE LA NOUVELLE INTERFACE (maquette A2, validés le 05/11/2026)
+ *  Les pages migrées n'utilisent que ceux-ci ; les --color-* au-dessus
+ *  disparaîtront avec la dernière page de l'ancienne interface.
+ *  ======================================================================= */
+:root {
+    --r-1: 6px;
+    --r-2: 12px;
+    --r-3: 14px;
+    --r-4: 18px;
+    --r-5: 22px;
+    --r-pill: 999px;
+    /* Échelle de texte en em : la page migrée pose 16 px sur son conteneur (html est à 14 px),
+       et seuls les éléments qui portent du texte fixent une taille, sinon les em se multiplient. */
+    --fs-1: .75em;
+    --fs-2: .8125em;
+    --fs-3: .875em;
+    --fs-4: .9375em;
+    --fs-5: 1.125em;
+    --fs-6: 1.25em;
+    --fs-7: 1.375em;
+    /* Tuiles de catalogue et de liste, relevées sur la maquette A2 (ListPage) : la page
+       Général et ses deux fenêtres servent de gabarit, les pages migrées ensuite reprennent
+       ces jetons plutôt que de réinventer des chiffres. */
+    --tile-min: 230px;
+    --tile-gap: 14px;
+    --tile-pad: 18px;
+    --tile-minh: 176px;
+    --tile-icon: 48px;
+}
+:root[data-theme="light"] {
+    --bg: #eceae6;
+    --panel: #f7f6f3;
+    --surface: #ffffff;
+    --surface-2: #f1efeb;
+    --sunken: #dcdad5;
+    --topbar: #f8fafd;
+    --border: #dcdfe4;
+    --divider: #eeece8;
+    --text: #17181c;
+    --text-2: #3b3d44;
+    --text-3: #6b6d74;
+    --accent: #1a5fb4;
+    --on-fill: #17181c;
+    --on-fill-text: #ffffff;
+    --info-bg: #e5eefa;
+    --info: #154c90;
+    --violet-bg: #efe7fb;
+    --violet: #5b21b6;
+    --warn-bg: #fff1d6;
+    --warn: #8a5300;
+    --danger-bg: #fdecea;
+    --danger: #b3261e;
+    --ok-bg: #e3f3e5;
+    --ok: #1f6b24;
+    /* Illustration de l'appareil, page Appareil (svg-fwDevice). */
+    --fw-dev-top: #ffffff;
+    --fw-dev-bottom: #d5d9dd;
+    --fw-dev-edge: rgba(0, 0, 0, .16);
+    --fw-dev-gloss: rgba(255, 255, 255, .6);
+    --fw-dev-ink: #878d95;
+    --fw-dev-line: #bcc1c8;
+    /* Ombre des fenêtres (JETONS A2) : c'est elle qui détache une fenêtre du panneau de même
+       couleur qu'elle recouvre -- sans quoi la colonne d'identité de la fenêtre se confond
+       avec celle de la page. */
+    --shadow-window: 0 14px 34px rgba(0, 0, 0, .18);
+    /* Voile de la page derrière une fenêtre : assombrit la zone de contenu seule, pour
+       que la page recule et que la fenêtre s'en détache même à couleur égale. */
+    --scrim-page: rgba(0, 0, 0, .14);
+}
+:root[data-theme="dark"] {
+    --bg: #0e1013;
+    --panel: #1a1e24;
+    --surface: #222730;
+    --surface-2: #2a2f38;
+    --sunken: #16191e;
+    --topbar: #14171b;
+    --border: #363c47;
+    --divider: #2a2f38;
+    --text: #eceef2;
+    --text-2: #c3c8d1;
+    --text-3: #9aa0ab;
+    --accent: #6aa5ee;
+    --on-fill: #eceef2;
+    --on-fill-text: #0e1013;
+    --info-bg: #1b2c44;
+    --info: #8ab8f2;
+    --violet-bg: #2b2140;
+    --violet: #c4a6f5;
+    --warn-bg: #3a2b0f;
+    --warn: #f2b24a;
+    --danger-bg: #3b1a18;
+    --danger: #ff8a80;
+    --ok-bg: #16301a;
+    --ok: #7bd17f;
+    --fw-dev-top: #3a4049;
+    --fw-dev-bottom: #262b33;
+    --fw-dev-edge: rgba(255, 255, 255, .12);
+    --fw-dev-gloss: rgba(255, 255, 255, .08);
+    --fw-dev-ink: #8d949e;
+    --fw-dev-line: #4a515c;
+    --shadow-window: 0 14px 34px rgba(0, 0, 0, .6);
+    --scrim-page: rgba(0, 0, 0, .35);
 }
 
 /* =======================================================================
@@ -370,20 +473,6 @@
     fill: currentColor;
 }
 
-.desc-highlight{
-    background-color: var(--color-accent-transp-94);
-    color: var(--color-accent);
-    padding: 2px 6px;
-    border-radius: var(--radius-md);
-    font-size: 0.8em;
-    margin-left: 2px;
-    font-weight: 600;
-    border: 1px solid var(--color-accent-card-blend);
-    display: inline-flex;
-    align-items: center;
-    align-self: center;
-}
-
 /* -----------------------------------------------------------------------
  *  Éléments HTML de base, typographie, séparateurs
  * ----------------------------------------------------------------------- */
@@ -447,7 +536,6 @@ hr {
 input[type="time"] {
     outline:none;
     font-size: 1.2em !important;
-    margin-top: -23px !important;
 }
 
 /* =========================================================================
@@ -647,15 +735,8 @@ input[type="time"] {
 }
 
 /* -----------------------------------------------------------------------
- *  Bloc "Heure de déclenchement" du planning (ScheduleOverlay) -- aperçu de l'heure solaire
- *  du jour, et réglage du décalage (slider + champ nombre synchronisés, cf. 71-schedule.js).
+ *  Décalage solaire d'un horaire (slider + champ nombre synchronisés, cf. 71-schedule.js)
  * ----------------------------------------------------------------------- */
-.schedule-sun-time-info {
-    font-size: 0.95em;
-    font-weight: 600;
-    color: var(--color-text-main);
-    margin-bottom: 6px;
-}
 .schedule-sun-offset-row {
     display: flex;
     align-items: center;
@@ -699,13 +780,6 @@ input[type="time"] {
 .schedule-sun-offset-field input.schedule-sun-offset-number:focus {
     outline: none;
 }
-.schedule-sun-offset-unit {
-    flex: 0 0 auto;
-    font-size: 0.85em;
-    font-weight: 600;
-    line-height: 1;
-    color: var(--color-text-secondary);
-}
 .schedule-sun-offset-number::-webkit-outer-spin-button,
 .schedule-sun-offset-number::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -743,12 +817,6 @@ form {
     display: flex;
     flex-direction: row;
     gap: 15px;
-}
-.row-To-Col-Mobile {
-    display: flex;
-    flex-direction: row;
-    gap: 15px;
-    width: 100%;
 }
 .options-grid {
     display: grid;
@@ -799,8 +867,7 @@ form {
     align-items: stretch;
     width: 100%;
 }
-.uniblocCol,
-.uniblocStep {
+.uniblocCol {
     display:flex;
     flex-direction:column;
     clear:both;
@@ -814,9 +881,6 @@ form {
     border:1px solid var(--color-border);
     box-shadow: var(--shadow-card);
     gap: 15px;
-}
-.uniblocStep {
-    gap:15px;
 }
 
 .flex1 {
@@ -923,7 +987,7 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
 
 /* =========================================================================
  * SECTION : RETOURS TACTILE & VISUEL (préférences utilisateur -- voir
- * general.FeedbackOverlay(), 40-general.js, bouton GENERAL_FEEDBACK).
+ * tuile #genFeedbackTile de la page Général, 40-general.js).
  *
  * Entièrement ADDITIF : n'édite aucune des règles :active déjà présentes
  * plus haut/plus bas dans ce fichier -- neutralisées ici via des overrides
@@ -931,7 +995,6 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
  * ========================================================================= */
 
 html[data-feedback-commands="off"] .btn-somfy-svg:active,
-html[data-feedback-commands="off"] .btn-somfy-svg-wide:active,
 html[data-feedback-commands="off"] .vr-cmd-btn:active {
     transform: none !important;
     filter: none !important;
@@ -945,10 +1008,9 @@ html[data-feedback-commands="off"] .vr-arrow-down:active {
     transform: translateX(-50%) !important;
 }
 
-html[data-feedback-ui="off"] .animScale:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):not(.vr-cmd-btn):active,
-html[data-feedback-ui="off"] button:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):active,
+html[data-feedback-ui="off"] .animScale:not(.btn-somfy-svg):not(.vr-cmd-btn):active,
+html[data-feedback-ui="off"] button:not(.btn-somfy-svg):active,
 html[data-feedback-ui="off"] .welcomeCard:active,
-html[data-feedback-ui="off"] .preset-badge:active,
 html[data-feedback-ui="off"] .radioBtnPrec:active,
 html[data-feedback-ui="off"] [close]:active {
     transform: none !important;
@@ -956,20 +1018,17 @@ html[data-feedback-ui="off"] [close]:active {
     filter: none !important;
 }
 
-html:not([data-feedback-commands="off"]):not([data-feedback-style-commands="flash"]) .btn-somfy-svg:active,
-html:not([data-feedback-commands="off"]):not([data-feedback-style-commands="flash"]) .btn-somfy-svg-wide:active {
+html:not([data-feedback-commands="off"]):not([data-feedback-style-commands="flash"]) .btn-somfy-svg:active {
     filter: none !important;
 }
-html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .animScale:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):not(.vr-cmd-btn):active,
-html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) button:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):active,
+html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .animScale:not(.btn-somfy-svg):not(.vr-cmd-btn):active,
+html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) button:not(.btn-somfy-svg):active,
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .welcomeCard:active,
-html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .preset-badge:active,
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .radioBtnPrec:active {
     filter: none !important;
 }
 
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .btn-somfy-svg:active,
-html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .btn-somfy-svg-wide:active,
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-cmd-btn:active {
     transform: none !important;
     filter: brightness(1.3) !important;
@@ -986,10 +1045,9 @@ html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-wheel-arrow:active svg {
     color: var(--color-text-main) !important;
 }
-html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .animScale:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):not(.vr-cmd-btn):active,
-html:not([data-feedback-ui="off"])[data-feedback-style="flash"] button:not(.btn-somfy-svg):not(.btn-somfy-svg-wide):active,
+html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .animScale:not(.btn-somfy-svg):not(.vr-cmd-btn):active,
+html:not([data-feedback-ui="off"])[data-feedback-style="flash"] button:not(.btn-somfy-svg):active,
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .welcomeCard:active,
-html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .preset-badge:active,
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .radioBtnPrec:active {
     transform: none !important;
     filter: brightness(1.3) !important;
@@ -1031,7 +1089,6 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
 .no-feedback .btn-somfy-svg:active,
 .no-feedback .animScale:active,
 .no-feedback .welcomeCard:active,
-.no-feedback .preset-badge:active,
 .no-feedback .radioBtnPrec:active,
 .no-feedback [close]:active,
 .no-feedback .dirty-target:active,
@@ -1051,7 +1108,6 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
     .btn-somfy-svg:active,
     .animScale:active,
     .welcomeCard:active,
-    .preset-badge:active,
     .radioBtnPrec:active,
     [close]:active,
     button:active,
@@ -1086,9 +1142,6 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
     border-radius: var(--radius-icon-badge);
     color: var(--color-accent);
 }
-.svg-mirror-x {
-    transform: scaleX(-1);
-}
 .uniblocSvg-S svg {
     width: 22px;
     height: 22px;
@@ -1108,22 +1161,11 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
     gap: 4px;
     text-align: left;
 }
-.uniStatus,
-.uniStatus-Button {
+.uniStatus {
     font-size:0.8em;
     color:var(--color-text-secondary);
     margin-bottom:2px;
     padding:0;
-}
-.uniStatus-Button {
-    font-weight: 400;
-    text-transform: none;
-
-}
-.uniStatus.ledPinWarn {
-    color: var(--color-danger);
-    font-weight: 600;
-    margin-top: 4px;
 }
 
 .uniLabel {
@@ -1279,13 +1321,6 @@ input[type="radio"]:hover {
     font-weight: 600;
     padding: 6px 10px;
     border-radius: var(--radius-full);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.credit-name {
-    font-size: 0.8em;
-    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -1596,7 +1631,7 @@ fieldset {
 /* Même patron que .switch:has(input:disabled) et .slider-wrapper:has(.md3-range-input:disabled) :
  * grise la bascule et bloque le clic dès que ses entrées sont désactivées. Utilisé pour un réglage
  * qui n'a de sens que si un interrupteur amont est actif (ex: le style des commandes quand le
- * retour visuel des commandes est coupé, cf. general.FeedbackOverlay()) -- le curseur reste
+ * retour visuel des commandes est coupé) -- le curseur reste
  * visible sur la position mémorisée, il ne s'agit pas de perdre le choix mais de montrer qu'il
  * ne s'applique pas en l'état. */
 .SwitchBig:has(input:disabled) {
@@ -1657,7 +1692,7 @@ fieldset {
 }
 /* Même patron que .slider-wrapper:has(.md3-range-input:disabled) plus haut : grise le switch et
  * bloque le clic quand son input est désactivé (ex: interrupteur haptique sur un appareil sans
- * écran tactile, cf. general.FeedbackOverlay()). */
+ * écran tactile, cf. general._renderFeedback()). */
 .switch:has(input:disabled) {
     opacity:0.4;
     cursor:not-allowed;
@@ -1874,13 +1909,6 @@ button:disabled:active {
 .unibutton:hover {
     background:transparent;
 }
-.bouton-Danger {
-    background:var(--color-danger);
-    border: 2px solid var(--color-danger);
-}
-.bouton-Danger:hover {
-    background: color-mix(in srgb,var(--color-danger),#060606 20%);
-}
 .version-badge {
     font-size:0.9em;
     opacity:0.7;
@@ -1922,8 +1950,7 @@ button:disabled:active {
     border-left: 5px solid var(--color-danger-tint-border);
 }
 .warning-header,
-.information-header,
-.error-header {
+.information-header {
     display: flex;
     align-items: center;
     gap: 5px;
@@ -1951,8 +1978,7 @@ button:disabled:active {
 }
 
 .warning-header b,
-.information-header b,
-.error-header b {
+.information-header b {
     margin: 0;
     line-height: 1.2;
 }
@@ -1967,11 +1993,6 @@ button:disabled:active {
 
 .information-header b { color: #0072ff; }
 .warning-header b { color: var(--color-warning);}
-
-.error-header svg,
-.error-header b {
-    color: var(--color-danger);
-}
 .warning span,
 .information span,
 .error span {
@@ -2033,6 +2054,10 @@ button:disabled:active {
     animation:progress-bar-halo 2s infinite ease-in-out;
     z-index:1;
 }
+/* Jauge figée (mémoire, stockage) : le balayage dirait « en cours » là où rien ne bouge. */
+.progress-bar.is-static::before {
+    display: none;
+}
 .progress-bar-fill {
     height:100%;
     width:var(--progress, 0%);
@@ -2070,6 +2095,154 @@ button:disabled:active {
     flex-shrink:0;
 }
 
+
+/* =========================================================================
+ *  BARRE D'ENREGISTREMENT (class SaveBar, 20-shell.js)
+ *  Hors écran tant qu'aucune valeur ne diffère de l'enregistrée. La page
+ *  hôte garde 110 px de marge basse pour ne rien masquer.
+ *  ======================================================================= */
+.save-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    background: var(--surface);
+    color: var(--text-2);
+    border-top: 1px solid var(--border);
+    transform: translateY(110%);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform .3s cubic-bezier(.16, 1, .3, 1), opacity .25s ease, visibility 0s .3s;
+}
+.save-bar.shown {
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+    transition: transform .35s cubic-bezier(.16, 1, .3, 1), opacity .25s ease;
+}
+.save-bar-list-btn {
+    display: none;
+    position: relative;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-2);
+    background: var(--surface-2);
+    color: var(--color-accent);
+}
+.save-bar.many .save-bar-list-btn {
+    display: inline-flex;
+}
+.save-bar-list-btn svg {
+    width: 20px;
+    height: 20px;
+}
+.save-bar-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    box-sizing: border-box;
+    border-radius: var(--r-pill);
+    background: var(--color-accent);
+    color: var(--color-text-on-accent);
+    font-size: 11px;
+    font-weight: 700;
+    font-style: normal;
+}
+.save-bar-text,
+.save-bar-short {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.save-bar-short {
+    display: none;
+}
+.save-bar-revert-btn,
+.save-bar-save-btn {
+    flex: none;
+    width: auto;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: var(--r-2);
+    text-transform: none;
+    font-size: 14px;
+}
+.save-bar-revert-btn {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+}
+.save-bar-save-btn {
+    border: 0;
+    background: var(--color-accent);
+    color: var(--color-text-on-accent);
+}
+@media (min-width: 768px) {
+    .save-bar {
+        left: var(--sidebar-width);
+    }
+}
+/* Mobile : message flottant d'une ligne, au dessin des messages brefs. */
+@media (max-width: 767px) {
+    .save-bar {
+        left: 12px;
+        right: 12px;
+        bottom: 14px;
+        gap: 8px;
+        padding: 8px 8px 8px 10px;
+        border: 0;
+        border-radius: var(--r-3);
+        background: var(--on-fill);
+        color: var(--on-fill-text);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, .2);
+    }
+    .save-bar-list-btn {
+        display: inline-flex;
+        border-radius: var(--radius-row);
+        background: color-mix(in srgb, var(--on-fill-text) 12%, transparent);
+        color: inherit;
+    }
+    .save-bar-text {
+        display: none;
+    }
+    .save-bar-short {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+    }
+    .save-bar-revert-btn,
+    .save-bar-save-btn {
+        min-height: 40px;
+        padding: 0 12px;
+        border-radius: var(--radius-row);
+        font-size: 13px;
+    }
+    .save-bar-revert-btn {
+        border: 0;
+        color: inherit;
+    }
+    .save-bar-save-btn svg {
+        display: none;
+    }
+}
 
 /* =========================================================================
  *  COMPOSANTS PARTAGÉS DES COMMANDES SOMFY
@@ -2147,24 +2320,13 @@ button:disabled:active {
     color:var(--color-icon-muted);
 }
 
-.btn-somfy-svg-wide {
-    display:inline-flex;
-    width:88px;
-    height:44px;
-    padding: 0;
-    text-transform: none;
-    box-shadow: 0 1px 3px 0 var(--color-shadow-alt);
-}
-
-.btn-somfy-svg svg,
-.btn-somfy-svg-wide svg {
+.btn-somfy-svg svg {
     width:100%;
     height:100%;
     display:block;
 }
 
-.btn-somfy-svg:hover,
-.btn-somfy-svg-wide:hover {
+.btn-somfy-svg:hover {
     filter:brightness(1.1);
 }
 
@@ -2193,11 +2355,6 @@ button:disabled:active {
 @media (max-width: 945px) {
     .uniblocRow {
         flex-direction: column;
-    }
-
-    .row-To-Col-Mobile {
-        flex-direction: column;
-        gap: 12px;
     }
 
     .options-grid {
@@ -2232,7 +2389,7 @@ button:disabled:active {
         overflow-x:hidden;
         font-size: 13px;
     }
-    .uniblocCol, .uniblocStep {
+    .uniblocCol {
         padding: 13px;
     }
     .uniLeft,
@@ -2274,115 +2431,6 @@ button:disabled:active {
         margin-right:-90px !important;
         padding-right:80px !important;
     }
-}
-
-/* ==========================================================================
- *  CATALOGUE DES LANGUES (Phase 2 i18n) -- grille de tuiles de la modale du
- *  gestionnaire de langues, construite par general.openLangManager() et peuplée par
- *  renderLangCatalog() (40-general.js). La mise en page reprend les classes icon-pack-* ;
- *  seuls le code de langue, les badges, la progression et l'import manuel sont propres ici.
- *  ========================================================================== */
-.lang-catalog-code {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 30px;
-    margin-bottom: 2px;
-    font-size: 0.9em;
-    border-radius: var(--radius-md);
-    font-weight: 800;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    background: color-mix(in srgb, var(--color-accent) 16%, var(--color-bg-input));
-    color: var(--color-accent);
-}
-.lang-catalog-badge {
-    flex-shrink: 0;
-    font-size: 0.75em;
-    padding: 2px 8px;
-    border-radius: 10px;
-    background: var(--color-accent-transp-80);
-    color: var(--color-accent);
-}
-.lang-catalog-badge.active {
-    background: var(--color-accent);
-    color: #ffffff;
-}
-.lang-catalog-progress {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    --progress-bar-height: 6px;
-}
-.lang-catalog-progress.active {
-    display: flex;
-}
-.lang-catalog-progress .progress-bar-value {
-    font-size: 0.8em;
-    min-width: 34px;
-    text-align: right;
-}
-/* Sous la grille, pour la langue choisie : import manuel quand le relais navigateur a confirmé
- * qu'aucune route Internet n'existe depuis cet appareil, ou rappel d'une mise en attente. */
-.lang-catalog-manual-import {
-    padding: 10px 12px;
-    background: var(--color-bg-surface-2);
-    border-radius: var(--radius-row);
-    border: 1px dashed var(--color-border);
-}
-#langSelInfo:empty { display: none; }
-.lang-catalog-manual-import-info {
-    margin: 0 0 8px;
-    font-size: 0.85em;
-    line-height: 1.4;
-    color: var(--color-text-secondary);
-}
-
-/* Gestionnaire de packs d'icônes : hauteur bornée, seule la grille des packs défile, de sorte que
-   la modale garde la même taille avec 2 ou 20 packs et que la zone de dépôt reste visible. */
-.message-content.icon-pack-content { max-height: min(680px, calc(100dvh - 32px)); text-align: left; }
-.icon-pack-content > * { flex: none; }
-/* Scène au repos à 75 % fermé ; à chaque tuile choisie, un seul cycle ouverture puis retour
-   (.is-animating). --icon-pos est déclarée par @property pour pouvoir être animée. */
-@property --icon-pos { syntax: '<number>'; inherits: true; initial-value: 75; }
-@keyframes icon-pack-demo { 0% { --icon-pos: 75; } 45% { --icon-pos: 0; } 100% { --icon-pos: 75; } }
-.icon-pack-scene { padding: 10px 18px; border-bottom: 1px solid var(--color-border); --icon-pos: 75; --shade-position: var(--icon-pos); --fpos: calc(var(--icon-pos) * 1%); --shade-tilt: 60; }
-.icon-pack-scene.is-animating { animation: icon-pack-demo 1.6s ease-in-out; }
-.icon-pack-scene.is-animating * { transition: none; }
-@media (prefers-reduced-motion: reduce) { .icon-pack-scene.is-animating { animation: none; } }
-.icon-pack-scene-icons { display: flex; justify-content: space-between; gap: 2px; }
-.icon-pack-scene-icons svg { width: 15%; max-width: 58px; aspect-ratio: 1; height: auto; }
-.icon-pack-body { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px 18px 12px; }
-.icon-pack-body > * { flex: none; }
-.icon-pack-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.75em; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-secondary); }
-.icon-pack-grid-wrap { flex: 0 1 auto; min-height: 0; overflow-y: auto; margin: 0 -4px; padding: 2px 4px; }
-.icon-pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); gap: 8px; }
-.icon-pack-tile { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 8px; border-radius: var(--radius-lg); border: 1.5px solid var(--color-border); background: var(--color-bg-card); cursor: pointer; }
-.icon-pack-tile:hover { border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border)); }
-.icon-pack-tile.selected { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent) inset; }
-.icon-pack-tile.is-broken, .icon-pack-tile.is-disabled { opacity: .5; }
-.icon-pack-tile.is-disabled { pointer-events: none; }
-.icon-pack-thumb { display: flex; justify-content: space-between; padding: 4px; border-radius: var(--radius-md); background: var(--color-bg-input); aspect-ratio: 3.2; --shade-position: 60; --fpos: 100%; --shade-tilt: 60; }
-.icon-pack-thumb svg { width: 32%; aspect-ratio: 1; height: auto; }
-.icon-pack-name { font-weight: 700; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.icon-pack-meta { font-size: 0.75em; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.icon-pack-tag { position: absolute; top: 6px; right: 6px; }
-/* Pointillés : la tuile par défaut des packs d'icônes, ou une langue pas encore sur le boîtier. */
-.icon-pack-tile.is-default, .icon-pack-tile.is-remote { border-style: dashed; }
-.icon-pack-tile.is-default.selected, .icon-pack-tile.is-remote.selected { border-style: solid; }
-/* Sur écran tactile, aucun fichier ne peut être glissé dans la page : la grande zone de dépôt
-   n'y serait qu'un bouton haut de 100 px, remplacé par ce lien à droite du compteur. */
-.icon-pack-import { display: none; align-items: center; gap: 4px; color: var(--color-accent); font-weight: 600; text-transform: none; letter-spacing: 0; cursor: pointer; }
-.icon-pack-import svg { width: 14px; height: 14px; }
-@media (hover: none) and (pointer: coarse) {
-    .icon-pack-import { display: inline-flex; }
-    .icon-pack-drop { display: none; }
-}
-@media (max-width: 767px) {
-    .message-content.icon-pack-content { max-height: calc(100dvh - 32px); }
-}
-@media (max-width: 520px) {
-    .icon-pack-scene-icons svg { width: 15%; max-width: 40px; }
 }
 
 /* ==========================================================================

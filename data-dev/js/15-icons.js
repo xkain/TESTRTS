@@ -199,34 +199,49 @@ class IconPacks {
         this.applied = null;
         this.refreshUses();
     }
+    installedName() { return this.installed ? (this.installed.name || this.installed.id) : tr('ICONS_DEFAULT'); }
+    // L'état de la colonne de gauche suit ce qui est VRAIMENT sur l'appareil : il ne bouge pas
+    // pendant un aperçu, seulement à l'installation (cf. install / useDefault).
+    refreshModalState() {
+        const el = get('iconPackState');
+        if (el) el.innerHTML = genModalState(tr('ICONS_STATE_INSTALLED'), this.installedName());
+    }
     // --- Catalogue : toucher une tuile l'affiche en aperçu (page seulement) ; seule l'action du pied
     // de la modale écrit sur le boîtier. La tuile par défaut se choisit comme les autres.
     openManager() {
         const div = document.createElement('div');
         div.id = 'divIconManagerOverlay';
-        div.className = 'modal-overlay';
+        // genmod-overlay : ancre la fenêtre sous la barre du haut, sur la page (overlays.css).
+        div.className = 'modal-overlay genmod-overlay';
         const scene = ['svg-shutter', 'svg-window-blind', 'svg-cdrapery', 'svg-awning', 'svg-garage', 'svg-cgate']
             .map(i => `<svg viewBox="0 0 48 48"><use href="#${i}"></use></svg>`).join('');
         div.innerHTML = `
-        <div class="message-content icon-pack-content">
-        ${modalHeader('ICONS_TITLE', 'svg-indicShutter', { subtitle: 'ICONS_TITLE_DESC' })}
-        <div class="icon-pack-scene">
-            <div class="icon-pack-scene-icons">${scene}</div>
-        </div>
-        <div class="icon-pack-body">
+        <div class="message-content genmod-window">
+        ${genModalShell({
+            id: 'iconPack',
+            icon: 'svg-indicShutter',
+            titleKey: 'ICONS_TITLE',
+            descKey: 'ICONS_TITLE_DESC',
+            sectionKey: 'ICONS_MODAL_SECTION',
+            stateKey: tr('ICONS_STATE_INSTALLED'),
+            stateValue: this.installedName(),
+            hintKey: 'ICONS_HINT',
+            footId: 'iconPackFoot',
+            // La scène d'aperçu vit dans la colonne d'identité : c'est l'état courant des
+            // icônes, pas un réglage, et elle y a enfin la place d'être lisible.
+            sideExtra: `<div class="icon-pack-scene"><div class="icon-pack-scene-icons">${scene}</div></div>`,
+            bodyHtml: `
             <div class="icon-pack-label"><span id="iconPackCount"></span>
                 <label for="fileIconImport" class="icon-pack-import"><svg><use href="#svg-upload"></use></svg>${tr('FILE_PICK_ICONS')}</label></div>
             <p id="iconPackNotice" class="lang-catalog-manual-import-info margin0"></p>
-            <div class="icon-pack-grid-wrap"><div class="icon-pack-grid" id="iconCatalog"></div></div>
+            <div class="icon-pack-grid" id="iconCatalog"></div>
             <div class="icon-pack-drop">${fileDropZone('fileIconImport', 'FILE_PICK_ICONS')}</div>
-            <input id="fileIconImport" type="file" accept="application/json,.json" style="display:none" onchange="iconPacks.importFile(this)"/>
-        </div>
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal"><div class="button-content-modal" id="iconPackFoot"></div></div>
+            <input id="fileIconImport" type="file" accept="application/json,.json" style="display:none" onchange="iconPacks.importFile(this)"/>`,
+        })}
         </div>`;
         shOverlay(div);
         div.onclick = (e) => {
-            if (e.target.closest('[data-icon-close]')) requestCloseOverlay(div);
+            if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div);
         };
         // Quelle que soit la façon dont la modale se ferme, un aperçu non installé ne survit pas.
         new MutationObserver((m, obs) => {
@@ -300,7 +315,7 @@ class IconPacks {
         const inst = this.installed ? this.installed.id : '';
         const sel = this._selected;
         const tag = id => id === inst ? `<span class="lang-catalog-badge active">${tr('ICONS_INSTALLED')}</span>`
-            : id === sel ? `<span class="lang-catalog-badge">${tr('ICONS_PREVIEW')}</span>` : '';
+            : id === sel ? `<span class="lang-catalog-badge">${tr('PREVIEW')}</span>` : '';
         const name = id => id ? ((this._packs[id] && this._packs[id].name) || (this._catalog && this._catalog[id] && this._catalog[id].name) || id) : tr('ICONS_DEFAULT');
         // Grille
         const packs = Object.assign({}, this._catalog || {});
@@ -327,10 +342,12 @@ class IconPacks {
         }).join('');
         ids.forEach(id => this.renderThumb(id));
         // Pied : une seule action, celle qui correspond à la tuile choisie
-        const btn = (label, go, attr) => `<button type="button" ${attr} onclick="iconPacks.${go}()">${label}</button>`;
-        let actions;
-        if (sel === inst) actions = `<button type="button" line data-icon-close>${tr('BT_CLOSE')}</button>`;
-        else actions = btn(tr('BT_CANCEL'), 'cancelPreview', 'line') + btn(tr(sel === '' ? 'ICONS_BACK_DEFAULT' : 'BT_INSTALL_LANG'), 'install', '');
+        const btn = (label, go, cls) => `<button type="button" class="gen-btn ${cls}" onclick="iconPacks.${go}()">${label}</button>`;
+        // Plus de bouton « Fermer » : la croix de l'en-tête le remplace, et le pied ne garde
+        // que les actions qui écrivent sur l'appareil.
+        let actions = '';
+        if (sel !== inst) actions = btn(tr('BT_CANCEL'), 'cancelPreview', '')
+            + btn(tr(sel === '' ? 'ICONS_BACK_DEFAULT' : 'BT_INSTALL_LANG'), 'install', 'gen-btn-primary');
         get('iconPackFoot').innerHTML = actions;
     }
     async select(id) {
@@ -372,6 +389,9 @@ class IconPacks {
         if (!pack) return;
         const div = get('divIconManagerOverlay');
         setOverlayLock(div, 'confirm', {});
+        const hintEl = get('iconPackHint'), stateEl = get('iconPackState');
+        if (stateEl) stateEl.innerHTML = genModalState(tr('ICONS_STATE_INSTALLING'), pack.name || pack.id);
+        if (hintEl) hintEl.textContent = tr('ICONS_HINT_BUSY');
         try {
             await this.upload(pack);
             this.installed = this.meta(pack);
@@ -381,7 +401,9 @@ class IconPacks {
             ui.serviceError({ desc: escHtml(err.message), service: '/uploadIcons' });
         }
         clearOverlayLock(div);
+        if (hintEl) hintEl.textContent = tr('ICONS_HINT');
         this.showCurrent();
+        this.refreshModalState();
         this.renderCatalog();
     }
     async useDefault() {
@@ -397,6 +419,7 @@ class IconPacks {
             ui.serviceError(err);
         }
         this.showCurrent();
+        this.refreshModalState();
         this.renderCatalog();
     }
     // Un <use> ne suit pas toujours le remplacement du <symbol> qu'il vise : on réaffecte son href.

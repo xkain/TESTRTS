@@ -6,6 +6,8 @@ class Wifi {
     ethBoardTypes = [];
     ethClockModes = [];
     ethPhyTypes = [];
+    // Sur le point d'accès, aucun type de connexion n'est présélectionné : l'utilisateur choisit.
+    _pending = false;
 
     init() {
         this.ethBoardTypes = [
@@ -47,10 +49,14 @@ class Wifi {
         }
         this.loadETHDropdown(get('selETHAddress'), addr);
 
-        // Cinq clics sur le titre de la page révèlent la "Configuration matérielle" sur BOX-ETH
-        // (cf. main.css). Même classe `show-expert-gpio` que les broches de la radio : un seul
-        // déverrouillage pour tout le mode avancé, et il ne survit pas au rechargement.
-        initMultiClickToggle('#divNetAdapter .main-headerTitle', 'show-expert-gpio', 5);
+        // Cinq clics sur le nom affiché en tête révèlent la carte Ethernet sur BOX-ETH (cf. main.css).
+        // Même classe `show-expert-gpio` que les broches de la radio ; l'onglet Ethernet en dépend,
+        // d'où le nouveau rendu.
+        initMultiClickToggle('#netHeroName', () => {
+            document.body.classList.add('show-expert-gpio');
+            ui.successMessage("Mode avancé débloqué.");
+            this.useEthernetClicked();
+        }, 5);
 
         ui.toElement(get('divNetAdapter'), {
             wifi: { ssid: '', passphrase: '' },
@@ -65,6 +71,7 @@ class Wifi {
             }
         });
         this.onETHBoardTypeChanged(get('selETHBoardType'));
+        this._bindNetPage();
         this.initialized = true;
 
         const inputPwr = get('inputETHPWRPin');
@@ -116,6 +123,10 @@ class Wifi {
             if (typeof type.mdio !== 'undefined') get('inputETHMDIOPin').value = type.mdio;
 
             get('divETHSettings').style.display = type.val === 0 ? '' : 'none';
+        }
+        if (this.initialized) {
+            this._renderEth();
+            this._renderSummary();
         }
     }
     togglePowerIcon(isNone) {
@@ -172,65 +183,65 @@ class Wifi {
         inputPwr.value = 'None';
         this.togglePowerIcon(true); // Mode None -> Icône OFF
     }
+    // =====================================================================
+    // SECTION : PAGE CONNEXION (onglets suivant le type, résumé, barre d'enregistrement)
+    // =====================================================================
+    _bindNetPage() {
+        const page = get('divNetAdapter');
+        this._tabs = bindGenTabs(page, { tabs: 'netTabs', panels: 'netPanels', pager: 'netPager', prev: 'btnNetPrev', next: 'btnNetNext' });
+        get('cbNetDhcp').addEventListener('change', () => this._renderIp());
+        get('cbNetApProtect').addEventListener('change', () => this._renderAp());
+        get('netSummary').addEventListener('click', (e) => {
+            const row = e.target.closest('.net-sum-row');
+            if (row) this._goTab(parseInt(row.dataset.tab, 10));
+        });
+        // Différé d'un tour : _markDirty (watchDirty) passe après cet écouteur.
+        ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateDirtyCount(), 0)));
+        this._saveBar = new SaveBar(page, { onSave: () => this.savePage(), onRevert: () => this.revertPage() });
+    }
     loadNetwork() {
-        let pnl = get('divNetAdapter');
         getJSONSync('/networksettings', (err, settings) => {
             if (err) {
                 ui.serviceError(err);
                 return;
             }
-
-            // 1. Configuration des boutons switch globaux (Connexion & Fallback)
-            get('cbHardwired').checked = settings.connType >= 2;
-            get('cbHardwired').parentElement.classList.remove('sel-pending');
-            get('cbFallbackWireless').checked = settings.connType === 3;
-
-            // Injection des données réseau dans le panneau principal
-            ui.toElement(pnl, settings);
-
-            // 2. Gestion de la broche d'alimentation Ethernet (PWRPin)
-            const inputPwr = get('inputETHPWRPin');
-            if (inputPwr && settings.ethernet && settings.ethernet.PWRPin !== undefined) {
-                const pwrVal = parseInt(settings.ethernet.PWRPin, 10);
-                const isNone = (pwrVal === -1);
-
-                if (isNone) {
-                    inputPwr.type = 'text';
-                    inputPwr.value = 'None';
-                } else {
-                    inputPwr.type = 'number';
-                    inputPwr.value = pwrVal;
-                }
-                this.togglePowerIcon(isNone);
-            }
-
-            // 3. Sauvegarde locale des données IP pour l'overlay DHCP
-            this._ipData = settings.ip || { dhcp: true, ip: '', subnet: '', gateway: '', dns1: '', dns2: '' };
-            // Le serveur ne renvoie jamais les secrets réels, seulement s'ils sont définis :
-            // les champs de saisie correspondants démarrent donc toujours vides.
-            this._hasApPassword = !!(settings.wifi && settings.wifi.hasApPassword);
-            this._hasPassphrase = !!(settings.wifi && settings.wifi.hasPassphrase);
-
-            // 4. Mise à jour de l'interface et des badges
-            this.updateDHCPBadge(this._ipData.dhcp);
-            this.updateAPBadge();
-            get('divETHSettings').style.display = settings.ethernet.boardType === 0 ? '' : 'none';
-            get('spanCurrentIP').innerHTML = this._ipData.ip;
-
-            // 5. Synchronisation des comportements UI restants
-            this.updateStatusBadge(settings);
-            this.setConnectionType(settings.connType >= 2);
-            this.useEthernetClicked();
-            this.hiddenSSIDClicked();
-
-            // Pas d'écouteur à poser pour les deux entrées Wi-Fi : les boutons portent leur
-            // onclick dans le balisage (index.html, "Trouver un réseau" et "Ajouter manuellement",
-            // qui appellent wifi.wifiOverlay avec la CLÉ de traduction, pas la chaîne traduite).
-            // Deux blocs get('btnOpenScanWifi')/get('btnOpenManualWifi') vivaient ici et ne
-            // trouvaient rien -- ces identifiants n'ont jamais existé dans le HTML, et leur garde
-            // `if (btn)` avalait l'échec en silence.
-            watchDirty(pnl);
+            this._settings = settings;
+            this._applySettings();
+            watchDirty(get('divNetAdapter'));
+            this.updateDirtyCount();
         });
+    }
+    // Remet à l'écran l'état enregistré : au chargement, après un enregistrement et sur « Annuler ».
+    _applySettings() {
+        const s = this._settings, pnl = get('divNetAdapter');
+        const ct = parseInt(s.connType, 10);
+        this._pending = !!this.isHotspot || !(ct >= 1 && ct <= 3);
+        ui.toElement(pnl, s);
+        get('cbHardwired').checked = ct >= 2;
+        get('cbFallbackWireless').checked = ct === 3;
+
+        const inputPwr = get('inputETHPWRPin');
+        if (inputPwr && s.ethernet && s.ethernet.PWRPin !== undefined) {
+            const isNone = parseInt(s.ethernet.PWRPin, 10) === -1;
+            inputPwr.type = isNone ? 'text' : 'number';
+            inputPwr.value = isNone ? 'None' : parseInt(s.ethernet.PWRPin, 10);
+            this.togglePowerIcon(isNone);
+        }
+        this._ipData = s.ip || { dhcp: true, ip: '', subnet: '', gateway: '', dns1: '', dns2: '' };
+        // Le serveur ne renvoie jamais les secrets, seulement s'ils sont définis.
+        this._hasApPassword = !!(s.wifi && s.wifi.hasApPassword);
+        this._hasPassphrase = !!(s.wifi && s.wifi.hasPassphrase);
+        resetSecretField(get('fldPassphrase'), this._hasPassphrase);
+        get('cbNetApProtect').checked = this._hasApPassword;
+        resetSecretField(get('fldAPPassword'), this._hasApPassword);
+        get('divETHSettings').style.display = s.ethernet && s.ethernet.boardType === 0 ? '' : 'none';
+
+        this.updateStatusBadge(s);
+        this.hiddenSSIDClicked();
+        this._renderIp();
+        this._renderAp();
+        this.useEthernetClicked();
+        this._renderHero();
     }
     // Pose le type de connexion sur l'en-tête : libellé du badge Wi-Fi/AP, badge allumé parmi
     // WIFI/LAN/POE, et indicateur réseau mobile. Séparé de updateStatusBadge() parce que ce dernier
@@ -306,31 +317,84 @@ class Wifi {
             wrap.setAttribute('title', `${label} — ${tr(up ? 'NET_STATUS_UP' : 'NET_STATUS_DOWN')}`);
         }
     }
-    pickConnType(isEthernet) {
-        const cb = get('cbHardwired');
-        if (cb) cb.parentElement.classList.remove('sel-pending');
-        if (cb && cb.checked !== isEthernet) cb.click();
-    }
-    setConnectionType(isEthernet) {
+    // mode : 1 Wi-Fi, 2 Ethernet, 3 Ethernet + Wi-Fi de secours (= connType).
+    pickConnType(mode) {
+        this._pending = false;
+        get('cbHardwired').checked = mode >= 2;
+        get('cbFallbackWireless').checked = mode === 3;
         this.useEthernetClicked();
+        this.updateDirtyCount();
     }
+    _mode() {
+        if (this._pending) return 0;
+        return get('cbHardwired').checked ? (get('cbFallbackWireless').checked ? 3 : 2) : 1;
+    }
+    _savedMode() {
+        const ct = parseInt(this._settings && this._settings.connType, 10);
+        return ct >= 1 && ct <= 3 ? ct : 0;
+    }
+    // Sur un boîtier, la carte Ethernet est figée : sans le mode avancé, l'onglet n'aurait rien
+    // à montrer.
+    _ethEditable() {
+        const profile = (get('divContainer') && get('divContainer').getAttribute('data-hardwareprofile')) || '';
+        return !profile.startsWith('BOX') || document.body.classList.contains('show-expert-gpio');
+    }
+    // Onglets et tuiles suivent le type choisi, avant même l'enregistrement. L'assistant de première
+    // connexion l'appelle aussi, après avoir posé les vraies cases.
     useEthernetClicked() {
-        let useEthernet = get('cbHardwired').checked;
-        const cbFallback = get('cbFallbackWireless');
-        // Les réglages Wi-Fi ne servent pas qu'au mode Wi-Fi : en Ethernet avec repli (connType 3),
-        // NetManager::preferredConnType() n'active le repli que si `settings.WIFI.ssid` n'est pas vide.
-        // Les masquer dès que l'Ethernet était coché rendait donc cette configuration inatteignable
-        // depuis cette page -- il fallait passer d'abord par le Wi-Fi, enregistrer, puis revenir.
-        const showWifi = !useEthernet || !!(cbFallback && cbFallback.checked);
-
-        get('divEthernetOptions').style.display = useEthernet ? '' : 'none';
-        get('divWiFiMode').style.display = showWifi ? '' : 'none';
-        // Ces deux-là portent leur propre display parce que hiddenSSIDClicked() les manipule
-        // séparément ; ils suivent la visibilité du bloc qui les contient, pas celle de l'Ethernet.
-        get('divRoaming').style.display = showWifi ? '' : 'none';
-        get('divHiddenSSID').style.display = showWifi ? '' : 'none';
-        get('divEthernetSection').style.display = useEthernet ? '' : 'none';
-        get('divEthernetMode').style.display = useEthernet ? '' : 'none';
+        const m = this._mode(), usesWifi = m === 1 || m === 3, usesEth = m >= 2 && this._ethEditable();
+        const active = this.isHotspot ? 0 : this._savedMode();
+        get('netTypeList').querySelectorAll('.net-type-btn').forEach(b => {
+            const v = parseInt(b.dataset.mode, 10);
+            b.classList.toggle('selected', v === m);
+            b.setAttribute('aria-pressed', v === m ? 'true' : 'false');
+            b.classList.toggle('is-active', v === active);
+        });
+        get('netApNote').hidden = !this.isHotspot;
+        const wifiKey = m === 3 ? 'CONNEXION_WIFI_FALLBACK' : 'CONNEXION_WIFI';
+        get('divNetAdapter').querySelectorAll('.net-wifi-tab, .net-wifi-title').forEach(el => {
+            el.setAttribute('tr', wifiKey);
+            el.textContent = tr(wifiKey);
+        });
+        [[1, usesEth], [2, usesWifi]].forEach(([i, on]) => {
+            get('netTabs').querySelector(`[data-tab="${i}"]`).hidden = !on;
+            get('netPanels').querySelector(`:scope > [data-tab="${i}"]`).classList.toggle('net-off', !on);
+        });
+        fillGenSecMini(Array.from(get('netPanels').children).filter(p => !p.classList.contains('net-off')));
+        if (this._tabs) {
+            const cur = get('netTabs').querySelector(`[data-tab="${this._tabs.current()}"]`);
+            if (!cur || cur.hidden) this._tabs.show(0);
+            else this._tabs.update();
+        }
+        this._renderEth();
+        this._renderSummary();
+    }
+    _renderEth() {
+        const board = parseInt(get('selETHBoardType').value, 10) || 0;
+        const det = get('netEthDetail'), btn = get('btnNetEthDetail');
+        get('netEthManualTile').hidden = board !== 0;
+        get('netEthPresetTile').hidden = board === 0;
+        if (board === 0) det.hidden = true;
+        btn.querySelector('span').textContent = tr(det.hidden ? 'CONNEXION_SHOW_DETAIL' : 'CONNEXION_HIDE_DETAIL');
+        if (!det.hidden) det.innerHTML = this._ethDetailHtml();
+        genGridSpan(get('netPanels').querySelector(':scope > [data-tab="1"]'));
+    }
+    toggleEthDetail() {
+        const det = get('netEthDetail');
+        det.hidden = !det.hidden;
+        this._renderEth();
+    }
+    // Libellés venus des listes de cartes et de puces : aucune saisie libre.
+    _ethDetailHtml() {
+        const text = (id) => { const s = get(id); return s.options[s.selectedIndex] ? s.options[s.selectedIndex].text : '--'; };
+        const pwr = get('inputETHPWRPin').value;
+        const row = (key, value) => `<div class="ed-ro"><span>${tr(key)}</span><b>${value}</b></div>`;
+        return row('ETH_SETTINGS_PHY_TYPE', text('selETHPhyType'))
+            + row('ETH_SETTINGS_PHY_ADDRESS', text('selETHAddress'))
+            + row('ETH_SETTINGS_CLOCK_MODE', text('selETHClkMode'))
+            + row('ETH_SETTINGS_POWER_PIN', pwr === 'None' || pwr === '-1' ? tr('ETH_SETTINGS_NONE') : escHtml(pwr))
+            + row('ETH_SETTINGS_MDC_PIN', escHtml(get('inputETHMDCPin').value))
+            + row('ETH_SETTINGS_MDIO_PIN', escHtml(get('inputETHMDIOPin').value));
     }
     hiddenSSIDClicked() {
         const cbHidden = get('cbHiddenSSID');
@@ -355,138 +419,220 @@ class Wifi {
         }
     }
 
-    apPasswordOverlay() {
-        if (get('divAPPasswordOverlay')) return;
-
-        let div = document.createElement('div');
-        div.id = 'divAPPasswordOverlay';
-        div.className = 'modal-overlay';
-
-        div.innerHTML = `
-        <div class="message-content apPassword-content">
-        ${modalHeader('AP_MODAL_TITLE', 'svg-hotspot', {
-            subtitle: 'AP_MODAL_TITLE_DESC',
-        })}
-
-        <div class="overlay-scroll-content">
-        <div class="uniblocCol">
-        <p>${tr('AP_MODAL_DESC')}</p>
-        </div>
-        <div class="uniblocCol">
-        <div class="SwitchBig SwitchBig-2 dirty-target" id="apProtectSwitch">
-        <input type="radio" name="apProtect" id="rbAPOpen" value="open" ${this._hasApPassword ? '' : 'checked'}>
-        <label for="rbAPOpen">${tr('IS_OPEN')}</label>
-        <input type="radio" name="apProtect" id="rbAPProtected" value="protected" ${this._hasApPassword ? 'checked' : ''}>
-        <label for="rbAPProtected">${tr('CONNEXION_BADGE_AP_PROTECTED')}</label>
-        <div class="nav-pill"></div>
-        </div>
-        </div>
-        <div id="divAPPasswordField" class="uniblocCol dirty-target">
-        <label class="label" for="fldAPPassword">${tr('CONNEXION_AP_PASSWORD')}</label>
-        <div class="password-container">
-        <input id="fldAPPassword" class="inputAndSelect" name="apPassword" type="password" minlength="8" placeholder="${tr('SECURITY_PASSWORD_PLH_SIMPLE')}">
-        <div class="password-eye" onclick="security.toggleFieldPassword('fldAPPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
-        </div>
-        </div>
-        <div class="warning">
-        <div class="warning-header">
-        <svg><use href="#svg-warning"></use></svg>
-        <b>${tr('MSG_WARNING')}</b>
-        </div>
-        <div class="information-text">
-        <span id="spanAPWarning"></span>
-        </div>
-        </div>
-        </div>
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnAPPasswordClose" line type="button">${tr('BT_CLOSE')}</button>
-        <button id="btnSaveAPPassword" type="button">
-        <svg><use href="#svg-save"></use></svg>
-        <span>${tr('BT_SAVE')}</span>
-        </button>
-        </div>
-        </div>
-        </div>`;
-
-        shOverlay(div);
-        initSecretField(div.querySelector('#fldAPPassword'), this._hasApPassword);
-
-        // La bascule porte l'intention, le champ ne la porte pas : un champ vidé veut dire "je n'y
-        // touche pas" (le serveur ne renvoie jamais le secret, cf. initSecretField), et ne peut
-        // donc pas vouloir dire en même temps "ouvre le point d'accès". L'avertissement suit l'état
-        // choisi -- protégé, on prévient de l'oubli ; ouvert, on prévient de l'ouverture.
-        //
-        // SwitchBig-2 (deux boutons radio) et non la case à cocher des SwitchBig historiques : la
-        // variante à radios est la seule générique, les autres exigent une règle CSS par #id pour
-        // déplacer le curseur (cf. base.css, "Switch géant").
-        const rbProtected = div.querySelector('#rbAPProtected');
-        const syncProtect = () => {
-            const on = rbProtected.checked;
-            div.querySelector('#divAPPasswordField').style.display = on ? '' : 'none';
-            div.querySelector('#spanAPWarning').innerText = tr(on ? 'AP_MODAL_WARNING' : 'AP_MODAL_OPEN_WARNING');
-        };
-        div.querySelectorAll('input[name="apProtect"]').forEach(rb => rb.addEventListener('change', syncProtect));
-        syncProtect();
-
-        watchDirty(div);
-
-        div.querySelector('#btnAPPasswordClose').onclick = () => requestCloseOverlay(div);
-        div.querySelector('#btnSaveAPPassword').onclick = () => this.saveAPPassword(div);
+    _renderIp() {
+        const dhcp = get('cbNetDhcp').checked;
+        get('netStaticIp').hidden = dhcp;
+        get('netIpTip').hidden = !dhcp;
+        this._renderSummary();
     }
-    saveAPPassword(overlayEl) {
-        if (!overlayEl) overlayEl = get('divAPPasswordOverlay');
-        if (!overlayEl) return;
-
-        // Chaîne vide si le masque factice n'a jamais été effacé (= non modifié).
-        const pwd = secretValue(overlayEl.querySelector('#fldAPPassword'));
-        const rbProtected = overlayEl.querySelector('#rbAPProtected');
-        const protect = !!(rbProtected && rbProtected.checked);
-
-        // `apPasswordClear` et non `apPassword: ''` : côté firmware le champ vide signifie
-        // "inchangé" (WifiSettings::fromJSON), et il doit le rester -- la page Connexion réenvoie
-        // un champ vide à chaque enregistrement tant que cette modale n'a pas été ouverte.
-        let payload = { apPasswordClear: true };
-        if (protect) {
-            // Pas de maxlength sur ce champ, même raison que les champs de sécurité (cf.
-            // General.saveSecurity) : il bornait la saisie sans rien dire, et l'utilisateur repartait
-            // avec un mot de passe plus court que celui qu'il croyait avoir choisi. Les deux bornes
-            // sont donc énoncées ici. 63 est la limite du protocole WPA2, pas celle du tampon
-            // (apPassword[65] côté firmware) : c'est la contrainte réelle.
-            if (pwd.length === 0 && !this._hasApPassword) {
+    _renderAp() {
+        const on = get('cbNetApProtect').checked;
+        get('netApPwdField').hidden = !on;
+        get('netApWarning').textContent = tr(on ? 'AP_MODAL_WARNING' : 'AP_MODAL_OPEN_WARNING');
+        this._renderSummary();
+    }
+    // Ce qui partirait à l'enregistrement, sans attendre : une ligne manquante passe en orange.
+    _renderSummary() {
+        const box = get('netSummary');
+        if (!box || !this._settings) return;
+        const m = this._mode(), rows = [];
+        const add = (key, value, tab, missing = false) => rows.push({ key, value, tab, missing });
+        if (m === 1 || m === 3) {
+            const ssid = get('fldSsid').value.trim();
+            add(m === 3 ? 'CONNEXION_WIFI_FALLBACK' : 'CONNEXION_TITLE_WIFI', ssid || tr('CONNEXION_TO_FILL'), 2, !ssid);
+            add('CONNEXION_ROAMING', tr(get('cbRoaming').checked ? 'BT_YES' : 'BT_NO'), 2);
+        }
+        if (m >= 2) {
+            const sel = get('selETHBoardType');
+            add('CONNEXION_ETH_BOARD', sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '--', 1);
+        }
+        const dhcp = get('cbNetDhcp').checked;
+        add('CONNEXION_CURRENT_IP', dhcp ? tr('CONNEXION_IP_AUTO') : `${tr('CONNEXION_IP_STATIC')} · ${get('fldIPAddress').value.trim()}`, 3);
+        const protect = get('cbNetApProtect').checked;
+        add('CONNEXION_AP_TITLE', tr(protect ? 'CONNEXION_BADGE_AP_PROTECTED' : 'IS_OPEN'), 3,
+            protect && !this._hasApPassword && secretValue(get('fldAPPassword')).length < 8);
+        // SSID et adresses viennent de champs libres : textContent, jamais innerHTML.
+        box.replaceChildren(...rows.map(r => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'net-sum-row' + (r.missing ? ' is-missing' : '');
+            b.dataset.tab = r.tab;
+            b.innerHTML = '<span></span><b></b><svg><use href="#svg-arrowRight"></use></svg>';
+            b.children[0].textContent = tr(r.key);
+            b.children[1].textContent = r.value;
+            return b;
+        }));
+    }
+    // Sous 768 px il n'y a plus d'onglets : on descend jusqu'à la section.
+    _goTab(i) {
+        const tab = get('netTabs').querySelector(`[data-tab="${i}"]`);
+        if (!tab || tab.hidden) return;
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+        if (window.matchMedia('(max-width: 767px)').matches) {
+            get('netPanels').querySelector(`:scope > [data-tab="${i}"]`).scrollIntoView({ block: 'start', behavior: reduce });
+            return;
+        }
+        this._tabs.show(i);
+        get('netTabs').scrollIntoView({ block: 'start', behavior: reduce });
+    }
+    // Chaque réglage modifié, avec son groupe : chacun part par sa propre route.
+    _netFields() {
+        const s = this._settings || {}, w = s.wifi || {}, e = s.ethernet || {}, ip = s.ip || {};
+        const yesNo = (v) => tr(v ? 'BT_YES' : 'BT_NO');
+        const modeKeys = { 1: 'CONNEXION_WIFI', 2: 'CONNEXION_ETHERNET', 3: 'CONNEXION_ETH_FALLBACK' };
+        const selText = (id) => (v) => { const o = Array.from(get(id).options).find(x => x.value === String(v)); return o ? o.text : v; };
+        const pin = (v) => (v === 'None' || v === '' || v === undefined || v === null) ? '-1' : String(v);
+        const field = (group, label, el, saved, now, show = (v) => v, secret = false) => ({ group, label, el, saved, now, show, secret });
+        const savedMode = this._savedMode();
+        const board = get('selETHBoardType').value;
+        const dhcp = get('cbNetDhcp').checked;
+        const list = [
+            field('conn', 'CONNEXION_TYPE', get('cbHardwired'), savedMode, this._pending ? savedMode : this._mode(), (v) => modeKeys[v] ? tr(modeKeys[v]) : ''),
+            field('conn', 'CONNEXION_WIFI_SSID', get('fldSsid'), w.ssid || '', get('fldSsid').value),
+            field('conn', 'SECURITY_PASSWORD', get('fldPassphrase'), '', secretValue(get('fldPassphrase')), undefined, true),
+            field('conn', 'CONNEXION_HIDDEN_SSID', get('cbHiddenSSID'), !!w.hidden, get('cbHiddenSSID').checked, yesNo),
+            field('conn', 'CONNEXION_ROAMING', get('cbRoaming'), !!w.roaming, get('cbRoaming').checked, yesNo),
+            field('conn', 'SETTINGS_BOARD_TYPE', get('selETHBoardType'), String(e.boardType ?? 0), board, selText('selETHBoardType'))
+        ];
+        // Une carte connue fixe d'elle-même puce et broches : seule la carte compte alors.
+        if (board === '0') list.push(
+            field('conn', 'ETH_SETTINGS_PHY_TYPE', get('selETHPhyType'), String(e.phyType ?? 0), get('selETHPhyType').value, selText('selETHPhyType')),
+            field('conn', 'ETH_SETTINGS_PHY_ADDRESS', get('selETHAddress'), String(e.phyAddress ?? 0), get('selETHAddress').value, selText('selETHAddress')),
+            field('conn', 'ETH_SETTINGS_CLOCK_MODE', get('selETHClkMode'), String(e.CLKMode ?? 0), get('selETHClkMode').value, selText('selETHClkMode')),
+            field('conn', 'ETH_SETTINGS_POWER_PIN', get('inputETHPWRPin'), pin(e.PWRPin), pin(get('inputETHPWRPin').value)),
+            field('conn', 'ETH_SETTINGS_MDC_PIN', get('inputETHMDCPin'), String(e.MDCPin ?? ''), get('inputETHMDCPin').value),
+            field('conn', 'ETH_SETTINGS_MDIO_PIN', get('inputETHMDIOPin'), String(e.MDIOPin ?? ''), get('inputETHMDIOPin').value));
+        list.push(field('ip', 'CONNEXION_ADDRESSING', get('cbNetDhcp'), ip.dhcp !== false, dhcp, (v) => tr(v ? 'CONNEXION_IP_AUTO' : 'CONNEXION_IP_STATIC')));
+        if (!dhcp) [['DHCP_OVERLAY_STATIC_IP', 'fldIPAddress', 'ip'], ['DHCP_OVERLAY_SUBNET_MASK', 'fldSubnetMask', 'subnet'],
+            ['DHCP_OVERLAY_GATEWAY', 'fldGateway', 'gateway'], ['DHCP_OVERLAY_DNS1', 'fldDNS1', 'dns1'], ['DHCP_OVERLAY_DNS2', 'fldDNS2', 'dns2']]
+            .forEach(([label, id, k]) => list.push(field('ip', label, get(id), ip[k] || '', get(id).value.trim())));
+        const protect = get('cbNetApProtect').checked;
+        list.push(field('ap', 'CONNEXION_AP_PASSWORD', get('cbNetApProtect'), this._hasApPassword, protect, yesNo));
+        if (protect) list.push(field('ap', 'SECURITY_PASSWORD', get('fldAPPassword'), '', secretValue(get('fldAPPassword')), undefined, true));
+        return list.filter(f => String(f.saved) !== String(f.now));
+    }
+    // Page cachée : rien à compter, et l'assistant de première connexion écrit dans ces champs.
+    updateDirtyCount() {
+        if (!this._saveBar || !this._settings || !get('divNetAdapter').offsetParent) return;
+        get('divNetAdapter').querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+        const diffs = this._netFields();
+        diffs.forEach(f => f.el.classList.add('is-dirty'));
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        this._saveBar.update(diffs.map(f => ({ label: tr(f.label), from: f.show(f.saved), to: f.show(f.now), secret: f.secret })));
+        this._renderSummary();
+    }
+    revertPage() {
+        if (!this._settings) return;
+        this._applySettings();
+        this.updateDirtyCount();
+    }
+    // Trois routes : le mot de passe du point d'accès et l'adresse IP s'appliquent sans
+    // redémarrage, la connexion en dernier, puisqu'elle peut couper la session.
+    savePage() {
+        const diffs = this._netFields(), has = (g) => diffs.some(f => f.group === g);
+        const m = this._mode();
+        if ((m === 1 || m === 3) && !get('fldSsid').value.trim()) {
+            ui.errorMessage(tr('ERR_WIFI_SSID_INVALID'));
+            this._goTab(2);
+            return;
+        }
+        const protect = get('cbNetApProtect').checked, apPwd = secretValue(get('fldAPPassword'));
+        if (has('ap') && protect) {
+            // 63 : limite du protocole WPA2, pas du tampon firmware.
+            if ((apPwd.length === 0 && !this._hasApPassword) || (apPwd.length > 0 && apPwd.length < 8)) {
                 ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_INVALID_DESC'));
                 return;
             }
-            if (pwd.length > 0 && pwd.length < 8) {
-                ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_INVALID_DESC'));
-                return;
-            }
-            if (pwd.length > 63) {
+            if (apPwd.length > 63) {
                 ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_MAX_LENGTH_63'));
                 return;
             }
-            payload = { apPassword: pwd };
         }
+        const ip = { dhcp: get('cbNetDhcp').checked };
+        ['ip', 'subnet', 'gateway', 'dns1', 'dns2'].forEach((k, i) => { ip[k] = get(['fldIPAddress', 'fldSubnetMask', 'fldGateway', 'fldDNS1', 'fldDNS2'][i]).value.trim(); });
+        if (has('ip') && !this._validateIp(ip)) return;
 
-        putJSONSync('/setNetwork', { wifi: payload }, (err, response) => {
-            if (err) {
-                ui.serviceError(err);
-            } else {
-                this._hasApPassword = protect && (pwd.length > 0 || this._hasApPassword);
-                this.updateAPBadge();
-                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                clearDirty();
-                closeOverlay(overlayEl);
-            }
-        });
+        const put = (url, body) => new Promise((resolve, reject) => putJSONSync(url, body, (err) => err ? reject(err) : resolve()));
+        let chain = Promise.resolve();
+        if (has('ap')) chain = chain
+            // Champ vide = « inchangé » côté firmware : pour ouvrir le point d'accès, apPasswordClear.
+            .then(() => put('/setNetwork', { wifi: protect ? { apPassword: apPwd } : { apPasswordClear: true } }))
+            .then(() => {
+                this._hasApPassword = protect && (apPwd.length > 0 || this._hasApPassword);
+                this._settings.wifi = Object.assign({}, this._settings.wifi, { hasApPassword: this._hasApPassword });
+                resetSecretField(get('fldAPPassword'), this._hasApPassword);
+            });
+        if (has('ip')) chain = chain
+            .then(() => put('/setIP', ip))
+            .then(() => { this._settings.ip = ip; this._ipData = ip; });
+        chain.then(() => {
+            if (has('conn')) { this.saveNetwork(); return; }
+            ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            this.updateDirtyCount();
+            this._renderHero();
+        }).catch(err => ui.serviceError(err));
     }
-    // État du point d'accès sur sa tuile, sans ouvrir la modale. Le serveur ne dit que
-    // `hasApPassword` (il ne renvoie jamais le secret), ce qui suffit : protégé ou ouvert.
-    updateAPBadge() {
-        const badge = get('badgeAPState');
-        if (!badge) return;
-        badge.innerText = tr(this._hasApPassword ? 'CONNEXION_BADGE_AP_PROTECTED' : 'IS_OPEN');
+    _validateIp(obj) {
+        if (obj.dhcp) return true;
+        const valid = (a) => /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(a);
+        const checks = [
+            ['ip', 'ERR_STATIC_IP_REQUIRED', 'ERR_STATIC_IP_INVALID'],
+            ['subnet', 'ERR_NETMASK_REQUIRED', 'ERR_NETMASK_INVALID'],
+            ['gateway', 'ERR_GATEWAY_REQUIRED', 'ERR_GATEWAY_INVALID']
+        ];
+        for (const [k, required, invalid] of checks) {
+            if (!obj[k] || obj[k] === '0.0.0.0') { ui.errorMessage(tr(required)); return false; }
+            if (!valid(obj[k])) { ui.errorMessage(tr(invalid)); return false; }
+        }
+        if (obj.dns1 && !valid(obj.dns1)) { ui.errorMessage(tr('ERR_DNS1_INVALID')); return false; }
+        if (obj.dns2 && !valid(obj.dns2)) { ui.errorMessage(tr('ERR_DNS2_INVALID')); return false; }
+        return true;
+    }
+    // Depuis la page, la modale ne fait que remplir les champs : la barre d'enregistrement conclut.
+    findWifi() {
+        this.wifiOverlay('CONNEXION_FIND_WIFI', false, () => this.updateDirtyCount());
+    }
+    // Tête de page : ce que fait l'appareil maintenant, pas ce qui est réglé.
+    _renderHero() {
+        const hero = get('netHero');
+        if (!hero) return;
+        const ap = !!this.isHotspot, eth = !ap && !!this._ethLinkUp;
+        const kind = ap ? 'ap' : eth ? 'eth' : 'wifi';
+        const s = this._settings || {};
+        hero.dataset.net = kind;
+        get('netHeroWave').style.display = kind === 'wifi' ? '' : 'none';
+        get('netHeroIconSvg').style.display = kind === 'wifi' ? 'none' : '';
+        get('netHeroIcon').setAttribute('href', ap ? '#svg-hotspot' : '#svg-ethernet');
+        get('netHeroState').textContent = tr({ ap: 'CONNEXION_HERO_AP', eth: 'CONNEXION_HERO_ETH', wifi: 'CONNEXION_HERO_WIFI' }[kind]);
+        get('netHeroName').textContent = ap ? (window.__currentHostname || 'ESPSomfy RTS')
+            : eth ? tr('CONNEXION_ETHERNET') : (this._wifiSsid || (s.wifi && s.wifi.ssid) || '--');
+        let qKey = '', qCls = '';
+        if (eth) qKey = 'CONNEXION_LINK_UP';
+        else if (!ap && !this._wifiLinkUp) { qKey = 'NET_STATUS_DOWN'; qCls = 'is-bad'; }
+        else if (!ap) {
+            const lvl = this.calcWaveStrength(this._wifiRssi);
+            qKey = lvl >= 2 ? 'CONNEXION_SIGNAL_GOOD' : lvl === 1 ? 'CONNEXION_SIGNAL_MEDIUM' : 'CONNEXION_SIGNAL_BAD';
+            qCls = lvl >= 2 ? '' : lvl === 1 ? 'is-medium' : 'is-bad';
+        }
+        // Le halo prend la couleur du signal et n'allume que les arcs atteints.
+        const lvl = this._wifiLinkUp ? this.calcWaveStrength(this._wifiRssi) : -1;
+        get('netHeroWave').querySelectorAll('use').forEach((u, i) => u.classList.toggle('on', i <= lvl));
+        get('netHeroHalo').className = 'gen-hero-halo ' + (ap ? 'is-ap' : qCls);
+        const q = get('netHeroQuality');
+        q.hidden = !qKey;
+        q.className = 'net-hero-quality ' + qCls;
+        q.textContent = qKey ? tr(qKey) : '';
+        // En DHCP, NetManager recopie l'adresse obtenue dans les réglages : ip.ip est l'adresse réelle.
+        const host = window.location.hostname;
+        const known = this._ipData && this._ipData.ip && this._ipData.ip !== '0.0.0.0' ? this._ipData.ip : '';
+        const ipNow = known || (/^\d+\.\d+\.\d+\.\d+$/.test(host) ? host : '--');
+        get('spanCurrentIP').textContent = ap ? '192.168.4.1' : ipNow;
+        get('netHeroAddr').textContent = tr(this._ipData && this._ipData.dhcp === false ? 'CONNEXION_IP_STATIC' : 'CONNEXION_IP_AUTO');
+        get('netHeroSignalRow').hidden = kind !== 'wifi' || !this._wifiLinkUp;
+        get('netHeroSignal').textContent = `${this._wifiChannel} · ${this._wifiRssi} ${tr('UNIT_DBM')}`;
+        get('netHeroSpeedRow').hidden = !eth;
+        get('netHeroSpeed').textContent = isNaN(this._ethSpeed) ? '--' : `${this._ethSpeed} Mbit/s${this._ethDuplex ? ' · full duplex' : ''}`;
     }
     // onCapture (facultatif) fait basculer la modale en mode CAPTURE : "Confirmer" retient le
     // réseau et rend la main à l'appelant au lieu d'enchaîner sur l'enregistrement. Utilisé par
@@ -509,7 +655,7 @@ class Wifi {
             rightContent: `<!-- Ton contenu de droite si nécessaire -->`
         })}
         <!-- Seule cette zone défile -- le header et le pied de page restent fixes, comme sur
-        les autres modal-overlay (cf. apPasswordOverlay/ledOverlay). -->
+        les autres modal-overlay (cf. ledOverlay). -->
         <div class="overlay-scroll-content">
         <!-- CARROUSEL CONTAINER -->
         <div id="wifiCarousel">
@@ -617,14 +763,15 @@ class Wifi {
             const realSsid = document.getElementsByName('ssid')[0];
             if (realSsid) {
                 realSsid.value = e.target.value;
-                realSsid.dispatchEvent(new Event('input'));
+                realSsid.dispatchEvent(new Event('input', { bubbles: true }));
             }
         };
         get('modalFldPassphrase').oninput = (e) => {
             const realPass = document.getElementsByName('passphrase')[0];
             if (realPass) {
                 realPass.value = e.target.value;
-                realPass.dispatchEvent(new Event('input'));
+                realPass.dataset.secretDummy = 'false';
+                realPass.dispatchEvent(new Event('input', { bubbles: true }));
             }
         };
 
@@ -651,7 +798,7 @@ class Wifi {
         }
         const modalPass = get('modalFldPassphrase');
         if (modalPass) {
-            modalPass.value = document.getElementsByName('passphrase')[0]?.value || '';
+            modalPass.value = secretValue(document.getElementsByName('passphrase')[0]);
         }
     }
     slideCarousel(pageIndex) {
@@ -767,7 +914,7 @@ class Wifi {
         const realSsidField = document.getElementsByName('ssid')[0];
         if (realSsidField) {
             realSsidField.value = obj.name;
-            realSsidField.dispatchEvent(new Event('input'));
+            realSsidField.dispatchEvent(new Event('input', { bubbles: true }));
         }
         const modalSsidField = get('modalFldSsid');
         if (modalSsidField) {
@@ -776,7 +923,7 @@ class Wifi {
         const realPassField = document.getElementsByName('passphrase')[0];
         const modalPassField = get('modalFldPassphrase');
         if (realPassField && modalPassField) {
-            modalPassField.value = realPassField.value;
+            modalPassField.value = secretValue(realPassField);
         }
         this.slideCarousel(1);
         setTimeout(() => {
@@ -953,194 +1100,6 @@ class Wifi {
         </div>`;
     }
 
-    DHCPOverlay() {
-        if (get('divDHCPOverlay')) return;
-
-        let div = document.createElement('div');
-        div.id = 'divDHCPOverlay';
-        div.className = 'inst-overlay';
-
-        div.innerHTML = `
-        <div class="instructions-content overlaydhcp" id="divDHCPPopupContent">
-
-        ${overlayHeader("CONNEXION_DHCP", "CONNEXION_DHCP_DESC", "svg-hostName", { subtitle: "CONNEXION_DHCP_DESC" })}
-
-        <div class="overlay-scroll-content" id="divDHCPScrollContent">
-
-        <div class="SwitchBig">
-        <input id="cbPopupDHCP" type="checkbox" name="dhcp" data-bind="ip.dhcp"/>
-        <label for="cbPopupDHCP" class="label-left" >${tr('CONNEXION_BADGE_STATIC')}</label>
-        <label for="cbPopupDHCP" class="label-right" >${tr('CONNEXION_BADGE_DHCP')}</label>
-        <div class="nav-pill"></div>
-        </div>
-
-        <div id="divPopupStaticIP" style="display: none; margin-top: 15px;">
-        <div class="uniblocCol">
-
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-ip"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="fldIPAddress" tr="DHCP_OVERLAY_STATIC_IP"></label>
-        <input id="fldIPAddress" class="inputAndSelect" name="staticIP" type="text" data-bind="ip.ip" length=32 placeholder="0.0.0.0">
-        </div>
-        </div>
-
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-gatewayMask"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="fldSubnetMask" tr="DHCP_OVERLAY_SUBNET_MASK"></label>
-        <input id="fldSubnetMask" class="inputAndSelect" name="subnet" type="text" data-bind="ip.subnet" length=32 placeholder="0.0.0.0">
-        </div>
-        </div>
-
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-gateway"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="fldGateway" tr="DHCP_OVERLAY_GATEWAY"></label>
-        <input id="fldGateway" class="inputAndSelect" name="gateway" type="text" data-bind="ip.gateway" length=32 placeholder="0.0.0.0">
-        </div>
-        </div>
-
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-dns1"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="fldDNS1" tr="DHCP_OVERLAY_DNS1"></label>
-        <input id="fldDNS1" class="inputAndSelect" name="dns1" type="text" data-bind="ip.dns1" length=32 placeholder="0.0.0.0">
-        </div>
-        </div>
-
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-dns2"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="fldDNS2" tr="DHCP_OVERLAY_DNS2"></label>
-        <input id="fldDNS2" class="inputAndSelect" name="dns2" type="text" data-bind="ip.dns2" length=32 placeholder="0.0.0.0">
-        </div>
-        </div>
-
-        </div>
-        </div>
-
-        <div class="information">
-        <div class="information-header">
-        <svg><use href="#svg-info"></use></svg>
-        <b>${tr('MSG_INFO')}</b>
-        </div>
-        <div class="information-text">
-        <span>${tr('DHCP_OVERLAY_REBOOT_INFO')}</span>
-        </div>
-        </div>
-
-        </div>
-        <div class="hrDivFooter"></div>
-        <div class="button-container-overlay">
-        <button id="btnDHCPGoBack" line type="button">${tr('BT_CLOSE')}</button>
-        <button id="btnPopupSaveIPSettings" type="button">
-        <svg><use href="#svg-save"></use></svg>
-        <span>${tr('BT_SAVE')}</span>
-        </button>
-        </div>
-
-        </div>`;
-
-        shOverlay(div);
-
-        ui.toElement(div, { ip: this._ipData || { dhcp: true, ip: '', subnet: '', gateway: '', dns1: '', dns2: '' } });
-        watchDirty(div);
-
-        const cbDHCP = div.querySelector('#cbPopupDHCP');
-        const divStatic = div.querySelector('#divPopupStaticIP');
-
-        const toggleStaticFields = (isDhcpEnabled) => {
-            divStatic.style.display = isDhcpEnabled ? 'none' : 'block';
-        };
-
-        if (cbDHCP) {
-            toggleStaticFields(cbDHCP.checked);
-            cbDHCP.onclick = (e) => {
-                toggleStaticFields(e.target.checked);
-            };
-        }
-
-        div.querySelector('#btnDHCPGoBack').onclick = () => requestCloseOverlay(div);
-
-        div.querySelector('#btnPopupSaveIPSettings').onclick = () => {
-            clearDirty();
-            this.saveIPSettings();
-            closeOverlay(div);
-        };
-    }
-
-    updateDHCPBadge(isDhcp) {
-        const badge = get('badgeDHCPState');
-        if (badge) {
-            if (isDhcp) {
-                badge.innerText = tr('CONNEXION_BADGE_DHCP');
-            } else {
-                badge.innerText = tr('CONNEXION_BADGE_STATIC');
-            }
-        }
-    }
-
-    saveIPSettings() {
-        let overlay = get('divDHCPOverlay');
-        if (!overlay) return;
-
-        let obj = ui.fromElement(overlay).ip;
-        logger.debug('Saving IP settings:', obj);
-
-        if (!obj.dhcp) {
-            let fnValidateIP = (addr) => {
-                return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(addr);
-            };
-
-            if (typeof obj.ip !== 'string' || obj.ip.length === 0 || obj.ip === '0.0.0.0') {
-                ui.errorMessage(tr('ERR_STATIC_IP_REQUIRED'));
-                return;
-            }
-            else if (!fnValidateIP(obj.ip)) {
-                ui.errorMessage(tr('ERR_STATIC_IP_INVALID'));
-                return;
-            }
-            if (typeof obj.subnet !== 'string' || obj.subnet.length === 0 || obj.subnet === '0.0.0.0') {
-                ui.errorMessage(tr('ERR_NETMASK_REQUIRED'));
-                return;
-            }
-            else if (!fnValidateIP(obj.subnet)) {
-                ui.errorMessage(tr('ERR_NETMASK_INVALID'));
-                return;
-            }
-            if (typeof obj.gateway !== 'string' || obj.gateway.length === 0 || obj.gateway === '0.0.0.0') {
-                ui.errorMessage(tr('ERR_GATEWAY_REQUIRED'));
-                return;
-            }
-            else if (!fnValidateIP(obj.gateway)) {
-                ui.errorMessage(tr('ERR_GATEWAY_INVALID'));
-                return;
-            }
-            if (obj.dns1.length !== 0 && !fnValidateIP(obj.dns1)) {
-                ui.errorMessage(tr('ERR_DNS1_INVALID'));
-                return;
-            }
-            if (obj.dns2.length !== 0 && !fnValidateIP(obj.dns2)) {
-                ui.errorMessage(tr('ERR_DNS2_INVALID'));
-                return;
-            }
-        }
-
-        putJSONSync('/setIP', obj, (err, response) => {
-            if (err) {
-                ui.serviceError(err);
-            } else {
-                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                logger.debug('IP settings saved:', response);
-
-                this._ipData = obj;
-                this.updateDHCPBadge(obj.dhcp);
-                closeOverlay(overlay);
-            }
-        });
-    }
-
     saveNetwork() {
         let pnl = get('divNetAdapter'), obj = ui.fromElement(pnl);
 
@@ -1160,6 +1119,9 @@ class Wifi {
         if (cbHardwired) {
             obj.ethernet.hardwired = cbHardwired.checked;
         }
+        // Masque factice = inchangé : le firmware garde la phrase de passe sur une chaîne vide.
+        if (obj.wifi) obj.wifi.passphrase = secretValue(get('fldPassphrase'));
+        delete obj.ip;
 
         const eth = obj.ethernet;
 
@@ -1261,6 +1223,7 @@ class Wifi {
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                 logger.debug("Network settings updated:", response);
                 clearDirty();
+                this._rebaseline(obj);
             });
         };
         // Enregistrer un Wi-Fi depuis l'assistant de premier démarrage (mode AP) coupe le hotspot
@@ -1285,105 +1248,34 @@ class Wifi {
         }
     }
 
+    // Pas de relecture du serveur : l'appareil peut redémarrer dans la seconde.
+    _rebaseline(obj) {
+        if (!this._settings) return;
+        const s = this._settings, w = obj.wifi || {};
+        s.connType = obj.connType;
+        s.wifi = Object.assign({}, s.wifi, { ssid: w.ssid, hidden: w.hidden, roaming: w.roaming, hasPassphrase: this._hasPassphrase || !!w.passphrase });
+        s.ethernet = Object.assign({}, s.ethernet, obj.ethernet);
+        this._applySettings();
+        this.updateDirtyCount();
+    }
     procWifiStrength(strength) {
         if (!strength) return;
-
         const ssid = strength.ssid || strength.name;
         this._wifiSsid = ssid || '';
-        const sVal = parseInt(strength.strength);
-        const elSSID = get('spanNetworkSSID');
-        const elChan = get('spanNetworkChannel');
-        const elStrength = get('spanNetworkStrength');
-        const elSvgCont = get('divWiFiStrength'); // On récupère le conteneur du SVG
-
-        // textContent : `ssid` vient du réseau (évènement socket wifiStrength), donc d'un tiers.
-        if (elSSID) elSSID.textContent = !ssid || ssid === '' ? '-------------' : ssid;
-        if (elChan) elChan.innerHTML = isNaN(strength.channel) || strength.channel < 0 ? '--' : strength.channel;
-        if (elStrength) elStrength.innerHTML = isNaN(sVal) || sVal <= -100 ? '----' : sVal;
-
-        let level = (isNaN(sVal) || sVal >= 0 || sVal <= -100) ? -1 : this.calcWaveStrength(sVal);
-        if (level >= 3) level = 3;
-
-        // -100 dBm est la valeur que socket.onclose injecte pour signifier "plus de lien" : le même
-        // test sert donc pour une vraie perte de signal et pour une coupure de la liaison socket.
-        this._wifiLinkUp = level >= 0;
+        this._wifiRssi = parseInt(strength.strength);
+        this._wifiChannel = parseInt(strength.channel);
+        // -100 dBm est la valeur que socket.onclose injecte pour signifier "plus de lien".
+        this._wifiLinkUp = !isNaN(this._wifiRssi) && this._wifiRssi < 0 && this._wifiRssi > -100;
         this.updateMobileNetStatus();
-
-        for (let i = 0; i <= 3; i++) {
-            const part = get('wifi_' + i);
-            if (part) {
-                if (i <= level) {
-                    part.classList.add('active');
-                } else {
-                    part.classList.remove('active');
-                }
-            }
-        }
-
-        if (elStrength && elSvgCont) {
-            const classes = ['sig-good', 'sig-medium', 'sig-bad'];
-            elStrength.classList.remove(...classes);
-            elSvgCont.classList.remove(...classes);
-
-            if (!isNaN(sVal) && sVal < 0 && sVal > -100) {
-                // Excellent / Bon signal (Niveau 2 et 3) : sVal > -70 dBm
-                if (level >= 2) {
-                    elStrength.classList.add('sig-good');
-                    elSvgCont.classList.add('sig-good');
-                }
-                // Signal moyen (Niveau 1) : sVal entre -70 et -80 dBm
-                else if (level === 1) {
-                    elStrength.classList.add('sig-medium');
-                    elSvgCont.classList.add('sig-medium');
-                }
-                // Signal mauvais (Niveau 0 ou -1) : sVal <= -80 dBm
-                else {
-                    elStrength.classList.add('sig-bad');
-                    elSvgCont.classList.add('sig-bad');
-                }
-            }
-        }
+        this._renderHero();
     }
     procEthernet(ethernet) {
         logger.debug('Ethernet status:', ethernet);
-        const spanStatus = get('spanEthernetStatus');
-        const divStatus = get('divEthernetStatus');
-        const divWifi = get('divWiFiStrength');
-        const spanSpeedVal = get('spanEthernetSpeedVal');
-        const spanSpeedDetails = get('spanEthernetSpeedDetails');
-
-        const isConnected = ethernet.connected;
-        this._ethLinkUp = !!isConnected;
+        this._ethLinkUp = !!ethernet.connected;
+        this._ethSpeed = parseInt(ethernet.speed);
+        this._ethDuplex = !!ethernet.fullduplex;
         this.updateMobileNetStatus();
-
-        if (divStatus) divStatus.style.display = isConnected ? '' : 'none';
-        if (divWifi) divWifi.style.display = isConnected ? 'none' : '';
-
-        spanStatus.innerHTML = isConnected ? 'Connected' : 'Disconnected';
-        spanStatus.style.color = isConnected ? 'var(--color-signal-good)' : '';
-
-        if (isConnected) {
-            divStatus.classList.add('sig-good');
-            divStatus.classList.remove('sig-bad');
-
-            const speed = parseInt(ethernet.speed);
-
-            spanSpeedVal.innerHTML = isNaN(speed) ? '--' : speed;
-            spanSpeedDetails.innerHTML = ` Mbps ${ethernet.fullduplex ? 'Full-duplex' : 'Half-duplex'}`;
-
-            spanSpeedVal.classList.remove('sig-good', 'sig-medium');
-
-            if (!isNaN(speed) && speed >= 100) {
-                spanSpeedVal.classList.add('sig-good'); // Vert si >= 100 Mbps
-            } else {
-                spanSpeedVal.classList.add('sig-medium'); // Orange si 10 Mbps ou moins
-            }
-        } else {
-            divStatus.classList.remove('sig-good', 'sig-bad');
-            spanSpeedVal.innerHTML = '--';
-            spanSpeedDetails.innerHTML = '';
-            spanSpeedVal.classList.remove('sig-good', 'sig-medium');
-        }
+        this._renderHero();
     }
 }
 var wifi = new Wifi();

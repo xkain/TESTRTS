@@ -28,12 +28,127 @@ class General {
         this.applyFeedbackPrefs();
         this.setAppVersion();
         this.setTimeZones();
+        this._bindGeneralPage();
         if (sockIsOpen && ui.isConfigOpen()) socket.send('join:0');
         ui.toElement(get('divSystemSettings'), {
             general: { hostname: 'ESPSomfyRTS', username: '', password: '', posixZone: 'UTC0', ntpServer: 'pool.ntp.org' }
         });
 
         this.initialized = true;
+    }
+    // =====================================================================
+    // SECTION : PAGE GÉNÉRAL (onglets, colonne d'identité, compteur de modifications)
+    // =====================================================================
+    _bindGeneralPage() {
+        const page = get('divSystemOptions');
+        this._tabs = bindGenTabs(page, { tabs: 'genTabs', panels: 'genPanels', pager: 'genPager', prev: 'btnGenPrev', next: 'btnGenNext' });
+        page.querySelectorAll('input[name="genTheme"]').forEach(r => r.addEventListener('change', () => {
+            const sel = get('selThemeMode');
+            sel.value = r.value;
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }));
+        get('genSwatches').addEventListener('click', (e) => {
+            const sw = e.target.closest('.gen-swatch');
+            if (!sw) return;
+            const input = get('fldAccentColor');
+            input.value = sw.dataset.color;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        get('fldHostname').addEventListener('input', () => this._renderHero());
+        get('selTimeZone').addEventListener('change', () => this._renderHero());
+        // Après _markDirty (écouteur posé par watchDirty sur l'ancêtre #divSystemSettings, donc
+        // appelé APRÈS celui-ci) : différé d'un tour pour compter le champ qui vient d'être marqué.
+        ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateDirtyCount(), 0)));
+        this._bindGeo();
+        this._saveBar = new SaveBar(page, { onSave: () => this.setGeneral(), onRevert: () => this.revertGeneral() });
+        this.renderSecurityTile();
+    }
+    showGeneralTab(i) {
+        this._tabs.show(i);
+    }
+    // La protection de l'interface s'enregistre à part (bouton de sa tuile, cf. saveSecurity) :
+    // elle n'entre pas dans la barre d'enregistrement.
+    // Chaque réglage compare sa valeur à l'écran à celle enregistrée : le thème, la couleur et la
+    // position ont leur propre référence, les retours visuels vivent dans le navigateur.
+    _generalFields() {
+        const s = this._lastSettings || {};
+        const page = get('divSystemOptions');
+        const radios = (name) => Array.from(page.querySelectorAll(`input[name="${name}"]`));
+        const radioVal = (name) => radios(name).find(r => r.checked)?.value || '';
+        const radioText = (name) => (v) => radios(name).find(r => r.value === String(v))?.nextElementSibling.textContent || v;
+        const yesNo = (v) => tr(v ? 'BT_YES' : 'BT_NO');
+        const tz = get('selTimeZone');
+        const tzText = (v) => Array.from(tz.options).find(o => o.value === v)?.text || v;
+        const geo = this._geoSettings || { geoLat: 99, geoLon: 0 };
+        const geoSet = geo.geoLat >= -90 && geo.geoLat <= 90;
+        const num = (v) => v === '' || isNaN(parseFloat(v)) ? v : String(parseFloat(v));
+        const fb = this.getFeedbackPrefs();
+        const fbStyle = (on, style) => on ? (style === 'flash' ? 'flash' : 'scale') : 'off';
+        const field = (label, els, saved, now, show = (v) => v, same = (a, b) => a === b) => ({ label, els, saved, now, show, same });
+        return [
+            field('GENERAL_HOSTNAME', [get('fldHostname')], s.hostname || '', get('fldHostname').value),
+            field('GENERAL_NTP_SERVER', [get('fldNtptimesever')], s.ntpServer || '', get('fldNtptimesever').value),
+            field('GENERAL_UPNP', [get('cbSsdpBroadcast')], !!s.ssdpBroadcast, get('cbSsdpBroadcast').checked, yesNo),
+            field('GENERAL_TIMEZONE', [tz], s.posixZone || '', tz.value, tzText),
+            field('GEO_LAT', [get('inputGeoLat')], geoSet ? geo.geoLat.toFixed(2) : '', get('inputGeoLat').value.trim(), undefined, (a, b) => num(a) === num(b)),
+            field('GEO_LON', [get('inputGeoLon')], geoSet ? geo.geoLon.toFixed(2) : '', get('inputGeoLon').value.trim(), undefined, (a, b) => num(a) === num(b)),
+            field('GENERAL_DISPLAY_MODE', [get('selThemeMode'), ...radios('genTheme')], String(this._savedTheme ?? '0'), get('selThemeMode').value, radioText('genTheme')),
+            field('GENERAL_COLOR', [get('fldAccentColor')], (this._savedAccent || '').toLowerCase(), get('fldAccentColor').value.toLowerCase()),
+            field('FEEDBACK_VISUAL_COMMANDS', radios('genFbCommands'), fbStyle(fb.visualCommands, fb.styleCommands), radioVal('genFbCommands'), radioText('genFbCommands')),
+            field('FEEDBACK_VISUAL_UI', radios('genFbUi'), fbStyle(fb.visualUI, fb.style), radioVal('genFbUi'), radioText('genFbUi')),
+            field('FEEDBACK_VISUAL_FORMS', [get('cbFeedbackForms')], !!fb.visualForms, get('cbFeedbackForms').checked, yesNo),
+            field('FEEDBACK_HAPTIC_TOGGLE', [get('cbFeedbackHaptic')], !!fb.haptic, get('cbFeedbackHaptic').checked, yesNo)
+        ];
+    }
+    // Un champ remis à sa valeur enregistrée perd aussi .is-dirty : le garde de sortie
+    // (confirmDiscardChanges) et la barre doivent dire la même chose.
+    updateDirtyCount() {
+        if (!this._saveBar) return;
+        const diffs = [];
+        if (this._generalReady) this._generalFields().forEach(f => {
+            f.els.forEach(el => el.classList.remove('is-dirty'));
+            if (f.same(f.saved, f.now)) return;
+            (f.els.find(el => el.checked) || f.els[0]).classList.add('is-dirty');
+            diffs.push({ label: tr(f.label), from: f.show(f.saved), to: f.show(f.now) });
+        });
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        this._saveBar.update(diffs);
+        get('btnGenSecApply').disabled = !get('genSecTile').querySelector('.is-dirty');
+    }
+    _clearPageDirty() {
+        const sec = get('genSecTile');
+        get('divSystemSettings').querySelectorAll('.is-dirty').forEach(el => { if (!sec.contains(el)) el.classList.remove('is-dirty'); });
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        this.updateDirtyCount();
+    }
+    revertGeneral() {
+        if (this._lastSettings) ui.toElement(get('divSystemOptions'), { general: this._lastSettings });
+        this._renderGeo();
+        this._renderFeedback();
+        this.revertClientPreviews();
+        this._clearPageDirty();
+        this._renderHero();
+    }
+    // « Quitter sans enregistrer » rend les valeurs enregistrées : la barre compare des valeurs,
+    // elle réapparaîtrait sinon au retour sur la page.
+    discardChanges(scope) {
+        if (!scope || scope.contains(get('divSystemOptions'))) this.revertGeneral();
+        else this.revertClientPreviews(scope);
+    }
+    _renderHero() {
+        const set = (id, v) => { const el = get(id); if (el) el.textContent = v; };
+        const host = get('fldHostname')?.value || '';
+        set('genHeroHost', host);
+        set('genHeroUrl', host ? `http://${host.toLowerCase()}.local` : '');
+        set('genChipLang', get('currentLangDisplay')?.textContent || '');
+        const tz = get('selTimeZone');
+        set('genChipTz', tz && tz.selectedIndex >= 0 ? tz.options[tz.selectedIndex].text : '');
+        const theme = document.querySelector('input[name="genTheme"]:checked');
+        set('genChipTheme', theme ? theme.nextElementSibling.textContent : '');
+        set('genChipSec', this._securityLabel(this._currentSecurityType || 0));
     }
     readAccent() {
         const v = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim();
@@ -44,9 +159,15 @@ class General {
         if (!input) return;
         this._savedAccent = saved;
         input.value = saved;
+        this._syncSwatches();
         input.addEventListener('input', (e) => {
             document.documentElement.style.setProperty('--color-accent', e.target.value);
+            this._syncSwatches();
         });
+    }
+    _syncSwatches() {
+        const v = (get('fldAccentColor')?.value || '').toLowerCase();
+        document.querySelectorAll('#genSwatches .gen-swatch').forEach(b => b.classList.toggle('selected', b.dataset.color === v));
     }
     revertAccentPreview(scope) {
         if (!this._savedAccent) return;
@@ -54,6 +175,7 @@ class General {
         if (scope && !(input && scope.contains(input))) return;
         document.documentElement.style.setProperty('--color-accent', this._savedAccent);
         if (input) input.value = this._savedAccent;
+        this._syncSwatches();
     }
     revertThemePreview(scope) {
         if (!this._savedTheme) return;
@@ -76,18 +198,19 @@ class General {
         }
         const sel = get('selThemeMode');
         if (sel) sel.value = val;
+        document.querySelectorAll('input[name="genTheme"]').forEach(r => { r.checked = r.value === String(val); });
+        this._renderHero();
     }
     // =====================================================================
-    // SECTION : RETOURS TACTILE & VISUEL (voir FeedbackOverlay() plus bas)
+    // SECTION : RETOURS TACTILE & VISUEL (tuile #genFeedbackTile de la page Général)
     // =====================================================================
     // Préférence 100% client, jamais synchronisée au firmware -- même patron
     // que getShadeUIPrefs() plus loin dans ce fichier : un unique blob JSON en
     // localStorage. Le thème et la couleur d'accent, eux, sont bien persistés
     // côté boîtier (themeMode/accentColor, cf. ConfigSettings.h) ; localStorage
     // n'en est que le cache d'amorce, relu avant le premier pixel.
-    // Le STOCKAGE est donc local, mais la SAISIE suit le même contrat que les
-    // réglages serveur (GeoOverlay/DashboardPrefsOverlay) : Annuler/Appliquer
-    // et alerte de sortie -- cf. FeedbackOverlay() plus bas.
+    // Le STOCKAGE est donc local, mais la SAISIE suit le bouton Enregistrer de
+    // la page, comme les réglages serveur (cf. setGeneral()).
     static FEEDBACK_PREFS_DEFAULT = { haptic: true, visualCommands: true, visualUI: true, visualForms: true, style: 'scale', styleCommands: 'scale' };
     getFeedbackPrefs() {
         let saved = {};
@@ -123,7 +246,7 @@ class General {
         if (this._feedbackListenersBound) return;
         this._feedbackListenersBound = true;
 
-        const HAPTIC_PRESS_SELECTOR = '.btn-somfy-svg, .animScale, .welcomeCard, .preset-badge, .radioBtnPrec, [close], button';
+        const HAPTIC_PRESS_SELECTOR = '.btn-somfy-svg, .animScale, .welcomeCard, .radioBtnPrec, [close], button';
         const vibrate = () => {
             if (this.getFeedbackPrefs().haptic && navigator.vibrate) navigator.vibrate(15);
         };
@@ -135,160 +258,41 @@ class General {
             if (/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName) && el.closest('.dirty-target')) vibrate();
         });
     }
-    FeedbackOverlay() {
-        if (get('divFeedbackOverlay')) return;
-        const p = this.getFeedbackPrefs();
-        // navigator.vibrate existe comme fonction sur la plupart des navigateurs desktop
-        // (Chrome/Firefox), même sans moteur de vibration -- l'appel serait un no-op silencieux,
-        // pas une erreur. `!!navigator.vibrate` seul ne détecte donc rien : il faut croiser avec la
-        // présence d'un écran tactile pour ne proposer le réglage que là où il peut avoir un effet.
+    // navigator.vibrate existe comme fonction sur la plupart des navigateurs desktop (Chrome/Firefox),
+    // même sans moteur de vibration : il faut croiser avec un écran tactile pour savoir s'il agit.
+    _hapticSupported() {
         const hasTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-        const hapticSupported = !!navigator.vibrate && hasTouch;
-
-        const div = document.createElement('div');
-        div.id = 'divFeedbackOverlay';
-        div.className = 'modal-overlay';
-        div.innerHTML = `
-        <div class="message-content" id="divFeedbackPopupContent">
-        ${modalHeader('GENERAL_FEEDBACK', 'svg-haptic', { subtitle: 'FEEDBACK_MODAL_DESC' })}
-
-        <div class="overlay-scroll-content">
-
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('FEEDBACK_SECTION_HAPTIC')}</h3>
-        <label class="uniRow dirty-target" for="cbFeedbackHaptic">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-vibrate"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('FEEDBACK_HAPTIC_TOGGLE')}</div>
-        <div class="uniStatus">${tr(hapticSupported ? 'FEEDBACK_HAPTIC_TOGGLE_DESC' : 'FEEDBACK_HAPTIC_UNSUPPORTED')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch">
-        <input id="cbFeedbackHaptic" type="checkbox" ${p.haptic ? 'checked' : ''} ${hapticSupported ? '' : 'disabled'}>
-        <div></div>
-        </span>
-        </div>
-        </label>
-        </div>
-
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('FEEDBACK_VISUAL_COMMANDS')}</h3>
-        <label class="uniRow dirty-target" for="cbFeedbackCommands">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-simpleShutter"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('FEEDBACK_SECTION_VISUAL')}</div>
-        <div class="uniStatus">${tr('FEEDBACK_VISUAL_COMMANDS_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbFeedbackCommands" type="checkbox" ${p.visualCommands ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
-
-        <div class="SwitchBig SwitchBig-2 dirty-target" id="feedbackStyleCommandsSwitch">
-        <input type="radio" name="feedbackStyleCommands" id="feedbackStyleCommandsScale" value="scale" ${p.styleCommands !== 'flash' ? 'checked' : ''}>
-        <label for="feedbackStyleCommandsScale">${tr('FEEDBACK_STYLE_SCALE')}</label>
-        <input type="radio" name="feedbackStyleCommands" id="feedbackStyleCommandsFlash" value="flash" ${p.styleCommands === 'flash' ? 'checked' : ''}>
-        <label for="feedbackStyleCommandsFlash">${tr('FEEDBACK_STYLE_FLASH')}</label>
-        <div class="nav-pill"></div>
-        </div>
-        </div>
-
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('FEEDBACK_SECTION_VISUAL_UI')}</h3>
-        <label class="uniRow dirty-target" for="cbFeedbackUI">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-tabHome"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('FEEDBACK_VISUAL_UI')}</div>
-        <div class="uniStatus">${tr('FEEDBACK_VISUAL_UI_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbFeedbackUI" type="checkbox" ${p.visualUI ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
-        <label class="uniRow dirty-target" for="cbFeedbackForms">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-edit"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('FEEDBACK_VISUAL_FORMS')}</div>
-        <div class="uniStatus">${tr('FEEDBACK_VISUAL_FORMS_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbFeedbackForms" type="checkbox" ${p.visualForms ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
-
-
-        <div class="SwitchBig SwitchBig-2 dirty-target" id="feedbackStyleSwitch">
-        <input type="radio" name="feedbackStyle" id="feedbackStyleScale" value="scale" ${p.style !== 'flash' ? 'checked' : ''}>
-        <label for="feedbackStyleScale">${tr('FEEDBACK_STYLE_SCALE')}</label>
-        <input type="radio" name="feedbackStyle" id="feedbackStyleFlash" value="flash" ${p.style === 'flash' ? 'checked' : ''}>
-        <label for="feedbackStyleFlash">${tr('FEEDBACK_STYLE_FLASH')}</label>
-        <div class="nav-pill"></div>
-        </div>
-        </div>
-
-        </div>
-
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnFeedbackCancel" line type="button">${tr('BT_CANCEL')}</button>
-        <button id="btnFeedbackApply" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
-        </div>
-        </div>
-        </div>`;
-
-        get('divContainer').appendChild(div);
-        shOverlay(div);
-        // Rien n'est appliqué au fil des clics : la modale se valide en bloc par "Appliquer", comme
-        // GeoOverlay()/DashboardPrefsOverlay(). watchDirty() est ce qui rend l'alerte "modifications
-        // non enregistrées" possible sur TOUS les chemins de sortie -- les boutons ci-dessous, mais
-        // aussi la croix, le clic sur le fond et le glisser mobile, qui passent déjà par
-        // requestCloseOverlay() -> confirmDiscardChanges() (cf. 20-shell.js).
-        watchDirty(div);
-
-        // Le SwitchBig "Style" des commandes ne pilote rien tant que l'interrupteur au-dessus est
-        // sur off : toutes ses règles CSS sont gardées par :not([data-feedback-commands="off"])
-        // (cf. base.css, section "RETOURS TACTILE & VISUEL"). On désactive donc ses deux radios,
-        // ce qui grise la bascule via .SwitchBig:has(input:disabled) -- même patron que
-        // l'interrupteur haptique sur un appareil sans écran tactile. La position cochée est
-        // conservée telle quelle : le choix n'est pas perdu, il est juste sans effet en l'état.
-        // Piloté par la case du BROUILLON (pas par la préférence enregistrée) : décocher puis
-        // Annuler ne doit pas laisser la bascule grisée à la réouverture.
-        const syncCommandsStyleState = () => {
-            const on = div.querySelector('#cbFeedbackCommands').checked;
-            div.querySelectorAll('input[name="feedbackStyleCommands"]').forEach(r => { r.disabled = !on; });
+        return !!navigator.vibrate && hasTouch;
+    }
+    _renderFeedback() {
+        const tile = get('genFeedbackTile');
+        if (!tile) return;
+        const p = this.getFeedbackPrefs();
+        const pick = (name, on, style) => {
+            const v = on ? (style === 'flash' ? 'flash' : 'scale') : 'off';
+            tile.querySelectorAll(`input[name="${name}"]`).forEach(r => { r.checked = r.value === v; });
         };
-        // Affectation directe de la propriété .disabled : elle ne déclenche aucun évènement, donc
-        // aucun faux "dirty" sur les radios que l'utilisateur n'a pas touchés.
-        div.querySelector('#cbFeedbackCommands').addEventListener('change', syncCommandsStyleState);
-        syncCommandsStyleState();
-
-        get('btnFeedbackCancel').onclick = () => requestCloseOverlay(div);
-        get('btnFeedbackApply').onclick = () => {
-            const radioValue = (name, fallback) => div.querySelector(`input[name="${name}"]:checked`)?.value || fallback;
-            // Écriture unique : setFeedbackPrefs() persiste le blob puis appelle applyFeedbackPrefs(),
-            // qui repose les attributs data-feedback-* sur <html>. Pas de putJSONSync ici -- rien ne
-            // part au firmware, donc pas de cas d'erreur réseau à traiter, contrairement à
-            // GeoOverlay()/DashboardPrefsOverlay() dont on reprend par ailleurs le déroulé.
-            this.setFeedbackPrefs({
-                haptic: get('cbFeedbackHaptic').checked,
-                visualCommands: get('cbFeedbackCommands').checked,
-                visualUI: get('cbFeedbackUI').checked,
-                visualForms: get('cbFeedbackForms').checked,
-                style: radioValue('feedbackStyle', 'scale'),
-                styleCommands: radioValue('feedbackStyleCommands', 'scale')
-            });
-            ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-            clearDirty(div);
-            closeOverlay(div);
+        pick('genFbCommands', p.visualCommands, p.styleCommands);
+        pick('genFbUi', p.visualUI, p.style);
+        get('cbFeedbackForms').checked = p.visualForms;
+        const haptic = get('cbFeedbackHaptic');
+        const supported = this._hapticSupported();
+        haptic.checked = p.haptic;
+        haptic.disabled = !supported;
+        get('genHapticDesc').textContent = tr(supported ? 'FEEDBACK_HAPTIC_TOGGLE_DESC' : 'FEEDBACK_HAPTIC_UNSUPPORTED');
+    }
+    _readFeedback() {
+        const radio = (name) => get('genFeedbackTile').querySelector(`input[name="${name}"]:checked`)?.value || 'scale';
+        const cmd = radio('genFbCommands'), ui = radio('genFbUi');
+        // « Aucun » coupe l'effet mais garde le style choisi avant, pour le retrouver en le rallumant.
+        const prev = this.getFeedbackPrefs();
+        return {
+            haptic: get('cbFeedbackHaptic').checked,
+            visualCommands: cmd !== 'off',
+            styleCommands: cmd === 'off' ? prev.styleCommands : cmd,
+            visualUI: ui !== 'off',
+            style: ui === 'off' ? prev.style : ui,
+            visualForms: get('cbFeedbackForms').checked
         };
     }
     reload() {
@@ -406,8 +410,8 @@ class General {
         "Pacific/Norfolk|<+11>-11<+12>,M10.1.0,M4.1.0/3"
     ];
     loadGeneral() {
-        // divSystemSettings englobe les deux sous-onglets (Général + Firmware) : certains
-        // champs "general.*" (ex: enableDebugLogs) vivent dans Firmware, pas Général.
+        // divSystemSettings englobe les deux sous-onglets (Général + Appareil) : checkForUpdate et
+        // enableDebugLogs vivent dans Appareil, qui les enregistre à part (firmware.setOption).
         const pnl = get('divSystemSettings');
 
         getJSONSync('/modulesettings', (err, settings) => {
@@ -418,7 +422,7 @@ class General {
             logger.setDebugEnabled(settings.enableDebugLogs);
             logger.debug('General settings loaded:', settings);
 
-            get('spanFwVersion').innerText = settings.fwVersion;
+            firmware.renderVersion(settings.fwVersion);
             get('spanHwVersion').innerText = settings.chipModel.length > 0 ? '-' + settings.chipModel : '';
             get('divContainer').setAttribute('data-chipmodel', settings.chipModel);
 
@@ -450,7 +454,9 @@ class General {
             // Position géo (lever/coucher du soleil, cf. Plannings) : geoLat=99 est la sentinelle
             // "non configuré" côté firmware (cf. ConfigSettings.h) -- hors de la plage valide -90..90.
             this._geoSettings = { geoLat: settings.geoLat, geoLon: settings.geoLon };
-            this.updateGeoBadge();
+            this._renderGeo();
+            this._renderFeedback();
+            this._lastSettings = settings;
 
             // Personnalisation dashboard/header (general.DashboardPrefsOverlay()) : synchronisée
             // côté firmware, comme le thème et la couleur d'accent ci-dessus (seuls les retours
@@ -477,19 +483,14 @@ class General {
                 }
             }
 
-            // Retour depuis la page externe de détection de position (cf. GEO_HELPER_URL) :
-            // ouvre directement la modale, pré-remplie, pour que l'utilisateur n'ait plus qu'à
-            // vérifier puis confirmer -- jamais d'enregistrement automatique sans son geste.
-            if (_pendingGeoFromUrl) {
-                const prefill = _pendingGeoFromUrl;
-                _pendingGeoFromUrl = null;
-                this.GeoOverlay(prefill);
-            }
-
+            this._generalReady = false;
             loadLang(() => {
                 ui.toElement(pnl, { general: settings });
 
                 this.populateLangSelect(settings.language);
+                this._renderHero();
+                this._generalReady = true;
+                this.updateDirtyCount();
             });
             if (settings.accentColor) {
                 this._savedAccent = settings.accentColor;
@@ -506,6 +507,15 @@ class General {
             this.revertClientPreviews();
 
             watchDirty(pnl);
+            // Retour depuis la page externe de détection de position (cf. GEO_HELPER_URL) : les
+            // champs sont pré-remplis APRÈS watchDirty, pour compter comme une modification à
+            // enregistrer -- jamais d'enregistrement automatique sans le geste de l'utilisateur.
+            if (_pendingGeoFromUrl) {
+                const prefill = _pendingGeoFromUrl;
+                _pendingGeoFromUrl = null;
+                this.applyGeoPrefill(prefill);
+            }
+            this.updateDirtyCount();
         });
     }
 
@@ -543,10 +553,15 @@ class General {
             ui.errorMessage(msg, tr('ERR_NTP_LENGTH'));
             valid = false;
         }
+        const geo = valid ? this._readGeo() : null;
+        if (valid && !geo) valid = false;
         if (valid) {
+            obj.geoLat = geo.geoLat;
+            obj.geoLon = geo.geoLon;
             putJSONSync('/setgeneral', obj, (err, response) => {
                 if (err) {
-                    ui.serviceError(err);
+                    if (err.code === 'GEO_LAT_INVALID' || err.code === 'GEO_LON_INVALID') ui.errorMessage(tr('GENERAL_GEO_TITLE'), tr('ERR_' + err.code));
+                    else ui.serviceError(err);
                 } else {
                     ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                     logger.debug('General settings saved:', response);
@@ -558,7 +573,10 @@ class General {
                         this._savedTheme = String(obj.themeMode);
                         localStorage.setItem('themeMode', this._savedTheme);
                     }
-                    clearDirty();
+                    this._geoSettings = geo;
+                    this._lastSettings = Object.assign(this._lastSettings || {}, obj);
+                    this.setFeedbackPrefs(this._readFeedback());
+                    this._clearPageDirty();
                 }
                 if (typeof done === 'function') done(err);
             });
@@ -585,274 +603,71 @@ class General {
             badge.classList.add('state-disabled');
         }
     }
-    // geoLat=99 (hors -90..90) est la sentinelle "non configuré" côté firmware, cf. ConfigSettings.h.
-    updateGeoBadge() {
-        const badge = get('badgeGeoState');
-        if (!badge) return;
-        const s = this._geoSettings || { geoLat: 99 };
-        badge.classList.remove('state-disabled', 'state-success');
-        if (s.geoLat >= -90 && s.geoLat <= 90) {
-            badge.textContent = `${s.geoLat.toFixed(2)}, ${s.geoLon.toFixed(2)}`;
-            badge.classList.add('state-success');
-        } else {
-            badge.textContent = tr('GENERAL_GEO_BADGE_DISABLED');
-            badge.classList.add('state-disabled');
-        }
-    }
-
-    // `prefill` optionnel ({lat, lon}) : valeurs de retour de GEO_HELPER_URL (page externe HTTPS),
-    // affichées dans les champs à la place des valeurs déjà enregistrées -- l'utilisateur garde
-    // la main pour vérifier puis confirmer via Appliquer, rien n'est jamais pré-enregistré.
-    GeoOverlay(prefill) {
-        if (get('divGeoOverlay')) return;
+    // geoLat=99 (hors -90..90) est la sentinelle "non configuré" côté firmware, cf. ConfigSettings.h :
+    // elle s'affiche en champs vides, et deux champs vidés la renvoient.
+    _renderGeo() {
         const s = this._geoSettings || { geoLat: 99, geoLon: 0 };
         const isSet = s.geoLat >= -90 && s.geoLat <= 90;
-        const initLat = prefill ? prefill.lat : (isSet ? s.geoLat : null);
-        const initLon = prefill ? prefill.lon : (isSet ? s.geoLon : null);
-        // navigator.geolocation exige un contexte sécurisé (HTTPS/localhost) : sur ce device,
-        // servi en HTTP simple sur le réseau local, la détection native échouerait toujours
-        // silencieusement -- on masque ce bouton au profit de la page externe (GEO_HELPER_URL).
-        const canDetectLocally = window.isSecureContext;
-        // Même contrainte pour la LECTURE programmatique du presse-papiers (navigator.clipboard.
-        // readText) : sur ce device en HTTP simple, elle est indisponible dans la quasi-totalité
-        // des navigateurs, desktop comme mobile. Le COLLAGE natif (Ctrl+V, ou appui long > Coller
-        // sur mobile), lui, ne dépend PAS de cette API -- c'est un geste utilisateur direct dans le
-        // champ, pas une lecture par script -- et fonctionne donc toujours (cf. smartPaste()
-        // plus bas). Les icônes presse-papiers logées DANS les champs s'adaptent : lecture directe
-        // si possible, sinon elles se contentent de mettre le focus sur le champ concerné et
-        // d'indiquer comment coller manuellement.
-        const canReadClipboard = window.isSecureContext && !!(navigator.clipboard && navigator.clipboard.readText);
-
-        const div = document.createElement('div');
-        div.id = 'divGeoOverlay';
-        div.className = 'modal-overlay';
-        div.innerHTML = `
-        <div class="message-content" id="divGeoPopupContent">
-        ${modalHeader('GENERAL_GEO_TITLE', 'svg-location', {
-            subtitle: 'GEO_MODAL_DESC',
-        })}
-
-        <div class="overlay-scroll-content">
-        <div class="information">
-        <div class="information-header">
-        <svg><use href="#svg-info"></use></svg>
-        <b>${tr('MSG_INFO')}</b>
-        </div>
-        <div class="information-text">
-        <span>${tr('GEO_PRIVACY_NOTE')}</span>
-        </div>
-        </div>
-
-        <div class="uniRow feedback-card">
-        <button type="button" id="btnGeoExternal" class="buttonUpdate unibuttonPad">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-search"></use></svg></div>
-        <div class="devButtonUpdate">
-        <div>${tr('GEO_EXTERNAL')}</div>
-        <div class="uniStatus">${tr('GEO_EXTERNAL_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <svg class="btnArrowRight"><use href="#svg-linkOut"></use></svg>
-        </div>
-        </button>
-        </div>
-
-        ${canDetectLocally ? `
-        <div class="uniRow feedback-card">
-        <button type="button" id="btnGeoDetect" class="buttonUpdate unibuttonPad">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-target"></use></svg></div>
-        <div class="devButtonUpdate">
-        <div>${tr('GEO_DETECT')}</div>
-        <div class="uniStatus">${tr('GEO_DETECT_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-        </div>
-        </button>
-        </div>
-        <div class="uniStatus ledPinWarn" id="geoDetectError" style="display:none"></div>
-        ` : ''}
-
-        <div class="baseFlexRow">
-        <div class="uniRow dirty-target">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-latitude"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="inputGeoLat">${tr('GEO_LAT')}</label>
-        <input type="number" id="inputGeoLat" class="inputAndSelect" min="-90" max="90" step="0.01" value="${initLat !== null ? initLat.toFixed(2) : ''}" placeholder="37.24">
-        <button type="button" class="input-paste-btn" id="btnGeoPasteLat" title="${tr('BT_PAST')}" aria-label="${tr('BT_PAST')}"><svg><use href="#svg-clipboard"></use></svg></button>
-        </div>
-        </div>
-        </div>
-        <div class="uniRow dirty-target">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-longitude"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="inputGeoLon">${tr('GEO_LON')}</label>
-        <input type="number" id="inputGeoLon" class="inputAndSelect" min="-180" max="180" step="0.01" value="${initLon !== null ? initLon.toFixed(2) : ''}" placeholder="-115.81">
-        <button type="button" class="input-paste-btn" id="btnGeoPasteLon" title="${tr('BT_PAST')}" aria-label="${tr('BT_PAST')}"><svg><use href="#svg-clipboard"></use></svg></button>
-        </div>
-        </div>
-        </div>
-        </div>
-        <div class="uniStatus ledPinWarn" id="geoError" style="display:none"></div>
-        </div>
-
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        ${isSet ? `<button id="btnGeoClear" line type="button">${tr('BT_RESET')}</button>` : ''}
-        <button id="btnGeoCancel" line type="button">${tr('BT_CANCEL')}</button>
-        <button id="btnGeoApply" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
-        </div>
-        </div>
-        </div>`;
-
-        get('divContainer').appendChild(div);
-        shOverlay(div);
-        watchDirty(div);
-
-        const setError = (msgKey) => {
-            const el = get('geoError');
-            if (!msgKey) { el.textContent = ''; el.style.display = 'none'; return; }
-            el.textContent = tr(msgKey);
-            el.style.display = '';
-        };
-        const setDetectError = (msgKey) => {
-            const el = get('geoDetectError');
-            if (!msgKey) { el.textContent = ''; el.style.display = 'none'; return; }
-            el.textContent = tr(msgKey);
-            el.style.display = '';
-        };
-
+        get('inputGeoLat').value = isSet ? s.geoLat.toFixed(2) : '';
+        get('inputGeoLon').value = isSet ? s.geoLon.toFixed(2) : '';
+    }
+    _readGeo() {
+        const rawLat = get('inputGeoLat').value.trim(), rawLon = get('inputGeoLon').value.trim();
+        if (rawLat === '' && rawLon === '') return { geoLat: 99, geoLon: 0 };
+        const lat = parseFloat(rawLat), lon = parseFloat(rawLon);
+        const fail = (key) => { this.showGeneralTab(1); ui.errorMessage(tr('GENERAL_GEO_TITLE'), tr(key)); return null; };
+        if (isNaN(lat) || lat < -90 || lat > 90) return fail('ERR_GEO_LAT_INVALID');
+        if (isNaN(lon) || lon < -180 || lon > 180) return fail('ERR_GEO_LON_INVALID');
+        return { geoLat: lat, geoLon: lon };
+    }
+    // Remplit la tuile comme une saisie (événements compris) : la valeur reçue compte comme une
+    // modification non enregistrée, l'utilisateur vérifie puis enregistre lui-même.
+    applyGeoPrefill(pos) {
+        if (currentLeafId !== 'divSystemOptions') activateGrpid('divSystemOptions');
+        this.showGeneralTab(1);
+        [['inputGeoLat', pos.lat], ['inputGeoLon', pos.lon]].forEach(([id, v]) => {
+            const el = get(id);
+            el.value = Number(v).toFixed(2);
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    }
+    _bindGeo() {
         // Reconnaît une paire "lat, lon" collée en bloc (ex: copiée depuis Google Maps :
-        // "43.4, -0.57"), pour remplir les deux champs correctement au lieu d'écraser un seul
-        // d'entre eux avec les deux valeurs. Tolère virgule ou point comme séparateur décimal, et
-        // espace/virgule/point-virgule comme séparateur entre les deux nombres.
+        // "43.4, -0.57") pour remplir les deux champs au lieu d'écraser un seul d'entre eux.
         const GEO_PASTE_RE = /^(-?\d+(?:[.,]\d+)?)[\s,;]+(-?\d+(?:[.,]\d+)?)$/;
-        const applyPastedCoords = (raw) => {
-            const m = (raw || '').trim().match(GEO_PASTE_RE);
-            if (!m) return false;
-            const lat = parseFloat(m[1].replace(',', '.'));
-            const lon = parseFloat(m[2].replace(',', '.'));
-            if (!Number.isFinite(lat) || lat < -90 || lat > 90) return false;
-            if (!Number.isFinite(lon) || lon < -180 || lon > 180) return false;
-            get('inputGeoLat').value = lat.toFixed(2);
-            get('inputGeoLon').value = lon.toFixed(2);
-            setError(null);
-            return true;
-        };
-        // Collage manuel (Ctrl+V) directement dans l'un ou l'autre champ : marche indépendamment
-        // du bouton "Coller" ci-dessous et de la permission presse-papiers.
         const smartPaste = (e) => {
-            const raw = (e.clipboardData || window.clipboardData)?.getData('text') || '';
-            if (applyPastedCoords(raw)) e.preventDefault();
+            const raw = ((e.clipboardData || window.clipboardData)?.getData('text') || '').trim();
+            const m = raw.match(GEO_PASTE_RE);
+            if (!m) return;
+            const lat = parseFloat(m[1].replace(',', '.')), lon = parseFloat(m[2].replace(',', '.'));
+            if (!(lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180)) return;
+            e.preventDefault();
+            this.applyGeoPrefill({ lat, lon });
         };
         get('inputGeoLat').addEventListener('paste', smartPaste);
         get('inputGeoLon').addEventListener('paste', smartPaste);
 
-        // Une valeur seule (un seul nombre dans le presse-papiers) ne concerne que le champ dont
-        // on a cliqué l'icône : on la borne à SA plage plutôt qu'à celle de l'autre champ.
-        const applyPastedSingle = (raw, inputId, max) => {
-            const v = parseFloat((raw || '').trim().replace(',', '.'));
-            if (!Number.isFinite(v) || v < -max || v > max) return false;
-            get(inputId).value = v.toFixed(2);
-            setError(null);
-            return true;
-        };
-        const bindPasteButton = (btnId, inputId, max) => {
-            get(btnId)?.addEventListener('click', async () => {
-                setError(null);
-                if (canReadClipboard) {
-                    try {
-                        const raw = await navigator.clipboard.readText();
-                        // Une paire "lat, lon" collée depuis l'une ou l'autre icône remplit les
-                        // deux champs ; sinon on retombe sur la valeur seule de ce champ-ci.
-                        if (!applyPastedCoords(raw) && !applyPastedSingle(raw, inputId, max))
-                            setError('ERR_GEO_PASTE_MANUAL');
-                        return;
-                    } catch (e) {
-                        // Permission refusée au clic malgré un contexte sécurisé : bascule sur le
-                        // même repli manuel que le cas non sécurisé ci-dessous.
-                    }
-                }
-                // Pas de lecture programmatique possible ici (cf. canReadClipboard) : on amène
-                // directement l'utilisateur au geste qui fonctionne -- focus + sélection du champ
-                // cliqué, prêt à recevoir un Ctrl+V ou un appui long > Coller (mobile).
-                const input = get(inputId);
-                input.focus();
-                input.select();
-                setError('ERR_GEO_PASTE_MANUAL');
-            });
-        };
-        bindPasteButton('btnGeoPasteLat', 'inputGeoLat', 90);
-        bindPasteButton('btnGeoPasteLon', 'inputGeoLon', 180);
-
-        get('btnGeoDetect')?.addEventListener('click', () => {
-            if (!navigator.geolocation) {
-                setDetectError('ERR_GEO_UNAVAILABLE');
-                return;
-            }
-            setDetectError(null);
+        // navigator.geolocation exige un contexte sécurisé : sur l'appareil, servi en HTTP simple,
+        // la détection échouerait toujours en silence -- le bouton n'existe qu'en HTTPS/localhost.
+        const detect = get('btnGeoDetect');
+        if (!window.isSecureContext) detect.remove();
+        else detect.addEventListener('click', () => {
+            if (!navigator.geolocation) { ui.errorMessage(tr('GENERAL_GEO_TITLE'), tr('ERR_GEO_UNAVAILABLE')); return; }
             navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    get('inputGeoLat').value = pos.coords.latitude.toFixed(2);
-                    get('inputGeoLon').value = pos.coords.longitude.toFixed(2);
-                    setError(null);
-                },
-                () => { setDetectError('ERR_GEO_DENIED'); },
+                (pos) => this.applyGeoPrefill({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+                () => ui.errorMessage(tr('GENERAL_GEO_TITLE'), tr('ERR_GEO_DENIED')),
                 { timeout: 10000 }
             );
         });
         get('btnGeoExternal').onclick = () => {
             // `return` : l'origine de CET appareil, pour que la page externe sache où renvoyer les
-            // coordonnées (repli par URL uniquement, cf. plus haut). `lang` : la langue déjà
-            // choisie ici, pour que la page externe s'affiche dans la même langue plutôt que de
-            // deviner d'après le navigateur.
+            // coordonnées. `lang` : la langue choisie ici, plutôt que celle du navigateur.
             const params = new URLSearchParams({ return: window.location.origin });
             const lang = localStorage.getItem('selectedLang');
             if (lang) params.set('lang', lang);
-            // PAS de 'noopener' ici : on a besoin que le popup garde une référence vers cette page
-            // (window.opener) pour pouvoir nous renvoyer les coordonnées par postMessage et se
-            // refermer tout seul (cf. sendToESP() dans docs/js/geo.js) -- sans ça, valider sur la
-            // page externe naviguait cette page-là vers l'ESP et laissait cet onglet-ci en double.
-            // Sans risque : GEO_HELPER_URL pointe vers notre propre page GitHub Pages, pas un site
-            // tiers.
+            // PAS de 'noopener' : le popup a besoin de window.opener pour nous renvoyer les
+            // coordonnées par postMessage puis se refermer (cf. sendToESP() dans docs/js/geo.js).
             window.open(`${GEO_HELPER_URL}?${params.toString()}`, '_blank');
-        };
-
-        get('btnGeoCancel').onclick = () => requestCloseOverlay(div);
-        get('btnGeoClear')?.addEventListener('click', () => {
-            putJSONSync('/setgeneral', { geoLat: 99, geoLon: 0 }, (err) => {
-                if (err) { ui.serviceError(err); return; }
-                this._geoSettings = { geoLat: 99, geoLon: 0 };
-                this.updateGeoBadge();
-                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                closeOverlay(div);
-            });
-        });
-        get('btnGeoApply').onclick = () => {
-            const lat = parseFloat(get('inputGeoLat').value);
-            const lon = parseFloat(get('inputGeoLon').value);
-            if (isNaN(lat) || lat < -90 || lat > 90) { setError('ERR_GEO_LAT_INVALID'); return; }
-            if (isNaN(lon) || lon < -180 || lon > 180) { setError('ERR_GEO_LON_INVALID'); return; }
-            setError(null);
-            putJSONSync('/setgeneral', { geoLat: lat, geoLon: lon }, (err) => {
-                if (err) {
-                    if (err.code === 'GEO_LAT_INVALID') setError('ERR_GEO_LAT_INVALID');
-                    else if (err.code === 'GEO_LON_INVALID') setError('ERR_GEO_LON_INVALID');
-                    else ui.serviceError(err);
-                    return;
-                }
-                this._geoSettings = { geoLat: lat, geoLon: lon };
-                this.updateGeoBadge();
-                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                clearDirty(div);
-                closeOverlay(div);
-            });
         };
     }
     // =====================================================================
@@ -878,9 +693,9 @@ class General {
         const homePnl = get('divHomePnl');
         if (homePnl) homePnl.classList.toggle('reverse-columns', !!p.reverseDashboardColumns);
     }
-    // Réglage serveur (NVS + /setgeneral), contrairement à FeedbackOverlay() ci-dessus qui reste
+    // Réglage serveur (NVS + /setgeneral), contrairement aux retours d'appui ci-dessus qui restent
     // 100% client -- mais même déroulé de saisie dans les deux cas : sauvegarde par bouton
-    // "Appliquer" unique, comme GeoOverlay()/LedOverlay(), plutôt qu'application immédiate par
+    // "Appliquer" unique, comme LedOverlay(), plutôt qu'application immédiate par
     // champ. Ici s'ajoute une raison propre au réseau : une coupure en cours de modification ne
     // doit pas laisser un sous-ensemble de champs appliqué silencieusement.
     DashboardPrefsOverlay() {
@@ -1104,171 +919,110 @@ class General {
         // tous les profils de puce connus et n'est pas une broche de strapping.
         this._lastValidLedPin = (presetVal === String(MANUAL)) ? s.ledPin : 4;
 
+        const seg = (id, on, yesKey = 'BT_YES', noKey = 'BT_NO') => `
+        <span class="gen-seg gen-seg-bool">
+        <input id="${id}" type="checkbox" ${on ? 'checked' : ''}>
+        <span class="gen-seg-yes">${tr(yesKey)}</span>
+        <span class="gen-seg-no">${tr(noKey)}</span>
+        </span>`;
+        const row = (id, labelKey, descKey, control) => `
+        <div class="gen-row dirty-target"${id ? ` id="${id}"` : ''}>
+        <span class="gen-row-text"><b>${tr(labelKey)}</b>${descKey ? `<span>${tr(descKey)}</span>` : ''}</span>
+        ${control}
+        </div>`;
+        const color = s.ledColorActivity || '#ffffff';
+        const pinText = s.ledPin > 0 ? `GPIO ${s.ledPin} · ${tr(s.ledAddressable ? 'LED_MODAL_TYPE_RGB' : 'LED_MODAL_TYPE_PLAIN')}` : '';
+        const rfRow = row('', 'LED_MODAL_RF_BLINK', 'LED_MODAL_RF_BLINK_DESC', seg('cbLedRfBlink', s.ledRfBlink));
+
         const div = document.createElement('div');
         div.id = 'divLedOverlay';
-        div.className = 'modal-overlay';
+        // genmod-overlay : la fenêtre se cadre sur la page, comme celles de Général (overlays.css).
+        div.className = 'modal-overlay genmod-overlay';
         div.innerHTML = `
-        <div class="message-content ledOverlay-content" id="divLedPopupContent">
-        ${modalHeader('FW_LED_TITLE', 'svg-led', {
-            subtitle: 'LED_MODAL_DESC',
+        <div class="message-content genmod-window" id="divLedPopupContent">
+        ${genModalShell({
+            id: 'led', icon: 'svg-led', footId: 'ledFoot',
+            titleKey: 'FW_LED_TITLE', descKey: 'LED_MODAL_DESC',
+            stateKey: tr('LED_MODAL_LED'),
+            stateValue: tr(isGeneric ? (enabled ? 'ENABLED' : 'IS_DISABLED') : 'INTEGRATED'),
+            stateNote: isGeneric ? pinText : tr('LED_MODAL_STATE_BOARD').replace('%1', this._ledBoardLabel(profile)),
+            sideExtra: `
+            <span class="led-preview" id="ledPreview" style="--lc:${s.ledAddressable || !isGeneric ? color : 'var(--ok)'}" aria-hidden="true"><i></i></span>
+            <button id="btnLedTest" type="button" class="gen-btn"><svg><use href="#svg-led"></use></svg><span>${tr('LED_MODAL_TEST')}</span></button>`,
+            sectionKey: 'LED_MODAL_SECTION', hintKey: 'LED_MODAL_HINT',
+            bodyHtml: isGeneric ? `
+            <p class="genmod-error" id="ledPinError" style="display:none"></p>
+            <section class="genmod-sect">
+            <h3 class="gen-tile-title">${tr('LED_MODAL_LED')}</h3>
+            ${row('ledEnableSwitch', 'LED_MODAL_ENABLE', 'LED_MODAL_ENABLE_DESC', seg('cbLedEnabled', enabled))}
+            </section>
+            <section class="genmod-sect">
+            <h3 class="gen-tile-title">${tr('LED_MODAL_PIN_SECTION')}</h3>
+            <div class="gen-field dirty-target">
+            <label class="gen-field-label" for="selLedBoardPreset">${tr('LED_MODAL_BOARD_PRESET')}</label>
+            <div class="gen-input-box">
+            <select id="selLedBoardPreset" class="gen-input">
+            ${ledOpts.map(b => `<option value="${b.val}" ${b.placeholder ? 'disabled hidden' : ''} ${presetVal === String(b.val) ? 'selected' : ''}>${tr(b.label)}</option>`).join('')}
+            </select>
+            </div>
+            </div>
+            <div id="divLedManualBlock" class="led-manual" style="display:${presetVal === String(MANUAL) ? '' : 'none'};">
+            <div class="gen-field">
+            <label class="gen-field-label" for="inputLedPinManual">GPIO</label>
+            <div class="gen-input-box led-pin-box dirty-target" id="divLedPinCustom">
+            <input type="number" id="inputLedPinManual" class="gen-input" min="0" max="48" value="${this._lastValidLedPin}" autocomplete="new-password">
+            <span class="led-pin-steps">
+            <button type="button" id="btnLedPinMinus" aria-label="-1">−</button>
+            <button type="button" id="btnLedPinPlus" aria-label="+1">+</button>
+            </span>
+            </div>
+            </div>
+            <label class="genmod-check led-safety"><input id="cbLedManualSafety" type="checkbox"><span>${tr('RADIO_SAFETY_TEXT')}</span></label>
+            <p class="gen-tile-desc is-warning led-pin-warn" id="ledPinWarn" style="display:none"></p>
+            </div>
+            <p class="gen-tile-desc">${tr('LED_MODAL_PIN_DESC')}</p>
+            </section>
+            <section class="genmod-sect">
+            <h3 class="gen-tile-title">${tr('LED_MODAL_SECT_TYPE')}</h3>
+            <div class="gen-row dirty-target" id="ledTypeSwitch">
+            <span class="gen-row-text"><b>${tr('LED_MODAL_TYPE')}</b></span>
+            <span class="gen-seg">
+            <label><input type="radio" name="ledType" id="rbLedPlain" value="plain" ${!s.ledAddressable ? 'checked' : ''}><span>${tr('LED_MODAL_TYPE_PLAIN')}</span></label>
+            <label><input type="radio" name="ledType" id="rbLedRgb" value="rgb" ${s.ledAddressable ? 'checked' : ''}><span>${tr('LED_MODAL_TYPE_RGB')}</span></label>
+            </span>
+            </div>
+            ${row('rowLedActiveLow', 'LED_MODAL_ACTIVE_LOW', 'LED_MODAL_ACTIVE_LOW_DESC', seg('cbLedActiveLow', s.ledActiveLow))}
+            ${row('rowLedColorActivity', 'LED_MODAL_COLOR_ACTIVITY', 'LED_MODAL_COLOR_ACTIVITY_DESC', `
+            <label class="led-color">
+            <span class="accent-swatch led-swatch" id="swLedColorActivity" style="--led-swatch:${color}">
+            <input id="fldLedColorActivity" class="general-accent-color" type="color" value="${color}">
+            </span>
+            <code id="ledColorHex">${color}</code>
+            </label>`)}
+            ${/* Les vrais noms plutôt que Oui/Non ; RGB = case cochée, GRB affiché en premier (CSS). */ ''}
+            ${row('rowLedColorOrder', 'LED_MODAL_COLOR_ORDER', 'LED_MODAL_COLOR_ORDER_DESC', `
+            <span class="gen-seg gen-seg-bool led-order">
+            <input id="cbLedColorOrder" type="checkbox" ${s.ledColorOrder ? 'checked' : ''}>
+            <span class="gen-seg-yes">${tr('LED_MODAL_ORDER_RGB')}</span>
+            <span class="gen-seg-no">${tr('LED_MODAL_ORDER_GRB')}</span>
+            </span>`)}
+            </section>
+            <section class="genmod-sect">
+            <h3 class="gen-tile-title">${tr('LED_MODAL_SECT_RF')}</h3>
+            ${rfRow}
+            </section>` : `
+            <p class="genmod-error" id="ledPinError" style="display:none"></p>
+            <p class="gen-tile-desc is-info">${tr('LED_MODAL_BOARD_INFO')}</p>
+            <section class="genmod-sect">
+            <h3 class="gen-tile-title">${tr('LED_MODAL_SECT_RF')}</h3>
+            ${rfRow}
+            </section>`
         })}
-        <div class="overlay-scroll-content">
-
-        ${isGeneric ? `
-        <div class="SwitchBig marginB25" id="ledEnableSwitch">
-        <input id="cbLedEnabled" type="checkbox" ${enabled ? 'checked' : ''}>
-        <label for="cbLedEnabled" class="label-left">${tr('IS_DISABLED')}</label>
-        <label for="cbLedEnabled" class="label-right">${tr('ENABLED')}</label>
-        <div class="nav-pill"></div>
-        </div>
-
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('LED_MODAL_PIN_SECTION')}</h3>
-
-
-
-        <div class="uniStatus ledPinWarn" id="ledPinError" style="display:none"></div>
-
-
-
-
-
-
-        <div class="baseFlexCol ">
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="selLedBoardPreset">${tr('LED_MODAL_BOARD_PRESET')}</label>
-        <select id="selLedBoardPreset" class="inputAndSelect">
-        ${ledOpts.map(b => `<option value="${b.val}" ${b.placeholder ? 'disabled hidden' : ''} ${presetVal === String(b.val) ? 'selected' : ''}>${tr(b.label)}</option>`).join('')}
-        </select>
-        </div>
-        </div>
-
-
-
-
-
-
-
-        <div id="divLedManualBlock" style="display:${presetVal === String(MANUAL) ? 'block' : 'none'};">
-        <div class="gpio-main-wrapper">
-        <div class="gpio-group-block">
-        <div class="gpio-flex-container">
-        <div class="gpio-card">
-        <div class="input-number-custom dirty-target" id="divLedPinCustom">
-        <label class="input-label" for="inputLedPinManual">GPIO</label>
-        <input type="number" id="inputLedPinManual" class="inputAndSelect" min="0" max="48" value="${this._lastValidLedPin}" autocomplete="new-password">
-        <div class="step-buttons-warp">
-        <div class="step-buttons">
-        <button type="button" id="btnLedPinMinus">-</button>
-        <button type="button" id="btnLedPinPlus">+</button>
-        </div>
-        </div>
-        </div>
-        <div class="uniStatus ledPinWarn" id="ledPinWarn" style="display:none"></div>
-        </div>
-        </div>
-        </div>
-        </div>
-        <div class="manual-safety-block">
-        <label class="safety-label" for="cbLedManualSafety">
-        <span class="switch"><input id="cbLedManualSafety" type="checkbox"><div></div></span>
-        <span class="safety-text">${tr('RADIO_SAFETY_TEXT')}</span>
-        </label>
-        </div>
-        </div>
-        </div>
-
-        <div class="baseFlexCol">
-        <div class="uniStatus led-pin-help">${tr('LED_MODAL_PIN_DESC')}</div>
-        </div>
-
-        <div class="SwitchBig SwitchBig-2 dirty-target marginB25" id="ledTypeSwitch">
-        <input type="radio" name="ledType" id="rbLedPlain" value="plain" ${!s.ledAddressable ? 'checked' : ''}>
-        <label for="rbLedPlain">${tr('LED_MODAL_TYPE_PLAIN')}</label>
-        <input type="radio" name="ledType" id="rbLedRgb" value="rgb" ${s.ledAddressable ? 'checked' : ''}>
-        <label for="rbLedRgb">${tr('LED_MODAL_TYPE_RGB')}</label>
-        <div class="nav-pill"></div>
-        </div>
-
-        <label class="uniRow dirty-target" for="cbLedActiveLow" id="rowLedActiveLow">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-gpioUp"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('LED_MODAL_ACTIVE_LOW')}</div>
-        <div class="uniStatus">${tr('LED_MODAL_ACTIVE_LOW_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbLedActiveLow" type="checkbox" ${s.ledActiveLow ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
-
-        <label class="uniRow dirty-target" for="fldLedColorActivity" id="rowLedColorActivity">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('LED_MODAL_COLOR_ACTIVITY')}</div>
-        <div class="uniStatus">${tr('LED_MODAL_COLOR_ACTIVITY_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="accent-swatch led-swatch" id="swLedColorActivity" style="--led-swatch:${s.ledColorActivity || '#ffffff'}">
-        <input id="fldLedColorActivity" class="general-accent-color" type="color" value="${s.ledColorActivity || '#ffffff'}">
-        </span>
-        </div>
-        </label>
-
-        <label class="uniRow dirty-target" for="cbLedColorOrder" id="rowLedColorOrder">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-commandInverse"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('LED_MODAL_COLOR_SWAP')}</div>
-        <div class="uniStatus">${tr('LED_MODAL_COLOR_SWAP_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbLedColorOrder" type="checkbox" ${s.ledColorOrder ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
-
-        <div class="baseFlexCol" id="rowLedTest">
-        <button id="btnLedTest" line type="button"><svg><use href="#svg-led"></use></svg><span>${tr('LED_MODAL_TEST')}</span></button>
-        </div>
-
-        </div>
-        ` : ''}
-
-        <label class="uniRow dirty-target" for="cbLedRfBlink">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('LED_MODAL_RF_BLINK')}</div>
-        <div class="uniStatus">${tr('LED_MODAL_RF_BLINK_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbLedRfBlink" type="checkbox" ${s.ledRfBlink ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
-
-        ${!isGeneric ? `
-        <div class="baseFlexCol" id="rowLedTest">
-        <button id="btnLedTest" line type="button"><svg><use href="#svg-led"></use></svg><span>${tr('LED_MODAL_TEST')}</span></button>
-        </div>
-        ` : ''}
-        </div>
-
-
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnLedCancel" line type="button">${tr('BT_CANCEL')}</button>
-        <button id="btnLedApply" type="button" disabled><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
-        </div>
-        </div>
         </div>`;
+        div.querySelector('#ledFoot').innerHTML = `
+        <button id="btnLedCancel" type="button" class="gen-btn">${tr('BT_CANCEL')}</button>
+        <button id="btnLedApply" type="button" class="gen-btn gen-btn-primary" disabled><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>`;
+        div.onclick = (e) => { if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div); };
 
         get('divContainer').appendChild(div);
         shOverlay(div);
@@ -1327,7 +1081,15 @@ class General {
             // une préférence, elle reste donc offerte dès que la LED est adressable, préréglage ou
             // non. Tout est MASQUÉ plutôt que grisé -- il n'y a rien à lire dans un réglage qui ne
             // s'applique pas.
+            // Aperçu de la colonne de gauche : la couleur d'activité pour une LED adressable, le vert
+            // d'état pour une LED simple, éteint quand le témoin est désactivé.
+            const syncPreview = () => {
+                const p = get('ledPreview');
+                p.style.setProperty('--lc', !swEnabled.checked ? 'var(--sunken)'
+                    : get('rbLedRgb').checked ? get('fldLedColorActivity').value : 'var(--ok)');
+            };
             const syncAddressable = () => {
+                syncPreview();
                 const addr = get('rbLedRgb').checked;
                 const manuel = parseInt(presetSel.value, 10) === MANUAL;
                 const vis = (id, on) => { const row = get(id); if (row) row.style.display = on ? '' : 'none'; };
@@ -1335,6 +1097,11 @@ class General {
                 vis('rowLedActiveLow', manuel && !addr);
                 vis('rowLedColorOrder', manuel && addr);
                 vis('rowLedColorActivity', addr);
+                // Plus rien à régler (préréglage d'une LED simple) : le bloc entier disparaît avec
+                // ses lignes, sinon il ne resterait que son titre.
+                const sect = get('ledTypeSwitch').closest('.genmod-sect');
+                sect.style.display = ['ledTypeSwitch', 'rowLedActiveLow', 'rowLedColorActivity', 'rowLedColorOrder']
+                    .some(id => get(id).style.display !== 'none') ? '' : 'none';
             };
             syncAddressable();
 
@@ -1346,6 +1113,8 @@ class General {
                 if (!fld || !sw) return;
                 fld.addEventListener('input', () => {
                     sw.style.setProperty('--led-swatch', fld.value);
+                    get('ledColorHex').textContent = fld.value;
+                    syncPreview();
                     markDirty();
                 });
             };
@@ -1569,7 +1338,6 @@ class General {
             () => {
                 if(typeof socket !== 'undefined') socket.close(3000, 'reboot');
                 putJSONSync('/reboot', {}, (err, response) => {
-                    get('btnSaveGeneral').classList.remove('disabled');
                     logger.debug('Reboot requested:', response);
                 });
                 ui.clearErrors();
@@ -1592,12 +1360,14 @@ class General {
 
         // Affiche immédiatement ce que le cache du manifeste permet (ou le code en majuscules).
         langDisplay.textContent = langLabel(currentLang);
+        this._renderHero();
 
         // Si le manifeste est disponible, remplace par le nom natif (ex: "Français", "Deutsch").
         loadLangManifest()
         .then(manifest => {
             if (manifest && manifest.langs && manifest.langs[currentLang]?.native) {
                 langDisplay.textContent = manifest.langs[currentLang].native;
+                this._renderHero();
             }
         })
         .catch(err => {
@@ -1662,34 +1432,37 @@ class General {
 
         const div = document.createElement('div');
         div.id = 'divLangManagerOverlay';
-        div.className = 'modal-overlay';
+        // genmod-overlay : ancre la fenêtre sous la barre du haut, sur la page (overlays.css).
+        div.className = 'modal-overlay genmod-overlay';
         div.innerHTML = `
-        <div class="message-content icon-pack-content">
-        ${modalHeader('GENERAL_LANGUAGE', 'svg-language', {
-            subtitle: 'LANG_MODAL_TITLE_DESC',
-        })}
-        <div class="icon-pack-body">
+        <div class="message-content genmod-window">
+        ${genModalShell({
+            id: 'lang',
+            icon: 'svg-language',
+            titleKey: 'GENERAL_LANGUAGE',
+            descKey: 'LANG_MODAL_TITLE_DESC',
+            sectionKey: 'LANG_MODAL_SECTION',
+            stateKey: tr('LANG_MODAL_STATE_ACTIVE'),
+            stateValue: langLabel(document.documentElement.lang || window.__defaultLangCode || 'en'),
+            stateNote: document.documentElement.lang || '',
+            hintKey: 'LANG_MODAL_HINT',
+            footId: 'langFoot',
+            bodyHtml: `
             <div class="icon-pack-label"><span id="langCount"></span>
                 <label for="fileLangGlobalImport" class="icon-pack-import"><svg><use href="#svg-upload"></use></svg>${tr('FILE_PICK_LANG')}</label></div>
             <p id="langNotice" class="lang-catalog-manual-import-info margin0" style="display:none"></p>
-            <div class="icon-pack-grid-wrap"><div class="icon-pack-grid" id="langCatalog"></div></div>
+            <div class="icon-pack-grid" id="langCatalog"></div>
             <div id="langSelInfo"></div>
             <div class="icon-pack-drop">${fileDropZone('fileLangGlobalImport', 'FILE_PICK_LANG')}</div>
             <input id="fileLangGlobalImport" type="file" accept="application/json,.json,application/gzip,.gz" style="display:none"
-            onchange="general.handleGlobalLangUpload(this)"/>
-        </div>
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal"><div class="button-content-modal" id="langFoot">
-            <button id="btnLangManagerClose" line type="button">${tr('BT_CLOSE')}</button>
-        </div></div>
+            onchange="general.handleGlobalLangUpload(this)"/>`,
+        })}
         </div>`;
 
         shOverlay(div);
 
         div.onclick = (e) => {
-            if (e.target.id === 'btnLangManagerClose' || e.target.closest('#btnLangManagerClose')) {
-                requestCloseOverlay(div);
-            }
+            if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div);
         };
 
         this.loadLangCatalog();
@@ -1794,7 +1567,7 @@ class General {
 
             let badge = '';
             if (entry.code === activeLang) badge = `<span class="lang-catalog-badge active">${tr('LANG_MODAL_ACTIVE')}</span>`;
-            else if (entry.installed) badge = `<span class="lang-catalog-badge">${tr('LANG_MODAL_INSTALLED')}</span>`;
+            else if (entry.installed) badge = `<span class="lang-catalog-badge">${tr('INSTALLED')}</span>`;
             else if (isPending) badge = `<span class="lang-catalog-badge">${tr('LANG_PENDING_BADGE')}</span>`;
 
             // Boîtier plein : une langue en ligne ne peut plus être choisie, sauf celle déjà mise
@@ -1845,7 +1618,17 @@ class General {
         }
         get('langSelInfo').innerHTML = info;
 
-        // Pied : les actions possibles sur la langue choisie, à côté de Fermer.
+        // Colonne de gauche : la langue active tant qu'on n'a rien choisi d'autre, sinon la
+        // langue sur laquelle porte le pied -- l'utilisateur doit pouvoir lire les deux.
+        const stateEl = get('langState');
+        if (stateEl) {
+            stateEl.innerHTML = sel === activeLang
+                ? genModalState(tr('LANG_MODAL_STATE_ACTIVE'), langLabel(activeLang), activeLang)
+                : genModalState(tr('LANG_MODAL_STATE_PICKED'), langLabel(sel), sel);
+        }
+
+        // Pied : les actions possibles sur la langue choisie. Plus de « Fermer » : la croix
+        // de l'en-tête le remplace.
         let actions = '';
         if (sel !== activeLang && !info) {
             if (entry.installed) {
@@ -1853,14 +1636,14 @@ class General {
                 // fr sur BOX, en sinon) reste le filet de sécurité universel côté backend
                 // (handleLang) -- jamais supprimable.
                 if (sel !== window.__defaultLangCode) {
-                    actions += `<button type="button" lineRed onclick="general.deleteLang('${sel}')">${tr('LANG_MODAL_DELETE_LANG')}</button>`;
+                    actions += `<button type="button" class="gen-btn genmod-btn-danger" onclick="general.deleteLang('${sel}')">${tr('LANG_MODAL_DELETE_LANG')}</button>`;
                 }
-                actions += `<button type="button" onclick="general.useLang('${sel}')">${tr('LANG_MODAL_USE_LANG')}</button>`;
+                actions += `<button type="button" class="gen-btn gen-btn-primary" onclick="general.useLang('${sel}')">${tr('LANG_MODAL_USE_LANG')}</button>`;
             } else if (entry.downloadable && !full) {
-                actions = `<button type="button" onclick="general.downloadLang('${sel}')">${tr('LANG_MODAL_DOWNLOAD')}</button>`;
+                actions = `<button type="button" class="gen-btn gen-btn-primary" onclick="general.downloadLang('${sel}')">${tr('LANG_MODAL_DOWNLOAD')}</button>`;
             }
         }
-        get('langFoot').innerHTML = `<button id="btnLangManagerClose" line type="button">${tr('BT_CLOSE')}</button>${actions}`;
+        get('langFoot').innerHTML = actions;
     }
     // Ignorée pendant un téléchargement : redessiner la grille effacerait sa barre de progression.
     selectLang(code) {
@@ -1996,15 +1779,25 @@ class General {
         })
         .catch(err => logger.error('Failed to delete language:', err));
     }
-    // Affiche la barre de progression d'une tuile du catalogue et retire les actions du pied
-    // (Fermer excepté), au déclenchement du téléchargement. La sélection reste figée jusqu'au
-    // prochain rendu du catalogue (cf. selectLang).
+    // Affiche la barre de progression d'une tuile du catalogue et vide le pied, au
+    // déclenchement du téléchargement. La sélection reste figée jusqu'au prochain rendu du
+    // catalogue (cf. selectLang). La colonne de gauche dit ce qui est en train de se passer,
+    // et la croix cesse de répondre : c'est le verrou posé par relayLangDownload, rendu visible.
     showLangProgress(code) {
         const prog = get(`langProgress_${code}`);
         if (!prog) return;
         prog.classList.add('active');
         this._langBusy = true;
-        get('langFoot').querySelectorAll('button:not(#btnLangManagerClose)').forEach(b => b.remove());
+        get('langFoot').innerHTML = '';
+        const stateEl = get('langState'), hintEl = get('langHint');
+        if (stateEl) stateEl.innerHTML = genModalState(tr('LANG_MODAL_STATE_DOWNLOAD'), langLabel(code), code);
+        if (hintEl) hintEl.textContent = tr('LANG_MODAL_HINT_BUSY');
+    }
+    // Fin du téléchargement, abouti ou non : le verrou lève lui-même l'état occupé, il ne
+    // reste que la phrase du pied à remettre.
+    clearLangProgress() {
+        const hintEl = get('langHint');
+        if (hintEl) hintEl.textContent = tr('LANG_MODAL_HINT');
     }
     procLangDownloadProgress(prog) {
         const block = get(`langProgress_${prog.code}`);
@@ -2019,6 +1812,7 @@ class General {
     procLangDownloadComplete(msg) {
         // no-op si le catalogue n'est pas ouvert (déclenché depuis un toast, cf. acceptLangPrompt).
         clearOverlayLock(get('divLangManagerOverlay'));
+        this.clearLangProgress();
         const toast = get('langPromptToast');
         if (toast) toast.remove();
         const missingToast = get('langMissingToast');
@@ -2145,213 +1939,121 @@ class General {
         this.applyTheme(sel.value);
     }
     onSecurityTypeChanged() {
-        const badge = get('badgeSecurityState');
-        if (!badge) return;
-        badge.classList.remove('state-disabled', 'state-pin', 'state-password');
-
-        if (this._currentSecurityType === 0) {
-            badge.textContent = tr('IS_DISABLED');
-            badge.classList.add('state-disabled');
-        } else if (this._currentSecurityType === 1) {
-            badge.textContent = tr('SECURITY_PIN_CODE');
-            badge.classList.add('state-pin');
-        } else if (this._currentSecurityType === 2) {
-            badge.textContent = tr('SECURITY_PASSWORD');
-            badge.classList.add('state-password');
-        }
+        this._renderHero();
+        this.renderSecurityTile();
     }
-    SecurityOverlay() {
-        if (get('divSecurityOverlay')) return;
-
-        let div = document.createElement('div');
-        div.id = 'divSecurityOverlay';
-        div.className = 'modal-overlay';
-
-        // Page unique : le mode (Désactivé / Code PIN / Mot de passe) se choisit sur un seul
-        // SwitchBig à 3 positions. Les radios gardent le nom secTypeGroup : c'est toujours la
-        // source de vérité lue à l'enregistrement (cf. saveSecurity()).
+    _securityLabel(type) {
+        return tr(['IS_DISABLED', 'SECURITY_PIN_CODE', 'SECURITY_PASSWORD'][type] || 'IS_DISABLED');
+    }
+    // La tuile est reconstruite à partir du seul état enregistré (_securityData/_hasPin/_hasPassword,
+    // alimentés par setSecurityConfig depuis le serveur) : une saisie abandonnée ne survit pas à
+    // un nouvel enregistrement ni à un rechargement. Les champs secrets sont réinitialisés à chaque
+    // rendu, la confirmation comprise : le gestionnaire de mots de passe du navigateur peut repeupler
+    // un champ juste après l'insertion (d'où aussi les attributs autocomplete).
+    renderSecurityTile() {
+        const tile = get('genSecTile'), body = get('genSecBody');
+        if (!tile || !body) return;
         const currentType = this._currentSecurityType || 0;
+        const radio = (v, key) => `<label><input type="radio" name="secTypeGroup" value="${v}" ${currentType === v ? 'checked' : ''}><span>${tr(key)}</span></label>`;
+        body.innerHTML = `
+        <div class="gen-seg dirty-target">${radio(0, 'IS_DISABLED')}${radio(1, 'SECURITY_PIN_CODE')}${radio(2, 'SECURITY_PASSWORD')}</div>
+        <p id="secTypeDesc" class="gen-tile-desc"></p>
 
-        div.innerHTML = `
-        <div class="message-content securityOverlay-content" id="divSecurityPopupContent">
-        ${modalHeader('GENERAL_SECURITY', 'svg-lock', {
-            subtitle: 'SECURITY_MODAL_DESC',
-        })}
-
-        <div class="overlay-scroll-content">
-
-        <div class="SwitchBig SwitchBig-3 dirty-target" id="secTypeSwitch">
-        <input type="radio" name="secTypeGroup" id="secType0" value="0" ${currentType === 0 ? 'checked' : ''}>
-        <label for="secType0">${tr('IS_DISABLED')}</label>
-        <input type="radio" name="secTypeGroup" id="secType1" value="1" ${currentType === 1 ? 'checked' : ''}>
-        <label for="secType1">${tr('SECURITY_PIN_CODE')}</label>
-        <input type="radio" name="secTypeGroup" id="secType2" value="2" ${currentType === 2 ? 'checked' : ''}>
-        <label for="secType2">${tr('SECURITY_PASSWORD')}</label>
-        <div class="nav-pill"></div>
-        </div>
-        <p id="secTypeDesc" class="sec-type-desc"></p>
-
-        <label class="uniRow dirty-target">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('SECURITY_SECURE_CONFIG_ONLY')}</div>
-        <div class="uniStatus">${tr('SECURITY_SECURE_CONFIG_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch">
-        <input id="cbSecureConfigOnly" name="hardwired" type="checkbox" data-bind="security.permissions.configOnly"/>
-        <div></div>
-        </span>
-        </div>
-        </label>
-
-        <div id="divPopupPin" class="uniblocCol" style="display: ${currentType === 1 ? 'block' : 'none'};">
-        <label class="labelMAJ">${tr('SECURITY_ENTER_PIN')}</label>
-        <div class="pin-digit-row">
+        <div id="divPopupPin" class="gen-field">
+        <span class="gen-field-label">${tr('SECURITY_ENTER_PIN')}</span>
+        <div class="pin-digit-row dirty-target">
         <input class="pin-digit" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off">
         <input class="pin-digit" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off">
         <input class="pin-digit" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off">
         <input class="pin-digit" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off">
         </div>
-        <p id="secPinHint" class="sec-secret-hint"></p>
+        <p id="secPinHint" class="gen-tile-desc"></p>
         </div>
 
-        <div id="divPopupPassword" style="display: ${currentType === 2 ? 'block' : 'none'};">
-        <div class="baseFlexCol">
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-user"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="fldUsername">${tr('SECURITY_USERNAME')}</label>
-        <input id="fldUsername" class="inputAndSelect" name="secUsername" autocomplete="off" type="text" data-bind="security.username" placeholder="${tr('SECURITY_USERNAME_PLH')}">
+        <div id="divPopupPassword" class="gen-sec-pwd">
+        <div class="gen-field">
+        <label class="gen-field-label" for="fldUsername">${tr('SECURITY_USERNAME')}</label>
+        <div class="gen-input-box dirty-target"><input id="fldUsername" class="gen-input" name="secUsername" autocomplete="off" type="text" data-bind="security.username" placeholder="${tr('SECURITY_USERNAME_PLH')}"></div>
         </div>
-        </div>
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="fldPassword">${tr('SECURITY_PASSWORD')}</label>
-        <input id="fldPassword" class="inputAndSelect" name="secNewPassword" autocomplete="new-password" type="password" placeholder="${tr('SECURITY_PASSWORD_PLH')}">
+        <div class="gen-field-pair">
+        <div class="gen-field">
+        <label class="gen-field-label" for="fldPassword">${tr('SECURITY_PASSWORD')}</label>
+        <div class="gen-input-box dirty-target">
+        <input id="fldPassword" class="gen-input" name="secNewPassword" autocomplete="new-password" type="password" placeholder="${tr('SECURITY_PASSWORD_PLH')}">
         <div class="password-eye" onclick="security.toggleFieldPassword('fldPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
         </div>
         </div>
-        <p id="secPasswordHint" class="sec-secret-hint"></p>
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="fldRenterPassword">${tr('SECURITY_CONFIRM_PASSWORD')}</label>
-        <input id="fldRenterPassword" class="inputAndSelect" name="secConfirmPassword" autocomplete="new-password" type="password" placeholder="${tr('SECURITY_CONFIRM_PASSWORD')}">
+        <div class="gen-field">
+        <label class="gen-field-label" for="fldRenterPassword">${tr('SECURITY_CONFIRM_PASSWORD')}</label>
+        <div class="gen-input-box dirty-target">
+        <input id="fldRenterPassword" class="gen-input" name="secConfirmPassword" autocomplete="new-password" type="password" placeholder="${tr('SECURITY_CONFIRM_PASSWORD')}">
         <div class="password-eye" onclick="security.toggleFieldPassword('fldRenterPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
         </div>
         </div>
         </div>
-        </div>
+        <p id="secPasswordHint" class="gen-tile-desc"></p>
         </div>
 
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnSecGoBack" line type="button">${tr('BT_CLOSE')}</button>
-        <button id="btnPopupSaveSec" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
-        </div>
-        </div>
-        </div>
+        <div id="genSecConfigOnly" class="gen-row dirty-target">
+        <span class="gen-row-text"><b>${tr('SECURITY_SECURE_CONFIG_ONLY')}</b><span>${tr('SECURITY_SECURE_CONFIG_DESC')}</span></span>
+        <span class="gen-seg gen-seg-bool">
+        <input id="cbSecureConfigOnly" name="hardwired" type="checkbox" data-bind="security.permissions.configOnly">
+        <span class="gen-seg-yes">${tr('BT_YES')}</span>
+        <span class="gen-seg-no">${tr('BT_NO')}</span>
+        </span>
         </div>`;
 
-        get('divContainer').appendChild(div);
-        shOverlay(div);
-
-        // La fenêtre est reconstruite à chaque ouverture à partir du seul état enregistré
-        // (_securityData/_hasPin/_hasPassword, alimentés par setSecurityConfig depuis le serveur) :
-        // une saisie abandonnée -- fermeture après un message d'erreur, refus de la confirmation --
-        // ne survit donc jamais à la réouverture. Les trois champs sont explicitement réinitialisés
-        // ci-dessous, la confirmation comprise : s'en remettre à la valeur vide du HTML ne suffit
-        // pas, le gestionnaire de mots de passe du navigateur pouvant repeupler le champ juste
-        // après l'insertion (cf. les attributs autocomplete posés plus haut, qui l'en dissuadent
-        // en amont -- sans eux, name="username"/"password" faisaient passer ce panneau de réglages
-        // pour le formulaire de connexion de index.html, qui porte les mêmes noms).
-        ui.toElement(div, { security: this._securityData || { username: '', permissions: { configOnly: false } } });
-        initSecretPinGroup(div.querySelectorAll('#divPopupPin .pin-digit'), this._hasPin);
-        initSecretField(div.querySelector('#fldPassword'), this._hasPassword);
-        initSecretField(div.querySelector('#fldRenterPassword'), false);
+        ui.toElement(body, { security: this._securityData || { username: '', permissions: { configOnly: false } } });
+        initSecretPinGroup(body.querySelectorAll('#divPopupPin .pin-digit'), this._hasPin);
+        initSecretField(body.querySelector('#fldPassword'), this._hasPassword);
+        initSecretField(body.querySelector('#fldRenterPassword'), false);
         // Le masque factice dit seulement "un secret existe" : à l'écran, rien ne le distinguait
-        // d'une saisie qu'on aurait conservée. Ce libellé lève l'ambiguïté sans rien ajouter à
-        // manipuler -- la suppression, elle, découle du mode retenu (cf. saveSecurity).
+        // d'une saisie qu'on aurait conservée. Ce libellé lève l'ambiguïté.
         const setHint = (id, key, show) => {
-            const el = div.querySelector(id);
-            if (!el) return;
+            const el = body.querySelector(id);
             el.textContent = tr(key);
             el.style.display = show ? '' : 'none';
         };
         setHint('#secPasswordHint', 'SECURITY_PASSWORD_STORED', this._hasPassword);
         setHint('#secPinHint', 'SECURITY_PIN_STORED', this._hasPin);
-        watchDirty(div);
 
-        // Fermeture par le point d'entrée commun (cf. requestCloseOverlay dans 20-shell.js) : ce
-        // bouton effaçait l'état "modifié" AVANT de fermer, donc la fenêtre se refermait sans un
-        // mot sur un mode de sécurité, un identifiant ou un PIN qu'on venait de changer -- alors
-        // que le fond cliquable et le glisser mobile, eux, demandaient bien confirmation. Les
-        // autres formulaires de réglages passent tous par cette garde (cf. #btnDHCPGoBack,
-        // #btnAPPasswordClose).
-        div.querySelector('#btnSecGoBack').onclick = () => requestCloseOverlay(div);
-
-        // Le switch pilote directement la description affichée ET les champs de saisie : rien à
-        // saisir en mode Désactivé, le pavé PIN en mode Code PIN, le couple identifiant/mot de
-        // passe en mode Mot de passe.
-        const selectedType = () => {
-            const checked = div.querySelector('input[name="secTypeGroup"]:checked');
-            return checked ? parseInt(checked.value, 10) : 0;
-        };
+        // Le choix du mode pilote la description ET les champs : rien à saisir en mode Désactivé,
+        // le pavé PIN en mode Code PIN, le couple identifiant/mot de passe en mode Mot de passe.
         const SEC_DESC = { 0: 'SECURITY_INACTIVE_DESC', 1: 'SECURITY_PIN_CODE_DESC', 2: 'SECURITY_PASSWORD_DESC' };
         const applyType = () => {
-            const val = selectedType();
-            div.querySelector('#divPopupPin').style.display = (val === 1) ? 'block' : 'none';
-            div.querySelector('#divPopupPassword').style.display = (val === 2) ? 'block' : 'none';
-            const desc = div.querySelector('#secTypeDesc');
-            if (desc) {
-                desc.textContent = tr(SEC_DESC[val]);
-                desc.classList.toggle('is-warning', val === 0);
-            }
+            const val = parseInt(body.querySelector('input[name="secTypeGroup"]:checked')?.value || '0', 10);
+            body.querySelector('#divPopupPin').hidden = val !== 1;
+            body.querySelector('#divPopupPassword').hidden = val !== 2;
+            body.querySelector('#genSecConfigOnly').hidden = val === 0;
+            const desc = body.querySelector('#secTypeDesc');
+            desc.textContent = tr(SEC_DESC[val]);
+            desc.classList.toggle('is-warning', val === 0);
         };
-        div.querySelectorAll('input[name="secTypeGroup"]').forEach(r => r.addEventListener('change', applyType));
+        body.querySelectorAll('input[name="secTypeGroup"]').forEach(r => r.addEventListener('change', applyType));
         applyType();
 
-        // La fenêtre ne se ferme PLUS ici : saveSecurity() valide d'abord la saisie et n'appelle
-        // closeOverlay() qu'une fois la confirmation acceptée. Fermer avant de valider faisait
-        // perdre identifiant/mot de passe/PIN au moindre message d'erreur -- il fallait rouvrir la
-        // fenêtre et tout ressaisir. Le type retenu se relit de toute façon depuis les radios dans
-        // saveSecurity(), et _currentSecurityType n'est mis à jour qu'après un enregistrement
-        // réellement abouti (applyLocalState()).
-        div.querySelector('#btnPopupSaveSec').onclick = () => { this.saveSecurity(); };
-
-        const pinInputs = div.querySelectorAll('.pin-digit');
+        const pinInputs = body.querySelectorAll('.pin-digit');
         pinInputs.forEach((input, index) => {
             input.addEventListener('input', (e) => {
-                // Le PIN est numérique de bout en bout : le firmware le range dans un char[5] et le
-                // compare tel quel (WebAuth.cpp), et l'écran de saisie de index.html n'offre qu'un
-                // pavé numérique sur mobile (inputmode="numeric"). Rien n'empêchait pourtant d'y
-                // taper des lettres au clavier physique : "aaaa" s'enregistrait sans un mot, puis
-                // se ressaisissait à l'aveugle à la reconnexion. On filtre à la frappe plutôt que
-                // de refuser à l'enregistrement -- la case reste simplement vide, sans message à
-                // lire pour comprendre ce qui vient d'être refusé (le contrôle de saveSecurity
-                // reste en second rideau, pour le collage et l'autoremplissage).
+                // Le PIN est numérique de bout en bout (char[5] comparé tel quel, cf. WebAuth.cpp) :
+                // on filtre à la frappe, le contrôle de saveSecurity reste pour le collage et
+                // l'autoremplissage.
                 e.target.value = (e.target.value || '').replace(/\D/g, '');
                 if (e.target.value.length === 1 && index < pinInputs.length - 1) pinInputs[index + 1].focus();
             });
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Backspace' && e.target.value.length === 0 && index > 0) pinInputs[index - 1].focus();
-                });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && e.target.value.length === 0 && index > 0) pinInputs[index - 1].focus();
+            });
         });
+        clearDirty(tile);
     }
     saveSecurity() {
-        const popupContent = get('divSecurityPopupContent');
+        const popupContent = get('genSecBody');
         let s;
         let finalType = 0;
         let pinInputs = [];
         let pwdInput = null;
         let repeatInput = null;
-
-        const overlay = popupContent ? popupContent.closest('.modal-overlay') : null;
 
         if (popupContent) {
             const boundData = ui.fromElement(popupContent);
@@ -2359,7 +2061,7 @@ class General {
             pinInputs = popupContent.querySelectorAll('#divPopupPin .pin-digit');
             pwdInput = popupContent.querySelector('#fldPassword');
             repeatInput = popupContent.querySelector('#fldRenterPassword');
-            // Le SwitchBig à 3 positions porte le mode voulu, "Désactivé" (valeur 0) compris :
+            // Les 3 radios portent le mode voulu, "Désactivé" (valeur 0) compris :
             // c'est donc lui qui fait foi, sans drapeau d'activation séparé à tenir à jour.
             const checkedRadio = popupContent.querySelector('input[name="secTypeGroup"]:checked');
             finalType = checkedRadio ? parseInt(checkedRadio.value, 10) : this._currentSecurityType;
@@ -2395,7 +2097,7 @@ class General {
         }
         else if (finalType === 1) {
             if (pinTouched) {
-                // Quatre CHIFFRES : le filtre de frappe (cf. SecurityOverlay) écarte déjà les
+                // Quatre CHIFFRES : le filtre de frappe (cf. renderSecurityTile) écarte déjà les
                 // lettres case par case, mais un collage ou un autoremplissage peut peupler les
                 // champs sans passer par lui.
                 if (!/^[0-9]{4}$/.test(pin)) return this.secError('ERR_PIN_INVALID', 'ERR_PIN_INVALID_DESC');
@@ -2455,11 +2157,6 @@ class General {
         };
 
         const prompt = ui.promptMessage(tr('PROMPT_SECURITY_CONFIRM'), () => {
-            // Seul point de fermeture de la fenêtre de sécurité : toutes les validations sont
-            // passées et l'utilisateur vient de confirmer. clearDirty() cible ce conteneur précis
-            // (et pas tout le suivi global) pour ne pas effacer les modifications en attente d'un
-            // autre formulaire resté ouvert derrière.
-            if (overlay) { clearDirty(overlay); closeOverlay(overlay); }
             putJSONSync('/saveSecurity', data, (e, resp) => {
                 prompt.remove();
                 if (e) {

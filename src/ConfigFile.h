@@ -125,6 +125,9 @@ class ShadeConfigFile : public ConfigFile {
     bool skipScheduleBlock();
     bool writeListenerBlock(SomfyShadeController *s);
     bool readListenerBlock(SomfyShadeController *s, bool restoring);
+    bool skipListenerBlock();
+    bool writeRepeaterNameBlock(SomfyShadeController *s);
+    bool readRepeaterNameBlock(SomfyShadeController *s);
   public:
     static bool exists();
     static bool load(SomfyShadeController *somfy, const char *filename = "/shades.cfg");

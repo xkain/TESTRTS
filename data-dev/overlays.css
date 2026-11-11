@@ -18,7 +18,8 @@
 /* Même traitement pour le conteneur `.input-number-custom` (GPIO manuel de la LED de statut) :
  * la bordure rouge et la secousse portent sur le bloc entier (select/input + boutons +/-), pas
  * seulement sur le champ, pour que l'erreur saute aux yeux même sur un petit écran. */
-.input-number-custom.input-error {
+.input-number-custom.input-error,
+.led-pin-box.input-error {
     border-color: var(--color-danger) !important;
     animation: shake 0.5s ease-in-out;
 }
@@ -343,11 +344,6 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
 @keyframes vrBadgePing {
     0%   { box-shadow: 0 0 0 0    color-mix(in srgb, var(--vr-radio-color), transparent 40%); }
     100% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--vr-radio-color), transparent 100%); }
-}
-@keyframes log-live-pulse {
-    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--log-live-pulse), transparent 45%); }
-    70% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--log-live-pulse), transparent 100%); }
-    100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--log-live-pulse), transparent 100%); }
 }
 @keyframes frame-row-in {
     from { background: var(--color-accent-transp-70); }
@@ -675,6 +671,39 @@ body.modal-open {
 }
 
 /* =======================================================================
+ *  LISTE DES MODIFICATIONS NON ENREGISTRÉES (SaveBar.showList, 20-shell.js)
+ *  ======================================================================= */
+.save-bar-sheet {
+    max-width: 560px;
+    padding: 20px;
+    border-radius: var(--r-5);
+}
+.save-bar-sheet-list {
+    margin: 12px 0 0;
+    padding: 12px 16px;
+    list-style: none;
+    border-radius: var(--r-3);
+    background: var(--surface-2);
+    text-align: left;
+}
+.save-bar-sheet-list li + li {
+    margin-top: 6px;
+}
+.save-bar-sheet .button-container-row button {
+    flex: 1 1 auto;
+    width: auto;
+    border-radius: var(--r-2);
+    text-transform: none;
+    white-space: nowrap;
+}
+@media (max-width: 767px) {
+    .save-bar-sheet .button-container-row {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+}
+
+/* =======================================================================
  *  ASSISTANTS À ÉTAPES (wizard/stepper partagé : appairage, liaison groupe...)
  *  ======================================================================= */
 
@@ -700,14 +729,6 @@ body.modal-open {
     font-size: 14px;
     line-height: 1.4;
     color: var(--color-text-main);
-}
-.uniblocRollingCode label {
-    color: var(--color-accent);
-}
-.uniblocRollingCode input {
-    text-align:center;
-    font-size: 35px !important;
-    color: var(--color-accent) !important;
 }
 .wizard-step p {
     font-size:14px;
@@ -799,14 +820,6 @@ body.modal-open {
 .instructions-content .empty-state {
     padding:0;
 }
-#divRollingCode button[line] {
-    border: 2px solid #398a1b;
-    color: #398a1b;
-}
-#divRollingCode button[line]:hover {
-    background: #398a1b;
-    color: white;
-}
 .firmware-message {
     display: none;
     align-items: center;
@@ -874,14 +887,6 @@ button[line].fw-sidebar-button:hover {
        remises à zéro, le bandeau touche exactement les bords -- même résultat, par l'autre chemin. */
     margin-left: 0;
     margin-right: 0;
-}
-#divPrereleaseWarning .error-header svg {
-    width: 20px;
-    height: 20px;
-    margin-right: 4px;
-}
-#divPrereleaseWarning .error-header b {
-    font-size: 11.5px;
 }
 #divPrereleaseWarning .information-text {
     font-size: 12.5px;
@@ -1124,9 +1129,6 @@ button[line].fw-sidebar-button:hover {
  *  Led Overlay
  *  ======================================================================= */
 
-.ledOverlay-content .uniRow {
- max-height: 88px;
- }
 
 
 .somfyRepeater {
@@ -1193,33 +1195,8 @@ button[line].fw-sidebar-button:hover {
     border-radius: 0;
 }
 /* -----------------------------------------------------------------------
- *  Modale des télécommandes liées (modal-remotes)
+ *  Télécommandes liées : adresse et badge de signal (fiche, fenêtre de tâche)
  * ----------------------------------------------------------------------- */
-
-.somfyLinkedRemote {
-    display: flex;
-    align-items: center;
-    padding: 2px 10px;
-    background: var(--color-bg-inset);
-    border-radius: var(--radius-row);
-    border: 1px solid transparent;
-}
-.somfyLinkedRemote:hover {
-    background: var(--color-accent-transp-94);
-    color: var(--color-text-main);
-    border-radius:var(--radius-row);
-    border: 1px solid var(--color-accent);
-}
-.linkedWrap svg {
-    color: var(--color-text-secondary);
-}
-.linkedContent {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    text-align: left;
-    margin-left: 6px;
-}
 .idRemoteAddress {
     display: flex;
     align-items: center;
@@ -1227,55 +1204,6 @@ button[line].fw-sidebar-button:hover {
     flex-shrink: 0;
     margin-left: auto;
     line-height: 1;
-}
-/* --- Fusion divLinking/divRemotesOverlay (recherche de télécommande + qualité de signal) --- */
-/* Scopée à .linkedRemoteCard pour ne pas déteindre sur .somfyLinkedRemote/.linkedWrap/.linkedContent
-   ailleurs (setLinkedShadesList réemploie ces mêmes classes de structure). Pas de :hover ici,
-   contrairement à .somfyLinkedRemote:hover dont elle hérite sinon -- neutralisé ci-dessous en
-   repartant des mêmes valeurs que l'état par défaut. */
-.linkedRemoteCard {
-    /* Empilée en colonne : override du display:flex/align-items:center row de .somfyLinkedRemote,
-       qui centrerait sinon la ligne signal avec l'icône/la poubelle sur toute la hauteur. */
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 12px 14px;
-}
-.linkedRemoteCard:hover {
-    background: var(--color-bg-inset);
-    border-radius: var(--radius-row);
-    border-color: transparent;
-    color: inherit;
-}
-/* Bloc du haut (icône + infos + poubelle) : ce sont ces trois éléments-là qu'on centre entre eux,
-   pas la carte entière -- la ligne signal (.remote-card-bottom) reste alignée à gauche en dessous. */
-.linkedRemoteCard .remote-card-top {
-    display: flex;
-    align-items: center;
-    gap:4px;
-}
-.linkedRemoteCard .remote-card-bottom {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--color-border-hr-soft);
-}
-.linkedRemoteCard .linkedWrap .icon-svg {
-    width: 38px;
-    height: 38px;
-}
-.linkedRemote-title {
-    font-weight: 700;
-    font-size: 1.02em;
-    color: var(--color-text-main);
-}
-.linkedRemote-meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 3px;
-    font-size: 0.82em;
-    color: var(--color-text-secondary);
-    opacity: 0.8;
 }
 .linkedRemote-sep {
     opacity: 0.5;
@@ -1316,26 +1244,6 @@ button[line].fw-sidebar-button:hover {
 .linkedRemote-signal-icon.sig-bad,
 .linkedRemote-signal-value.sig-bad {
     color: var(--color-signal-bad);
-}
-.linkedRemote-btn-delete {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    color: var(--color-danger);
-    flex-shrink: 0;
-    cursor: pointer;
-    opacity: 0.9;
-    transition: opacity 0.2s ease;
-}
-.linkedRemote-btn-delete svg {
-    width: 25px;
-    height: 25px;
-    fill: currentColor;
-}
-.linkedRemote-btn-delete:hover {
-    opacity: 1;
 }
 .remote-search-status {
     margin: 0 20px 15px;
@@ -1462,29 +1370,6 @@ button[line].fw-sidebar-button:hover {
 .ha-github-link { color: var(--color-accent); }
 .ha-github-link:hover { filter: brightness(1.3); }
 
-/* ==========================================================
- * Assistant configuration DHCP / IP statique (inst-ip)
- * ========================================================== */
-#cbPopupDHCP:not(:checked) ~ .label-left,
-#cbPopupDHCP:checked ~ .label-right {
-    color: #ffffff;
-}
-#cbPopupDHCP:not(:checked) ~ .nav-pill {
-    transform: translateX(0);
-}
-#cbPopupDHCP:checked ~ .nav-pill {
-    transform: translateX(100%);
-}
-.overlaydhcp .hrDivFooter {
-    margin: 0;
-}
-.overlaydhcp .message-content {
-    height: 100%;
-}
-.overlaydhcp .overlay-scroll-content {
-    padding: 20px;
-}
-
 /* =======================================================================
  *  ASSISTANT RECHERCHE WI-FI (inst-wifiscan)
  *  ======================================================================= */
@@ -1515,40 +1400,6 @@ button[line].fw-sidebar-button:hover {
 .strength .signal {
     width:24px; height: 24px;
 }
-/* =======================================================================
- *  MODALE SÉCURITÉ (déverrouillage PIN / mot de passe, choix de méthode)
- *  ======================================================================= */
-
-#divSecurityPopupContent .SwitchBig {
-    width: 100%;
-}
-.SwitchBig-3 label {
-    padding: 8px 0;
-}
-.sec-type-desc {
-    margin: 22px 0 26px;
-    text-align: center;
-    font-size: 0.9em;
-    line-height: 1.5;
-    color: var(--color-text-secondary);
-}
-.sec-type-desc.is-warning {
-    color: var(--color-danger);
-}
-/* Libellé d'état d'un secret déjà enregistré ("un mot de passe est déjà enregistré" / "sera
-   supprimé"). Le masque factice (puces) ne disait rien de plus qu'un champ rempli : sans ce
-   libellé, rien ne distinguait à l'écran un secret enregistré d'une saisie conservée. */
-.sec-secret-hint {
-    margin: 8px 0 -8px 0;
-    font-size: 0.82em;
-    line-height: 1.4;
-    color: var(--color-text-secondary);
-}
-.pin-digit-row {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-}
 .prompt-content .sub-message p.is-warning {
     color: var(--color-danger);
     font-weight: 600;
@@ -1565,17 +1416,6 @@ button[line].fw-sidebar-button:hover {
 }
 #cbLedEnabled:not(:checked) ~ .nav-pill {
     background-color: var(--color-danger);
-}
-.led-pin-help {
-    margin-top: 4px;
-    line-height: 1.5;
-}
-#divPopupPin { text-align: center;}
-#divPopupPin div{ margin-top: 10px;}
-#divPopupPin.uniblocCol {
-    background: none;
-    border: none;
-    box-shadow: none;
 }
 /* =======================================================================
  *  ASSISTANT AVERTISSEMENT ETHERNET (inst-ethwarning)
@@ -1603,35 +1443,6 @@ div.eth-setting-line label {
     text-align:right;
     color: var(--color-text-main);
 }
-/* -----------------------------------------------------------------------
- *  Modale édition pièce (modal-room)
- * ----------------------------------------------------------------------- */
-
-.room-presets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 30px 0;
-}
-.preset-badge {
-    font-size: 0.75rem;
-    background: var(--color-bg-radio-card);
-    border: 1px solid var(--color-border);
-    padding: 4px 10px;
-    border-radius: 20px;
-    cursor: pointer;
-    color: var(--color-text-secondary);
-    user-select: none;
-    transition: all 0.15s ease;
-}
-.preset-badge:hover {
-    filter:brightness(0.9);
-}
-.preset-badge:active {
-    transform: scale(0.95);
-    filter:brightness(0.8);
-}
-
 /* Le padding horizontal habituel de .overlay-scroll-content est retiré ICI : avec un carrousel
  * qui glisse en translateX(), ce padding forme un "sas" entre le bord du track et le bord de
  * clip d'overflow-x, assez large pour y laisser dépasser un filet de la page voisine. Le padding
@@ -2938,29 +2749,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     justify-content: flex-end;
     gap: 8px;
 }
-.slider-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    width: 100%;
-    margin-bottom: 3px;
-}
-.slider-header .title {
-    font-size: 1em;
-    color: var(--color-text-main);
-    font-weight: 500;
-}
-.slider-header .val {
-    font-size: 0.9em;
-    font-weight: bold;
-    color: var(--color-text-secondary);
-}
-.slider-group {
-    width: 100%;
-}
-.slider-header .val span {
-    font-variant-numeric: tabular-nums;
-}
 .shade-positioner input[type=range] {
     width:100%;
     margin-top:0px;
@@ -2970,6 +2758,1031 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     animation: slideToRight 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
 }
 
+
+/* =======================================================================
+ *  FENÊTRES LANGUES ET PACKS D'ICÔNES (page Système › Général)
+ *
+ *  Déplacé de base.css : ce sont deux modales injectées en JS, leur place est ici.
+ *
+ *  Catalogue des langues (Phase 2 i18n) : grille construite par
+ *  general.openLangManager() et peuplée par renderLangCatalog() (40-general.js). La mise en
+ *  page reprend les classes icon-pack-* ; seuls le code de langue, les badges, la progression
+ *  et l'import manuel sont propres ici.
+ *  ======================================================================= */
+/* --- Coque commune aux deux fenêtres (genmod-) -------------------------------
+   La fenêtre est cadrée sur .gen-layout et reprend le MÊME gabarit de colonnes que la
+   page (main.css). L'overlay, lui, reste celui de toutes les autres fenêtres : même voile
+   flouté plein écran, même fermeture au clic dehors (gestionnaire de clic de 20-shell.js).
+   Le menu latéral et la barre du haut restent donc lisibles derrière, et toute cette
+   surface sert de cible de sortie -- pas seulement un liseré de 16 px. */
+.modal-overlay.genmod-overlay { align-items: stretch; }
+/* Le voile ne floute QUE la page : le menu latéral et la barre du haut restent nets, on
+   continue de lire où l'on est. L'overlay, lui, couvre toujours tout l'écran et reste donc
+   cliquable partout pour sortir -- le flou est porté par cette couche, pas par lui.
+   position:absolute et non fixed : l'overlay porte un transform pendant son entrée, ce qui
+   ferait de lui le bloc conteneur d'un enfant fixed et mettrait le voile à l'échelle. */
+.modal-overlay.genmod-overlay,
+.modal-overlay.genmod-overlay.overlay-entered { backdrop-filter: none; }
+.genmod-overlay::before {
+    content: '';
+    position: absolute;
+    inset: var(--topbar-height) 0 0 var(--sidebar-width);
+    background: transparent;
+    backdrop-filter: blur(0px);
+    transition: backdrop-filter 0.4s ease-out, background-color 0.4s ease-out;
+    pointer-events: none;
+}
+.genmod-overlay.overlay-entered::before {
+    background: var(--scrim-page);
+    backdrop-filter: blur(5px);
+}
+.message-content.genmod-window {
+    /* 16 px comme le conteneur de la page migrée : sans ça les --fs-* en em
+       tomberaient sur les 14 px de <html>. */
+    font-size: 16px;
+    flex: 1;
+    width: auto;
+    max-width: none;
+    max-height: none;
+    /* Cadrée sur .gen-layout : sous la barre du haut, à droite du menu latéral. */
+    margin: calc(var(--topbar-height) + 16px) 16px 16px calc(var(--sidebar-width) + 16px);
+    display: grid;
+    grid-template-columns: minmax(300px, 32fr) minmax(0, 68fr);
+    border: 0;
+    border-radius: var(--r-5);
+    /* L'ombre n'est pas un ornement : la fenêtre recouvre un panneau de la même couleur
+       qu'elle (la colonne d'identité de la page), c'est elle qui l'en détache. */
+    box-shadow: var(--shadow-window);
+    background: var(--panel);
+    color: var(--text);
+    text-align: left;
+}
+
+/* Colonne d'identité : ce que fait l'appareil, pas ce qu'on lui demande. */
+.genmod-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    min-height: 0;
+    padding: clamp(20px, 3vh, 40px) clamp(20px, 2.5vw, 40px);
+    overflow: hidden;
+    text-align: center;
+    border-radius: var(--r-5) 0 0 var(--r-5);
+}
+.genmod-side-icon {
+    width: clamp(72px, min(7vw, 13vh), 120px);
+    height: clamp(72px, min(7vw, 13vh), 120px);
+    flex: none;
+    fill: currentColor;
+    color: var(--color-accent);
+}
+.genmod-side-title {
+    margin: 0;
+    font-size: clamp(22px, 1.9vw, 30px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+}
+.genmod-side-desc {
+    margin: 8px 0 0;
+    max-width: 34ch;
+    font-size: var(--fs-3);
+    line-height: 1.45;
+    color: var(--text-3);
+}
+.genmod-state {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    max-width: 320px;
+    padding: 14px 16px;
+    border-radius: var(--r-4);
+    background: var(--surface);
+}
+.genmod-state-key {
+    font-size: var(--fs-1);
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+}
+.genmod-state-val {
+    font-size: var(--fs-6);
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+.genmod-state-val small {
+    margin-left: 6px;
+    font-size: var(--fs-2);
+    font-weight: 700;
+    color: var(--text-3);
+}
+
+/* Colonne de configuration. Les rangées du corps et du pied sont posées à la main :
+   quand le bandeau de section est masqué (mobile) il sort du flux, et le placement
+   automatique donnerait la rangée 1 au corps et le 1fr au pied, réduit à zéro. */
+.genmod-main {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    min-width: 0;
+    min-height: 0;
+    background: var(--surface);
+    border-radius: 0 var(--r-5) var(--r-5) 0;
+}
+.genmod-head {
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--divider);
+}
+.genmod-head-title {
+    font-size: var(--fs-3);
+    font-weight: 700;
+    color: var(--text-2);
+}
+.genmod-close {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    margin-left: auto;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: var(--r-2);
+    background: var(--surface-2);
+    color: var(--text-2);
+}
+.genmod-close svg { width: 18px; height: 18px; fill: currentColor; }
+.genmod-close[disabled] { opacity: .45; cursor: default; }
+/* La croix du bandeau d'identité ne sert qu'en tablette (cf. plus bas). */
+.genmod-side .genmod-close { display: none; }
+.genmod-body {
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px 22px 16px;
+}
+.genmod-body > * { flex: none; }
+/* Tuiles aux mesures de la maquette A2 (ListPage) hors mobile : la page Général et ces deux
+   fenêtres servent de gabarit à la nouvelle interface, elles doivent donc porter les mêmes
+   chiffres que les pages-listes à venir. Sous 768 px la valeur de base reprend la main, sans
+   quoi la feuille retomberait à une seule colonne. */
+@media (min-width: 768px) {
+    .genmod-body .icon-pack-grid {
+        grid-template-columns: repeat(auto-fill, minmax(max(var(--tile-min), calc((100% - 3 * var(--tile-gap)) / 4)), 1fr));
+        gap: var(--tile-gap);
+    }
+    .genmod-body .icon-pack-tile {
+        gap: 10px;
+        min-height: var(--tile-minh);
+        padding: var(--tile-pad);
+        border-radius: var(--r-5);
+    }
+    /* L'aperçu prend la place libre au lieu d'un rapport fixe : il grandit avec la tuile. */
+    .genmod-body .icon-pack-thumb { aspect-ratio: auto; flex: 1 1 auto; min-height: 0; }
+    .genmod-body .icon-pack-name { margin-top: auto; font-size: 1.0625em; font-weight: 800; }
+    .genmod-body .icon-pack-meta { font-size: var(--fs-2); font-weight: 500; }
+    /* Une langue n'a pas de vignette : son code tient lieu d'icône, dans la pastille d'A2
+       (48 px, --r-3, plaque neutre et contenu à la couleur d'accent). */
+    .genmod-body .lang-catalog-code {
+        width: var(--tile-icon);
+        height: var(--tile-icon);
+        margin-bottom: 0;
+        border-radius: var(--r-3);
+        background: var(--surface-2);
+        font-size: 1.0625em;
+    }
+}
+.genmod-foot {
+    grid-row: 3;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 22px;
+    border-top: 1px solid var(--divider);
+}
+.genmod-foot-hint {
+    flex: 1 1 180px;
+    min-width: 0;
+    font-size: var(--fs-2);
+    color: var(--text-3);
+}
+.genmod-foot-btns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-left: auto;
+}
+/* Les boutons sont ceux de la page migrée (.gen-btn, main.css) : rien de neuf ici,
+   sauf la variante destructrice, qui n'existait pas. */
+.genmod-foot-btns .gen-btn { align-self: auto; }
+.genmod-btn-danger, .genmod-btn-danger:hover {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+/* Tablette : une seule colonne, fenêtre à la hauteur de son contenu plutôt
+   qu'étirée sur toute la page, et l'identité devient l'en-tête de la fenêtre. */
+@media (max-width: 999px) {
+    .message-content.genmod-window {
+        align-self: center;
+        flex: 0 1 auto;
+        height: auto;
+        max-height: calc(100% - var(--topbar-height) - 32px);
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, auto);
+    }
+    .genmod-side {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        justify-items: start;
+        gap: 12px 18px;
+        padding: 20px 24px 18px;
+        text-align: left;
+        border-radius: var(--r-5) var(--r-5) 0 0;
+    }
+    .genmod-side-icon { width: 72px; height: 72px; }
+    .genmod-side-title { font-size: 26px; }
+    .genmod-side-desc { max-width: none; }
+    .genmod-state {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 10px;
+        max-width: none;
+        padding: 10px 14px;
+    }
+    .genmod-state-val { font-size: var(--fs-5); }
+    .genmod-side .genmod-close { display: flex; align-self: start; justify-self: end; }
+    .genmod-main {
+        grid-template-rows: auto minmax(0, auto) auto;
+        border-radius: 0 0 var(--r-5) var(--r-5);
+    }
+    .genmod-head .genmod-close { display: none; }
+}
+
+/* Mobile : la feuille montante de .message-content fait déjà le gros du travail
+   (slideUp, 90vh, coins hauts, poignée) -- on n'écrit que les écarts. */
+@media (max-width: 767px) {
+    .genmod-overlay::before { inset: var(--mobile-header-height) 0 0 0; }
+    .message-content.genmod-window {
+        margin: 0;
+        align-self: flex-end;
+        width: 100%;
+        max-height: 90vh;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        border-radius: var(--r-5) var(--r-5) 0 0;
+    }
+    .genmod-side {
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+        padding: 0 16px 14px;
+        text-align: center;
+        border-radius: var(--r-5) var(--r-5) 0 0;
+    }
+    .genmod-side-icon { width: 56px; height: 56px; }
+    .genmod-side-title { font-size: var(--fs-7); }
+    .genmod-side-desc { font-size: var(--fs-2); }
+    .genmod-state {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: center;
+        gap: 8px;
+        max-width: none;
+        padding: 8px 12px;
+    }
+    .genmod-state-val { font-size: var(--fs-4); }
+    .genmod-side .genmod-close { display: none; }
+    .genmod-head { display: none; }
+    .genmod-body { padding: 12px 16px 14px; }
+    /* nowrap : hérité en colonne, le flex-wrap du pied d'ordinateur l'écrase. */
+    .genmod-foot {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        gap: 8px;
+        padding: 12px 16px;
+    }
+    .genmod-foot-hint { flex: none; }
+    /* Boutons côte à côte, à parts égales, sur toutes les fenêtres genmod- (choix du user) :
+       empilés, ils mangeaient la hauteur utile du contenu. */
+    .genmod-foot-btns {
+        flex-wrap: nowrap;
+        margin-left: 0;
+        gap: 8px;
+    }
+    .genmod-foot-btns .gen-btn { flex: 1 1 0; justify-content: center; }
+}
+
+
+/* --- Fenêtres de tâche de la page Appareil (genmod-task) : GitHub, téléversement, restauration.
+   Même coque que les fenêtres de Général ; seuls leurs éléments propres et le mobile changent. */
+.genmod-state-note { font-size: var(--fs-2); line-height: 1.4; color: var(--text-3); }
+.genmod-seg { display: grid; grid-template-columns: 1fr 1fr; align-self: stretch; }
+.genmod-seg span { text-align: center; }
+.genmod-link { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-2); font-weight: 700; text-transform: none; letter-spacing: 0; }
+.genmod-notes { max-height: none; padding: 14px 16px; border-radius: var(--r-4); background: var(--panel); font-size: var(--fs-3); }
+/* La ligne entière déclenche la sauvegarde (bouton), dans l'étape 3 comme dans le pied GitHub. */
+button.genmod-backup,
+button.genmod-backup:hover,
+button.genmod-backup:active {
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-4);
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    text-transform: none;
+    transform: none;
+    opacity: 1;
+}
+button.genmod-backup:hover { border-color: var(--color-accent); }
+.genmod-backup-ico {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: var(--r-2);
+    background: var(--surface);
+    color: var(--color-accent);
+}
+button.genmod-backup svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
+.genmod-backup .gen-row-text { flex: 1 1 auto; }
+.genmod-backup .gen-row-text > span { font-size: var(--fs-2); }
+button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3); }
+.genmod-foot-hint:has(.genmod-backup) { display: flex; flex: 1 1 320px; }
+@media (max-width: 767px) {
+    .genmod-foot-hint:has(.genmod-backup) { flex: none; }
+}
+.genmod-form { display: flex; flex-direction: column; gap: 12px; }
+.genmod-checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.genmod-check { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: var(--r-3); background: var(--panel); font-size: var(--fs-3); cursor: pointer; }
+.genmod-check input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--color-accent); }
+.genmod-body .fw-band { margin: 8px 0 0; border-radius: var(--r-3); border: 1px solid var(--border); background: var(--surface-2); }
+.genmod-body .fw-band-label { color: var(--text-2); }
+.genmod-body .fw-id-name .fw-lit,
+.genmod-body .fw-id-name .fw-ver { color: var(--text-2); }
+/* Zone de dépôt aux couleurs A2 : le mélange d'accent à 97 % de l'ancienne interface
+   disparaissait sur le fond sombre de la fenêtre. */
+.genmod-body .file-drop {
+    border-color: color-mix(in srgb, var(--color-accent) 65%, var(--border));
+    border-radius: var(--r-3);
+    background: var(--surface-2);
+    color: var(--text-2);
+}
+.genmod-body .file-drop:hover,
+.genmod-body .file-drop.is-over { background: color-mix(in srgb, var(--color-accent) 14%, var(--surface-2)); }
+.genmod-body .file-drop-title { color: var(--text); }
+/* Sélecteur de canal compact et bouton d'ouverture des notes : mobile seulement. */
+.genmod-mode-select,
+.genmod-notes-open { display: none; }
+/* Étapes : un rail par étape (pastille, puis trait qui remplit la hauteur de l'étape) plutôt
+   qu'un trait posé en absolu, qui se décalait dès que le contenu changeait de hauteur. */
+.genmod-step { display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 14px; }
+.genmod-step-rail { display: flex; flex-direction: column; align-items: center; }
+.genmod-step-num {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: var(--r-pill);
+    background: var(--color-accent);
+    color: var(--color-text-on-accent);
+    font-size: var(--fs-3);
+    font-weight: 800;
+}
+.genmod-step-line { flex: 1; width: 2px; min-height: 10px; margin: 4px 0; border-radius: var(--r-pill); background: color-mix(in srgb, var(--color-accent) 45%, var(--border)); }
+.genmod-step:last-child .genmod-step-line { display: none; }
+.genmod-step-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 6px 0 16px; font-size: var(--fs-3); }
+.genmod-step:last-child .genmod-step-body { padding-bottom: 0; }
+/* La zone de dépôt et la ligne de sauvegarde ne portent pas de texte en tête : collées au haut
+   de la pastille plutôt qu'à la ligne de texte. */
+.genmod-step-body:has(> .file-drop:first-of-type, > .genmod-backup) { padding-top: 0; }
+/* L'aide du nom de fichier s'affiche en clair dès qu'il y a la place (tablette et plus) ;
+   en dessous, elle reste dans l'infobulle du « ? ». */
+.fw-id-help { display: none; }
+@media (min-width: 768px) {
+    .genmod-body .fw-id-help {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin: 10px 0 0;
+        padding: 10px 0 0 18px;
+        border-top: 1px solid var(--divider);
+        font-size: var(--fs-2);
+        line-height: 1.45;
+        color: var(--text-3);
+    }
+    .genmod-body .fw-id .help-container { display: none; }
+}
+/* Mode Développeur validé : la colonne d'identité se teinte, on ne l'oublie pas en cours de route. */
+#divGitInstall[data-mode="dev"] .genmod-side { background: color-mix(in srgb, var(--danger) 9%, var(--panel)); }
+#divGitInstall[data-mode="dev"] .genmod-side-icon,
+#divGitInstall[data-mode="dev"] .genmod-state-note { color: var(--danger); }
+#divGitInstall[data-mode="dev"] .genmod-seg input:checked + span { background: var(--danger); color: var(--danger-bg); }
+/* Tablette et mobile : l'état passe en ligne ; celui du canal garde le sélecteur et sa note
+   sous le titre au lieu de les serrer côte à côte. */
+@media (max-width: 999px) {
+    .genmod-state:has(.genmod-seg) { flex-wrap: wrap; align-items: center; }
+    .genmod-state:has(.genmod-seg) .genmod-state-note { flex-basis: 100%; }
+    .genmod-seg { align-self: auto; }
+}
+/* Mobile : plein écran comme l'ancien .inst-overlay, sans feuille, poignée ni montée. */
+@media (max-width: 767px) {
+    .genmod-task::before { inset: 0; }
+    .genmod-task .message-content.genmod-window {
+        align-self: stretch;
+        height: 100%;
+        max-height: none;
+        border-radius: 0;
+        /* La feuille mobile part de translateY(100%) et monte par l'animation : sans elle, il
+           faut aussi annuler le décalage, sinon la fenêtre reste sous l'écran. */
+        animation: none;
+        transform: none;
+        box-shadow: none;
+    }
+    .genmod-task .genmod-side { border-radius: 0; padding-top: 14px; }
+    .genmod-task .modalHeader-handle { display: none; }
+    .genmod-task .genmod-side .genmod-close { display: flex; position: absolute; top: 12px; right: 12px; }
+    .genmod-task .genmod-backup { flex: none; }
+    /* Pied compact : boutons côte à côte, et plus de coins arrondis en bas d'un plein écran. */
+    .genmod-task .genmod-main { border-radius: 0; }
+    .genmod-task button.genmod-backup { padding: 8px 12px; }
+    /* GitHub : le choix du canal quitte le bloc d'état pour un sélecteur compact posé en haut à
+       gauche, en face de la croix ; le reste de l'en-tête ne bouge pas. */
+    #divGitInstall .genmod-state:has(.genmod-seg) {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        width: auto;
+        padding: 0;
+        background: none;
+    }
+    #divGitInstall .genmod-state:has(.genmod-seg) > :not(.genmod-mode-select) { display: none; }
+    #divGitInstall .genmod-mode-select {
+        display: block;
+        padding: 8px 28px 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--r-pill);
+        background: var(--surface) url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+        color: var(--text);
+        font: inherit;
+        font-size: var(--fs-2);
+        font-weight: 700;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    #divGitInstall[data-mode="dev"] .genmod-mode-select { border-color: var(--danger); color: var(--danger); }
+    /* Les notes prennent la hauteur restante et s'ouvrent en grand au toucher. */
+    #divGitInstall .genmod-notes-wrap { position: relative; display: flex; flex-direction: column; flex: 1 0 200px; min-height: 200px; cursor: pointer; }
+    #divGitInstall .genmod-notes { flex: 1; min-height: 0; overflow: hidden; }
+    #divGitInstall .genmod-notes-open {
+        display: inline-flex;
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+        gap: 6px;
+        padding: 8px 12px;
+        border: 0;
+        border-radius: var(--r-pill);
+        background: var(--on-fill);
+        color: var(--on-fill-text);
+        font-size: var(--fs-2);
+        text-transform: none;
+    }
+    #divGitInstall .genmod-notes-open svg { width: 16px; height: 16px; fill: currentColor; }
+}
+
+/* --- Fenêtre du témoin LED (#divLedOverlay) : coque genmod- de Général, blocs de réglages.
+   À gauche l'aperçu du voyant tient lieu d'icône ; à droite un bloc par sujet. */
+#divLedOverlay .genmod-side-icon { display: none; }
+#divLedOverlay .genmod-side > div:not([class]) { order: 0; }
+.led-preview {
+    order: 1;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 96px;
+    height: 96px;
+    flex: none;
+    border-radius: var(--r-pill);
+    background: radial-gradient(circle, var(--lc) 0, color-mix(in srgb, var(--lc) 30%, transparent) 45%, transparent 70%);
+}
+.led-preview i {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--r-pill);
+    background: var(--lc);
+    box-shadow: 0 0 0 4px var(--surface), 0 0 18px 4px color-mix(in srgb, var(--lc) 70%, transparent);
+}
+#divLedOverlay #btnLedTest { order: 2; align-self: center; }
+#divLedOverlay .genmod-state { order: 3; }
+.genmod-sect {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--r-4);
+    background: var(--panel);
+}
+.genmod-sect .gen-row { margin: 0 -8px; padding: 6px 8px; }
+.genmod-error {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: var(--r-3);
+    background: var(--danger-bg);
+    color: var(--danger);
+    font-size: var(--fs-3);
+}
+.led-manual { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.led-pin-steps { display: flex; gap: 6px; flex: none; }
+.led-pin-steps > button,
+.led-pin-steps > button:hover {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-2);
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-size: var(--fs-5);
+    font-weight: 700;
+}
+.led-safety { align-self: end; background: none; padding: 11px 0; }
+.led-pin-warn { grid-column: 1 / -1; }
+/* La moitié cochée doit suivre la case dans le HTML (.gen-seg input:checked + span) : GRB
+   passe devant par l'ordre d'affichage seulement. */
+.led-order .gen-seg-no { order: -1; }
+.led-color { display: inline-flex; align-items: center; gap: 10px; flex: none; cursor: pointer; }
+.led-color .accent-swatch {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--surface);
+    border-radius: var(--r-pill);
+    box-shadow: 0 0 0 1px var(--border);
+}
+.led-color code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--fs-2); color: var(--text-2); }
+@media (max-width: 999px) {
+    .led-preview { display: none; }
+    #divLedOverlay #btnLedTest { grid-column: 1 / -1; justify-self: start; }
+}
+@media (max-width: 767px) {
+    .led-manual { grid-template-columns: minmax(0, 1fr); }
+    #divLedOverlay #btnLedTest { align-self: stretch; justify-content: center; }
+}
+.lang-catalog-code {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 30px;
+    margin-bottom: 2px;
+    font-size: 0.9em;
+    border-radius: var(--radius-md);
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    background: color-mix(in srgb, var(--color-accent) 16%, var(--color-bg-input));
+    color: var(--color-accent);
+}
+.lang-catalog-badge {
+    flex-shrink: 0;
+    font-size: 0.75em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--color-accent-transp-80);
+    color: var(--color-accent);
+}
+.lang-catalog-badge.active {
+    background: var(--color-accent);
+    color: #ffffff;
+}
+.lang-catalog-progress {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    --progress-bar-height: 6px;
+}
+.lang-catalog-progress.active {
+    display: flex;
+}
+.lang-catalog-progress .progress-bar-value {
+    font-size: 0.8em;
+    min-width: 34px;
+    text-align: right;
+}
+/* Sous la grille, pour la langue choisie : import manuel quand le relais navigateur a confirmé
+ * qu'aucune route Internet n'existe depuis cet appareil, ou rappel d'une mise en attente. */
+.lang-catalog-manual-import {
+    padding: 10px 12px;
+    background: var(--color-bg-surface-2);
+    border-radius: var(--radius-row);
+    border: 1px dashed var(--color-border);
+}
+#langSelInfo:empty { display: none; }
+.lang-catalog-manual-import-info {
+    margin: 0 0 8px;
+    font-size: 0.85em;
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+}
+
+/* Scène au repos à 75 % fermé ; à chaque tuile choisie, un seul cycle ouverture puis retour
+   (.is-animating). --icon-pos est déclarée par @property pour pouvoir être animée. */
+@property --icon-pos { syntax: '<number>'; inherits: true; initial-value: 75; }
+@keyframes icon-pack-demo { 0% { --icon-pos: 75; } 45% { --icon-pos: 0; } 100% { --icon-pos: 75; } }
+.icon-pack-scene { width: 100%; padding: 12px 14px; border-radius: var(--r-4); background: var(--surface); --icon-pos: 75; --shade-position: var(--icon-pos); --fpos: calc(var(--icon-pos) * 1%); --shade-tilt: 60; }
+.icon-pack-scene.is-animating { animation: icon-pack-demo 1.6s ease-in-out; }
+.icon-pack-scene.is-animating * { transition: none; }
+@media (prefers-reduced-motion: reduce) { .icon-pack-scene.is-animating { animation: none; } }
+.icon-pack-scene-icons { display: flex; justify-content: space-between; gap: 2px; }
+.icon-pack-scene-icons svg { width: 15%; max-width: 58px; aspect-ratio: 1; height: auto; }
+.icon-pack-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.75em; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-secondary); }
+.icon-pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); gap: 8px; }
+.icon-pack-tile { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 8px; border-radius: var(--radius-lg); border: 1.5px solid var(--color-border); background: var(--color-bg-card); cursor: pointer; }
+.icon-pack-tile:hover { border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border)); }
+.icon-pack-tile.selected { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent) inset; }
+.icon-pack-tile.is-broken, .icon-pack-tile.is-disabled { opacity: .5; }
+.icon-pack-tile.is-disabled { pointer-events: none; }
+.icon-pack-thumb { display: flex; justify-content: space-between; padding: 4px; border-radius: var(--radius-md); background: var(--color-bg-input); aspect-ratio: 3.2; --shade-position: 60; --fpos: 100%; --shade-tilt: 60; }
+.icon-pack-thumb svg { width: 32%; aspect-ratio: 1; height: auto; }
+.icon-pack-name { font-weight: 700; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-pack-meta { font-size: 0.75em; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-pack-tag { position: absolute; top: 6px; right: 6px; }
+/* Pointillés : la tuile par défaut des packs d'icônes, ou une langue pas encore sur le boîtier. */
+.icon-pack-tile.is-default, .icon-pack-tile.is-remote { border-style: dashed; }
+.icon-pack-tile.is-default.selected, .icon-pack-tile.is-remote.selected { border-style: solid; }
+/* Sur écran tactile, aucun fichier ne peut être glissé dans la page : la grande zone de dépôt
+   n'y serait qu'un bouton haut de 100 px, remplacé par ce lien à droite du compteur. */
+.icon-pack-import { display: none; align-items: center; gap: 4px; color: var(--color-accent); font-weight: 600; text-transform: none; letter-spacing: 0; cursor: pointer; }
+.icon-pack-import svg { width: 14px; height: 14px; }
+@media (hover: none) and (pointer: coarse) {
+    .icon-pack-import { display: inline-flex; }
+    .icon-pack-drop { display: none; }
+}
+@media (max-width: 520px) {
+    .icon-pack-scene-icons svg { width: 15%; max-width: 40px; }
+}
+
+/* --- Fenêtre pièce (#divEditRoomOverlay) : coque genmod- de Général, nom puis contenu à cocher.
+   Une seule fenêtre pour créer, modifier et créer depuis la fiche d'un équipement ou d'un groupe. */
+#divEditRoomOverlay .gen-field { max-width: 460px; }
+.room-win-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.room-win-preset, .room-win-preset:hover { width: auto; min-height: 36px; margin: 0; padding: 0 14px; border: 0; border-radius: var(--r-pill); background: var(--surface-2); color: var(--text-2); font-size: var(--fs-3); font-weight: 600; text-transform: none; }
+.room-win-preset:hover { background: var(--sunken); }
+.room-win-label { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; margin-top: 6px; }
+.room-win-label b { font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.room-win-label span { font-size: var(--fs-2); color: var(--text-3); }
+.room-win-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(max(var(--tile-min), calc((100% - 30px) / 4)), 100%), 1fr)); gap: 10px; }
+.room-win-item, .room-win-item:hover { display: flex; justify-content: flex-start; align-items: center; gap: 12px; width: auto; min-height: 64px; margin: 0; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--r-4); background: var(--surface); color: var(--text); text-align: left; text-transform: none; font-weight: 400; }
+.room-win-item.on, .room-win-item.on:hover { border-color: var(--on-fill); box-shadow: inset 0 0 0 1px var(--on-fill); }
+.room-win-item-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--r-2); background: var(--surface-2); color: var(--text-2); }
+.room-win-item-icon svg { width: 22px; height: 22px; }
+.room-win-item-text { display: flex; flex-direction: column; min-width: 0; }
+.room-win-item-text b { overflow: hidden; font-size: var(--fs-4); text-overflow: ellipsis; white-space: nowrap; }
+.room-win-item-text small { font-size: var(--fs-2); color: var(--text-3); }
+.room-win-item-text small.is-move { color: var(--warn); font-weight: 700; }
+.room-win-item-box { display: grid; place-items: center; flex: none; width: 24px; height: 24px; margin-left: auto; border: 2px solid var(--sunken); border-radius: 8px; color: transparent; }
+.room-win-item.on .room-win-item-box { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+.room-win-item-box svg { width: 14px; height: 14px; opacity: 1; }
+.room-win-info { display: flex; align-items: flex-start; gap: 12px; max-width: 520px; margin: 0; padding: 14px 16px; border-radius: var(--r-4); background: var(--surface-2); font-size: var(--fs-3); line-height: 1.45; color: var(--text-2); }
+.room-win-info svg { flex: none; width: 20px; height: 20px; fill: currentColor; color: var(--color-accent); }
+@media (max-width: 767px) {
+    .room-win-items { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* --- Assistants (coque wiz-) : créer un groupe, ajouter un équipement. Collés aux bords de la zone de contenu, sans
+   les 16 px des fenêtres genmod- ; étapes à gauche, contenu à droite, pied sur toute la largeur. */
+.message-content.wiz-window { font-size: 16px; flex: 1; align-self: stretch; width: auto; max-width: none; max-height: none; margin: var(--topbar-height) 0 0 var(--sidebar-width); display: grid; grid-template-columns: minmax(280px, 26fr) minmax(0, 74fr); grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "side main" "foot foot"; border: 0; border-radius: 0; background: var(--bg); color: var(--text); text-align: left; }
+.wiz-side { grid-area: side; display: flex; flex-direction: column; gap: 22px; min-height: 0; overflow: auto; padding: clamp(24px, 4vh, 44px) clamp(20px, 2.2vw, 36px); background: var(--panel); }
+.wiz-side-head { display: flex; align-items: center; gap: 12px; }
+.wiz-title { margin: 0; font-size: clamp(24px, 2.2vw, 34px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+.wiz-close, .wiz-close:hover { display: none; flex: none; place-items: center; width: 40px; height: 40px; margin: 0 0 0 auto; padding: 0; border: 1px solid var(--border); border-radius: var(--r-2); background: var(--surface-2); color: var(--text-2); }
+.wiz-close svg { width: 18px; height: 18px; }
+.wiz-steps { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.wiz-step { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 10px 0; color: var(--text-3); }
+.wiz-step-n { display: grid; place-items: center; flex: none; width: 32px; height: 32px; box-sizing: border-box; border: 2px solid var(--sunken); border-radius: var(--r-pill); font-size: var(--fs-3); font-weight: 800; }
+.wiz-step-n svg { width: 16px; height: 16px; fill: currentColor; }
+.wiz-step-text { display: flex; flex-direction: column; min-width: 0; }
+.wiz-step-text b { font-size: var(--fs-4); }
+.wiz-step-text small { overflow: hidden; font-size: var(--fs-2); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.wiz-step.on { color: var(--text); }
+.wiz-step.on .wiz-step-n { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+.wiz-step.done { color: var(--text-2); }
+.wiz-step.done .wiz-step-n { border-color: var(--ok); background: var(--ok); color: var(--surface); }
+.wiz-step.skipped .wiz-step-n { border-style: dashed; }
+.wiz-step.pick { cursor: pointer; }
+.wiz-step.pick:hover b { color: var(--color-accent); }
+/* Titre de phase (« Créer », « Mettre en service ») : simple trait en bandeau, absent sur mobile. */
+.wiz-phase { padding: 14px 0 2px; font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.wiz-phase.first { padding-top: 0; }
+/* Barre segmentée sous le bandeau mobile : la vue d'ensemble que les étapes masquées ne donnent plus. */
+.wiz-pbar { display: none; gap: 3px; }
+.wiz-pbar i { flex: 1; height: 4px; border-radius: 2px; background: var(--sunken); }
+.wiz-pbar i.done { background: var(--ok); }
+.wiz-pbar i.skipped { background: var(--text-3); }
+.wiz-pbar i.on { background: var(--on-fill); }
+.wiz-pbar i.cut { margin-left: 6px; }
+.wiz-sum { display: flex; align-items: center; gap: 12px; margin-top: auto; padding: 16px; border-radius: var(--r-4); background: var(--surface); }
+.wiz-sum-icon { display: grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: var(--r-3); background: var(--surface-2); color: var(--text-2); }
+.wiz-sum-icon svg { width: 30px; height: 30px; --shade-position: 100; --fpos: 100%; }
+.wiz-sum-text { display: flex; flex-direction: column; min-width: 0; }
+.wiz-sum-text b { overflow: hidden; font-size: var(--fs-4); text-overflow: ellipsis; white-space: nowrap; }
+.wiz-sum-text span { font-size: var(--fs-3); color: var(--text-3); }
+.wiz-main { grid-area: main; display: flex; flex-direction: column; gap: 20px; min-width: 0; min-height: 0; overflow: auto; padding: clamp(24px, 4vh, 48px) clamp(24px, 3.4vw, 64px); }
+.wiz-kick { font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.wiz-h { margin: 4px 0 0; font-size: clamp(24px, 2.3vw, 36px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; overflow-wrap: anywhere; }
+.wiz-lead { max-width: 760px; margin: 0; font-size: var(--fs-4); line-height: 1.5; color: var(--text-2); }
+.wiz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(max(380px, calc((100% - 48px) / 4)), 100%), 1fr)); gap: 16px; }
+.wiz-check, .wiz-check:hover { display: flex; justify-content: flex-start; align-items: center; gap: 12px; width: auto; min-height: 64px; margin: 0; padding: 12px 14px; border: 2px solid var(--surface-2); border-radius: var(--r-4); background: var(--surface); color: var(--text); text-align: left; text-transform: none; font-weight: 400; }
+.wiz-check.on, .wiz-check.on:hover { border-color: var(--on-fill); }
+.wiz-check:disabled, .wiz-check:disabled:hover { opacity: .5; }
+.wiz-check-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--r-2); background: var(--surface-2); color: var(--text-2); }
+.wiz-check-icon svg { width: 22px; height: 22px; }
+.wiz-check-text { display: flex; flex-direction: column; min-width: 0; }
+.wiz-check-text b { overflow: hidden; font-size: var(--fs-4); text-overflow: ellipsis; white-space: nowrap; }
+.wiz-check-text small { font-size: var(--fs-2); color: var(--text-3); }
+.wiz-check-box { display: grid; place-items: center; flex: none; width: 24px; height: 24px; margin-left: auto; box-sizing: border-box; border: 2px solid var(--sunken); border-radius: 7px; color: transparent; }
+.wiz-check.on .wiz-check-box { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+.wiz-check-box svg { width: 14px; height: 14px; fill: currentColor; opacity: 1; }
+.wiz-keep .wiz-check-text b { white-space: normal; }
+.wiz-adv summary { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--fs-3); font-weight: 700; color: var(--color-accent); cursor: pointer; }
+.wiz-adv summary span { font-weight: 500; color: var(--text-3); }
+.wiz-adv .wiz-grid { margin-top: 12px; }
+.wiz-q { margin: 0; font-size: var(--fs-4); font-weight: 700; }
+.wiz-ok, .wiz-warn, .wiz-info { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 14px 16px; border-radius: var(--r-4); font-size: var(--fs-3); line-height: 1.45; }
+.wiz-ok { background: var(--ok-bg); color: var(--ok); }
+.wiz-ok svg { flex: none; width: 18px; height: 18px; fill: currentColor; }
+.wiz-warn { background: var(--warn-bg); color: var(--warn); }
+.wiz-info { background: var(--info-bg); color: var(--info); }
+.wiz-link, .wiz-link:hover { align-self: flex-start; width: auto; min-height: 40px; margin: 0; padding: 0; border: 0; background: none; color: var(--color-accent); font-size: var(--fs-3); font-weight: 700; text-align: left; text-transform: none; }
+/* « Passer cette étape » : au pied sur ordinateur, dans le contenu en dessous de 1000 px. */
+.wiz-skip-in { display: none; }
+.wiz-task { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--surface-2); font-size: var(--fs-3); }
+.wiz-task:first-of-type { border-top: 0; }
+.wiz-task b { flex: 1; min-width: 0; font-size: var(--fs-4); }
+.wiz-task > span:last-child { color: var(--text-3); }
+.wiz-task-n { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: var(--r-pill); background: var(--surface-2); font-weight: 800; }
+.wiz-task-n svg { width: 14px; height: 14px; fill: currentColor; }
+.wiz-task.done .wiz-task-n { background: var(--ok-bg); color: var(--ok); }
+.wiz-task.cur .wiz-task-n { background: var(--on-fill); color: var(--on-fill-text); }
+.wiz-opt, .wiz-opt:hover { width: auto; min-height: 36px; margin: 0; padding: 0 16px; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--text-3); font-size: var(--fs-3); font-weight: 600; text-transform: none; }
+.wiz-opt.on, .wiz-opt.on:hover { background: var(--on-fill); color: var(--on-fill-text); }
+.wiz-foot { grid-area: foot; display: flex; align-items: center; gap: 12px; padding: 12px clamp(24px, 3.4vw, 64px); border-top: 1px solid var(--border); background: var(--surface); }
+.wiz-foot .gen-btn { align-self: auto; }
+/* Sortie : neutre mais bien visible (ce n'est pas une action destructrice), juste avant le bouton principal. */
+.wiz-foot .wiz-quit, .wiz-foot .wiz-quit:hover { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
+.wiz-add-room { align-self: flex-start; min-height: 40px; }
+.wiz-busy { gap: 10px; }
+/* aria-disabled et non disabled : button:disabled (base.css) le grise en !important. */
+.wiz-busy { pointer-events: none; cursor: progress; }
+.wiz-spin { width: 16px; height: 16px; flex: none; box-sizing: border-box; border: 2px solid currentColor; border-right-color: transparent; border-radius: var(--r-pill); animation: wait-spinner-rotate .8s linear infinite; }
+.wiz-foot-gap { flex: 1; }
+.wiz-foot-hint { font-size: var(--fs-3); color: var(--text-3); }
+.wiz-foot-hint:empty { display: none; }
+/* --- Ajouter un équipement : la page de création (trois sections), puis l'appairage (72-setup.js). */
+.wiz-sec { display: flex; flex-direction: column; gap: 16px; }
+.wiz-sec + .wiz-sec { padding-top: 28px; border-top: 1px solid var(--border); }
+.wiz-sec-h { display: flex; align-items: center; gap: 10px; margin: 0; font-size: var(--fs-6); font-weight: 800; }
+.wiz-sec-n { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: var(--r-pill); background: var(--on-fill); color: var(--on-fill-text); font-size: var(--fs-3); }
+.wiz-sec-off { opacity: .45; pointer-events: none; }
+/* Huit types : deux rangées pleines de quatre, toujours
+   sur toute la largeur, comme la tuile de copie en dessous ; jamais de tuile seule en bout de grille. */
+.wiz-fam { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.wiz-fam-card, .wiz-fam-card:hover { flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 14px; width: auto; min-height: 190px; margin: 0; padding: 18px; border: 2px solid var(--surface); border-radius: var(--r-4); background: var(--surface); color: var(--text); font-size: var(--fs-5); font-weight: 700; text-align: left; text-transform: none; }
+.wiz-fam-card.on, .wiz-fam-card.on:hover { border-color: var(--on-fill); }
+.wiz-fam-icon { display: grid; place-items: center; width: 100%; height: 112px; border-radius: var(--r-3); background: var(--surface-2); color: var(--text-2); }
+.wiz-fam-icon svg { width: 84px; height: 84px; --shade-position: 100; --fpos: 100%; }
+.wiz-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.wiz-chip, .wiz-chip:hover { width: auto; min-height: 44px; margin: 0; padding: 0 16px; border: 2px solid var(--surface-2); border-radius: var(--r-3); background: var(--surface); color: var(--text); font-size: var(--fs-3); font-weight: 700; text-transform: none; }
+.wiz-chip.on, .wiz-chip.on:hover { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+.wiz-copy { flex-direction: row; flex-wrap: wrap; align-items: center; }
+.wiz-copy-text { display: flex; flex: 1 1 260px; flex-direction: column; gap: 4px; }
+.wiz-copy .gen-input-box { flex: 0 1 280px; }
+.wiz-listen { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px; border: 2px dashed var(--color-accent); border-radius: var(--r-4); background: var(--surface); }
+.wiz-listen-icon { display: grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: var(--r-pill); background: var(--color-accent-transp-94); color: var(--color-accent); }
+.wiz-listen-icon svg { width: 26px; height: 26px; animation: setupPulse 1.2s ease-in-out infinite; }
+.wiz-listen-text { display: flex; flex: 1 1 220px; flex-direction: column; gap: 4px; font-size: var(--fs-3); color: var(--text-3); }
+.wiz-listen-text b { font-size: var(--fs-4); color: var(--text); }
+.wiz-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.wiz-facts span { padding: 2px 10px; border-radius: var(--r-pill); background: var(--surface); font-size: var(--fs-2); font-weight: 600; color: var(--text); }
+.wiz-badge { margin-left: 6px; padding: 1px 8px; border-radius: var(--r-pill); background: var(--ok-bg); color: var(--ok); font-size: var(--fs-1); font-weight: 700; text-transform: uppercase; }
+.wiz-prog { min-width: 120px; letter-spacing: .08em; }
+.wiz-after { display: flex; flex-direction: column; gap: 10px; }
+.wiz-after[hidden] { display: none; }
+/* Contenu des tâches de mise en service (corps setup-*, partagés avec l'overlay d'une tâche seule)
+   remis aux couleurs de la coque : boutons pilule, contrôles segmentés, tuiles pour les options. */
+/* --- Tâche seule au gabarit genmod- (cf. renderTask) : appairage, télécommandes, puis le contenu des
+   autres tâches repris de l'assistant, restylé par :is(.wiz-main, .genmod-body). --- */
+#divShadeSetup .genmod-body > .wiz-body { display: flex; flex-direction: column; gap: 16px; }
+.tw-steps { display: flex; flex-direction: column; gap: 10px; }
+.tw-step { display: flex; align-items: flex-start; gap: 14px; padding: 16px; border-radius: var(--r-4); background: var(--surface-2); }
+.tw-step-n { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--r-pill); background: var(--on-fill); color: var(--on-fill-text); font-size: var(--fs-3); font-weight: 800; }
+.tw-step-n svg { width: 16px; height: 16px; fill: currentColor; }
+.tw-step.is-done .tw-step-n { background: var(--ok); color: #fff; }
+.tw-step.is-off { opacity: .6; }
+.tw-step.is-off .tw-step-n { background: var(--border); color: var(--text-2); }
+.tw-step-t { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: var(--fs-3); line-height: 1.5; color: var(--text-2); }
+.tw-step-t > b { font-size: var(--fs-4); color: var(--text); }
+.tw-prog, .tw-prog:hover { align-self: flex-start; display: flex; width: auto; flex-direction: column; align-items: center; min-width: 220px; min-height: 64px; margin: 0; padding: 10px 24px; border: 0; border-radius: var(--r-4); background: var(--on-fill); color: var(--on-fill-text); font-size: var(--fs-7); font-weight: 800; letter-spacing: .04em; text-transform: uppercase; box-shadow: 0 6px 16px rgba(0, 0, 0, .18); user-select: none; }
+.tw-prog small { font-size: var(--fs-1); font-weight: 600; letter-spacing: 0; text-transform: none; opacity: .7; }
+.tw-q { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1.5px solid var(--border); border-radius: var(--r-4); }
+.tw-q[hidden] { display: none; }
+.tw-q > b { font-size: var(--fs-4); }
+.tw-chips, .tw-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.tw-acts .gen-btn { width: auto; }
+.tw-chip, .tw-chip:hover { width: auto; min-height: 44px; margin: 0; padding: 0 16px; border: 2px solid var(--surface-2); border-radius: var(--r-5); background: var(--surface); color: var(--text); font-size: var(--fs-3); font-weight: 700; text-transform: none; }
+.tw-chip.is-ok { border-color: var(--ok); background: var(--ok); color: #fff; }
+.tw-ok, .tw-card { display: flex; align-items: center; gap: 14px; margin: 0; padding: 16px; border-radius: var(--r-4); }
+.tw-ok { background: var(--ok-bg); color: var(--ok); font-size: var(--fs-4); font-weight: 700; }
+.tw-ok svg { flex: none; width: 22px; height: 22px; fill: currentColor; }
+.tw-card { background: var(--info-bg); color: var(--info); }
+.tw-card.is-ok { background: var(--ok-bg); color: var(--ok); }
+.tw-card.is-warn { align-items: flex-start; background: var(--warn-bg); color: var(--warn); }
+.tw-card-ico { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: var(--r-pill); background: var(--surface); }
+.tw-card-ico svg { width: 26px; height: 26px; fill: currentColor; }
+.tw-card.is-listen .tw-card-ico { animation: twPulse 1.4s ease-in-out infinite; }
+@keyframes twPulse { 50% { opacity: .35; } }
+.tw-card b { display: block; margin-bottom: 4px; font-size: var(--fs-4); }
+.tw-card span { font-size: var(--fs-3); line-height: 1.45; }
+.tw-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tw-facts i { padding: 4px 10px; border-radius: var(--r-pill); background: var(--surface); font-size: var(--fs-1); font-style: normal; font-weight: 700; }
+.tw-link, .tw-link:hover { align-self: flex-start; width: auto; min-height: 0; margin: 0; padding: 0; border: 0; background: none; color: var(--color-accent); font-size: var(--fs-3); font-weight: 700; text-transform: none; }
+.tw-sec { margin: 4px 0 0; font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.tw-rlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(max(300px, calc((100% - 30px) / 4)), 100%), 1fr)); gap: 10px; }
+.tw-rt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-width: 0; padding: 12px; border: 1.5px solid var(--border); border-radius: var(--r-3); }
+.tw-rt-ico { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-2); background: var(--surface-2); }
+.tw-rt-ico svg { width: 22px; height: 22px; fill: currentColor; }
+.tw-rt-t { display: flex; flex-direction: column; min-width: 0; }
+.tw-rt-t b { font-size: var(--fs-3); }
+.tw-rt-t small { font-size: var(--fs-1); color: var(--text-3); }
+.tw-rt .linkedRemote-signal { margin-left: auto; }
+/* --- Fenêtres de planning : programmation (ScheduleOverlay, gabarit genmod-) et horaire posé dessus. --- */
+.sw-sec { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 4px; font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.sw-days { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sw-days .schedule-day-btn, .sw-days .schedule-day-btn:hover { flex: none; box-sizing: border-box; display: grid; place-items: center; width: 44px; height: 44px; min-width: 0; margin: 0; padding: 0; border: 2px solid var(--surface-2); border-radius: var(--r-pill); background: var(--surface); color: var(--text-2); font-size: var(--fs-3); font-weight: 800; text-transform: none; }
+.sw-days .schedule-day-btn.active { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+.sw-hours { display: flex; flex-direction: column; gap: 8px; }
+.sw-hr { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--r-3); background: var(--surface); cursor: pointer; }
+.sw-hr:hover { border-color: var(--on-fill); }
+.sw-hr.is-off { opacity: .55; }
+.sw-hr-time { flex: none; min-width: 64px; font-size: var(--fs-6); font-weight: 800; font-variant-numeric: tabular-nums; }
+.sw-hr-ico { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: var(--r-2); background: var(--surface-2); }
+.sw-hr-ico svg { width: 18px; height: 18px; fill: currentColor; }
+.sw-hr-t { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sw-hr-t b { font-size: var(--fs-3); }
+.sw-hr-t small { font-size: var(--fs-2); color: var(--text-3); }
+.sw-hr-del, .sw-hr-del:hover { flex: none; display: grid; place-items: center; width: 36px; height: 36px; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--danger); }
+.sw-hr-del svg { width: 18px; height: 18px; fill: currentColor; }
+.sw-add, .sw-add:hover { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 56px; margin: 0; border: 2px dashed color-mix(in srgb, var(--text-3) 45%, transparent); border-radius: var(--r-3); background: transparent; color: var(--text-2); font-size: var(--fs-3); font-weight: 700; text-transform: none; }
+.sw-add:hover { border-color: var(--on-fill); }
+.sw-add svg { width: 20px; height: 20px; fill: currentColor; }
+.genmod-side .sw-off { align-self: center; padding: 4px 10px; border-radius: var(--r-pill); background: var(--warn-bg); color: var(--warn); font-size: var(--fs-1); font-weight: 700; }
+.sw-hour-overlay .message-content.sw-hour { display: flex; flex-direction: column; gap: 0; width: min(680px, calc(100% - 32px)); max-width: none; max-height: calc(100% - 48px); padding: 0; border-radius: var(--r-5); background: var(--surface); overflow: hidden; text-align: left; }
+.sw-hour-head { display: flex; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--border); }
+.sw-hour-head h3 { margin: 0; font-size: var(--fs-6); font-weight: 800; color: var(--text); }
+.sw-hour-head .genmod-close { display: flex; margin-left: auto; }
+.sw-hour-body { display: flex; flex-direction: column; gap: 14px; min-height: 0; padding: 18px 22px; overflow: auto; }
+.sw-col { display: flex; flex-direction: column; gap: 10px; }
+.sw-slh { display: flex; justify-content: space-between; align-items: baseline; }
+.sw-slh b { font-size: var(--fs-5); font-weight: 800; color: var(--text); }
+.sw-chips .schedule-quickpos-btn, .sw-chips .schedule-quickpos-btn:hover { flex: none; width: auto; flex-direction: row; gap: 8px; min-width: 0; min-height: 44px; margin: 0; padding: 0 16px; border: 2px solid var(--surface-2); border-radius: var(--r-5); background: var(--surface); color: var(--text); font-size: var(--fs-3); font-weight: 700; text-transform: none; }
+.sw-chips .schedule-quickpos-btn svg { width: 20px; height: 20px; fill: currentColor; }
+.sw-chips .schedule-quickpos-btn.active { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+.sw-hour .schedule-sun-offset-field { flex: 0 0 110px; height: auto; padding: 0 12px; }
+.sw-hour-foot { padding: 12px 22px; border-top: 1px solid var(--border); }
+.sw-hour .gen-btn, .sw-days .tw-link { width: auto; }
+@media (max-width: 767px) {
+    .sw-hour-overlay { align-items: flex-end; }
+    .sw-hour-overlay .message-content.sw-hour { width: 100%; max-height: 92%; border-radius: var(--r-5) var(--r-5) 0 0; }
+    .sw-hour-body { padding: 14px 16px; }
+    .sw-hour-foot { padding: 12px 16px; }
+    .sw-hr { gap: 10px; padding: 10px 12px; }
+    .sw-hr-time { min-width: 52px; font-size: var(--fs-5); }
+    /* Jours : les sept ronds se partagent la ligne (44 px au plus), « Tous les jours » passe dessous. */
+    .sw-days { gap: 6px; }
+    .sw-days .schedule-day-btn, .sw-days .schedule-day-btn:hover { flex: 1 1 0; width: auto; max-width: 44px; height: auto; aspect-ratio: 1; }
+    .sw-days .tw-link { flex-basis: 100%; text-align: left; }
+    /* Positions en icônes seules, sur une ligne : le libellé reste lu par les lecteurs d'écran. */
+    .sw-chips { flex-wrap: nowrap; gap: 6px; }
+    .sw-chips .schedule-quickpos-btn, .sw-chips .schedule-quickpos-btn:hover { position: relative; flex: 1 1 0; justify-content: center; min-height: 52px; padding: 0; }
+    .sw-chips .schedule-quickpos-btn svg { width: 26px; height: 26px; }
+    .sw-chips .schedule-quickpos-btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-p { font-size: var(--fs-4); color: var(--text); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-p.sub { font-size: var(--fs-3); color: var(--text-3); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-actions button, #divShadeSetup :is(.wiz-main, .genmod-body) .setup-actions button:hover,
+#divShadeSetup :is(.wiz-main, .genmod-body) :is(.wiz-body, .setup-optq) > button:not(.setup-link), #divShadeSetup :is(.wiz-main, .genmod-body) :is(.wiz-body, .setup-optq) > button:not(.setup-link):hover { flex: none; align-self: flex-start; width: auto; min-height: 44px; margin: 0; padding: 0 18px; border: 0; border-radius: var(--r-pill); background: var(--color-accent); color: var(--color-text-on-accent); font-size: var(--fs-3); font-weight: 700; text-transform: none; }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-actions button[line], #divShadeSetup :is(.wiz-main, .genmod-body) .setup-actions button[line]:hover,
+#divShadeSetup :is(.wiz-main, .genmod-body) :is(.wiz-body, .setup-optq) > button[line], #divShadeSetup :is(.wiz-main, .genmod-body) :is(.wiz-body, .setup-optq) > button[line]:hover { background: var(--surface-2); color: var(--text); }
+#divShadeSetup :is(.wiz-main, .genmod-body) :is(.wiz-body, .setup-optq, .setup-actions) > button.btn-success, #divShadeSetup :is(.wiz-main, .genmod-body) :is(.wiz-body, .setup-optq, .setup-actions) > button.btn-success:hover { background: var(--ok); color: var(--surface); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-link { font-size: var(--fs-3); font-weight: 700; text-decoration: none; }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-chips { gap: 4px; padding: 4px; border: 0; border-radius: var(--r-pill); background: var(--surface-2); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-chip { padding: 7px 13px; border-radius: var(--r-pill); font-size: var(--fs-2); font-weight: 600; color: var(--text-3); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-chip.sel { background: var(--on-fill); color: var(--on-fill-text); box-shadow: none; }
+#divShadeSetup .wiz-opts .setup-optq { gap: 12px; padding: 22px; border: 0; border-radius: var(--r-5); background: var(--surface); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-q2 { font-size: var(--fs-4); font-weight: 700; color: var(--text); }
+#divShadeSetup :is(.wiz-main, .genmod-body) :is(.setup-warn, .setup-info) { padding: 12px 14px; border: 0; border-radius: var(--r-4); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-warn { background: var(--warn-bg); color: var(--warn); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-info { background: var(--info-bg); color: var(--info); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-meas div { border: 2px solid transparent; border-radius: var(--r-3); background: var(--surface-2); padding: 12px 14px; font-size: var(--fs-2); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-meas b { margin-top: 2px; font-size: var(--fs-6); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-meas .cur { border-color: var(--on-fill); }
+#divShadeSetup :is(.wiz-main, .genmod-body) .setup-chrono { font-size: clamp(40px, 4.4vw, 64px); text-align: left; }
+#divShadeSetup :is(.wiz-main, .genmod-body) :is(.setup-marks, .setup-mypos) { border: 0; border-radius: var(--r-3); background: var(--surface-2); }
+/* Tablette : étapes en bandeau au-dessus du contenu, croix au bout de la ligne du titre. */
+@media (max-width: 999px) {
+    .message-content.wiz-window { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "side" "main" "foot"; }
+    .wiz-side { gap: 14px; padding: 18px 24px; overflow: visible; }
+    .wiz-title { font-size: var(--fs-7); }
+    .wiz-close, .wiz-close:hover { display: grid; }
+    .wiz-steps { flex-direction: row; gap: 8px; }
+    .wiz-step { flex: 1; gap: 8px; padding: 8px 10px; border-radius: var(--r-3); background: var(--surface); }
+    .wiz-step-text small { display: none; }
+    .wiz-step-text b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wiz-sum { display: none; }
+    .wiz-skip-in { display: block; }
+    .wiz-foot .wiz-skip { display: none; }
+    .wiz-fam { gap: 12px; }
+    .wiz-fam-card, .wiz-fam-card:hover { min-height: 0; gap: 10px; padding: 14px; font-size: var(--fs-4); }
+    .wiz-fam-icon { height: 80px; }
+    .wiz-fam-icon svg { width: 60px; height: 60px; }
+    .wiz-foot .gen-btn { white-space: nowrap; }
+    .wiz-main { padding: 24px; }
+    .wiz-foot { padding: 12px 24px; }
+}
+/* Tablette seule : plus de 4 étapes ne tiennent pas en toutes lettres, seule la courante garde son
+   nom ; le titre de phase devient un trait entre « Créer » et « Mettre en service ». */
+@media (min-width: 768px) and (max-width: 999px) {
+    .wiz-phase { align-self: center; width: 2px; height: 28px; padding: 0; border-radius: 2px; background: var(--sunken); font-size: 0; }
+    .wiz-phase.first { display: none; }
+    .wiz-steps.many .wiz-step:not(.on) { flex: none; padding: 4px; background: none; }
+    .wiz-steps.many .wiz-step:not(.on) .wiz-step-text { display: none; }
+}
+/* Mobile : plein écran comme les fenêtres de tâche ; étapes réduites à leur numéro sauf la
+   courante ; pied comme .genmod-foot, indication au-dessus et boutons en ligne à parts égales. */
+@media (max-width: 767px) {
+    .wiz-overlay::before { inset: 0; }
+    .message-content.wiz-window { height: 100%; margin: 0; border-top: 0; border-radius: 0; box-shadow: none; overflow: hidden; animation: none; transform: none; }
+    .wiz-side { gap: 10px; padding: 14px 16px 10px; }
+    .wiz-title { font-size: var(--fs-6); }
+    /* Seulement trois repères : la précédente (coche), la courante en toutes lettres, la suivante
+       en fondu vers la droite. Le nom courant garde toute la place, quelle que soit la langue. */
+    .wiz-steps { gap: 10px; overflow: hidden; }
+    .wiz-phase { display: none; }
+    .wiz-step { display: none; flex: none; gap: 8px; padding: 0; background: none; }
+    .wiz-step.prev, .wiz-step.on, .wiz-step.next { display: flex; }
+    .wiz-step-n { width: 28px; height: 28px; font-size: var(--fs-2); }
+    .wiz-step.prev .wiz-step-text { display: none; }
+    .wiz-step.on { flex: 0 1 auto; }
+    .wiz-step.next { flex: 1 1 0; overflow: hidden; -webkit-mask-image: linear-gradient(to right, #000 20%, transparent 95%); mask-image: linear-gradient(to right, #000 20%, transparent 95%); }
+    .wiz-pbar { display: flex; }
+    .wiz-fam { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .wiz-fam-icon { height: 64px; }
+    .wiz-fam-icon svg { width: 48px; height: 48px; }
+    .wiz-sec-h { font-size: var(--fs-5); }
+    /* Réponses des questions : chips séparés, comme les questions du type, plutôt qu'un segmenté. */
+    #divShadeSetup :is(.wiz-main, .genmod-body) .setup-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; background: none; }
+    #divShadeSetup :is(.wiz-main, .genmod-body) .setup-chip { display: flex; align-items: center; min-height: 44px; padding: 0 16px; border: 2px solid var(--surface-2); border-radius: var(--r-5); background: var(--surface); color: var(--text); font-size: var(--fs-3); font-weight: 700; }
+    #divShadeSetup :is(.wiz-main, .genmod-body) .setup-chip.sel { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
+    /* Page de création : le pied devient le message flottant de la barre d'enregistrement (.save-bar). */
+    .message-content.wiz-window { position: relative; }
+    .wiz-main.wiz-main-float { padding-bottom: 96px; }
+    .wiz-foot.wiz-float { position: absolute; left: 12px; right: 12px; bottom: 14px; z-index: 1; flex-wrap: nowrap; gap: 8px; padding: 8px 8px 8px 12px; border: 0; border-radius: var(--r-3); background: var(--on-fill); color: var(--on-fill-text); box-shadow: 0 10px 24px rgba(0, 0, 0, .2); }
+    .wiz-foot.wiz-float .wiz-foot-hint { order: 0; flex: 1 1 auto; min-width: 0; overflow: hidden; font-size: var(--fs-2); font-weight: 700; color: inherit; text-overflow: ellipsis; white-space: nowrap; }
+    .wiz-foot.wiz-float .gen-btn { flex: none; min-height: 40px; padding: 0 12px; border-radius: var(--radius-row); font-size: var(--fs-2); }
+    .wiz-foot.wiz-float .wiz-quit, .wiz-foot.wiz-float .wiz-quit:hover { background: transparent; box-shadow: none; color: inherit; }
+    .wiz-main { gap: 16px; padding: 16px; }
+    .wiz-h { font-size: var(--fs-7); }
+    .wiz-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .wiz-foot { flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
+    .wiz-foot-gap { display: none; }
+    .wiz-foot-hint { order: -1; flex: 1 1 100%; font-size: var(--fs-2); }
+    .wiz-foot .gen-btn { flex: 1 1 0; justify-content: center; min-width: 0; padding: 0 10px; }
+}
 
 /* =======================================================================
  *  MEDIA QUERIES RESPONSIVE (toutes modales/overlays)
@@ -3194,25 +4007,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     }
 }
 
-/* -----------------------------------------------------------------------
- *  Cartes de planning (Options -> Équipement/Groupe), une par ligne (cf.
- *  renderScheduleBadges(), 71-schedule.js). L'icône de suppression réutilise
- *  .divEditDelete-svg/.icon-svg plutôt qu'un composant dédié -- activé/désactivé
- *  reste piloté depuis l'édition complète (switch de ScheduleOverlay).
- * ----------------------------------------------------------------------- */
-/* .devButtonUpdate est déjà en column (titre puis description) : cette ligne interne les remet
- * côte à côte sans toucher au reste de la mise en page du bouton. */
-.schedule-add-title-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.schedule-card-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-}
 /* Fiche de planning : trois zones empilées -- en-tête d'identité, une ligne par horaire, jours en
  * pied. L'en-tête reprend le gabarit commun aux cartes équipement/groupe/pièce (.shade-icon-wrapper,
  * .name-text, .cfg-room, poubelle), pour qu'une programmation se lise comme le reste de l'appli.
@@ -3382,12 +4176,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
 .col-days-list span.active {
     color: var(--color-accent);
 }
-.schedule-hours-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
 .schedule-hour-time {
     display: flex;
     align-items: center;
@@ -3410,11 +4198,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     border: none;
     border-radius: var(--radius-row) 0 0 var(--radius-row);
 }
-.schedule-hour-block .uniRow:hover {
-    background: var(--color-accent-transp-94);
-    border-color: var(--color-accent);
-    cursor: pointer;
-}
 
 @media (max-width: 480px) {
     .schedule-hour-trigger {
@@ -3425,53 +4208,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
         white-space: normal;
     }
 }
-/* =======================================================================
- *  GÉOLOCALISATION (#divGeoPopupContent)
- *  ======================================================================= */
-
-/* Latitude et Longitude sont côte à côte dans un .baseFlexRow : le
- * min-width: 210px hérité de .uniRow empêche les deux cartes de se
- * rétrécir sous 420px + gap, et la modale déborde en largeur sur mobile.
- * Ces deux champs-là n'ont besoin que de la place de leur libellé. */
-#divGeoPopupContent .baseFlexRow > .uniRow {
-    min-width: auto;
-}
-
-/* En <button> plutôt qu'en <div> pour rester atteignable au clavier -- d'où la remise à zéro des
- * styles de bouton. */
-#divGeoPopupContent .input-paste-btn {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    width: auto;
-    margin: 0;
-    padding: 5px;
-    border: none;
-    background: none;
-    box-shadow: none;
-    color: var(--color-text-main);
-    cursor: pointer;
-    opacity: 0.6;
-}
-#divGeoPopupContent .input-paste-btn svg {
-    width: 20px;
-    height: 20px;
-}
-#divGeoPopupContent .input-paste-btn:hover,
-#divGeoPopupContent .input-paste-btn:focus-visible {
-    background: none;
-    color: var(--color-accent);
-    opacity: 1;
-}
-/* Réserve la place de l'icône pour qu'une valeur longue ne passe pas dessous. */
-#divGeoPopupContent .baseFlexRow .inputAndSelect {
-    padding-right: 36px;
-}
-
 /* =======================================================================
  *  TABLIER PLEIN ÉCRAN (.rts-shade)
  *  ======================================================================= */
