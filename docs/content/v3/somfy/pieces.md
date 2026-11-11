@@ -18,9 +18,11 @@ confus. Créer des pièces offre plusieurs avantages :
 
 ## Caractéristiques techniques
 
-* **Capacité** : jusqu'à **14 pièces** personnalisées (la même logique de réserve que pour
-    les [équipements](equipements/index.md#capacité) : 16 emplacements internes, 2 toujours
-    soustraits).
+* **Capacité** : jusqu'à **30 pièces** personnalisées (la même logique de réserve que pour
+    les [équipements](equipements/index.md#capacité) : 32 emplacements internes, 2 toujours
+    soustraits). Au-delà de 14 pièces, un firmware plus ancien (v2.x ou v3 antérieure)
+    refuse toute la configuration : ni retour en arrière, ni restauration de la sauvegarde
+    sur ces versions.
 * **Gestion de l'accueil** : Tous les équipements et groupes non assignés à une pièce
     spécifique sont regroupés par défaut dans la pièce principale **Accueil**, toujours
     présente et non supprimable.

@@ -41,7 +41,7 @@ extern ConfigSettings settings;
 // Écriture NVS uniquement quand le masque CHANGE : ces fonctions sont aussi appelées à chaque
 // ajout/suppression, et réécrire à l'identique userait la flash pour rien.
 #define MQTT_PUB_NAMESPACE "mqttpub"
-static void loadPublishedMasks(uint32_t &shadeMask, uint16_t &groupMask, uint16_t &roomMask) {
+static void loadPublishedMasks(uint32_t &shadeMask, uint16_t &groupMask, uint32_t &roomMask) {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   // Ouverture en LECTURE-ÉCRITURE, pas en lecture seule : au tout premier démarrage le namespace
   // n'existe pas encore, et Preferences::begin(..., true) échoue alors en imprimant un log_e
@@ -53,7 +53,9 @@ static void loadPublishedMasks(uint32_t &shadeMask, uint16_t &groupMask, uint16_
   pref.begin(MQTT_PUB_NAMESPACE, false);
   shadeMask = pref.getULong("shades", 0);
   groupMask = (uint16_t)pref.getUShort("groups", 0);
-  roomMask = (uint16_t)pref.getUShort("rooms", 0);
+  // Nouvelle clé : NVS est typé, un getULong sur l'ancienne clé U16 rendrait 0. L'ancienne n'est
+  // relue qu'au premier démarrage après la mise à jour, pour ne pas perdre un cycle de nettoyage.
+  roomMask = pref.isKey("rooms32") ? pref.getULong("rooms32", 0) : pref.getUShort("rooms", 0);
   pref.end();
 }
 static void storeShadeMask(uint32_t mask) {
@@ -68,10 +70,13 @@ static void storeGroupMask(uint16_t mask) {
   if(pref.getUShort("groups", 0) != mask) pref.putUShort("groups", mask);
   pref.end();
 }
-static void storeRoomMask(uint16_t mask) {
+static void storeRoomMask(uint32_t mask) {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin(MQTT_PUB_NAMESPACE, false);
-  if(pref.getUShort("rooms", 0) != mask) pref.putUShort("rooms", mask);
+  if(!pref.isKey("rooms32") || pref.getULong("rooms32", 0) != mask) {
+    pref.putULong("rooms32", mask);
+    if(pref.isKey("rooms")) pref.remove("rooms");
+  }
   pref.end();
 }
 
@@ -773,13 +778,13 @@ void SomfyShadeController::publishGroupIndex() {
 void SomfyShadeController::publishRoomIndex() {
   if(!mqtt.connected()) return;
   char arrIds[128] = "[";
-  uint16_t mask = 0;
+  uint32_t mask = 0;
   for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {
     uint8_t id = this->rooms[i].roomId;
     if(id == 0) continue;
     if(strlen(arrIds) > 1) strcat(arrIds, ",");
     itoa(id, &arrIds[strlen(arrIds)], 10);
-    if(id <= SOMFY_MAX_ROOMS) mask |= (1U << (id - 1));
+    if(id <= SOMFY_MAX_ROOMS) mask |= (1UL << (id - 1));
   }
   strcat(arrIds, "]");
   mqtt.publish("rooms", arrIds, true);
@@ -794,7 +799,7 @@ void SomfyShadeController::publish() {
   // SomfyShade::unpublish() appelé depuis deleteShade() ne peut pas couvrir).
   uint32_t prevShades = 0;
   uint16_t prevGroups = 0;
-  uint16_t prevRooms = 0;
+  uint32_t prevRooms = 0;
   loadPublishedMasks(prevShades, prevGroups, prevRooms);
   for(uint8_t id = 1; id <= SOMFY_MAX_SHADES; id++) {
     if((prevShades & (1UL << (id - 1))) && !this->getShadeById(id)) SomfyShade::unpublish(id);
@@ -803,7 +808,7 @@ void SomfyShadeController::publish() {
     if((prevGroups & (1U << (id - 1))) && !this->getGroupById(id)) SomfyGroup::unpublish(id);
   }
   for(uint8_t id = 1; id <= SOMFY_MAX_ROOMS; id++) {
-    if((prevRooms & (1U << (id - 1))) && !this->getRoomById(id)) SomfyRoom::unpublish(id);
+    if((prevRooms & (1UL << (id - 1))) && !this->getRoomById(id)) SomfyRoom::unpublish(id);
   }
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
     if(this->shades[i].getShadeId() == 255) continue;

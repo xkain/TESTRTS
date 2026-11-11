@@ -200,8 +200,8 @@ Longueur totale : **76 octets**.
 
 !!! note "Note"
 
-    **Pourquoi 14 pièces et non 16, 30 équipements et non 32, 14 groupes et non 16 ?** Le
-    format de fichier réserve bien 16 emplacements pour les pièces et les groupes, et 32 pour
+    **Pourquoi 30 pièces et non 32, 30 équipements et non 32, 14 groupes et non 16 ?** Le
+    format de fichier réserve bien 16 emplacements pour les groupes, et 32 pour les pièces,
     les équipements et les plannings — ce sont les capacités *brutes* que portent les champs
     d'en-tête et les identifiants ci-dessous. Mais l'algorithme qui attribue un nouvel
     identifiant côté firmware (`getNextRoomId()` / `getNextShadeId()` / `getNextGroupId()`, et
@@ -217,13 +217,13 @@ Longueur totale : **76 octets**.
 
 ## Enregistrement Pièce
 
-Un enregistrement par pièce déclarée (jusqu'à 16, dont 14 réellement atteignables depuis
+Un enregistrement par pièce déclarée (jusqu'à 32, dont 30 réellement atteignables depuis
 l'interface — voir la note ci-dessus). Entièrement à largeur fixe, inchangé depuis le format
 d'origine. Longueur totale : **29 octets**.
 
 | Nom | Longueur | Commentaire | Depuis la version |
 | --- | --- | --- | --- |
-| Id Pièce | 3 | 1 à 16, mais seuls 1 à 14 sont attribués automatiquement par l'interface | 19+ |
+| Id Pièce | 3 | 1 à 32, mais seuls 1 à 30 sont attribués automatiquement par l'interface | 19+ |
 | Nom | 20 | | 19+ |
 | Ordre d'affichage | 3 | | 19+ |
 

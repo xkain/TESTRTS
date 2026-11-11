@@ -4134,7 +4134,7 @@ class Somfy {
         <div class="message-content room-content">
         ${modalHeader(titleKey, 'svg-navRoom', {
             subtitle: descKey,
-            rightContent: `<div class="somfyMaxId"><span id="spanRoomId">${roomId}</span>/<span id="spanMaxRooms">${roomData.maxRooms || 14}</span></div>`
+            rightContent: `<div class="somfyMaxId"><span id="spanRoomId">${roomId}</span>/<span id="spanMaxRooms">${roomData.maxRooms || 30}</span></div>`
         })}
         <div class="overlay-scroll-content">
         <div class="uniblocCol dirty-target">
