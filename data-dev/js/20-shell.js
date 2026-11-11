@@ -1551,7 +1551,9 @@ function bindGenTabs(page, ids) {
         if (!tabs().some(t => parseInt(t.dataset.tab, 10) === i)) return false;
         current = i;
         try { sessionStorage.setItem(store, JSON.stringify({ key, i })); } catch (e) { /* stockage indisponible */ }
-        tabs().forEach(t => {
+        // Tous les onglets, masqués compris : un onglet masqué resté « selected » reparaîtrait
+        // sélectionné à côté du vrai (page Connexion, type choisi après coup).
+        strip.querySelectorAll('.gen-tab').forEach(t => {
             const on = parseInt(t.dataset.tab, 10) === i;
             t.classList.toggle('selected', on);
             t.setAttribute('aria-selected', on ? 'true' : 'false');
