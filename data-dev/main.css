@@ -6010,8 +6010,17 @@ body:has(.inst-overlay, .modal-overlay) :is(#divSettingsPnl) > .button-container
     color: var(--accent);
     font-weight: 700;
 }
-#divHomeAssistant .gen-span {
-    grid-column: 1 / -1;
+/* Comme les cartes de la page Connexion : trois tuiles de large au plus, jamais toute la ligne.
+   Seuils = 2 et 3 colonnes de .gen-grid (340 px + 16 px d'écart). */
+@container (min-width: 696px) {
+    #divHomeAssistant .ha-feature {
+        grid-column: 1 / span 2;
+    }
+}
+@container (min-width: 1052px) {
+    #divHomeAssistant .ha-feature {
+        grid-column: 1 / span 3;
+    }
 }
 .ha-feature {
     box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ha) 55%, transparent);
