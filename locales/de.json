@@ -1920,7 +1920,6 @@
     "ERR_RTSDEVICE_1": "„Sie haben den Rollladen Ihres Bildschirms geschlossen. Herzlichen Glückwunsch.“",
     "ERR_RTSDEVICE_2": "Bildschirm öffnen",
     "ERR_RTSDEVICE_3": "oder irgendwohin klicken / Esc-Taste",
-    "ERR_PORT_INVALID": "Ungültige Portnummer",
     "ERR_LED_PIN_INVALID": "Diese GPIO-Nummer existiert auf dieser Platine nicht.",
     "ERR_UNSPECIFIED": "Datei fehlt oder Version für Ihren ESP32 nicht verfügbar",
     "ERR_USERNAME_INVALID": "Ungültiger Benutzername",

@@ -2083,6 +2083,19 @@ body.is-home-welcome .container {
     background: var(--surface);
     transition: border-color .15s;
 }
+/* Erreur de saisie (ui.fieldError) : l'emporte sur la mise en évidence des modifications. */
+.gen-input-box.is-invalid,
+body.dirty-alerted .gen-input-box.is-invalid {
+    border-color: var(--danger) !important;
+    background: var(--danger-field-bg);
+}
+.gen-field-error {
+    margin: 6px 0 0;
+    font-size: var(--fs-2);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--danger);
+}
 .gen-input-box:focus-within {
     border-color: var(--color-accent);
 }

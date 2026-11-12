@@ -547,32 +547,19 @@ class Wifi {
     savePage() {
         const diffs = this._netFields(), has = (g) => diffs.some(f => f.group === g);
         const m = this._mode();
-        if ((m === 1 || m === 3) && !get('fldSsid').value.trim()) {
-            ui.errorMessage(tr('ERR_WIFI_SSID_INVALID'));
-            this._goTab(2);
-            return;
-        }
+        if ((m === 1 || m === 3) && !get('fldSsid').value.trim()) return ui.fieldError('fldSsid', tr('ERR_WIFI_SSID_INVALID'));
         const protect = get('cbNetApProtect').checked, apPwd = secretValue(get('fldAPPassword'));
         if (has('ap') && protect) {
             // 63 : limite du protocole WPA2, pas du tampon firmware.
-            if ((apPwd.length === 0 && !this._hasApPassword) || (apPwd.length > 0 && apPwd.length < 8)) {
-                ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_INVALID_DESC'));
-                return;
-            }
-            if (apPwd.length > 63) {
-                ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_MAX_LENGTH_63'));
-                return;
-            }
+            if ((apPwd.length === 0 && !this._hasApPassword) || (apPwd.length > 0 && apPwd.length < 8))
+                return ui.fieldError('fldAPPassword', tr('ERR_AP_PASSWORD_INVALID_DESC'));
+            if (apPwd.length > 63) return ui.fieldError('fldAPPassword', tr('ERR_AP_PASSWORD_MAX_LENGTH_63'));
         }
         // Le firmware garde 31 caractères (char hostname[32]) et coupe le reste sans prévenir.
         const host = get('fldHostname').value.trim();
         if (has('host')) {
             const why = !host ? 'ERR_INVALID_HOSTNAME' : !/^[a-zA-Z0-9-]+$/.test(host) ? 'ERR_HOSTNAME_CHARS' : host.length > 31 ? 'ERR_HOSTNAME_LENGTH' : '';
-            if (why) {
-                ui.errorMessage(tr('ERR_HOSTNAME'), tr(why));
-                this._goTab(3);
-                return;
-            }
+            if (why) return ui.fieldError('fldHostname', tr(why));
         }
         const ip = { dhcp: get('cbNetDhcp').checked };
         ['ip', 'subnet', 'gateway', 'dns1', 'dns2'].forEach((k, i) => { ip[k] = get(['fldIPAddress', 'fldSubnetMask', 'fldGateway', 'fldDNS1', 'fldDNS2'][i]).value.trim(); });
@@ -610,12 +597,13 @@ class Wifi {
             ['subnet', 'ERR_NETMASK_REQUIRED', 'ERR_NETMASK_INVALID'],
             ['gateway', 'ERR_GATEWAY_REQUIRED', 'ERR_GATEWAY_INVALID']
         ];
+        const fld = { ip: 'fldIPAddress', subnet: 'fldSubnetMask', gateway: 'fldGateway' };
         for (const [k, required, invalid] of checks) {
-            if (!obj[k] || obj[k] === '0.0.0.0') { ui.errorMessage(tr(required)); return false; }
-            if (!valid(obj[k])) { ui.errorMessage(tr(invalid)); return false; }
+            if (!obj[k] || obj[k] === '0.0.0.0') { ui.fieldError(fld[k], tr(required)); return false; }
+            if (!valid(obj[k])) { ui.fieldError(fld[k], tr(invalid)); return false; }
         }
-        if (obj.dns1 && !valid(obj.dns1)) { ui.errorMessage(tr('ERR_DNS1_INVALID')); return false; }
-        if (obj.dns2 && !valid(obj.dns2)) { ui.errorMessage(tr('ERR_DNS2_INVALID')); return false; }
+        if (obj.dns1 && !valid(obj.dns1)) { ui.fieldError('fldDNS1', tr('ERR_DNS1_INVALID')); return false; }
+        if (obj.dns2 && !valid(obj.dns2)) { ui.fieldError('fldDNS2', tr('ERR_DNS2_INVALID')); return false; }
         return true;
     }
     // Tête de page : ce que fait l'appareil maintenant, pas ce qui est réglé.

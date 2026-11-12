@@ -1920,7 +1920,6 @@
     "ERR_RTSDEVICE_1": "« Vous avez fermé le volet de votre écran. Félicitations. »",
     "ERR_RTSDEVICE_2": "Ouvrir l'écran",
     "ERR_RTSDEVICE_3": "ou cliquez n'importe où / touche Échap",
-    "ERR_PORT_INVALID": "Numéro de port invalide",
     "ERR_LED_PIN_INVALID": "Ce numéro de GPIO n'existe pas sur cette carte.",
     "ERR_UNSPECIFIED": "Fichier manquant ou version indisponible pour votre ESP32",
     "ERR_USERNAME_INVALID": "Nom d’utilisateur invalide",

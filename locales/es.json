@@ -1920,7 +1920,6 @@
     "ERR_RTSDEVICE_1": "«Ha cerrado la persiana de su pantalla. Enhorabuena.»",
     "ERR_RTSDEVICE_2": "Abrir la pantalla",
     "ERR_RTSDEVICE_3": "o haga clic en cualquier sitio / tecla Esc",
-    "ERR_PORT_INVALID": "Número de puerto inválido",
     "ERR_LED_PIN_INVALID": "Este número de GPIO no existe en esta placa.",
     "ERR_UNSPECIFIED": "Archivo faltante o versión no disponible para su ESP32",
     "ERR_USERNAME_INVALID": "Nombre de usuario inválido",

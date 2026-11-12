@@ -476,7 +476,7 @@ class Somfy {
         });
 
             if (!t.config.type || t.config.type === 'none') {
-                ui.errorMessage(d, tr('ERR_RADIO_TYPE_REQUIRED'));
+                ui.fieldError('selRadioType', tr('ERR_RADIO_TYPE_REQUIRED'));
                 valid = false;
             }
 
@@ -3479,11 +3479,8 @@ class Somfy {
             ['RADIO_RX_FREQUENCY',   'RADIO_HELP_RX_FREQUENCY'],
             ['RADIO_RX_BANDWIDTH',   'RADIO_HELP_RX_BANDWIDTH']
         ];
-        // MEME PATRON QUE LES AUTRES MODALES DE CONTENU (DashboardPrefsOverlay) :
-        // en-tete, corps defilant, filet, pied. La premiere version empruntait celui des messages
-        // (.info-content + .sub-message + .button-container-row), qui est taille pour UNE phrase :
-        // trois explications n'y defilaient pas et debordaient sur petit ecran, et le bouton n'etait
-        // pas dans le conteneur de pied du reste de l'application.
+        // Patron des modales de contenu (DashboardPrefsOverlay) et non ui.alert(), taillée pour
+        // une phrase : trois explications doivent défiler sur petit écran.
         const div = document.createElement('div');
         div.id = 'divRadioAideOverlay';
         div.className = 'modal-overlay';
@@ -5855,8 +5852,7 @@ class Somfy {
     saveShade(then) {
         const g = get,
         sId = parseInt(g('spanShadeId').innerText, 10),
-        obj = ui.fromElement(g('somfyShade')),
-        settings = g('divSomfySettings');
+        obj = ui.fromElement(g('somfyShade'));
 
         // Temps morts et ordre des lames ne partent pas d'ici : absents de la requête, ils restent
         // tels que leurs tâches les ont enregistrés.
@@ -5870,29 +5866,25 @@ class Somfy {
         const times = this.changedShadeTimes();
         for (const { el, k } of times) {
             const v = parseFloat(el.value);
-            if (isNaN(v) || v < 0.5 || v > 180) return ui.errorMessage(settings, tr(k.startsWith('tilt') ? 'SETUP_ERR_TILT_TIMES' : 'SETUP_ERR_TIMES'));
+            if (isNaN(v) || v < 0.5 || v > 180) return ui.fieldError(el, tr(k.startsWith('tilt') ? 'SETUP_ERR_TILT_TIMES' : 'SETUP_ERR_TIMES'));
             obj[k] = Math.round(v * 1000);
         }
 
-        const checks = [
-            [isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215, 'ERR_REMOTE_ADDRESS_INVALID'],
-            [!obj.name || obj.name.length > 20, 'ERR_DEVICE_NAME_INVALID'],
-        ];
-
-        const basicError = checks.find(c => c[0]);
-        if (basicError) return ui.errorMessage(settings, tr(basicError[1]));
+        if (!obj.name || obj.name.length > 20) return ui.fieldError('fldShadeName', tr('ERR_DEVICE_NAME_INVALID'));
+        if (isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215)
+            return ui.fieldError('fldShadeAddress', tr('ERR_REMOTE_ADDRESS_INVALID'));
         // sId vaut NaN sur une création : rien n'est écarté du balayage, c'est voulu. Le nom part
         // dans un innerHTML.
         const addrOwner = this.remoteAddressOwner(obj.remoteAddress, sId, 255);
-        if (addrOwner) return ui.errorMessage(settings, tr(addrOwner.isGroup ? 'ERR_REMOTE_ADDRESS_USED_GROUP' : 'ERR_REMOTE_ADDRESS_USED_DEVICE').replace('{name}', escHtml(addrOwner.name)));
+        if (addrOwner) return ui.fieldError('fldShadeAddress', tr(addrOwner.isGroup ? 'ERR_REMOTE_ADDRESS_USED_GROUP' : 'ERR_REMOTE_ADDRESS_USED_DEVICE').replace('{name}', escHtml(addrOwner.name)));
         if (obj.proto === 8 || obj.proto === 9) {
             const isSp = [5, 14, 15, 16, 10].includes(obj.shadeType);
 
             if (obj.gpioUp === obj.gpioDown && !(isSp && obj.proto === 9)) {
-                return ui.errorMessage(settings, tr('ERR_GPIO_UP_DOWN_NOT_UNIQUE'));
+                return ui.fieldError('selShadeGPIODown', tr('ERR_GPIO_UP_DOWN_NOT_UNIQUE'));
             }
             if (!isSp && obj.proto === 9 && (obj.gpioMy === obj.gpioUp || obj.gpioMy === obj.gpioDown)) {
-                return ui.errorMessage(settings, tr('ERR_GPIO_UP_DOWN_MY_NOT_UNIQUE'));
+                return ui.fieldError('selShadeGPIOMy', tr('ERR_GPIO_UP_DOWN_MY_NOT_UNIQUE'));
             }
         }
         const isNew = isNaN(sId) || sId >= 255;
@@ -6264,15 +6256,12 @@ class Somfy {
         obj = ui.fromElement(g('somfyGroup')),
         isNew = isNaN(groupId) || groupId >= 255;
 
-        const checks = [
-            [isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215, 'ERR_REMOTE_ADDRESS_INVALID'],
-            [!obj.name || obj.name.length > 20, 'ERR_DEVICE_NAME_INVALID']
-        ];
-        const error = checks.find(c => c[0]);
-        if (error) return ui.errorMessage(tr(error[1]));
+        if (!obj.name || obj.name.length > 20) return ui.fieldError('fldGroupName', tr('ERR_DEVICE_NAME_INVALID'));
+        if (isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215)
+            return ui.fieldError('fldGroupAddress', tr('ERR_REMOTE_ADDRESS_INVALID'));
         // groupId vaut NaN sur une création, même exclusion que saveShade.
         const addrOwner = this.remoteAddressOwner(obj.remoteAddress, 255, groupId);
-        if (addrOwner) return ui.errorMessage(tr(addrOwner.isGroup ? 'ERR_REMOTE_ADDRESS_USED_GROUP' : 'ERR_REMOTE_ADDRESS_USED_DEVICE').replace('{name}', escHtml(addrOwner.name)));
+        if (addrOwner) return ui.fieldError('fldGroupAddress', tr(addrOwner.isGroup ? 'ERR_REMOTE_ADDRESS_USED_GROUP' : 'ERR_REMOTE_ADDRESS_USED_DEVICE').replace('{name}', escHtml(addrOwner.name)));
         if (!isNew) obj.groupId = groupId;
 
         putJSONSync(isNew ? '/addGroup' : '/saveGroup', obj, (err, group) => {

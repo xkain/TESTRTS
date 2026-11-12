@@ -487,13 +487,6 @@ body.modal-open {
 .modal-mobile-handle {
     display: none;
 }
-.sub-message  { margin: 10px 0;}
-.sub-message code {
-    font-size: 0.9em;
-    padding: 2px 4px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.1);
-}
 
 .modalHeader-handle {
     display: none;
@@ -593,24 +586,6 @@ body.modal-open {
 }
 .overlayHeader-right{
     gap: 2px;
-}
-/*VARIATIONS  (DANGER & SMALL) SUR PC*/
-.modalHeader.header-danger .modalHeader-badge,
-.overlayHeader.header-danger .overlayHeader-badge{
-    background: rgba(229, 75, 75, 0.1);
-    border: 1px solid rgba(229, 75, 75, 0.25);
-    color: var(--color-text-warning);
-}
-.modalHeader.header-small {
-    border-bottom: none;
-    margin-bottom: 5px;
-    padding: 0;
-    min-height: 0;
-}
-.instructions .sub-message {
-    font-size: 0.9em;
-    padding-left: 10px;
-    padding-right: 10px;
 }
 
 /* =======================================================================

@@ -1414,13 +1414,10 @@ function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
     const subtitle = options.subtitle ? `<span class="modalHeader-subtitle">${tr(options.subtitle)}</span>` : '';
     const rightContent = options.rightContent || '';
 
-    // Les types restent sous la forme 'header-danger' ou 'header-small'
-    const headerTypeClass = options.type ? options.type.split(' ').map(t => `header-${t}`).join(' ') : '';
-
     return `
     <div class="modalHeader-handle" onclick="handleMobileDismiss(this)"></div>
 
-    <div class="modalHeader ${headerTypeClass}">
+    <div class="modalHeader">
     <div class="modalHeader-block">
     <div class="modalHeader-badge">
     <svg><use href="#${icon}"></use></svg>

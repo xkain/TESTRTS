@@ -135,12 +135,10 @@ class MQTT {
         obj.mqtt.password = secretValue(get('fldMqttPassword'));
 
         if (obj.mqtt.enabled && (typeof obj.mqtt.hostname !== 'string' || obj.mqtt.hostname.length === 0)) {
-            ui.errorMessage(tr('ERR_HOSTNAME'), tr('ERR_MQTT_HOSTNAME_REQUIRED'));
-            return;
+            return ui.fieldError('fldMqttHost', tr('ERR_MQTT_HOSTNAME_REQUIRED'));
         }
         if (typeof obj.mqtt.hostname === 'string' && obj.mqtt.hostname.length > 64) {
-            ui.errorMessage(tr('ERR_HOSTNAME'), tr('ERR_HOSTNAME_MAX_LENGTH_64'));
-            return;
+            return ui.fieldError('fldMqttHost', tr('ERR_HOSTNAME_MAX_LENGTH_64'));
         }
 
         // Plage TCP valide 1-65535. Le champ HTML est en type="text" (pas type="number"), rien
@@ -149,23 +147,19 @@ class MQTT {
         // la rejeter -- sans ce garde-fou, un port mal saisi était accepté ici puis enregistré sous
         // une tout autre valeur, sans le moindre avertissement.
         if (isNaN(obj.mqtt.port) || obj.mqtt.port < 1 || obj.mqtt.port > 65535) {
-            ui.errorMessage(tr('ERR_PORT_INVALID'), tr('ERR_MQTT_PORT_HINT'));
-            return;
+            return ui.fieldError('fldMqttPort', tr('ERR_MQTT_PORT_HINT'));
         }
 
         if (typeof obj.mqtt.username === 'string' && obj.mqtt.username.length > 32) {
-            ui.errorMessage(tr('ERR_USERNAME_INVALID'), tr('ERR_USERNAME_MAX_LENGTH_32'));
-            return;
+            return ui.fieldError('fldMqttUsername', tr('ERR_USERNAME_MAX_LENGTH_32'));
         }
 
         if (typeof obj.mqtt.password === 'string' && obj.mqtt.password.length > 32) {
-            ui.errorMessage(tr('ERR_PASSWORD_INVALID'), tr('ERR_PASSWORD_MAX_LENGTH_32'));
-            return;
+            return ui.fieldError('fldMqttPassword', tr('ERR_PASSWORD_MAX_LENGTH_32'));
         }
 
         if (typeof obj.mqtt.rootTopic === 'string' && obj.mqtt.rootTopic.length > 64) {
-            ui.errorMessage(tr('ERR_ROOT_TOPIC_INVALID'), tr('ERR_ROOT_TOPIC_MAX_LENGTH_64'));
-            return;
+            return ui.fieldError('fldMqttTopic', tr('ERR_ROOT_TOPIC_MAX_LENGTH_64'));
         }
 
         // Ce préfixe est la seule chose qui délimite l'espace réservé à

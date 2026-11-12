@@ -539,10 +539,8 @@ class General {
         let pnl = get('divSystemSettings');
         let obj = ui.fromElement(pnl).general;
         logger.setDebugEnabled(obj.enableDebugLogs);
-        const msg = tr('ERR_HOSTNAME');
-
         if (valid && typeof obj.ntpServer === 'string' && obj.ntpServer.length > 64) {
-            ui.errorMessage(msg, tr('ERR_NTP_LENGTH'));
+            ui.fieldError('fldNtptimesever', tr('ERR_NTP_LENGTH'));
             valid = false;
         }
         const geo = valid ? this._readGeo() : null;
@@ -552,7 +550,8 @@ class General {
             obj.geoLon = geo.geoLon;
             putJSONSync('/setgeneral', obj, (err, response) => {
                 if (err) {
-                    if (err.code === 'GEO_LAT_INVALID' || err.code === 'GEO_LON_INVALID') ui.errorMessage(tr('GENERAL_GEO_TITLE'), tr('ERR_' + err.code));
+                    if (err.code === 'GEO_LAT_INVALID') ui.fieldError('inputGeoLat', tr('ERR_GEO_LAT_INVALID'));
+                    else if (err.code === 'GEO_LON_INVALID') ui.fieldError('inputGeoLon', tr('ERR_GEO_LON_INVALID'));
                     else ui.serviceError(err);
                 } else {
                     ui.toast(tr('MSG_SAVE_SUCCESS'));
@@ -607,9 +606,8 @@ class General {
         const rawLat = get('inputGeoLat').value.trim(), rawLon = get('inputGeoLon').value.trim();
         if (rawLat === '' && rawLon === '') return { geoLat: 99, geoLon: 0 };
         const lat = parseFloat(rawLat), lon = parseFloat(rawLon);
-        const fail = (key) => { this.showGeneralTab(0); ui.errorMessage(tr('GENERAL_GEO_TITLE'), tr(key)); return null; };
-        if (isNaN(lat) || lat < -90 || lat > 90) return fail('ERR_GEO_LAT_INVALID');
-        if (isNaN(lon) || lon < -180 || lon > 180) return fail('ERR_GEO_LON_INVALID');
+        if (isNaN(lat) || lat < -90 || lat > 90) { ui.fieldError('inputGeoLat', tr('ERR_GEO_LAT_INVALID')); return null; }
+        if (isNaN(lon) || lon < -180 || lon > 180) { ui.fieldError('inputGeoLon', tr('ERR_GEO_LON_INVALID')); return null; }
         return { geoLat: lat, geoLon: lon };
     }
     // Remplit la tuile comme une saisie (événements compris) : la valeur reçue compte comme une

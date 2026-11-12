@@ -1920,7 +1920,6 @@
     "ERR_RTSDEVICE_1": "“You have closed your screen's shutter. Congratulations.”",
     "ERR_RTSDEVICE_2": "Open the screen",
     "ERR_RTSDEVICE_3": "or click anywhere / Esc key",
-    "ERR_PORT_INVALID": "Invalid port number",
     "ERR_LED_PIN_INVALID": "This GPIO number does not exist on this board.",
     "ERR_UNSPECIFIED": "Missing file or version unavailable for your ESP32",
     "ERR_USERNAME_INVALID": "Invalid Username",

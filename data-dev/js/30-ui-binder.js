@@ -552,6 +552,45 @@ class UIBinder {
         }));
     }
 
+    // Erreur de saisie sous le champ (gabarit .gen-field) : l'onglet qui le contient s'affiche, le
+    // champ prend le focus, et le message part dès que la valeur change. Hors gabarit, la fenêtre.
+    // html : l'appelant échappe ce qui vient d'une saisie.
+    fieldError(field, html) {
+        const el = typeof field === 'string' ? get(field) : field;
+        const wrap = el && el.closest('.gen-field');
+        if (!wrap) return this.errorMessage(html);
+        this.clearFieldError(el);
+        const panel = el.closest('[role="tabpanel"][data-tab]');
+        if (panel && panel.hidden) {
+            const sel = `.gen-tab[data-tab="${panel.dataset.tab}"]`;
+            let n = panel.parentElement;
+            while (n && !n.querySelector(sel)) n = n.parentElement;
+            n?.querySelector(sel)?.click();
+        }
+        (wrap.querySelector('.gen-input-box') || el).classList.add('is-invalid');
+        const msg = document.createElement('p');
+        msg.className = 'gen-field-error';
+        msg.id = `${el.id || 'fld'}Error`;
+        msg.innerHTML = html;
+        wrap.appendChild(msg);
+        el.setAttribute('aria-invalid', 'true');
+        el.setAttribute('aria-describedby', msg.id);
+        el.focus({ preventScroll: true });
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        const clear = () => this.clearFieldError(el);
+        el.addEventListener('input', clear, { once: true });
+        el.addEventListener('change', clear, { once: true });
+        return msg;
+    }
+    clearFieldError(field) {
+        const el = typeof field === 'string' ? get(field) : field;
+        const wrap = el && el.closest('.gen-field');
+        if (!wrap) return;
+        wrap.querySelector('.gen-input-box.is-invalid')?.classList.remove('is-invalid');
+        wrap.querySelector('.gen-field-error')?.remove();
+        el.removeAttribute('aria-invalid');
+        el.removeAttribute('aria-describedby');
+    }
     errorMessage(el, title, subMsg, extraMsg) {
         const args = (el instanceof HTMLElement ? [title, subMsg, extraMsg] : [el, title, subMsg, extraMsg])
             .filter(a => a !== undefined && a !== null && a !== '');
