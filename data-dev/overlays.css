@@ -1833,6 +1833,28 @@ div.eth-setting-line label {
 }
 
 /* =======================================================================
+ *  FENÊTRES DE LIAISON D'UNE TÉLÉCOMMANDE (#divLinkListener, #divLinkRepeater, 70-somfy.js)
+ *  Coque genmod- cadrée à 16 px ; l'écoute reprend .rw-listen de l'assistant radio.
+ *  ======================================================================= */
+.rx-link-meter { height: 6px; overflow: hidden; border-radius: var(--r-pill); background: var(--surface-2); }
+.rx-link-meter i { display: block; height: 100%; border-radius: var(--r-pill); background: var(--color-accent); }
+.rx-link-warn { display: flex; gap: 10px; width: 100%; max-width: 320px; box-sizing: border-box; margin: 0; padding: 12px 14px; border-radius: var(--r-3); background: var(--warn-bg); color: var(--warn); font-size: var(--fs-2); line-height: 1.45; text-align: left; }
+.rx-link-warn svg { width: 18px; height: 18px; flex: none; fill: currentColor; }
+:is(#divLinkListener, #divLinkRepeater) .genmod-body { gap: 16px; padding: 22px 28px; }
+:is(#divLinkListener, #divLinkRepeater) .genmod-note .setup-facts { margin-top: 8px; }
+:is(#divLinkListener, #divLinkRepeater) .genmod-note .setup-facts span { background: color-mix(in srgb, var(--surface) 75%, transparent); color: var(--text-2); font-weight: 700; }
+.rx-link-name { max-width: 460px; }
+#divLinkRepeater .genmod-side-icon { color: var(--violet); }
+#divLinkRepeater .rx-link-meter i { background: var(--violet); }
+:is(#divLinkListener, #divLinkRepeater) .genmod-foot-btns .gen-btn { white-space: nowrap; }
+@media (max-width: 999px) {
+    .rx-link-warn { max-width: none; }
+}
+@media (max-width: 767px) {
+    :is(#divLinkListener, #divLinkRepeater) .genmod-body { padding: 12px 16px; gap: 14px; }
+}
+
+/* =======================================================================
  *  FENÊTRE TEST DES TÉLÉCOMMANDES (#divRadioWizard, radioWizard() dans 70-somfy.js)
  *  Même coque que le balayage (genmod-assist) ; la liste des télécommandes testées vit dans la
  *  colonne d'identité, le fil des trois étapes dans l'en-tête.

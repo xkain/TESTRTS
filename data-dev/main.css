@@ -5540,24 +5540,24 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 #divShadeSetup .setup-chip { padding: 6px 12px; border-radius: 7px; cursor: pointer; font-size: 13px; color: var(--color-text-secondary); }
 #divShadeSetup .setup-chip:hover { color: var(--color-text-main); }
 #divShadeSetup .setup-chip.sel { background: var(--color-bg-card); color: var(--color-accent); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-#divLinkListener .setup-fields .uniRow, #divLinkRepeater .setup-fields .uniRow, #divShadeSetup .setup-fields .uniRow { min-width: 0; }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote { display: flex; align-items: flex-start; gap: 14px; padding: 14px; border: 1.5px solid var(--color-border); border-radius: var(--radius-row); background: var(--color-bg-card); }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-idle { cursor: pointer; }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-idle:hover { border-color: var(--color-accent); }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-ico { width: 42px; height: 42px; flex: none; border-radius: 10px; display: grid; place-items: center; background: var(--color-bg-surface-2); }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-ico svg { width: 24px; height: 24px; color: var(--color-text-secondary); }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-txt b { color: var(--color-text-main); font-size: 14px; }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-txt > span { color: var(--color-text-secondary); font-size: 13px; line-height: 1.35; }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-listen { border-style: dashed; border-color: var(--color-accent); }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-listen .setup-ico { background: var(--color-accent-transp-94); }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-listen .setup-ico svg { color: var(--color-accent); animation: setupPulse 1.2s ease-in-out infinite; }
+#divShadeSetup .setup-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+#divShadeSetup .setup-fields .uniRow { min-width: 0; }
+#divShadeSetup .setup-remote { display: flex; align-items: flex-start; gap: 14px; padding: 14px; border: 1.5px solid var(--color-border); border-radius: var(--radius-row); background: var(--color-bg-card); }
+#divShadeSetup .setup-remote.st-idle { cursor: pointer; }
+#divShadeSetup .setup-remote.st-idle:hover { border-color: var(--color-accent); }
+#divShadeSetup .setup-ico { width: 42px; height: 42px; flex: none; border-radius: 10px; display: grid; place-items: center; background: var(--color-bg-surface-2); }
+#divShadeSetup .setup-ico svg { width: 24px; height: 24px; color: var(--color-text-secondary); }
+#divShadeSetup .setup-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+#divShadeSetup .setup-txt b { color: var(--color-text-main); font-size: 14px; }
+#divShadeSetup .setup-txt > span { color: var(--color-text-secondary); font-size: 13px; line-height: 1.35; }
+#divShadeSetup .setup-remote.st-listen { border-style: dashed; border-color: var(--color-accent); }
+#divShadeSetup .setup-remote.st-listen .setup-ico { background: var(--color-accent-transp-94); }
+#divShadeSetup .setup-remote.st-listen .setup-ico svg { color: var(--color-accent); animation: setupPulse 1.2s ease-in-out infinite; }
 @keyframes setupPulse { 50% { opacity: .35; transform: scale(.85); } }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-ok { border-color: var(--color-success-tint-border); background: var(--color-success-tint-bg); }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-ok .setup-ico svg { color: var(--color-success); }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-warn { border-color: var(--color-warning-tint-border); background: var(--color-warning-tint-bg); }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-warn .setup-ico svg { color: var(--color-warning); }
+#divShadeSetup .setup-remote.st-ok { border-color: var(--color-success-tint-border); background: var(--color-success-tint-bg); }
+#divShadeSetup .setup-remote.st-ok .setup-ico svg { color: var(--color-success); }
+#divShadeSetup .setup-remote.st-warn { border-color: var(--color-warning-tint-border); background: var(--color-warning-tint-bg); }
+#divShadeSetup .setup-remote.st-warn .setup-ico svg { color: var(--color-warning); }
 :is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-facts { display: flex; flex-wrap: wrap; gap: 6px; }
 :is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-facts span { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--color-bg-badge); color: var(--color-text-main); }
 #divShadeSetup .setup-keep { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-main); }
@@ -5582,13 +5582,8 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
 #divShadeSetup .setup-task-b { padding: 2px 14px 14px 54px; display: flex; flex-direction: column; gap: 12px; }
 #divShadeSetup .setup-p { margin: 0; color: var(--color-text-main); font-size: 14px; line-height: 1.45; }
 #divShadeSetup .setup-p.sub { color: var(--color-text-secondary); font-size: 13px; }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-actions button { flex: 1 1 140px; margin: 0; }
-:is(#divLinkListener, #divLinkRepeater) .ll-body { display: flex; flex-direction: column; gap: 12px; }
-:is(#divLinkListener, #divLinkRepeater) .setup-fields { grid-template-columns: minmax(0, 1fr); }
-:is(#divLinkListener, #divLinkRepeater) .ll-shared { display: flex; gap: 8px; align-items: flex-start; color: var(--color-warning); font-size: 13px; line-height: 1.35; }
-:is(#divLinkListener, #divLinkRepeater) .ll-shared svg { width: 16px; height: 16px; flex: none; margin-top: 1px; fill: var(--color-warning); }
-#divLinkRepeater .warning { margin: 0; }
+#divShadeSetup .setup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+#divShadeSetup .setup-actions button { flex: 1 1 140px; margin: 0; }
 #divShadeSetup .setup-nav { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--color-border); padding-top: 10px; }
 #divShadeSetup .setup-chrono { font-size: 34px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-text-main); text-align: center; padding: 4px 0; }
 #divShadeSetup .setup-chrono.run { color: var(--color-accent); }

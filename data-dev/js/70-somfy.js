@@ -6086,53 +6086,99 @@ class Somfy {
     _frameFactsHtml(frame) {
         return `<div class="setup-facts"><span>${this.frameProtoLabel(frame.proto)}</span><span>${tr('SETUP_FACT_BITS').replace('{n}', frame.bits)}</span><span>${tr('SETUP_FACT_ADDR').replace('{addr}', frame.address)}</span><span>${frame.rssi} dBm</span></div>`;
     }
-    // Même fenêtre que divLinkListener, sans étape de nom : le firmware répète dès l'enregistrement.
+    // Fenêtres de liaison des pages Déclencheurs et Répéteur : même coque (genmod-), même écoute de
+    // SETUP_LISTEN_MS avec compte à rebours ; seuls les textes et l'issue diffèrent.
+    _rxLinkWin(id, o) {
+        const div = document.createElement('div');
+        div.id = id;
+        div.className = 'modal-overlay genmod-overlay';
+        div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
+            id, icon: o.icon, titleKey: o.titleKey, descKey: o.descKey,
+            stateKey: tr(o.countKey), stateValue: '', sectionKey: 'LINK_HEAD_LISTEN', hintKey: '', footId: id + 'Foot', bodyHtml: '',
+            sideExtra: o.warnKey ? `<p class="rx-link-warn"><svg><use href="#svg-warning"></use></svg><span>${tr(o.warnKey)}</span></p>` : ''
+        })}</div>`;
+        div.querySelector('.genmod-state').insertAdjacentHTML('beforeend', '<div class="rx-link-meter"><i></i></div>');
+        div._max = o.max;
+        this._rxLinkCount(div, o.count);
+        div.onclick = (e) => { if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div); };
+        div._onClosed = () => this._rxLinkStop(div);
+        return div;
+    }
+    _rxLinkCount(div, n) {
+        div.querySelector('.genmod-state-val').innerHTML = `${n}<small>${tr('LIST_CAP_OF').replace('{MAX}', div._max)}</small>`;
+        div.querySelector('.rx-link-meter i').style.width = Math.min(100, Math.round(n / div._max * 100)) + '%';
+    }
+    _rxLinkStop(div) {
+        clearTimeout(div._lkTimer);
+        clearInterval(div._lkTick);
+        div._lkTimer = div._lkTick = null;
+    }
+    _rxLinkListen(div, render) {
+        this._rxLinkStop(div);
+        const t0 = Date.now();
+        div._lkTimer = setTimeout(() => { this._rxLinkStop(div); render('timeout'); }, SETUP_LISTEN_MS);
+        render('listen');
+        div._lkTick = setInterval(() => {
+            const left = SETUP_LISTEN_MS - (Date.now() - t0);
+            const c = div.querySelector('.rw-chrono'), b = div.querySelector('.rw-bar i');
+            if (c) c.textContent = Math.max(0, Math.ceil(left / 1000)) + ' s';
+            if (b) b.style.width = Math.min(100, (1 - left / SETUP_LISTEN_MS) * 100).toFixed(1) + '%';
+        }, 250);
+    }
+    _rxLinkPanel(div, head, body, hint, btns) {
+        div.querySelector('.genmod-head-title').textContent = tr(head);
+        div.querySelector('.genmod-body').innerHTML = body;
+        div.querySelector(`#${div.id}Hint`).textContent = hint ? tr(hint) : '';
+        div.querySelector(`#${div.id}Foot`).innerHTML = btns;
+    }
+    _rxListenHtml(desc) {
+        return `<h3 class="rw-title">${tr('LINK_PRESS_TITLE')}</h3><p class="rw-desc">${desc}</p>
+            <div class="rw-listen"><span class="rw-listen-icon"><svg><use href="#svg-tabRadio"></use></svg></span>
+            <div class="rw-listen-text"><b>${tr('SETUP_LISTEN_TITLE')}</b><div class="rw-bar"><i style="width:0%"></i></div></div>
+            <span class="rw-chrono">${Math.round(SETUP_LISTEN_MS / 1000)} s</span></div>`;
+    }
+    _rxNoteHtml(cls, ico, title, html) {
+        return `<div class="genmod-note ${cls}"><svg><use href="#svg-${ico}"></use></svg><div><b>${title}</b>${html}</div></div>`;
+    }
+    _rxBtn(key, attr, primary) {
+        return `<button type="button" class="gen-btn${primary ? ' gen-btn-primary' : ''}" ${attr}>${tr(key)}</button>`;
+    }
+    // Pas d'étape de nom ici : le firmware répète dès l'enregistrement.
     linkRepeatRemote() {
-        if ((this.repeaters || []).length >= (this.maxRepeaters || 7)) {
+        const list = this.repeaters || [], max = this.maxRepeaters || 7;
+        if (list.length >= max) {
             ui.errorMessage(tr('REPEAT_REMOTE_TITLE'), tr('ERR_REPEATER_FULL'));
             return;
         }
-        const div = document.createElement('div');
-        div.className = 'inst-overlay';
-        div.id = 'divLinkRepeater';
-        div.setAttribute('data-type', 'link-repeatremote');
-        div.innerHTML = `<div class="instructions-content">
-            ${overlayHeader('REPEAT_REMOTE_TITLE', '', 'svg-add', { subtitle: 'REPEAT_REMOTE_DESC' })}
-            <div class="overlay-scroll-content"><div class="setup-body ll-body"></div></div>
-            <div class="hrDivFooter-Instruc"></div>
-            <div class="button-container-overlay"><button type="button" line>${tr('BT_CLOSE')}</button></div></div>`;
-        const stop = () => { clearTimeout(div._rpTimer); div._rpTimer = null; };
-        div.querySelector('.button-container-overlay button').onclick = () => requestCloseOverlay(div, stop);
-        shOverlay(div, stop);
+        const div = this._rxLinkWin('divLinkRepeater', { icon: 'svg-repeater', titleKey: 'REPEATER_WIN_TITLE', descKey: 'REPEATER_WIN_DESC',
+            countKey: 'REPEATER_LIST_TITLE', count: list.length, max, warnKey: 'REPEATER_WIN_WARN' });
+        shOverlay(div);
         this._repeaterListen(div);
         return div;
     }
     _repeaterListen(div) {
-        clearTimeout(div._rpTimer);
-        div._rpTimer = setTimeout(() => { div._rpTimer = null; this._repeaterRender(div, 'timeout'); }, SETUP_LISTEN_MS);
-        this._repeaterRender(div, 'listen');
+        this._rxLinkListen(div, (st) => this._repeaterRender(div, st));
     }
     _repeaterRender(div, state, frame) {
         div._rpState = state;
-        const ico = id => `<div class="setup-ico"><svg><use href="#${id}"></use></svg></div>`;
-        const warning = `<div class="warning"><div class="warning-header"><svg><use href="#svg-warning"></use></svg><b>${tr('MSG_ALERT')}</b></div>
-            <div class="information-text"><span>${tr('REPEAT_REMOTE_DESC_4')}<br><br>${tr('REPEAT_REMOTE_DESC_3')}</span></div></div>`;
-        let html;
-        if (state === 'listen') html = `<div class="setup-remote st-listen">${ico('svg-wave')}<div class="setup-txt"><b>${tr('SETUP_LISTEN_TITLE')}</b><span>${tr('REPEAT_REMOTE_DESC_1')}</span></div></div>${warning}`;
-        else if (state === 'timeout') html = `<div class="setup-remote st-warn">${ico('svg-warning')}<div class="setup-txt"><b>${tr('SETUP_TIMEOUT_TITLE')}</b><span>${tr('SETUP_LINK_TIMEOUT_DESC')}</span></div></div>
-            <div class="setup-actions"><button type="button" data-rp="listen">${tr('BT_RETRY')}</button></div>`;
-        else if (state === 'already') html = `<div class="setup-remote st-warn">${ico('svg-warning')}<div class="setup-txt"><b>${tr('REPEATER_ALREADY')}</b>${this._frameFactsHtml(frame)}</div></div>
-            <div class="setup-actions"><button type="button" data-rp="listen">${tr('SETUP_REMOTE_AGAIN')}</button></div>${warning}`;
-        else html = `<div class="setup-remote st-ok">${ico('svg-check')}<div class="setup-txt"><b>${tr('REPEATER_LINKED')}</b>${this._frameFactsHtml(frame)}<span>${tr('REPEATER_LINKED_DESC')}</span></div></div>`;
-        const body = div.querySelector('.setup-body');
-        body.innerHTML = html;
-        body.querySelectorAll('[data-rp="listen"]').forEach(b => b.onclick = () => this._repeaterListen(div));
+        const close = this._rxBtn('BT_CLOSE', 'data-genmod-close');
+        const facts = frame ? this._frameFactsHtml(frame) : '';
+        if (state === 'listen') this._rxLinkPanel(div, 'LINK_HEAD_LISTEN', this._rxListenHtml(tr('REPEATER_LISTEN_DESC')), 'LINK_HINT_LISTEN', close);
+        else if (state === 'timeout') this._rxLinkPanel(div, 'LINK_HEAD_RESULT', this._rxNoteHtml('is-warn', 'warning', tr('SETUP_TIMEOUT_TITLE'), `<span>${tr('SETUP_LINK_TIMEOUT_DESC')}</span>`), '', close + this._rxBtn('BT_RETRY', 'data-rp="listen"', true));
+        else if (state === 'already') this._rxLinkPanel(div, 'LINK_HEAD_RESULT', this._rxNoteHtml('is-warn', 'warning', tr('REPEATER_ALREADY'), facts), '', close + this._rxBtn('BT_LISTEN_ANOTHER', 'data-rp="listen"', true));
+        else {
+            this._rxLinkPanel(div, 'LINK_HEAD_RESULT', this._rxNoteHtml('is-ok', 'check', tr('REPEATER_LINKED'), facts + `<span>${tr('REPEATER_LINKED_DESC')}</span>`), '', close + this._rxBtn('BT_REPEAT_ANOTHER', 'data-rp="listen"', true));
+            this._rxLinkCount(div, (this.repeaters || []).length);
+        }
+        div.querySelectorAll('[data-rp="listen"]').forEach(b => b.onclick = () => {
+            if ((this.repeaters || []).length >= div._max) { ui.errorMessage(tr('REPEAT_REMOTE_TITLE'), tr('ERR_REPEATER_FULL')); return; }
+            this._repeaterListen(div);
+        });
     }
     _handleRepeaterFrame(frame) {
         const div = get('divLinkRepeater');
         if (!div || div._rpState !== 'listen' || !frame.valid) return;
-        clearTimeout(div._rpTimer);
-        div._rpTimer = null;
+        this._rxLinkStop(div);
         if ((this.repeaters || []).includes(Number(frame.address))) return this._repeaterRender(div, 'already', frame);
         div._rpState = 'busy';
         const overlay = ui.waitMessage(div);
@@ -6140,7 +6186,7 @@ class Somfy {
             overlay.remove();
             if (err) {
                 ui.serviceError(err);
-                if (err.code === -18) { clearTimeout(div._rpTimer); return div.remove(); }
+                if (err.code === -18) return closeOverlay(div);
                 return this._repeaterListen(div);
             }
             (this._repeaterSeen = this._repeaterSeen || {})[Number(frame.address)] = { cmd: frame.command, at: Date.now(), rssi: frame.rssi };
@@ -6228,77 +6274,62 @@ class Somfy {
         this._renderListeners();
     }
 
-    // Même langage que l'ajout de télécommande d'un équipement (shadeSetup.twRemote) : une carte
-    // d'état unique, l'écoute expire au bout de SETUP_LISTEN_MS.
     linkListenRemote() {
-        if ((this.listeners || []).length >= (this.maxListeners || 14)) {
+        const list = this.listeners || [], max = this.maxListeners || 14;
+        if (list.length >= max) {
             ui.errorMessage(tr('LISTENER_TITLE'), tr('ERR_LISTENER_FULL'));
             return;
         }
-        const div = document.createElement('div');
-        div.className = 'inst-overlay';
-        div.id = 'divLinkListener';
-        div.setAttribute('data-type', 'link-listenremote');
-        div.innerHTML = `<div class="instructions-content">
-            ${overlayHeader('LISTENER_TITLE', '', 'svg-add', { subtitle: 'LISTENER_SCAN_DESC' })}
-            <div class="overlay-scroll-content"><div class="setup-body ll-body"></div></div>
-            <div class="hrDivFooter-Instruc"></div>
-            <div class="button-container-overlay"><button type="button" line>${tr('BT_CLOSE')}</button></div></div>`;
-        const stop = () => { clearTimeout(div._llTimer); div._llTimer = null; };
-        div.querySelector('.button-container-overlay button').onclick = () => requestCloseOverlay(div, stop);
-        shOverlay(div, stop);
+        const div = this._rxLinkWin('divLinkListener', { icon: 'svg-remote', titleKey: 'LISTENER_CAPTURE', descKey: 'LISTENER_WIN_DESC',
+            countKey: 'LISTENER_PAGE_TITLE', count: list.length, max });
+        shOverlay(div);
         this._listenerListen(div);
         return div;
     }
     _listenerListen(div) {
-        clearTimeout(div._llTimer);
-        div._llTimer = setTimeout(() => { div._llTimer = null; this._listenerRender(div, 'timeout'); }, SETUP_LISTEN_MS);
-        this._listenerRender(div, 'listen');
+        this._rxLinkListen(div, (st) => this._listenerRender(div, st));
     }
     _listenerRender(div, state, frame) {
         div._llState = state;
-        const ico = id => `<div class="setup-ico"><svg><use href="#${id}"></use></svg></div>`;
+        const close = this._rxBtn('BT_CLOSE', 'data-genmod-close');
         const facts = frame ? this._frameFactsHtml(frame) : '';
-        const again = `<button type="button" data-ll="listen">${tr('SETUP_REMOTE_AGAIN')}</button>`;
-        let html;
-        if (state === 'listen') html = `<div class="setup-remote st-listen">${ico('svg-wave')}<div class="setup-txt"><b>${tr('SETUP_LISTEN_TITLE')}</b><span>${tr('LISTENER_SCAN_STEP_1')} ${tr('LISTENER_SCAN_STEP_2')}</span></div></div>`;
-        else if (state === 'timeout') html = `<div class="setup-remote st-warn">${ico('svg-warning')}<div class="setup-txt"><b>${tr('SETUP_TIMEOUT_TITLE')}</b><span>${tr('SETUP_LINK_TIMEOUT_DESC')}</span></div></div>
-            <div class="setup-actions"><button type="button" data-ll="listen">${tr('BT_RETRY')}</button></div>`;
+        if (state === 'listen') this._rxLinkPanel(div, 'LINK_HEAD_LISTEN', this._rxListenHtml(`${tr('LISTENER_SCAN_STEP_1')} ${tr('LISTENER_SCAN_STEP_2')}`), 'LINK_HINT_LISTEN', close);
+        else if (state === 'timeout') this._rxLinkPanel(div, 'LINK_HEAD_RESULT', this._rxNoteHtml('is-warn', 'warning', tr('SETUP_TIMEOUT_TITLE'), `<span>${tr('SETUP_LINK_TIMEOUT_DESC')}</span>`), '', close + this._rxBtn('BT_RETRY', 'data-ll="listen"', true));
         else if (state === 'already') {
             const l = this.listeners.find(x => Number(x.address) === Number(frame.address));
-            html = `<div class="setup-remote st-warn">${ico('svg-warning')}<div class="setup-txt"><b>${escHtml(tr('LISTENER_ALREADY').replace('%s', l.name || l.address))}</b>${facts}</div></div>
-            <div class="setup-actions">${again}</div>`;
+            this._rxLinkPanel(div, 'LINK_HEAD_RESULT', this._rxNoteHtml('is-warn', 'warning', escHtml(tr('LISTENER_ALREADY').replace('%s', l.name || l.address)), facts), '', close + this._rxBtn('BT_LISTEN_ANOTHER', 'data-ll="listen"', true));
         } else {
             const known = this.frameAddressName(frame.address);
-            const shared = known && !known.own ? `<div class="ll-shared"><svg><use href="#svg-warning"></use></svg><span>${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', known.name))}</span></div>` : '';
-            html = `<div class="setup-remote st-ok">${ico('svg-check')}<div class="setup-txt"><b>${tr('SETUP_REMOTE_OK')}</b>${facts}${shared}</div></div>
-            <div class="setup-fields"><div class="uniRow"><div class="unifield-content"><label class="label" for="fldListenerName">${tr('NAME')}</label>
-            <input id="fldListenerName" class="inputAndSelect" type="text" maxlength="20" placeholder=" "></div></div></div>
-            <div class="setup-actions"><button type="button" data-ll="save">${tr('BT_SAVE')}</button></div>`;
+            const shared = known && !known.own ? this._rxNoteHtml('is-warn', 'warning', '', `<span>${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', known.name))}</span>`) : '';
+            this._rxLinkPanel(div, 'LINK_HEAD_RESULT', this._rxNoteHtml('is-ok', 'check', tr('SETUP_REMOTE_OK'), facts) + shared
+                + `<div class="gen-field rx-link-name"><label class="gen-field-label" for="fldListenerName">${tr('NAME')}</label>
+                <div class="gen-input-box"><input id="fldListenerName" class="gen-input" type="text" maxlength="20" placeholder="${escAttr(String(frame.address))}"></div>
+                <p class="gen-tile-desc">${tr('LISTENER_NAME_DESC')}</p></div>`,
+                'LISTENER_NAME_HINT', this._rxBtn('BT_CANCEL', 'data-genmod-close') + this._rxBtn('BT_SAVE', 'data-ll="save"', true));
         }
-        const body = div.querySelector('.setup-body');
-        body.innerHTML = html;
-        body.querySelectorAll('[data-ll="listen"]').forEach(b => b.onclick = () => this._listenerListen(div));
-        const save = body.querySelector('[data-ll="save"]');
+        div.querySelectorAll('[data-ll="listen"]').forEach(b => b.onclick = () => this._listenerListen(div));
+        const save = div.querySelector('[data-ll="save"]');
         if (save) save.onclick = () => {
             const overlay = ui.waitMessage(div);
-            putJSON('/linkListener', { address: Number(frame.address), name: body.querySelector('#fldListenerName').value.trim() }, (err, data) => {
+            putJSON('/linkListener', { address: Number(frame.address), name: div.querySelector('#fldListenerName').value.trim() }, (err, data) => {
                 overlay.remove();
                 if (err) { ui.serviceError(err); return; }
-                div.remove();
+                closeOverlay(div);
                 this.setListenerList(data);
             });
         };
-        const fld = body.querySelector('#fldListenerName');
-        if (fld) fld.focus();
+        const fld = div.querySelector('#fldListenerName');
+        if (fld) {
+            fld.focus();
+            fld.onkeydown = (e) => { if (e.key === 'Enter') save.click(); };
+        }
     }
     // Trame reçue pendant l'écoute. Une trame de l'adresse propre d'un équipement ou d'un groupe ne
     // peut pas venir d'ici (le boîtier ne s'entend pas émettre) ; le firmware la refuserait (code -14).
     _handleListenerFrame(frame) {
         const div = get('divLinkListener');
         if (!div || div._llState !== 'listen' || !frame.valid) return;
-        clearTimeout(div._llTimer);
-        div._llTimer = null;
+        this._rxLinkStop(div);
         const exists = (this.listeners || []).some(x => Number(x.address) === Number(frame.address));
         this._listenerRender(div, exists ? 'already' : 'captured', frame);
     }
