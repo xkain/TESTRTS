@@ -2058,6 +2058,12 @@ body.is-home-welcome .container {
     background: var(--info-bg);
     color: var(--info);
 }
+.gen-tile-desc.is-ok {
+    padding: 10px 12px;
+    border-radius: var(--r-3);
+    background: var(--ok-bg);
+    color: var(--ok);
+}
 .gen-tile-value {
     font-size: var(--fs-6);
     font-weight: 700;
@@ -3995,24 +4001,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
 .progress-bar-label.heard { color: var(--color-accent); font-weight: 600; }
 
 
-.radio-help-link {
-    justify-content: center;
-    gap: 6px;
-    width: auto;
-    min-width: 0;
-    margin: 0 auto;
-    padding: 6px 10px;
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-.radio-help-link:hover { color: var(--color-accent); }
-.radio-graph-viewport > .radio-help-link { padding-bottom: 14px; }
-.radio-help-link svg { width: 15px; height: 15px; flex: 0 0 auto; }
-.radio-aide-item { display: flex; flex-direction: column; gap: 3px; }
-.radio-aide-titre { font-size: 13px; font-weight: 600; color: var(--color-text-main); }
-.radio-aide-texte { font-size: 12px; line-height: 1.45; color: var(--color-text-secondary); }
 
 /* -------- L'ACCORDEUR --------
    Aucun axe vertical : tout se joue sur la POSITION et la LARGEUR du rectangle -- les deux
@@ -4058,12 +4046,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
    3:1 des composants sur piste claire. Le remplissage, grande surface, garde le jeton tel quel. */
 .radio-graph-container {
     --tuner-line-ok: color-mix(in srgb, var(--color-success) 78%, var(--color-text-main));
-}
-.radio-graph-verdict {
-    text-align: center;
-    padding: 10px 18px 4px;
-    font-size: 12px;
-    color: var(--color-text-secondary);
 }
 /* =======================================================================
  *  PAGE RADIO - CONFIGURATION (maquette A2, gabarit de Général)
@@ -4144,20 +4126,12 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
 .rdc-band .radio-graph-viewport {
     margin-top: 10px;
 }
-.rdc-band .radio-graph-verdict {
-    display: none;
-}
 .rdc-band .radio-graph-tuner {
     padding: 0;
 }
-.rdc-band .radio-graph-tuner-scale,
-.rdc-band .radio-graph-verdict {
+.rdc-band .radio-graph-tuner-scale {
     padding-left: 0;
     padding-right: 0;
-}
-.rdc-band .radio-help-link {
-    align-self: flex-start;
-    margin: 4px 0 0;
 }
 .rdc-hero .gen-hero-facts {
     max-width: 340px;
@@ -4177,16 +4151,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     padding-top: 14px;
     border-top: 1px solid var(--border);
 }
-.rdc-sliders .rd-txstd {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 8px;
-    font-size: var(--fs-2);
-}
-.rd-std { color: var(--ok); }
-.rd-std.off { color: var(--warn); }
 .rd-link,
 .rd-link:hover {
     width: auto;
@@ -4200,9 +4164,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     font-weight: 700;
     text-transform: none;
     cursor: pointer;
-}
-.rdc-sliders .rd-txstd .rd-link[disabled] {
-    visibility: hidden;
 }
 .rdc-pins #divShowGpio,
 .rdc-pins .gpio-main-wrapper {
@@ -4225,9 +4186,69 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     border-radius: var(--r-3);
     background: var(--surface-2);
 }
-.rdc-off {
-    display: none !important;
+.rdc-preset-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
 }
+.rdc-preset-btn,
+.rdc-preset-btn:hover {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    width: 100%;
+    min-height: 64px;
+    margin: 0;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--r-3);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    text-transform: none;
+    cursor: pointer;
+}
+.rdc-preset-btn:hover { background: var(--surface-2); }
+.rdc-preset-btn.selected { border-color: var(--color-accent); }
+.rdc-preset-btn b { font-size: var(--fs-5); font-variant-numeric: tabular-nums; }
+.rdc-preset-btn span { font-size: var(--fs-2); color: var(--text-3); }
+.rdc-tx-offset { margin-top: 8px; }
+/* Explications qui remplacent l'ancienne modale d'aide radio. */
+.rdc-help-list { margin: 0; }
+.rdc-help-list > div { padding: 12px 0; border-top: 1px solid var(--border); }
+.rdc-help-list > div:first-child { padding-top: 0; border-top: 0; }
+.rdc-help-list dt { font-size: var(--fs-4); font-weight: 700; color: var(--text); }
+.rdc-help-list dd { margin: 4px 0 0; font-size: var(--fs-3); line-height: 1.5; color: var(--text-2); }
+/* Profil BOX : brochage figé, montré en lecture seule. */
+.rdc-box-id { display: flex; align-items: center; gap: 14px; }
+.rdc-box-id > svg {
+    width: var(--tile-icon);
+    height: var(--tile-icon);
+    flex: none;
+    padding: 12px;
+    box-sizing: border-box;
+    border-radius: var(--r-3);
+    background: var(--surface-2);
+    fill: currentColor;
+    color: var(--color-accent);
+}
+.rdc-box-id b { display: block; font-size: var(--fs-5); color: var(--text); }
+.rdc-box-id span { font-size: var(--fs-3); color: var(--text-3); }
+.rdc-box-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.rdc-box-ro { font-size: var(--fs-2); color: var(--text-3); }
+.rdc-box-pins { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.rdc-box-pins > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px;
+    border-radius: var(--r-2);
+    background: var(--surface-2);
+}
+.rdc-box-pins span { font-size: var(--fs-1); font-weight: 700; color: var(--text-3); }
+.rdc-box-pins b { font-size: var(--fs-4); font-variant-numeric: tabular-nums; color: var(--text); }
 
 /* --- Résultat du test des télécommandes (#divRadioFleet, construit par renderRadioFleet) --- */
 .rd-fleet {

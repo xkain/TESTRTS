@@ -2984,15 +2984,23 @@ class Somfy {
             this.syncRadioHardwareTab();
         });
     }
-    // Profil BOX : la carte est connue et figée, l'onglet Matériel n'a rien à proposer (même règle
-    // que #divRadioBoardType dans main.css), sauf en mode expert.
+    // Profil BOX : la carte est connue et figée, l'onglet Matériel la montre en lecture seule (le
+    // sélecteur de carte est caché par main.css), sauf en mode expert.
     syncRadioHardwareTab() {
         if (!this._radioTabs) return;
         const profile = get('divContainer').getAttribute('data-hardwareprofile') || '';
-        const off = profile.startsWith('BOX') && !document.body.classList.contains('show-expert-gpio');
-        get('rdcTabs').querySelector('[data-tab="2"]').hidden = off;
-        get('rdcPanels').querySelector(':scope > [data-tab="2"]').classList.toggle('rdc-off', off);
-        if (off && this._radioTabs.current() === 2) this._radioTabs.show(0);
+        const box = profile.startsWith('BOX') && !document.body.classList.contains('show-expert-gpio');
+        const tile = get('divRadioBoxInfo'), c = this._radioApplied;
+        if (tile) {
+            tile.hidden = !box;
+            if (box && c) {
+                get('spanRadioBoxName').textContent = tr(profile);
+                get('spanRadioBoxBoard').textContent = this.radioBoardTypes.find(b => b.val === c.radioBoardType)?.label || '';
+                get('divRadioBoxPins').innerHTML = ['SCK', 'MOSI', 'MISO', 'CSN', 'TX', 'RX']
+                    .map(k => `<div><span>${k}</span><b>GPIO${escHtml(String(c[k + 'Pin']))}</b></div>`).join('');
+            }
+            genGridSpan(tile.parentElement);
+        }
         this._radioTabs.update();
     }
 
@@ -3563,52 +3571,6 @@ class Somfy {
             + `<div class="rd-rows">${f.remotes.map(ligne).join('')}</div>`
             + `<div class="rd-foot"><button type="button" class="rd-link" onclick="somfy.radioWizard('restart');">${tr('RADIO_FLEET_RESTART')}</button></div>`;
     }
-    // Les quatre explications d'un coup, et le SEUL endroit ou elles vivent desormais : le volet
-    // Manuel portait les memes textes en infobulles, une par carte, ce qui obligeait a survoler
-    // quatre fois pour reconstituer le tableau. Les deux volets appellent maintenant cette meme
-    // modale, donc plus aucun risque de voir les deux redactions diverger.
-    radioAideOverlay() {
-        if (get('divRadioAideOverlay')) return;
-        // Paires explicites libelle / explication plutot qu'une cle deduite de l'autre : les deux
-        // familles ne suivent PAS le meme schema (RADIO_RX_BANDWIDTH -> RADIO_HELP_RX_BANDWIDTH),
-        // et une construction par concatenation s'etait deja cassee en silence lors d'un
-        // renommage -- la modale affichait les noms de cles a la place des textes.
-        const lignes = [
-            ['RADIO_TX_FREQUENCY',   'RADIO_HELP_TX_FREQUENCY'],
-            ['RADIO_TX_POWER',       'RADIO_HELP_TX_POWER'],
-            ['RADIO_RX_FREQUENCY',   'RADIO_HELP_RX_FREQUENCY'],
-            ['RADIO_RX_BANDWIDTH',   'RADIO_HELP_RX_BANDWIDTH']
-        ];
-        // Patron des modales de contenu (DashboardPrefsOverlay) et non ui.alert(), taillée pour
-        // une phrase : trois explications doivent défiler sur petit écran.
-        const div = document.createElement('div');
-        div.id = 'divRadioAideOverlay';
-        div.className = 'modal-overlay';
-        div.innerHTML = `
-        <div class="message-content">
-        ${modalHeader('RADIO_HELP_TITLE', 'svg-info')}
-        <div class="overlay-scroll-content">
-        ${lignes.map(([libelle, aide]) => `
-            <div class="radio-aide-item">
-                <span class="radio-aide-titre">${tr(libelle)}</span>
-                <span class="radio-aide-texte">${tr(aide)}</span>
-            </div>`).join('')}
-        </div>
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnRadioAideOk" type="button">${tr('BT_OK')}</button>
-        </div>
-        </div>
-        </div>`;
-        get('divContainer').appendChild(div);
-        shOverlay(div);
-        // Fermeture posee en JS sur un bouton identifie, comme partout ailleurs, et non par un
-        // onclick en ligne qui remontait au .modal-overlay avec closest() : les autres chemins de
-        // sortie -- croix, clic sur le fond, glisser mobile -- passent tous par closeOverlay(div),
-        // et le bouton doit emprunter le meme.
-        div.querySelector('#btnRadioAideOk').onclick = () => closeOverlay(div);
-    }
     // Deux liaisons sur une meme reglette :
     //     fenetre d'ecoute = frequence d'ecoute  +/-  (largeur bande RX / 2)
     // le rectangle, et la porteuse d'emission, le trait plein.
@@ -3655,15 +3617,14 @@ class Somfy {
         const refTxt = ref.toFixed(2);
         const std = g('spanTxFreqStd');
         if (std) {
-            std.textContent = (ecartKHz === 0 ? tr('RADIO_TX_FREQ_STD')
-                : tr('RADIO_TX_FREQ_OFFSET').replace('{d}', (ecartKHz > 0 ? '+' : '') + ecartKHz)).replace('{f}', refTxt);
-            std.classList.toggle('off', ecartKHz !== 0);
+            std.hidden = ecartKHz === 0;
+            std.textContent = tr('RADIO_TX_FREQ_OFFSET').replace('{d}', (ecartKHz > 0 ? '+' : '') + ecartKHz).replace('{f}', refTxt);
         }
-        const btn = g('btnTxFreqStd');
-        if (btn) {
-            btn.disabled = ecartKHz === 0;
-            btn.textContent = tr('RADIO_TX_FREQ_RESET').replace('{f}', refTxt);
-        }
+        document.querySelectorAll('#divTransceiverSettings .rdc-preset-btn').forEach(b => {
+            const on = Math.round(parseFloat(b.dataset.freq) * 1000) === Math.round(freqTx * 1000);
+            b.classList.toggle('selected', on);
+            b.setAttribute('aria-pressed', on);
+        });
 
         // Les bornes s'affichent TELLES QUELLES, meme hors de la plage reglable : une bande large
         // posee pres d'un bord donne reellement une fenetre qui deborde, et l'arrondir a 433,000
@@ -3714,10 +3675,10 @@ class Somfy {
     nearestTxStandard(f) {
         return [433.42, 433.92].reduce((a, b) => Math.abs(f - b) < Math.abs(f - a) ? b : a);
     }
-    resetTxFrequency() {
+    setTxPreset(f) {
         const el = get('slidFrequency');
         if (!el) return;
-        el.value = Math.round(this.nearestTxStandard(el.value / 1000) * 1000);
+        el.value = Math.round(f * 1000);
         this.frequencyChanged(el);
         el.dispatchEvent(new Event('change', { bubbles: true }));
     }

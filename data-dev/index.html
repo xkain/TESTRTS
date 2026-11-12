@@ -1850,16 +1850,6 @@
                                                     <span>434.399</span>
                                                 </div>
                                             </div>
-                                            <div class="radio-graph-verdict" tr="RADIO_TUNER_EXPLAIN">ESPSomfy-RTS reçoit tout ce qui tombe dans cette tranche, et émet sur la fréquence de base.</div>
-                                            <!-- UN SEUL point d'entree vers l'aide : la modale donne les quatre
-                                            explications d'affilee, ce qui est justement ce qu'on cherche ici --
-                                            comparer les reglages entre eux. C'est le MEME composant et la MEME
-                                            modale que le volet Assiste, enclos au meme endroit relatif -- en fin
-                                            du bloc qui affiche les valeurs qu'il explique. -->
-                                            <button type="button" class="buttonUpdate radio-help-link" onclick="somfy.radioAideOverlay();">
-                                                <svg><use href="#icon-question"></use></svg>
-                                                <span tr="RADIO_HELP_LINK">À quoi servent ces réglages ?</span>
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -1880,13 +1870,14 @@
                                     <div class="gen-grid" data-tab="0">
                                         <header class="gen-sec-head"><h2 tr="RADIO_TAB_RX"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i></span></header>
                                         <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="RADIO_FLEET_TESTED"></h3>
+                                            <h3 class="gen-tile-title" tr="RADIO_ASSIST_TITLE"></h3>
+                                            <p class="gen-tile-desc" tr="RADIO_ASSIST_DESC"></p>
                                             <div id="divRadioFleet" class="rd-fleet"></div>
                                         </div>
                                         <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="SETUP_TIP_TITLE"></h3>
-                                            <p class="gen-tile-desc is-info" tr="RADIO_TIP_FREQ"></p>
+                                            <h3 class="gen-tile-title" tr="RADIO_SCAN_TITLE"></h3>
                                             <p class="gen-tile-desc" tr="RADIO_SCAN_HINT_DESC"></p>
+                                            <p class="gen-tile-desc is-info" tr="RADIO_SCAN_RX_ONLY"></p>
                                             <button id="btnScanFrequency" type="button" class="gen-btn" onclick="somfy.scanFrequency(true);"><svg><use href="#svg-scan"></use></svg><span tr="RADIO_SCAN_BTN"></span></button>
                                         </div>
                                         <div class="gen-tile rdc-sliders">
@@ -1968,6 +1959,13 @@
                                             <p class="gen-tile-desc" tr="RADIO_GROUP_RX_DESC"></p>
                                         </div>
                                         <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="RADIO_HELP_RX_TITLE"></h3>
+                                            <dl class="rdc-help-list">
+                                                <div><dt tr="RADIO_RX_FREQUENCY"></dt><dd tr="RADIO_HELP_RX_FREQUENCY"></dd></div>
+                                                <div><dt tr="RADIO_RX_BANDWIDTH"></dt><dd tr="RADIO_HELP_RX_BANDWIDTH"></dd></div>
+                                            </dl>
+                                        </div>
+                                        <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="RADIO_DECODE_TITLE"></h3>
                                             <div class="gen-field-pair">
                                                 <div class="gen-field">
@@ -2003,6 +2001,13 @@
                                         <header class="gen-sec-head"><h2 tr="RADIO_TAB_TX"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i></span></header>
                                         <div class="gen-tile rdc-sliders">
                                             <h3 class="gen-tile-title" tr="RADIO_GROUP_TX"></h3>
+                                            <div class="gen-field">
+                                                <span class="gen-field-label" tr="RADIO_TX_PRESETS"></span>
+                                                <div class="rdc-preset-list">
+                                                    <button type="button" class="rdc-preset-btn" data-freq="433.42" onclick="somfy.setTxPreset(433.42);"><b>433,42 MHz</b><span tr="RADIO_TX_PRESET_RTS"></span></button>
+                                                    <button type="button" class="rdc-preset-btn" data-freq="433.92" onclick="somfy.setTxPreset(433.92);"><b>433,92 MHz</b><span tr="RTV"></span></button>
+                                                </div>
+                                            </div>
                                             <div class="blocradio dirty-target">
                                                 <div class="blocRadioHeader">
                                                     <div class="blocRadioHeaderTitle">
@@ -2039,10 +2044,7 @@
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <div class="rd-txstd">
-                                                    <span id="spanTxFreqStd" class="rd-std"></span>
-                                                    <button type="button" id="btnTxFreqStd" class="rd-link" onclick="somfy.resetTxFrequency();">Revenir à 433.42</button>
-                                                </div>
+                                                <p id="spanTxFreqStd" class="gen-tile-desc is-warning rdc-tx-offset" hidden></p>
                                             </div>
                                             <div class="blocradio dirty-target">
                                                 <div class="blocRadioHeader">
@@ -2083,10 +2085,24 @@
                                             </div>
                                             <p class="gen-tile-desc" tr="RADIO_GROUP_TX_DESC"></p>
                                         </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="RADIO_HELP_TX_TITLE"></h3>
+                                            <dl class="rdc-help-list">
+                                                <div><dt tr="RADIO_TX_FREQUENCY"></dt><dd tr="RADIO_HELP_TX_FREQUENCY"></dd></div>
+                                                <div><dt tr="RADIO_TX_POWER"></dt><dd tr="RADIO_HELP_TX_POWER"></dd></div>
+                                            </dl>
+                                        </div>
                                     </div>
 
                                     <div class="gen-grid" data-tab="2" hidden>
                                         <header class="gen-sec-head"><h2 tr="RADIO_TAB_HARDWARE"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i></span></header>
+                                        <div id="divRadioBoxInfo" class="gen-tile" hidden>
+                                            <h3 class="gen-tile-title" tr="RADIO_BOX_TITLE"></h3>
+                                            <div class="rdc-box-id"><svg><use href="#svg-tabRadio"></use></svg><div><b id="spanRadioBoxName"></b><span id="spanRadioBoxBoard"></span></div></div>
+                                            <p class="gen-tile-desc is-ok" tr="RADIO_BOX_PRESET"></p>
+                                            <div class="rdc-box-head"><span class="gen-field-label" tr="RADIO_PINS_TITLE"></span><span class="rdc-box-ro" tr="RADIO_READ_ONLY"></span></div>
+                                            <div id="divRadioBoxPins" class="rdc-box-pins"></div>
+                                        </div>
                                         <div id="divRadioBoardType" class="gen-tile">
                                             <h3 class="gen-tile-title" tr="RADIO_GPIO_ASSIGN"></h3>
                                             <div class="gen-field">
