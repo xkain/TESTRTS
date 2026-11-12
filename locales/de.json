@@ -892,7 +892,7 @@
     "RADIO_FLEET_SHIFT_TITLE": "Einige Fernbedienungen erfordern eine Anpassung",
     "RADIO_FLEET_SHIFT_DESC": "Mindestens eine Fernbedienung sendet außerhalb des aktuellen Empfangsfensters. Der Assistent schlägt Einstellungen vor, die alle abdecken.",
     "RADIO_FLEET_SHOW": "Vorgeschlagene Einstellungen ansehen",
-    "RADIO_FLEET_OTHER_DESC": "Ihre Frequenz liegt bereits im Empfangsfenster: Prüfen Sie Protokoll und Framelänge (Kommunikation), Batterie oder Reichweite.",
+    "RADIO_FLEET_OTHER_DESC": "Ihre Frequenz liegt bereits im Empfangsfenster: Prüfen Sie Dekodierung, Batterie oder Reichweite.",
     "RADIO_FLEET_RESTART": "Test wiederholen",
     "RADIO_FREQ_CURRENT": "Aktive Frequenzen",
     "RADIO_TX_FREQUENCY": "Sendefrequenz",

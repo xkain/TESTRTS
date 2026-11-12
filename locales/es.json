@@ -892,7 +892,7 @@
     "RADIO_FLEET_SHIFT_TITLE": "Algunos mandos requieren un ajuste",
     "RADIO_FLEET_SHIFT_DESC": "Al menos un mando emite fuera de la ventana de escucha actual. El asistente propone ajustes que los cubren todos.",
     "RADIO_FLEET_SHOW": "Ver los ajustes propuestos",
-    "RADIO_FLEET_OTHER_DESC": "Su frecuencia ya está dentro de la ventana de escucha: compruebe el protocolo y la longitud de trama (Comunicación), la pila o el alcance.",
+    "RADIO_FLEET_OTHER_DESC": "Su frecuencia ya está dentro de la ventana de escucha: compruebe la decodificación, la pila o el alcance.",
     "RADIO_FLEET_RESTART": "Repetir la prueba",
     "RADIO_FREQ_CURRENT": "Frecuencias en uso",
     "RADIO_TX_FREQUENCY": "Frecuencia de emisión",

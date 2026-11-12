@@ -892,7 +892,7 @@
     "RADIO_FLEET_SHIFT_TITLE": "Some remotes need an adjustment",
     "RADIO_FLEET_SHIFT_DESC": "At least one remote transmits outside the current listening window. The assistant proposes settings that cover them all.",
     "RADIO_FLEET_SHOW": "See the proposed settings",
-    "RADIO_FLEET_OTHER_DESC": "Its frequency is already inside the listening window: check the protocol and frame length (Communication), the battery or the range.",
+    "RADIO_FLEET_OTHER_DESC": "Its frequency is already inside the listening window: check decoding, the battery or the range.",
     "RADIO_FLEET_RESTART": "Run the test again",
     "RADIO_FREQ_CURRENT": "Frequencies in use",
     "RADIO_TX_FREQUENCY": "Transmit frequency",

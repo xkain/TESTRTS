@@ -892,7 +892,7 @@
     "RADIO_FLEET_SHIFT_TITLE": "Des télécommandes demandent un ajustement",
     "RADIO_FLEET_SHIFT_DESC": "Au moins une télécommande émet hors de la fenêtre d'écoute actuelle. L'assistant propose des réglages qui les couvrent toutes.",
     "RADIO_FLEET_SHOW": "Voir les réglages proposés",
-    "RADIO_FLEET_OTHER_DESC": "Sa fréquence est déjà dans la fenêtre d'écoute : vérifiez le protocole et la longueur de trame (Communication), la pile ou la portée.",
+    "RADIO_FLEET_OTHER_DESC": "Sa fréquence est déjà dans la fenêtre d'écoute : vérifiez le décodage, la pile ou la portée.",
     "RADIO_FLEET_RESTART": "Refaire le test",
     "RADIO_FREQ_CURRENT": "Fréquences en service",
     "RADIO_TX_FREQUENCY": "Fréquence d'émission",

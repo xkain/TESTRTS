@@ -615,21 +615,29 @@ class Somfy {
         }
         const div = this.scanFrequency();
         if (!div) return;
-        const s = this._scan || (this._scan = { pts: Array(100).fill(null), idx: -1, pass: 1 });
+        const s = this._scan || (this._scan = { pts: Array(100).fill(null), max: {}, idx: -1, pass: 1 });
         const f = parseFloat(scan.testFreq), r = parseInt(scan.testRSSI, 10);
         if (isFinite(f) && isFinite(r)) {
             const i = Math.min(99, Math.max(0, Math.round((f - 433) * 100)));
             if (i < s.idx) s.pass++;
             s.idx = i;
             s.pts[i] = r;
+            const k = Math.round(f * 100);
+            s.max[k] = Math.max(s.max[k] ?? -100, r);
             div.querySelector('#spanTestFreq').textContent = f.toFixed(2);
             this.scanRead(div, 'Test', r);
         }
-        if (scan.RSSI !== -100) {
-            div.setAttribute('data-frequency', scan.frequency);
-            div.setAttribute('data-rssi', scan.RSSI);
-            div.querySelector('#spanBestFreq').textContent = parseFloat(scan.frequency).toFixed(2);
-            this.scanRead(div, 'Best', scan.RSSI);
+        // Milieu de la fenetre de detection, comme l'assistant (cf. wizFenetre) : le sommet publie
+        // par le firmware (scan.frequency) se promene de 40 kHz d'une passe a l'autre. Il ne sert
+        // que tant que la fenetre n'est pas fermee des deux cotes.
+        const fen = this.wizFenetre(s.max);
+        if (fen) s.ferme = true;
+        const m = fen || (scan.RSSI !== -100 && !s.ferme ? { freq: parseFloat(scan.frequency), rssi: scan.RSSI } : null);
+        if (m) {
+            div.setAttribute('data-frequency', m.freq);
+            div.setAttribute('data-rssi', m.rssi);
+            div.querySelector('#spanBestFreq').textContent = m.freq.toFixed(3);
+            this.scanRead(div, 'Best', m.rssi);
         }
         this.scanDraw(div);
     }
@@ -685,9 +693,9 @@ class Somfy {
         div.querySelector('#scanWinHint').textContent = mode === 'none' ? '' : tr(mode === 'run' ? 'SCANFREQ_HINT_RUN' : 'SCANFREQ_HINT_FOUND');
         if (mode !== 'found') return;
         const f = parseFloat(div.getAttribute('data-frequency')), r = div.getAttribute('data-rssi');
-        div.querySelector('#scanFoundTitle').textContent = tr('SCANFREQ_FOUND_TITLE').replace('{f}', f.toFixed(2));
+        div.querySelector('#scanFoundTitle').textContent = tr('SCANFREQ_FOUND_TITLE').replace('{f}', f.toFixed(3));
         div.querySelector('#scanFoundDesc').textContent = tr('SCANFREQ_FOUND_DESC').replace('{rssi}', r);
-        div.querySelector('#btnCopyFrequency').textContent = tr('BT_COPY_FREQUENCY').replace('{f}', f.toFixed(2));
+        div.querySelector('#btnCopyFrequency').textContent = tr('BT_COPY_FREQUENCY').replace('{f}', f.toFixed(3));
         const x = Math.min(99, Math.max(0, Math.round((f - 433) * 100))) * 6 + 3;
         div.querySelector('#scanBestMark').setAttribute('d', `M${x - 7} 0h14l-7 9z`);
     }
@@ -758,7 +766,7 @@ class Somfy {
         if (initScan) {
             div.setAttribute('data-initscan', true);
             div.removeAttribute('data-frequency');
-            this._scan = { pts: Array(100).fill(null), idx: -1, pass: 1 };
+            this._scan = { pts: Array(100).fill(null), max: {}, idx: -1, pass: 1 };
             ['spanTestFreq', 'spanBestFreq'].forEach(id => { div.querySelector('#' + id).textContent = '---.--'; });
             ['Test', 'Best'].forEach(w => { div.querySelector(`#span${w}RSSI`).textContent = '--'; div.querySelector(`#scan${w}Q`).textContent = ''; });
             this.scanDraw(div);
@@ -3016,27 +3024,28 @@ class Somfy {
     // Les 10 kHz restants sont le pas de quantification de l'estimateur, pas du bruit.
     // C'est pour cela que scan.frequency n'est jamais lu ici.
     // La LARGEUR de la fenetre, elle, depend du niveau du signal : elle n'est pas une mesure.
-    wizFenetre() {
-        const w = this.wiz, C = this.wizConst;
-        const cles = Object.keys(w.pas).map(Number).sort((a, b) => a - b);
+    // Le balayage de la page Radio s'en sert aussi, sur le maximum releve a chaque pas.
+    wizFenetre(pas = this.wiz.pas) {
+        const C = this.wizConst;
+        const cles = Object.keys(pas).map(Number).sort((a, b) => a - b);
         const plages = [];
         let cur = null;
         for (const k of cles) {
-            if (w.pas[k] > C.seuil) {
+            if (pas[k] > C.seuil) {
                 if (cur && k - cur.fin <= 2) cur.fin = k;   // tolere UN pas manquant au milieu
                 else { if (cur) plages.push(cur); cur = { debut: k, fin: k }; }
             }
         }
         if (cur) plages.push(cur);
         if (!plages.length) return null;
-        const pic = (p) => Math.max(...cles.filter(k => k >= p.debut && k <= p.fin).map(k => w.pas[k]));
+        const pic = (p) => Math.max(...cles.filter(k => k >= p.debut && k <= p.fin).map(k => pas[k]));
         // Plusieurs sources possibles dans la bande (un voisin qui emet) : on garde la plus forte.
         plages.sort((a, b) => pic(b) - pic(a));
         const p = plages[0];
         // FERMEE DES DEUX COTES : il faut avoir VISITE le pas d'avant et celui d'apres et les
         // avoir trouves sous le seuil. Sans cette condition on mesurerait le milieu d'une fenetre
         // encore en train de s'ouvrir, et le centre serait faux de la moitie de ce qui manque.
-        const avant = w.pas[p.debut - 1], apres = w.pas[p.fin + 1];
+        const avant = pas[p.debut - 1], apres = pas[p.fin + 1];
         if (avant === undefined || apres === undefined) return null;
         if (avant > C.seuil || apres > C.seuil) return null;
         return { freq: (p.debut + p.fin) / 200, rssi: pic(p) };
