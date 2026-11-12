@@ -862,67 +862,70 @@ class Wifi {
         return window.__currentHostname || (window.settings && window.settings.hostname) || 'espsomfyrts';
     }
     // Étape intermédiaire du parcours Ethernet : récapitulatif en lecture seule de la
-    // configuration matérielle retenue, pour que l'utilisateur relise les broches GPIO avant
-    // d'aller plus loin. Purement informatif -- l'ancienne case à cocher de sécurité, qui
-    // maintenait le bouton désactivé tant qu'elle n'était pas cochée, a été retirée. "Confirmer"
-    // enchaîne sur la modale finale d'enregistrement (networkConfirmationOverlay).
+    // configuration matérielle retenue, dans un panneau latéral teinté rouge (confirmation
+    // critique). "Continuer" enchaîne sur la modale finale d'enregistrement
+    // (networkConfirmationOverlay) ; toute autre sortie rend la main à l'appelant (onCancel).
     ethernetConfirmationOverlay(obj, onConfirm = null, onCancel = null) {
         if (get('divEthernetConfirmationOverlay')) return;
-
         const div = document.createElement('div');
         div.id = 'divEthernetConfirmationOverlay';
-        div.className = 'modal-overlay';
+        div.className = 'side-panel-overlay';
         div.innerHTML = `
-        <div class="message-content">
-        ${modalHeader('ETH_SETTINGS_TITLE', 'svg-ethernet', {
-            subtitle: 'ETH_SETTINGS_DESC',
-        })}
-        <div class="overlay-scroll-content">
-        <div class="uniblocCol"><p>${tr("ETH_SETTINGS_WARNING_DESC_1")}</p></div>
+        <aside class="side-panel is-danger" role="alertdialog" aria-modal="true" aria-labelledby="ethPanelTitle">
+        <div class="side-panel-head">
+        <span class="side-panel-icon"><svg><use href="#svg-ethernet"></use></svg></span>
+        <div><span class="side-panel-kicker">${tr('ETH_CONFIRM_KICKER')}</span><h2 id="ethPanelTitle">${tr('ETH_SETTINGS_TITLE')}</h2></div>
+        <button type="button" class="genmod-close" data-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button>
+        </div>
+        <div class="side-panel-body">
+        <div class="genmod-note is-danger"><svg><use href="#svg-warning"></use></svg><div><b>${tr('ETH_SETTINGS_WARNING_DESC_1')}</b><span>${tr('ETH_CONFIRM_CHECK')}</span></div></div>
         ${this._ethSummaryHtml(obj.ethernet)}
+        <p class="side-panel-q">${tr('ETH_CONFIRM_QUESTION')}</p>
         </div>
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnEthConfirmCancel" line type="button">${tr("BT_CANCEL_1")}</button>
-        <button id="btnEthConfirmNext" type="button">
-        <span>${tr("BT_CONFIRM")}</span>
-        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-        </button>
-        </div>
-        </div>
-        </div>`;
-
-        get('divContainer').appendChild(div);
-        shOverlay(div);
-
-        // Toute sortie autre que Confirmer (bouton, clic dehors, poignée) rend la main à l'appelant.
-        div._onClosed = () => { if (!div._confirmed && onCancel) onCancel(); };
-        get('btnEthConfirmCancel').onclick = () => closeOverlay(div);
-        get('btnEthConfirmNext').onclick = () => {
-            div._confirmed = true;
-            closeOverlay(div);
-            if (onConfirm) onConfirm();
-            else this.networkConfirmationOverlay(this._currentHostname(), obj);
+        <div class="side-panel-foot">
+        <span class="genmod-foot-hint">${onConfirm ? '' : tr('ETH_CONFIRM_HINT')}</span>
+        <div class="genmod-foot-btns">
+        <button id="btnEthConfirmCancel" type="button" class="gen-btn" data-close>${tr('BT_CANCEL_1')}</button>
+        <button id="btnEthConfirmNext" type="button" class="gen-btn gen-btn-danger">${tr(onConfirm ? 'BT_SAVE' : 'BT_CONTINUE')}</button>
+        </div></div>
+        </aside>`;
+        const close = (confirmed) => {
+            if (div.dataset.closing) return;
+            div.dataset.closing = 'true';
+            document.removeEventListener('keydown', onKey);
+            div.classList.remove('open');
+            setTimeout(() => {
+                div.remove();
+                if (confirmed) {
+                    if (onConfirm) onConfirm();
+                    else this.networkConfirmationOverlay(this._currentHostname(), obj);
+                } else if (onCancel) onCancel();
+            }, 250);
         };
+        const onKey = (e) => { if (e.key === 'Escape') close(false); };
+        document.addEventListener('keydown', onKey);
+        div.onclick = (e) => { if (e.target === div || e.target.closest('[data-close]')) close(false); };
+        div.querySelector('#btnEthConfirmNext').onclick = () => close(true);
+        get('divContainer').appendChild(div);
+        void div.offsetWidth;
+        div.classList.add('open');
     }
     _ethSummaryHtml(eth) {
         const board = this.ethBoardTypes.find(e => eth.boardType === e.val);
         const phy = this.ethPhyTypes.find(e => eth.phyType === e.val);
         const clk = this.ethClockModes.find(e => eth.CLKMode === e.val);
-        const line = (labelKey, value) => `<div class="eth-setting-line"><label>${tr(labelKey)}</label><span>${value}</span></div>`;
+        const gpio = (v) => (v === undefined || v === -1) ? tr('ETH_SETTINGS_NONE') : 'GPIO' + v;
+        const line = (labelKey, value) => `<div class="side-panel-kv"><span>${tr(labelKey)}</span><b>${escHtml(String(value))}</b></div>`;
         return `
-        <div class="blocEthBoardSettings">
-        <div>
-        ${line("SETTINGS_BOARD_TYPE", `${board ? board.label : tr("MANUAL_SETTINGS")} [${board ? board.val : 0}]`)}
-        ${line("ETH_SETTINGS_PHY_TYPE", `${phy ? phy.label : '---'} [${phy ? phy.val : 0}]`)}
-        ${line("ETH_SETTINGS_PHY_ADDRESS", eth.phyAddress ?? 0)}
-        ${line("ETH_SETTINGS_CLOCK_MODE", `${clk ? clk.label : '---'} [${clk ? clk.val : 0}]`)}
-        ${line("ETH_SETTINGS_POWER_PIN", (eth.PWRPin === undefined || eth.PWRPin === -1) ? tr("ETH_SETTINGS_NONE") : eth.PWRPin)}
-        ${line("ETH_SETTINGS_MDC_PIN", eth.MDCPin ?? 0)}
-        ${line("ETH_SETTINGS_MDIO_PIN", eth.MDIOPin ?? 0)}
-        </div>
-        </div>`;
+        <div class="side-panel-sec"><h3>${tr('ETH_CONFIRM_BOARD')}</h3>
+        ${line('SETTINGS_BOARD_TYPE', board ? board.label : tr('MANUAL_SETTINGS'))}
+        ${line('ETH_SETTINGS_PHY_TYPE', phy ? phy.label : '---')}
+        ${line('ETH_SETTINGS_PHY_ADDRESS', eth.phyAddress ?? 0)}
+        ${line('ETH_SETTINGS_CLOCK_MODE', clk ? clk.label : '---')}</div>
+        <div class="side-panel-sec"><h3>${tr('ETH_CONFIRM_PINS')}</h3>
+        ${line('ETH_SETTINGS_POWER_PIN', gpio(eth.PWRPin))}
+        ${line('ETH_SETTINGS_MDC_PIN', gpio(eth.MDCPin ?? 0))}
+        ${line('ETH_SETTINGS_MDIO_PIN', gpio(eth.MDIOPin ?? 0))}</div>`;
     }
     sendNetworkSettings(obj, opts = null) {
         // Enregistrer le réseau est l'action qui conclut RÉELLEMENT l'assistant de premier

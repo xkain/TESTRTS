@@ -1595,30 +1595,52 @@ button[line].fw-sidebar-button:hover {
     background-color: var(--color-danger);
 }
 /* =======================================================================
- *  ASSISTANT AVERTISSEMENT ETHERNET (inst-ethwarning)
+ *  PANNEAU LATÉRAL (side-panel-) : confirmation Ethernet (ethernetConfirmationOverlay, 50-wifi.js)
+ *  Même forme que la fiche d'un équipement du tableau de bord : 440 px, pleine hauteur, à droite.
+ *  is-danger le teinte en rouge, opaque (jeton mêlé au panneau, jamais une transparence).
  *  ======================================================================= */
-
-.blocEthBoardSettings {
+.side-panel-overlay { position: fixed; inset: 0; z-index: 2000; display: flex; justify-content: flex-end; background: rgba(0, 0, 0, 0); transition: background 0.25s ease; }
+.side-panel-overlay.open { background: rgba(0, 0, 0, 0.35); }
+.side-panel {
     display: flex;
-    justify-content: center;
-    width: 100%;
-    margin: 15px 0;
+    flex-direction: column;
+    width: min(440px, 100%);
+    height: 100%;
+    font-size: 16px;
+    background: var(--panel);
+    color: var(--text);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
 }
-div.eth-setting-line {
-    font-size:12px;
-    padding-top:0px;
-    padding-bottom:0px;
-}
-div.eth-setting-line span {
-    margin-left:7px;
-    color: var(--color-text-warning);
-}
-div.eth-setting-line label {
-    margin-right: 4px;
-    display:inline-block;
-    min-width: 130px;
-    text-align:right;
-    color: var(--color-text-main);
+.side-panel-overlay.open .side-panel { transform: none; }
+.side-panel.is-danger { background: color-mix(in srgb, var(--danger) 9%, var(--panel)); border-left: 3px solid var(--danger); }
+.side-panel-head { display: flex; align-items: flex-start; gap: 12px; padding: 18px 20px 14px; }
+.side-panel-head h2 { margin: 0; font-size: var(--fs-7); font-weight: 800; line-height: 1.2; }
+.side-panel-head .genmod-close { display: flex; }
+.side-panel-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: var(--r-3); background: var(--surface); color: var(--color-accent); }
+.side-panel-icon svg { width: 24px; height: 24px; fill: currentColor; }
+.side-panel.is-danger .side-panel-icon,
+.side-panel.is-danger .side-panel-kicker { color: var(--danger); }
+.side-panel-kicker { display: block; font-size: var(--fs-2); font-weight: 700; }
+.side-panel-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 4px 20px 20px; }
+.side-panel-sec { display: flex; flex-direction: column; padding: 6px 16px; border-radius: var(--r-4); background: var(--surface); }
+.side-panel-sec h3 { margin: 10px 0 4px; font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.side-panel-kv { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--divider); font-size: var(--fs-3); }
+.side-panel-sec h3 + .side-panel-kv { border-top: 0; }
+.side-panel-kv span { color: var(--text-3); }
+.side-panel-kv b { text-align: right; font-variant-numeric: tabular-nums; }
+.side-panel-q { margin: 0; font-size: var(--fs-4); font-weight: 700; }
+.side-panel-foot { display: flex; flex-direction: column; gap: 10px; padding: 14px 20px 20px; border-top: 1px solid var(--divider); }
+.side-panel-foot .genmod-foot-hint { flex: none; }
+.side-panel-foot .genmod-foot-hint:empty { display: none; }
+.side-panel-foot .genmod-foot-btns { display: flex; gap: 10px; margin: 0; }
+.side-panel-foot .gen-btn { flex: 1 1 0; justify-content: center; }
+.side-panel-foot .gen-btn-danger,
+.side-panel-foot .gen-btn-danger:hover { background: var(--destroy); color: #fff; box-shadow: none; }
+.genmod-note.is-danger { background: var(--danger-bg); color: var(--danger); }
+@media (max-width: 767px) {
+    .side-panel.is-danger { border-left: 0; border-top: 3px solid var(--danger); }
 }
 
 /* ==========================================================
@@ -1830,6 +1852,27 @@ div.eth-setting-line label {
     .scan-reads { gap: 10px; }
     .scan-read { padding: 12px 14px; }
     .scan-read-val b { font-size: 1.5em; }
+}
+
+/* =======================================================================
+ *  FENÊTRE AFFICHAGE DU TABLEAU DE BORD (#divDashboardPrefsOverlay, 40-general.js)
+ *  Rangées gen-row et sélecteurs Oui/Non de la page Général ; aperçu dans la colonne d'identité.
+ *  ======================================================================= */
+#divDashboardPrefsOverlay .genmod-body { gap: 2px; padding: 20px 28px; }
+.dp-sec { margin: 18px 0 4px; font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.dp-sec:first-child { margin-top: 0; }
+#divDashboardPrefsOverlay .gen-row + .gen-row { border-top: 1px solid var(--divider); }
+.dp-sel { flex: none; min-width: 12em; }
+.dp-prev { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; width: 100%; }
+.dp-col { display: flex; flex-direction: column; gap: 6px; }
+.dp-col span { font-size: var(--fs-1); font-weight: 700; color: var(--text-3); }
+.dp-col i { display: block; height: 58px; border-radius: var(--r-2); background: var(--surface-2); transition: height .2s ease; }
+.dp-col.is-compact i { height: 34px; }
+.dp-prev.is-rev { grid-template-columns: 1.6fr 1fr; }
+.dp-prev.is-rev [data-col="groups"] { order: 2; }
+.dp-prev.is-mv .dp-mv { box-shadow: inset 0 0 0 2px var(--color-accent); }
+@media (max-width: 999px) {
+    .dp-prev { display: none; }
 }
 
 /* =======================================================================

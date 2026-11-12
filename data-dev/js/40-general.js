@@ -697,129 +697,61 @@ class General {
     DashboardPrefsOverlay() {
         if (get('divDashboardPrefsOverlay')) return;
         const p = this._dashboardPrefs || { headerMobileDisplay: 0, reverseDashboardColumns: false, defaultMobileTab: 'groups', showRadioActivity: false, showMovementIndicator: true, dashCompact: 0 };
-
+        const bool = (id, on) => `<span class="gen-seg gen-seg-bool"><input id="${id}" type="checkbox"${on ? ' checked' : ''}>
+            <span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span>`;
+        const row = (k, d, ctl) => `<div class="gen-row dirty-target"><span class="gen-row-text"><b>${tr(k)}</b><span>${tr(d)}</span></span>${ctl}</div>`;
+        const sel = (id, opts, v) => `<span class="gen-input-box dp-sel"><select id="${id}" class="gen-input">${opts.map(([val, k]) => `<option value="${val}"${v === val ? ' selected' : ''}>${tr(k)}</option>`).join('')}</select></span>`;
+        const tab = p.defaultMobileTab === 'devices' ? 'devices' : 'groups';
         const div = document.createElement('div');
         div.id = 'divDashboardPrefsOverlay';
-        div.className = 'modal-overlay';
-        div.innerHTML = `
-        <div class="message-content" id="divDashboardPrefsPopupContent">
-        ${modalHeader('TAB_DASHBOARD', 'svg-tabHome', { subtitle: 'DASHB_PREFS_MODAL_DESC' })}
-
-        <div class="overlay-scroll-content">
-
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('DASHB_PREFS_SECTION_HEADER')}</h3>
-        <div class="uniRow dirty-target">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-header"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="selHeaderMobileDisplay">${tr('DASHB_PREFS_HEADER_MOBILE_DISPLAY')}</label>
-        <select id="selHeaderMobileDisplay" class="inputAndSelect">
-        <option value="0" ${p.headerMobileDisplay === 0 ? 'selected' : ''}>${tr('DASHB_PREFS_HEADER_MOBILE_ALL')}</option>
-        <option value="1" ${p.headerMobileDisplay === 1 ? 'selected' : ''}>${tr('DASHB_PREFS_HEADER_MOBILE_NET')}</option>
-        <option value="2" ${p.headerMobileDisplay === 2 ? 'selected' : ''}>${tr('DASHB_PREFS_HEADER_MOBILE_UPTIME')}</option>
-        <option value="3" ${p.headerMobileDisplay === 3 ? 'selected' : ''}>${tr('DASHB_PREFS_HEADER_MOBILE_NONE')}</option>
-        </select>
-        </div>
-        </div>
-        </div>
-        </div>
-
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('DASHB_PREFS_SECTION_HEADER_1')}</h3>
-        <label class="uniRow dirty-target" for="cbShowRadioActivity">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-tabRadio"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('DASHB_PREFS_RADIO_ACTIVITY')}</div>
-        <div class="uniStatus">${tr('DASHB_PREFS_RADIO_ACTIVITY_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbShowRadioActivity" type="checkbox" ${p.showRadioActivity ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
-
-        <label class="uniRow dirty-target" for="cbShowMovementIndicator">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-dashIndic"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('DASHB_PREFS_MOVEMENT_INDICATOR')}</div>
-        <div class="uniStatus">${tr('DASHB_PREFS_MOVEMENT_INDICATOR_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbShowMovementIndicator" type="checkbox" ${p.showMovementIndicator ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
-        </div>
-
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('DASHB_PREFS_SECTION_HEADER_2')}</h3>
-        <div class="uniRow dirty-target">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-list"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="selDashCompact">${tr('DASHB_PREFS_COMPACT_CARDS')}</label>
-        <select id="selDashCompact" class="inputAndSelect">
-        ${[[0, 'DASHB_PREFS_COMPACT_NONE'], [1, 'SUBTAB_GROUPS'], [2, 'SUBTAB_DEVICES'], [3, 'DASHB_PREFS_COMPACT_BOTH']].map(([v, k]) => `<option value="${v}" ${p.dashCompact === v ? 'selected' : ''}>${tr(k)}</option>`).join('')}
-        </select>
-        <div class="uniStatus">${tr('DASHB_PREFS_COMPACT_CARDS_DESC')}</div>
-        </div>
-        </div>
-        </div>
-        <label class="uniRow dirty-target" for="cbReverseDashboardColumns">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-column"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('DASHB_PREFS_REVERSE_COLUMNS')}</div>
-        <div class="uniStatus">${tr('DASHB_PREFS_REVERSE_COLUMNS_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbReverseDashboardColumns" type="checkbox" ${p.reverseDashboardColumns ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
-
-        <div class="unibloc-container">
-        <div class="unifield-content">
-        <label class="label">${tr('DASHB_PREFS_DEFAULT_TAB')}</label>
-
-        </div>
-        <div class="SwitchBig SwitchBig-2 dirty-target" id="dashboardDefaultTabSwitch">
-        <input type="radio" name="defaultMobileTab" id="defaultTabGroups" value="groups" ${p.defaultMobileTab !== 'devices' ? 'checked' : ''}>
-        <label for="defaultTabGroups">${tr('SUBTAB_GROUPS')}</label>
-        <input type="radio" name="defaultMobileTab" id="defaultTabDevices" value="devices" ${p.defaultMobileTab === 'devices' ? 'checked' : ''}>
-        <label for="defaultTabDevices">${tr('SUBTAB_DEVICES')}</label>
-        <div class="nav-pill"></div>
-        </div>
-        </div>
-        </div>
-
-        </div>
-
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnDashboardPrefsCancel" line type="button">${tr('BT_CANCEL')}</button>
-        <button id="btnDashboardPrefsApply" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
-        </div>
-        </div>
-        </div>`;
+        div.className = 'modal-overlay genmod-overlay';
+        div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
+            id: 'dashPrefs', icon: 'svg-tabHome', titleKey: 'DASHB_PREFS_TITLE', descKey: 'DASHB_PREFS_MODAL_DESC',
+            stateKey: tr('DASHB_PREFS_PREVIEW'), stateValue: '', sectionKey: 'DASHB_PREFS_SECTION', hintKey: '', footId: 'dashPrefsFoot',
+            bodyHtml: `
+            <h3 class="dp-sec">${tr('DASHB_PREFS_SECTION_HEADER_1')}</h3>
+            ${row('DASHB_PREFS_COMPACT_CARDS', 'DASHB_PREFS_COMPACT_CARDS_DESC', sel('selDashCompact', [[0, 'DASHB_PREFS_COMPACT_NONE'], [1, 'SUBTAB_GROUPS'], [2, 'SUBTAB_DEVICES'], [3, 'DASHB_PREFS_COMPACT_BOTH']], p.dashCompact))}
+            ${row('DASHB_PREFS_MOVEMENT_INDICATOR', 'DASHB_PREFS_MOVEMENT_INDICATOR_DESC', bool('cbShowMovementIndicator', p.showMovementIndicator))}
+            <h3 class="dp-sec">${tr('DASHB_PREFS_SECTION_HEADER_2')}</h3>
+            ${row('DASHB_PREFS_REVERSE_COLUMNS', 'DASHB_PREFS_REVERSE_COLUMNS_DESC', bool('cbReverseDashboardColumns', p.reverseDashboardColumns))}
+            ${row('DASHB_PREFS_DEFAULT_TAB', 'DASHB_PREFS_DEFAULT_TAB_DESC', `<span class="gen-seg">
+                <label><input type="radio" name="defaultMobileTab" value="groups"${tab === 'groups' ? ' checked' : ''}><span>${tr('SUBTAB_GROUPS')}</span></label>
+                <label><input type="radio" name="defaultMobileTab" value="devices"${tab === 'devices' ? ' checked' : ''}><span>${tr('SUBTAB_DEVICES')}</span></label></span>`)}
+            <h3 class="dp-sec">${tr('DASHB_PREFS_SECTION_HEADER')}</h3>
+            ${row('DASHB_PREFS_RADIO_ACTIVITY', 'DASHB_PREFS_RADIO_ACTIVITY_DESC', bool('cbShowRadioActivity', p.showRadioActivity))}
+            ${row('DASHB_PREFS_HEADER_MOBILE_DISPLAY', 'DASHB_PREFS_HEADER_MOBILE_DISPLAY_DESC', sel('selHeaderMobileDisplay', [[0, 'DASHB_PREFS_HEADER_MOBILE_ALL'], [1, 'DASHB_PREFS_HEADER_MOBILE_NET'], [2, 'DASHB_PREFS_HEADER_MOBILE_UPTIME'], [3, 'DASHB_PREFS_HEADER_MOBILE_NONE']], p.headerMobileDisplay))}`
+        })}</div>`;
+        // Aperçu de la disposition dans la colonne d'identité : il suit les choix avant tout envoi.
+        div.querySelector('.genmod-state-val').outerHTML = `<div class="dp-prev">
+            <div class="dp-col" data-col="groups"><span>${tr('SUBTAB_GROUPS')}</span><i></i><i></i></div>
+            <div class="dp-col" data-col="devices"><span>${tr('SUBTAB_DEVICES')}</span><i class="dp-mv"></i><i></i></div></div>`;
+        div.querySelector('#dashPrefsFoot').innerHTML = `
+            <button type="button" class="gen-btn" data-genmod-close>${tr('BT_CANCEL')}</button>
+            <button id="btnDashboardPrefsApply" type="button" class="gen-btn gen-btn-primary"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>`;
+        const preview = () => {
+            const c = parseInt(div.querySelector('#selDashCompact').value, 10) || 0;
+            const prev = div.querySelector('.dp-prev');
+            prev.classList.toggle('is-rev', div.querySelector('#cbReverseDashboardColumns').checked);
+            prev.classList.toggle('is-mv', div.querySelector('#cbShowMovementIndicator').checked);
+            prev.querySelector('[data-col="groups"]').classList.toggle('is-compact', c === 1 || c === 3);
+            prev.querySelector('[data-col="devices"]').classList.toggle('is-compact', c === 2 || c === 3);
+        };
+        div.addEventListener('change', preview);
+        preview();
+        div.onclick = (e) => { if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div); };
 
         get('divContainer').appendChild(div);
         shOverlay(div);
         watchDirty(div);
 
-        get('btnDashboardPrefsCancel').onclick = () => requestCloseOverlay(div);
-        get('btnDashboardPrefsApply').onclick = () => {
+        div.querySelector('#btnDashboardPrefsApply').onclick = () => {
             const payload = {
-                headerMobileDisplay: parseInt(get('selHeaderMobileDisplay').value, 10),
-                reverseDashboardColumns: get('cbReverseDashboardColumns').checked,
+                headerMobileDisplay: parseInt(div.querySelector('#selHeaderMobileDisplay').value, 10),
+                reverseDashboardColumns: div.querySelector('#cbReverseDashboardColumns').checked,
                 defaultMobileTab: div.querySelector('input[name="defaultMobileTab"]:checked')?.value || 'groups',
-                showRadioActivity: get('cbShowRadioActivity').checked,
-                showMovementIndicator: get('cbShowMovementIndicator').checked,
-                dashCompact: parseInt(get('selDashCompact').value, 10) || 0
+                showRadioActivity: div.querySelector('#cbShowRadioActivity').checked,
+                showMovementIndicator: div.querySelector('#cbShowMovementIndicator').checked,
+                dashCompact: parseInt(div.querySelector('#selDashCompact').value, 10) || 0
             };
             putJSONSync('/setgeneral', payload, (err) => {
                 if (err) { ui.serviceError(err); return; }
