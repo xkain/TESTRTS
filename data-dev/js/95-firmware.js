@@ -170,7 +170,7 @@ class Firmware {
     // endroit où la convention de nommage est définie (FwInfo::boardToken). Ce bloc en
     // tenait auparavant un miroir -- une table `boards` de correspondance puce -> suffixe -- et ce
     // miroir avait divergé : le C6 n'y figurait pas, si bien qu'un C6 se voyait annoncer
-    // "..._firmware_esp32.bin", une image Xtensa qui n'y démarrerait jamais. Ne pas réintroduire
+    // "..._ota_esp32.bin", une image Xtensa qui n'y démarrerait jamais. Ne pas réintroduire
     // cette table : la variante d'image (cf. FW_ASSET_VARIANT) s'y perdrait de la même façon.
     assetNameParts() {
         const cont = get('divContainer');
@@ -178,7 +178,7 @@ class Firmware {
         // Le profil ne compose plus aucun nom (le jeton du firmware porte déjà le suffixe de
         // boîtier) : il ne sert qu'à `box`, qui choisit un paragraphe d'aide.
         const box = profile === 'BOX-ETH' || profile === 'BOX-WIFI';
-        return { middle: '_firmware_', device: cont.getAttribute('data-assetdevice') || '', box: box };
+        return { middle: '_ota_', device: cont.getAttribute('data-assetdevice') || '', box: box };
     }
 
     // Le nom du fichier attendu, surligné sur la partie qui identifie le matériel. Ce bloc n'est

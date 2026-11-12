@@ -11,7 +11,7 @@ Firmware) ou Home Assistant qui lisent ce catalogue, récupèrent l'image de la 
 navigateur (aucun Access-Control-Allow-Origin, cf. mirror_releases.py), les images sont recopiées
 ici, où Pages sert « * ».
 
-Seule l'image APPLICATIVE est recopiée (ESPSomfyRTS_<tag>_firmware_<carte>.bin) : l'interface est
+Seule l'image APPLICATIVE est recopiée (ESPSomfyRTS_<tag>_ota_<carte>.bin) : l'interface est
 compilée dedans, et une mise à jour n'écrit plus que l'emplacement d'app inactif.
 
 Pour chaque image : taille, SHA-256 (vérifié par l'appareil avant de la rendre amorçable) et
@@ -40,7 +40,9 @@ import sys
 from datetime import datetime, timezone
 
 DEV_TAG = "dev"
-RE_FIRMWARE = re.compile(r"^ESPSomfyRTS_.+_firmware_(.+)\.bin$")
+# _firmware_ = nommage des releases publiées avant le passage à _ota_ (13/11/2026) : sans lui,
+# ces tags sortiraient du catalogue sans un mot.
+RE_FIRMWARE = re.compile(r"^ESPSomfyRTS_.+_(?:ota|firmware)_(.+)\.bin$")
 RE_MARKER = re.compile(rb"ESPSomfyRTS-PART/(\d+)/")
 CARTES = {"esp32", "esp32wrover", "esp32c3", "esp32s2", "esp32s3", "esp32c6"}
 

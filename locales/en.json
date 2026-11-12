@@ -1519,7 +1519,7 @@
     "FIRMWARE_MA_FILE_TOOLTIP_VERSION": "<b>[version]</b>: the version you are installing, for example <b>v3.0.0</b>.",
     "FIRMWARE_MA_FILE_TOOLTIP_GREEN": "<b>Highlighted in green</b>: identifies your hardware. A file that does not contain this exact part is not intended for this device.",
     "FIRMWARE_MA_FILE_TOOLTIP_ANYBOARD": "This file is the same for all boards: its name does not include any model.",
-    "FIRMWARE_MA_FILE_TOOLTIP_KIND_FW": "The name must contain <b>_firmware_</b>: this is the device program, web interface included. A <b>_filesystem_</b> file comes from older versions and is no longer accepted.",
+    "FIRMWARE_MA_FILE_TOOLTIP_KIND_FW": "The name must contain <b>_ota_</b>: this is the device program, web interface included. A <b>_filesystem_</b> file comes from older versions and is no longer accepted.",
     "FIRMWARE_MA_FILE_TOOLTIP_BOX": "Your device is one of my custom boxes: only a file with the highlighted label above is suitable. Files without it are intended for generic boards.",
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "If you don't have it locally: download from GitHub",
 
@@ -1651,7 +1651,7 @@
     "DISABLED_F": "Disabled",
     "ENABLED": "Enabled",
     "SCHEDULE_ADD": "Add a schedule",
-    "FILE_PICK_FIRMWARE": "Choose the _firmware_….bin file",
+    "FILE_PICK_FIRMWARE": "Choose the _ota_….bin file",
     "FILE_PICK_BACKUP": "Choose the .backup file",
     "FILE_DROP_HINT": "or drop it here",
     "M_SIGNAL": "Signal",

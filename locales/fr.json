@@ -1519,7 +1519,7 @@
     "FIRMWARE_MA_FILE_TOOLTIP_VERSION": "<b>[version]</b> : la version que vous installez, par exemple <b>v3.0.0</b>.",
     "FIRMWARE_MA_FILE_TOOLTIP_GREEN": "<b>Surligné en vert</b> : ce qui identifie votre matériel. Un fichier qui ne porte pas exactement cette partie n'est pas destiné à cet appareil.",
     "FIRMWARE_MA_FILE_TOOLTIP_ANYBOARD": "Ce fichier est le même pour toutes les cartes : son nom ne comporte aucun modèle.",
-    "FIRMWARE_MA_FILE_TOOLTIP_KIND_FW": "Le nom doit contenir <b>_firmware_</b> : c'est le programme de l'appareil, interface web comprise. Un fichier <b>_filesystem_</b> vient des anciennes versions et n'est plus accepté.",
+    "FIRMWARE_MA_FILE_TOOLTIP_KIND_FW": "Le nom doit contenir <b>_ota_</b> : c'est le programme de l'appareil, interface web comprise. Un fichier <b>_filesystem_</b> vient des anciennes versions et n'est plus accepté.",
     "FIRMWARE_MA_FILE_TOOLTIP_BOX": "Votre appareil est un de mes boîtiers : seul un fichier portant la mention surlignée ci-dessus lui convient. Les fichiers qui ne la portent pas sont destinés aux cartes génériques.",
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Si vous ne l'avez pas en local : télécharger sur GitHub",
 
@@ -1651,7 +1651,7 @@
     "DISABLED_F": "Désactivée",
     "ENABLED": "Activé",
     "SCHEDULE_ADD": "Ajouter une programmation",
-    "FILE_PICK_FIRMWARE": "Choisir le fichier _firmware_….bin",
+    "FILE_PICK_FIRMWARE": "Choisir le fichier _ota_….bin",
     "FILE_PICK_BACKUP": "Choisir le fichier .backup",
     "FILE_DROP_HINT": "ou le déposer ici",
     "M_SIGNAL": "Signal",

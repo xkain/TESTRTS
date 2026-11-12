@@ -190,7 +190,7 @@ d'avoir le bon avant de téléverser. L'interface affiche et surligne elle-même
 pour votre appareil, mais voici comment il est construit :
 
 ```
-ESPSomfyRTS_[1: vX.X.X]_firmware_[2: carte][3: suffixe].bin
+ESPSomfyRTS_[1: vX.X.X]_ota_[2: carte][3: suffixe].bin
 ```
 
 1. **Version** — par exemple `v3.0.1`.
@@ -200,9 +200,9 @@ ESPSomfyRTS_[1: vX.X.X]_firmware_[2: carte][3: suffixe].bin
     un boîtier officiel ; une variante technique (ex. taille de flash) pour certaines cartes
     qui en ont plusieurs déclinaisons.
 
-> Exemple générique : `ESPSomfyRTS_v3.0.1_firmware_esp32.bin`
+> Exemple générique : `ESPSomfyRTS_v3.0.1_ota_esp32.bin`
 >
-> Exemple boîtier : `ESPSomfyRTS_v3.0.1_firmware_esp32_BOX_eth.bin`
+> Exemple boîtier : `ESPSomfyRTS_v3.0.1_ota_esp32_BOX_eth.bin`
 
 ### Contrôles avant envoi
 

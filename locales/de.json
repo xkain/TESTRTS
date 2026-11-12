@@ -1519,7 +1519,7 @@
     "FIRMWARE_MA_FILE_TOOLTIP_VERSION": "<b>[version]</b>: die Version, die Sie installieren, zum Beispiel <b>v3.0.0</b>.",
     "FIRMWARE_MA_FILE_TOOLTIP_GREEN": "<b>Grün hervorgehoben</b>: identifiziert Ihre Hardware. Eine Datei, die diesen Teil nicht exakt enthält, ist nicht für dieses Gerät bestimmt.",
     "FIRMWARE_MA_FILE_TOOLTIP_ANYBOARD": "Diese Datei ist für alle Boards identisch: Ihr Name enthält kein bestimmtes Modell.",
-    "FIRMWARE_MA_FILE_TOOLTIP_KIND_FW": "Der Name muss <b>_firmware_</b> enthalten: das ist das Programm des Geräts, einschließlich der Web-Oberfläche. Eine <b>_filesystem_</b>-Datei stammt aus älteren Versionen und wird nicht mehr akzeptiert.",
+    "FIRMWARE_MA_FILE_TOOLTIP_KIND_FW": "Der Name muss <b>_ota_</b> enthalten: das ist das Programm des Geräts, einschließlich der Web-Oberfläche. Eine <b>_filesystem_</b>-Datei stammt aus älteren Versionen und wird nicht mehr akzeptiert.",
     "FIRMWARE_MA_FILE_TOOLTIP_BOX": "Ihr Gerät ist eines meiner fertigen Gehäuse: Nur eine Datei mit dem oben hervorgehobenen Hinweis ist dafür geeignet. Dateien ohne diesen Hinweis sind für generische Boards bestimmt.",
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Falls nicht lokal vorhanden: von GitHub herunterladen",
 
@@ -1651,7 +1651,7 @@
     "DISABLED_F": "Deaktiviert",
     "ENABLED": "Aktiviert",
     "SCHEDULE_ADD": "Zeitplan hinzufügen",
-    "FILE_PICK_FIRMWARE": "Datei _firmware_….bin auswählen",
+    "FILE_PICK_FIRMWARE": "Datei _ota_….bin auswählen",
     "FILE_PICK_BACKUP": ".backup-Datei auswählen",
     "FILE_DROP_HINT": "oder hier ablegen",
     "M_SIGNAL": "Signal",

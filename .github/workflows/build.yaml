@@ -249,7 +249,7 @@ jobs:
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x3B0000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_ota_esp32.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
@@ -258,7 +258,7 @@ jobs:
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x3B0000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32wrover.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_ota_esp32wrover.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32wrover.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32wrover.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
@@ -267,7 +267,7 @@ jobs:
             chip: ESP32-C3
             addr_bootloader: "0x0"
             addr_littlefs: "0x3B0000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32c3.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_ota_esp32c3.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c3.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c3.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
@@ -276,7 +276,7 @@ jobs:
             chip: ESP32-S2
             addr_bootloader: "0x1000"
             addr_littlefs: "0x3B0000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32s2.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_ota_esp32s2.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s2.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s2.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
@@ -285,7 +285,7 @@ jobs:
             chip: ESP32-S3
             addr_bootloader: "0x0"
             addr_littlefs: "0x3B0000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32s3.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_ota_esp32s3.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s3.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s3.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
@@ -306,7 +306,7 @@ jobs:
             chip: ESP32-C6
             addr_bootloader: "0x0"
             addr_littlefs: "0x610000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32c6.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_ota_esp32c6.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c6.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c6.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_c6.bin
@@ -321,7 +321,7 @@ jobs:
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x3B0000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32_BOX_wifi.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_ota_esp32_BOX_wifi.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_wifi.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_wifi.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_BOX.bin
@@ -330,7 +330,7 @@ jobs:
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x3B0000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32_BOX_eth.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_ota_esp32_BOX_eth.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_eth.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_eth.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_BOX.bin
