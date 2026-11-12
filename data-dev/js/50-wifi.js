@@ -666,130 +666,110 @@ class Wifi {
         nets.sort((a, b) => b.strength - a.strength);
         return nets;
     }
-    // Modale FINALE d'enregistrement, commune aux deux modes de connexion (d'où son nom : ni
-    // "wifi", ni "ethernet"). Sans pendingObj, elle conclut le parcours Wi-Fi et rappelle
-    // saveNetwork() (qui relira les champs à ce moment-là) ; avec un pendingObj, elle conclut le
-    // parcours Ethernet et envoie directement cet objet déjà constitué par saveNetwork() -- ce qui
-    // évite de repasser par saveNetwork() et de rouvrir cette modale en boucle.
-    // Elle ne contient volontairement AUCUN récapitulatif de broches : celui-ci appartient à
-    // l'étape précédente du parcours Ethernet (cf. ethernetConfirmationOverlay()).
+    // Étape FINALE d'enregistrement, commune aux deux modes de connexion. Sans pendingObj, elle
+    // conclut le parcours Wi-Fi et rappelle saveNetwork() (qui relira les champs à ce moment-là) ;
+    // avec un pendingObj, elle conclut le parcours Ethernet et envoie directement cet objet déjà
+    // constitué par saveNetwork() -- ce qui évite de rouvrir ce panneau en boucle. Même panneau
+    // latéral que ethernetConfirmationOverlay(), qui la précède, sans la teinte d'alerte.
     networkConfirmationOverlay(hostname, pendingObj) {
         if (get('divNetworkConfirmationOverlay')) return;
-
-        let div = document.createElement('div');
-        div.id = 'divNetworkConfirmationOverlay';
-        div.className = 'modal-overlay';
         const host = hostname || 'espsomfyrts';
-        // Les URL annoncées sont toujours en minuscules : mDNS et les noms d'hôte y sont
-        // insensibles à la casse, mais afficher "http://Salon.local" laisserait croire que la
-        // casse compte. Le champ, lui, garde la saisie telle quelle (cf. syncHostLinks()).
-        const hostUrl = host.toLowerCase();
-
+        const ext = `<svg><use href="#svg-linkOut"></use></svg>`;
+        // Les étapes « quitter le Wi-Fi ESPSomfyRTS » ne valent que si la page vient du point d'accès.
+        const steps = this.isHotspot ? `<div class="side-panel-sec"><h3>${tr('SAVEWIFI_STEP')}</h3><ol class="side-panel-steps">
+            <li><i>1</i><span>${tr('SAVEWIFI_STEP_0')}</span></li><li><i>2</i><span>${tr('SAVEWIFI_STEP_1')}</span></li><li><i>3</i><span>${tr('SAVEWIFI_STEP_2')}</span></li></ol></div>` : '';
+        const div = document.createElement('div');
+        div.id = 'divNetworkConfirmationOverlay';
+        div.className = 'side-panel-overlay';
         div.innerHTML = `
-        <div class="message-content confirmNetwork-content">
-        <div class="modal-mobile-handle" onclick="handleMobileDismiss(this)"></div>
-        <!-- Pas de modalHeader() ici (confirmNetwork-header est un en-tête custom), mais on
-        garde le même principe que les autres modal-overlay : l'en-tête reste hors de
-        overlay-scroll-content pour rester fixe pendant que le corps défile. -->
-        <div class="confirmNetwork-header">
-        <div class="confirmNetwork-icon"><svg><use href="#svg-save"></use></svg></div>
-        <h3>${tr("SAVEWIFI_TITLE")}</h3>
+        <aside class="side-panel" role="dialog" aria-modal="true" aria-labelledby="netPanelTitle">
+        <div class="side-panel-head">
+        <span class="side-panel-icon"><svg><use href="#svg-save"></use></svg></span>
+        <div><span class="side-panel-kicker">${tr('NETSAVE_KICKER')}</span><h2 id="netPanelTitle">${tr('SAVEWIFI_TITLE')}</h2></div>
+        <button type="button" class="genmod-close" data-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button>
         </div>
-        <p class="confirmNetwork-intro">${tr("SAVEWIFI_INTRO")}</p>
-        <div class="overlay-scroll-content">
-        <div class="confirmNetwork-body">
-
-        <p class="alert-desc-sub">${tr("FIRST_CONNECT_HOSTNAME_DESC")}</p>
-        <div class="uniRow dirty-target">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="txtConfirmHostname">${tr("GENERAL_HOSTNAME")}</label>
-        <input id="txtConfirmHostname" class="inputAndSelect" type="text" maxlength="31" value="${host}">
+        <div class="side-panel-body" data-part="form">
+        <div class="genmod-note is-info"><svg><use href="#svg-info"></use></svg><div><span>${tr('SAVEWIFI_INTRO')}</span></div></div>
+        <div class="side-panel-sec"><h3>${tr('NETSAVE_NAME')}</h3>
+        <div class="gen-field"><label class="gen-field-label" for="txtConfirmHostname">${tr('GENERAL_HOSTNAME')}</label>
+        <div class="gen-input-box"><input id="txtConfirmHostname" class="gen-input" type="text" maxlength="31" value="${escAttr(host)}"></div>
+        <p class="gen-tile-desc">${tr('NETSAVE_HOST_HINT')}</p></div></div>
+        <div class="side-panel-sec"><h3>${tr('SAVEWIFI_ACCES_AFTER')}</h3>
+        <a class="side-panel-link" id="lnkConfirmHostLocal" target="_blank"><span></span>${ext}</a>
+        <a class="side-panel-link" id="lnkConfirmHostPlain" target="_blank"><span></span>${ext}</a>
+        <p class="gen-tile-desc">${tr('SAVEWIFI_AFTER_DESC_2')}</p></div>
+        ${steps}
         </div>
+        <div class="side-panel-body" data-part="busy" hidden>
+        <div class="side-panel-wait"><span class="side-panel-spin" aria-hidden="true"></span><b>${tr('NETSAVE_BUSY_TITLE')}</b><span>${tr('WAIT_MSG_NET_SWITCH')}</span></div>
+        <div class="side-panel-sec"><h3>${tr('NETSAVE_NEW_ADDR')}</h3><a class="side-panel-link" id="lnkConfirmHostBusy" target="_blank"><span></span>${ext}</a></div>
         </div>
-        </div>
-        <div>
-        <div class="alert-title">${tr("SAVEWIFI_ACCES_AFTER")}</div>
-        <p class="alert-desc-sub">${tr("SAVEWIFI_AFTER_DESC_0")}</p>
-        <div class="links-container">
-        <a id="lnkConfirmHostLocal" href="http://${hostUrl}.local" target="_blank">http://${hostUrl}.local</a>
-        <span class="or-separator">${tr("SAVEWIFI_AFTER_DESC_1")}</span>
-        <a id="lnkConfirmHostPlain" href="http://${hostUrl}" target="_blank">http://${hostUrl}</a>
-        </div>
-        <p class="alert-desc-sub">${tr("SAVEWIFI_AFTER_DESC_2")}</p>
-        </div>
-        </div>
-        <div class="hrMessage"></div>
-        <div class="confSaveWifi-divStepsTitle">
-        <div class="confSaveWifi-stepsTitle">${tr("SAVEWIFI_STEP")}</div>
-        <ol class="confSaveWifi-steps">
-        <li>${tr("SAVEWIFI_STEP_0")}</li>
-        <li>${tr("SAVEWIFI_STEP_1")}</li>
-        <li>${tr("SAVEWIFI_STEP_2")}</li>
-        </ol>
-        </div>
-        </div>
-
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnConfirmNetCancel" type="button" line>${tr("BT_CANCEL_1")}</button>
-        <button id="btnConfirmNetSave" type="button">
-        <svg><use href="#svg-save"></use></svg>
-        <span>${tr("BT_SAVE")}</span>
-        </button>
-        </div>
-        </div>
-        </div>`;
-
-        get('divContainer').appendChild(div);
-        shOverlay(div);
-
-        get('btnConfirmNetCancel').onclick = () => closeOverlay(div);
-
-        // Les adresses d'accès annoncées juste au-dessus dépendent directement du nom d'hôte : on
-        // les réécrit à chaque frappe pour que l'utilisateur voie exactement l'URL qu'il devra
-        // saisir après la bascule. textContent/href assignés en propriété (jamais par innerHTML) --
-        // la valeur vient d'un champ libre.
-        const hostFld = get('txtConfirmHostname');
-        const lnkLocal = get('lnkConfirmHostLocal');
-        const lnkPlain = get('lnkConfirmHostPlain');
-        const syncHostLinks = () => {
-            // Toujours en minuscules, quelle que soit la saisie : les URL affichées doivent être
-            // celles réellement utilisables, sans laisser penser que la casse compte.
-            const h = ((hostFld.value || '').trim() || 'espsomfyrts').toLowerCase();
-            if (lnkLocal) { lnkLocal.href = `http://${h}.local`; lnkLocal.textContent = `http://${h}.local`; }
-            if (lnkPlain) { lnkPlain.href = `http://${h}`; lnkPlain.textContent = `http://${h}`; }
+        <div class="side-panel-foot">
+        <span class="genmod-foot-hint">${tr('NETSAVE_HINT')}</span>
+        <div class="genmod-foot-btns">
+        <button id="btnConfirmNetCancel" type="button" class="gen-btn" data-close>${tr('BT_CANCEL_1')}</button>
+        <button id="btnConfirmNetSave" type="button" class="gen-btn gen-btn-primary"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
+        </div></div>
+        </aside>`;
+        const q = (s) => div.querySelector(s);
+        const close = () => {
+            if (div.dataset.closing || div.dataset.busy) return;
+            div.dataset.closing = 'true';
+            document.removeEventListener('keydown', onKey);
+            div.classList.remove('open');
+            setTimeout(() => div.remove(), 250);
         };
-        if (hostFld) hostFld.oninput = syncHostLinks;
+        const onKey = (e) => { if (e.key === 'Escape') close(); };
+        document.addEventListener('keydown', onKey);
+        div.onclick = (e) => { if (e.target === div || e.target.closest('[data-close]')) close(); };
 
-        get('btnConfirmNetSave').onclick = () => {
-            // Même validation que General.setGeneral(), mais bloquante ici : contrairement à
-            // l'ancienne étape d'assistant, c'est la dernière occasion de corriger le nom d'hôte
-            // avant que l'appareil ne change de réseau.
-            const hostVal = hostFld ? (hostFld.value || '').trim() : '';
-            if (hostFld && (!hostVal || !/^[a-zA-Z0-9-]+$/.test(hostVal) || hostVal.length > 31)) {
-                ui.errorMessage(tr('ERR_HOSTNAME'), tr('ERR_HOSTNAME_CHARS'));
+        // Les adresses annoncées suivent le nom saisi, toujours en minuscules : mDNS y est
+        // insensible et afficher « Salon.local » laisserait croire que la casse compte.
+        // textContent/href en propriété, jamais innerHTML : la valeur vient d'un champ libre.
+        const hostFld = q('#txtConfirmHostname');
+        const syncHostLinks = () => {
+            const h = ((hostFld.value || '').trim() || 'espsomfyrts').toLowerCase();
+            [['#lnkConfirmHostLocal', `http://${h}.local`], ['#lnkConfirmHostPlain', `http://${h}`], ['#lnkConfirmHostBusy', `http://${h}.local`]]
+                .forEach(([sel, url]) => { const a = q(sel); a.href = url; a.firstElementChild.textContent = url; });
+        };
+        hostFld.oninput = syncHostLinks;
+        syncHostLinks();
+        const busy = (on) => {
+            if (on) div.dataset.busy = 'true'; else delete div.dataset.busy;
+            q('[data-part="form"]').hidden = on;
+            q('[data-part="busy"]').hidden = !on;
+            q('.side-panel-foot .genmod-foot-hint').hidden = on;
+            div.querySelectorAll('[data-close]').forEach(b => { b.disabled = on; });
+            const save = q('#btnConfirmNetSave');
+            save.disabled = on;
+            save.innerHTML = on ? `<span class="side-panel-btn-spin" aria-hidden="true"></span><span>${tr('WAIT_MSG_SAVING')}</span>`
+                : `<svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span>`;
+        };
+
+        q('#btnConfirmNetSave').onclick = () => {
+            // Même validation que General.setGeneral(), mais bloquante ici : c'est la dernière
+            // occasion de corriger le nom d'hôte avant que l'appareil ne change de réseau.
+            const hostVal = (hostFld.value || '').trim();
+            if (!hostVal || !/^[a-zA-Z0-9-]+$/.test(hostVal) || hostVal.length > 31) {
+                ui.fieldError(hostFld, tr('ERR_HOSTNAME_CHARS'));
                 return;
             }
-            // On ne ferme plus la fenêtre : l'ESP32 enregistre puis redémarre son réseau, donc la
-            // connexion va être coupée. On affiche un indicateur de chargement à la place pour que
-            // l'utilisateur comprenne que quelque chose est en cours plutôt que de croire à un bug.
-            get('btnConfirmNetCancel').disabled = true;
-            get('btnConfirmNetSave').disabled = true;
-            ui.waitMessage(div, 'WAIT_MSG_NET_SWITCH');
-            // Ethernet : l'objet réseau est déjà constitué (cf. saveNetwork()), on l'envoie tel
-            // quel. Wi-Fi : on repasse par saveNetwork(), qui relit les champs à cet instant.
+            // La fenêtre ne se ferme pas : l'appareil enregistre puis change de réseau, la page va
+            // perdre la connexion. Un échec d'envoi la rend de nouveau modifiable.
+            busy(true);
+            const onFail = () => busy(false);
             // Le nom d'hôte voyage dans le même /setNetwork : le firmware l'enregistre avant de
             // programmer un éventuel redémarrage.
-            const hostname = hostVal && hostVal !== (window.__currentHostname || '') ? hostVal : undefined;
+            const hostname = hostVal !== (window.__currentHostname || '') ? hostVal : undefined;
             if (pendingObj) {
                 if (hostname) pendingObj.hostname = hostname;
-                this.sendNetworkSettings(pendingObj);
+                this.sendNetworkSettings(pendingObj, { onFail });
             }
-            else this.saveNetwork({ hostname });
+            else this.saveNetwork({ hostname, onFail });
         };
+        get('divContainer').appendChild(div);
+        void div.offsetWidth;
+        div.classList.add('open');
     }
     calcWaveStrength(sig) {
         let wave = 0;

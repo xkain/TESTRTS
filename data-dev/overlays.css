@@ -484,10 +484,6 @@ body.modal-open {
     max-height: 100vh;
     overflow: hidden;
 }
-.modal-mobile-handle {
-    display: none;
-}
-
 .modalHeader-handle {
     display: none;
 }
@@ -1639,120 +1635,25 @@ button[line].fw-sidebar-button:hover {
 .side-panel-foot .gen-btn-danger,
 .side-panel-foot .gen-btn-danger:hover { background: var(--destroy); color: #fff; box-shadow: none; }
 .genmod-note.is-danger { background: var(--danger-bg); color: var(--danger); }
+.side-panel-overlay[data-busy] { cursor: progress; }
+.side-panel-body[hidden] { display: none; }
+.side-panel-foot .genmod-foot-hint[hidden] { display: none; }
+.side-panel-sec .gen-field { padding: 4px 0 10px; }
+.side-panel-link { display: flex; align-items: center; gap: 10px; margin: 4px 0; padding: 10px 12px; border-radius: var(--r-2); background: var(--surface-2); color: var(--color-accent); font-size: var(--fs-4); font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
+.side-panel-link svg { width: 16px; height: 16px; flex: none; margin-left: auto; fill: currentColor; }
+.side-panel-sec > .gen-tile-desc { margin: 4px 0 10px; }
+.side-panel-steps { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 12px; padding: 0; list-style: none; }
+.side-panel-steps li { display: flex; gap: 12px; align-items: flex-start; font-size: var(--fs-3); line-height: 1.45; }
+.side-panel-steps i { display: grid; place-items: center; width: 26px; height: 26px; flex: none; border-radius: var(--r-pill); background: var(--color-accent); color: var(--color-text-on-accent); font-style: normal; font-size: var(--fs-2); font-weight: 800; }
+.side-panel-wait { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 26px 18px; border-radius: var(--r-4); background: #141619; color: #fff; text-align: center; }
+.side-panel-wait b { font-size: var(--fs-4); }
+.side-panel-wait span:last-child { font-size: var(--fs-3); line-height: 1.5; color: #c9ccd3; }
+.side-panel-spin { width: 44px; height: 44px; border-radius: var(--r-pill); border: 4px solid rgba(255, 255, 255, .15); border-top-color: #fff; animation: wait-spinner-rotate 0.9s linear infinite; }
+.side-panel-btn-spin { width: 16px; height: 16px; flex: none; border-radius: var(--r-pill); border: 3px solid rgba(255, 255, 255, .35); border-top-color: #fff; animation: wait-spinner-rotate 0.9s linear infinite; }
 @media (max-width: 767px) {
     .side-panel.is-danger { border-left: 0; border-top: 3px solid var(--danger); }
 }
 
-/* ==========================================================
- * Modale confirmation sauvegarde Wi-Fi (modal-wificonfirm)
- * ========================================================== */
-
-.confirmNetwork-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    margin: 0 0 20px 0;
-    /* Le header est désormais hors de .overlay-scroll-content (fixe, pattern des autres
-    modal-overlay) : il ne bénéficie plus du padding de ce dernier et doit porter le sien. */
-    padding: 20px 20px 0 20px;
-}
-.confirmNetwork-icon {
-    width: 64px;
-    height: 64px;
-    background: var(--color-accent-transp-94);
-    border-radius:var(--radius-icon-badge);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 12px;
-    border: 1px solid var(--color-accent-transp-80);
-    color: var(--color-accent);
-}
-.confirmNetwork-icon svg {
-    width: 32px;
-    height: 32px;
-    fill: var(--color-accent);
-}
-.confirmNetwork-header h3 {
-    font-size: 1.4em;
-    color: var(--color-text-main);
-    font-weight: 600;
-    margin: 0;
-}
-.confirmNetwork-body {
-    text-align: left;
-}
-.confirmNetwork-intro {
-    font-size: 0.95em;
-    color: var(--color-text-main);
-    line-height: 1.5;
-    margin-bottom: 16px;
-    max-width: 350px;
-    margin: 0 auto 30px;
-    text-align: center;
-}
-.alert-desc-sub {
-    color: var(--color-text-secondary);
-    font-size: 0.85em;
-    margin-top: 8px;
-    margin-bottom: 0;
-}
-.confirmNetwork-body .uniRow{
-    margin: 2px 0 11px 0;
-}
-.links-container {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
-    padding: 10px;
-    background: var(--color-bg-surface-4);
-    border-radius: var(--radius-row);
-}
-.links-container a {
-    color: var(--color-text-warning);
-    font-weight: 600;
-    text-decoration: none;
-    border-bottom: 1px dashed rgba(255, 182, 77, 0.4);
-    transition: opacity 0.2s;
-}
-.links-container a:hover {
-    opacity: 0.8;
-}
-.or-separator {
-    color: #666;
-    font-size: 0.8em;
-}
-/*2ème page confirm save wifi*/
-.confSaveWifi-stepsTitle {
-    font-weight: 600;
-    margin-bottom: 15px;
-    color: var(--color-accent);
-    font-size: 1em;
-}
-.confSaveWifi-divStepsTitle { text-align: left;}
-.confSaveWifi-steps {
-    margin: 0;
-    padding-left: 25px;
-    border-left: 3px solid var(--color-accent);
-    line-height: 1.5;
-    font-size: 0.92em;
-}
-.confSaveWifi-steps li {
-    margin-bottom: 12px;
-    padding-left: 5px;
-}
-@media (max-width: 767px) {
-
-    .confirmNetwork-header {
-        margin: 15px 0 20px 0;
-        /* .confirmNetwork-content porte déjà le padding:20px ci-dessus sur mobile -- on annule
-        le padding desktop du header pour ne pas le doubler. */
-        padding: 0;
-    }
-}
 /* Update*/
 #selVersion.inputAndSelect {
     font-size: 15px;
@@ -4047,35 +3948,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
         box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.3);
         transform: translateY(100%);
         animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    .modal-mobile-handle {
-        display: block;
-        position: relative;
-        width: 100%;
-        height: 30px;
-        cursor: pointer;
-        background: transparent;
-    }
-    .modal-mobile-handle::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 40px;
-        height: 5px;
-        background-color: var(--color-border-hr-soft);
-        border-radius: 3px;
-        opacity: 0.8;
-        transition: opacity 0.2s, background-color 0.2s;
-    }
-    .modal-mobile-handle:active::after {
-        opacity: 1;
-        background-color: var(--color-accent);
-    }
-
-    .modal-mobile-handle:active {
-        opacity: 1;
     }
     .modal-overlay.overlay-exit .message-content {
         animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
