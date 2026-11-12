@@ -3660,9 +3660,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
 .gpioRadio-val { color: var(--color-accent); font-weight: bold; }
 .gpioRadio-sep { color: var(--color-text-secondary); opacity: 0.6; }
 
-.rssi-unit {
-    font-size: 16px;
-}
 .blocradio {
     padding: 8px;
     margin-bottom: 15px;
@@ -3895,110 +3892,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
 }
 
 
-/* -------- ASSISTANT DE REGLAGE RADIO --------
-   Les six ecrans de l'assistant partagent .information-text avec le reste des modales ; seuls le
-   titre de l'etape, la liste des relevés et le couple de valeurs finales ont besoin de regles
-   propres. Rien ici ne redefinit une couleur : tout passe par les variables de theme, sans quoi
-   l'assistant serait le seul ecran a ne pas suivre le mode sombre. */
-#divRadioWizard .overlay-scroll-content { min-height: 360px; }
-/* En colonne flex, #wizBody peut s'ETIRER à la hauteur disponible -- sans quoi la hauteur plancher
-   ci-dessus laisse un vide sous lui et margin-top:auto n'a rien contre quoi pousser. */
-#wizBody {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    gap: 15px;
-}
-.wiz-accueil {
-    margin: auto 0;
-    padding-top: 0;
-    padding-bottom: 0;
-}
-/* .empty-state est conçu pour une liste VIDE (texte effacé, il n'annonce rien à faire) -- ici
-   c'est l'inverse, c'est la consigne du premier écran, elle doit se lire. */
-.wiz-accueil .label {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-text-main);
-    line-height: 1.2;
-    margin-bottom: 6px;
-}
-.wiz-accueil .empty-subtext {
-    font-size: 13px;
-    color: var(--color-text-main);
-    opacity: 1;
-    line-height: 1.2;
-}
-.wiz-notice {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 12px 14px;
-    border: 1px solid var(--color-border);
-    border-left: 3px solid var(--color-accent);
-    border-radius: var(--radius-row);
-    background: var(--color-bg-row);
-    font-size: 12px;
-    line-height: 1.45;
-    color: var(--color-text-secondary);
-}
-.wiz-notice svg {
-    width: 18px;
-    height: 18px;
-    flex: 0 0 auto;
-    margin-top: 1px;
-    color: var(--color-accent);
-}
-.wiz-notice-texte { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.wiz-notice.warning { border-left-color: var(--color-warning); }
-.wiz-notice.warning svg { color: var(--color-warning); }
-.wiz-notice.warning .wiz-title { color: var(--color-warning); }
-.wiz-title {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-text-main);
-    margin-bottom: 6px;
-}
-.wiz-liste {
-    list-style: none;
-    margin: 14px 0 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--color-text-secondary);
-}
-.wiz-liste li {
-    display: flex;
-    gap: 6px;
-    align-items: baseline;
-    padding: 7px 12px;
-    background: var(--color-bg-row);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-row);
-}
-.wiz-liste b { color: var(--color-text-main); font-weight: 600; }
-.wiz-resultat {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 16px;
-}
-.wiz-resultat > div {
-    flex: 1 1 160px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 12px 14px;
-    background: var(--color-bg-row);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-row);
-}
-.wiz-resultat span { font-size: 11px; color: var(--color-text-secondary); }
-.wiz-resultat b { font-size: 17px; font-weight: 600; color: var(--color-accent); }
-.progress-bar-label.heard { color: var(--color-accent); font-weight: 600; }
 
 
 
@@ -6307,11 +6200,6 @@ input.gen-input.mqtt-mono {
         display: none;
     }
 }
-#divRadioWizard .wiz-notice.ok svg, #divRadioWizard .wiz-ok-icon { fill: var(--color-success); color: var(--color-success); }
-#divRadioWizard .wiz-notice.info svg { fill: var(--color-accent); color: var(--color-accent); }
-#divRadioWizard .wiz-notice.ok { border-left-color: var(--color-success); }
-#divRadioWizard .wiz-notice.ok .wiz-title { color: var(--color-success); }
-#divRadioWizard .wiz-notice.info { border-left-color: var(--color-accent); }
 @keyframes rdpulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 45%, transparent); } 100% { box-shadow: 0 0 0 14px transparent; } }
 /* Lames du store vénitien (svg-window-blind) : chacune s'aplatit sur son propre axe, de la tranche
    (inclinaison 0) à la pleine largeur (100). Même --shade-tilt que la carte, rien à changer en JS. */

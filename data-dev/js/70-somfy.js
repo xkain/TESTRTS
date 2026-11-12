@@ -613,56 +613,83 @@ class Somfy {
             if (!scan.scanning) this.wizStopping = false;
             return;
         }
-        let div = this.scanFrequency();
-        let spanTestFreq = get('spanTestFreq');
-        let spanTestRSSI = get('spanTestRSSI');
-        let spanBestFreq = get('spanBestFreq');
-        let spanBestRSSI = get('spanBestRSSI');
-
-        if (spanBestFreq) {
-            spanBestFreq.innerHTML = scan.RSSI !== -100 ? scan.frequency.fmt('###.00') : '----';
+        const div = this.scanFrequency();
+        if (!div) return;
+        const s = this._scan || (this._scan = { pts: Array(100).fill(null), idx: -1, pass: 1 });
+        const f = parseFloat(scan.testFreq), r = parseInt(scan.testRSSI, 10);
+        if (isFinite(f) && isFinite(r)) {
+            const i = Math.min(99, Math.max(0, Math.round((f - 433) * 100)));
+            if (i < s.idx) s.pass++;
+            s.idx = i;
+            s.pts[i] = r;
+            div.querySelector('#spanTestFreq').textContent = f.toFixed(2);
+            this.scanRead(div, 'Test', r);
         }
-        if (spanBestRSSI) {
-            const bestRSSIVal = scan.RSSI !== -100 ? scan.RSSI : '----';
-            spanBestRSSI.innerHTML = bestRSSIVal;
-
-            // MÀJ dynamique de la couleur de la carte de DROITE (Optimal)
-            this.updateCardState(document.querySelector('.scan-card.optimal'), bestRSSIVal);
-        }
-        if (spanTestFreq) {
-            spanTestFreq.innerHTML = scan.testFreq.fmt('###.00');
-        }
-        if (spanTestRSSI) {
-            const testRSSIVal = scan.testRSSI !== -100 ? scan.testRSSI : '----';
-            spanTestRSSI.innerHTML = testRSSIVal;
-
-            // MÀJ dynamique de la couleur de la carte de GAUCHE (Balayage actuel)
-            this.updateCardState(document.querySelector('.scan-card:not(.optimal)'), testRSSIVal);
-
-            if (this.rssiGraphWave) this.rssiGraphWave.update(scan.testRSSI);
-        }
-        if (scan.RSSI !== -100)
+        if (scan.RSSI !== -100) {
             div.setAttribute('data-frequency', scan.frequency);
-    }
-
-    // Fonction générique ultra propre pour appliquer les états aux cartes
-    updateCardState(cardElement, rssiVal) {
-        if (!cardElement) return;
-
-        // On nettoie les anciennes classes
-        cardElement.classList.remove('state-success', 'state-warning', 'state-error');
-
-        const v = parseInt(rssiVal);
-        if (isNaN(v) || rssiVal === '----') return; // Style neutre d'origine si vide
-
-        // Application des paliers de couleur (-30 à -60 / -60 à -90 / -90 et moins)
-        if (v >= -60) {
-            cardElement.classList.add('state-success');
-        } else if (v < -60 && v >= -90) {
-            cardElement.classList.add('state-warning');
-        } else {
-            cardElement.classList.add('state-error');
+            div.setAttribute('data-rssi', scan.RSSI);
+            div.querySelector('#spanBestFreq').textContent = parseFloat(scan.frequency).toFixed(2);
+            this.scanRead(div, 'Best', scan.RSSI);
         }
+        this.scanDraw(div);
+    }
+    // Paliers de la legende : excellent au-dessus de -60 dBm, faible jusqu'a -90, bruit en dessous.
+    scanLevel(r) { return r >= -60 ? 'ok' : r >= -90 ? 'weak' : 'noise'; }
+    scanRead(div, which, r) {
+        const lvl = this.scanLevel(r);
+        div.querySelector(`#span${which}RSSI`).textContent = r;
+        const q = div.querySelector(`#scan${which}Q`);
+        q.className = 'scan-q is-' + lvl;
+        q.textContent = tr({ ok: 'SCANFREQ_RSSI_EXCELLENT_DESC', weak: 'SCANFREQ_RSSI_WEAK_DESC', noise: 'SCANFREQ_RSSI_NOISE_DESC' }[lvl]);
+    }
+    scanDraw(div) {
+        const s = this._scan;
+        if (!s) return;
+        const d = { ok: '', weak: '', noise: '' };
+        s.pts.forEach((r, i) => {
+            if (r === null) return;
+            const v = Math.min(-30, Math.max(-110, r));
+            const y = 10 + (-30 - v) / 80 * 160;
+            d[this.scanLevel(v)] += `M${i * 6 + 0.5} 170V${y.toFixed(1)}h5V170z`;
+        });
+        div.querySelector('#scanBarsN').setAttribute('d', d.noise);
+        div.querySelector('#scanBarsW').setAttribute('d', d.weak);
+        div.querySelector('#scanBarsG').setAttribute('d', d.ok);
+        const x = (s.idx < 0 ? 0 : s.idx * 6 + 3).toFixed(1);
+        const cur = div.querySelector('#scanCursor');
+        cur.setAttribute('x1', x); cur.setAttribute('x2', x);
+        div.querySelector('#scanPass').textContent = tr('SCANFREQ_PASS').replace('{n}', s.pass);
+    }
+    scanLegend() {
+        const row = (lvl, k) => `<div class="scan-leg-row"><i class="is-${lvl}"></i><b>${tr(k)}</b><span>${tr(k + '_DESC')}</span></div>`;
+        return `<span class="genmod-state-key">${tr('SCANFREQ_LEGEND')}</span>`
+            + row('ok', 'SCANFREQ_RSSI_EXCELLENT') + row('weak', 'SCANFREQ_RSSI_WEAK') + row('noise', 'SCANFREQ_RSSI_NOISE');
+    }
+    // run : balayage en cours ; found : une frequence retenue ; none : rien au-dessus du bruit.
+    scanSetMode(div, mode) {
+        // toggleAttribute et non .hidden : les éléments SVG du graphique n'ont pas la propriété.
+        const show = (sel, on) => { const e = div.querySelector(sel); if (e) e.toggleAttribute('hidden', !on); };
+        show('#scanIntro', mode === 'run');
+        show('#scanFound', mode === 'found');
+        show('#scanNone', mode === 'none');
+        show('#scanReadCur', mode === 'run');
+        show('#scanCursor', mode === 'run');
+        show('#scanLegCursor', mode === 'run');
+        show('#scanBestMark', mode === 'found');
+        show('#scanLegBest', mode === 'found');
+        show('#btnStopScanning', mode === 'run');
+        show('#btnRestartScanning', mode !== 'run');
+        show('#btnCopyFrequency', mode === 'found');
+        show('#btnCloseScanning', mode === 'none');
+        div.querySelector('.genmod-head-title').textContent = tr(mode === 'run' ? 'SCANFREQ_RUNNING' : 'SCANFREQ_DONE');
+        div.querySelector('#scanWinHint').textContent = mode === 'none' ? '' : tr(mode === 'run' ? 'SCANFREQ_HINT_RUN' : 'SCANFREQ_HINT_FOUND');
+        if (mode !== 'found') return;
+        const f = parseFloat(div.getAttribute('data-frequency')), r = div.getAttribute('data-rssi');
+        div.querySelector('#scanFoundTitle').textContent = tr('SCANFREQ_FOUND_TITLE').replace('{f}', f.toFixed(2));
+        div.querySelector('#scanFoundDesc').textContent = tr('SCANFREQ_FOUND_DESC').replace('{rssi}', r);
+        div.querySelector('#btnCopyFrequency').textContent = tr('BT_COPY_FREQUENCY').replace('{f}', f.toFixed(2));
+        const x = Math.min(99, Math.max(0, Math.round((f - 433) * 100))) * 6 + 3;
+        div.querySelector('#scanBestMark').setAttribute('d', `M${x - 7} 0h14l-7 9z`);
     }
     scanFrequency(initScan) {
         // Meme garde que le test et l'assistant : le balayage a BESOIN de la radio. Sans ce
@@ -678,456 +705,77 @@ class Somfy {
         let div = get('divScanFrequency');
 
         if (!div) {
-            div = document.createElement('div');
-            div.id = 'divScanFrequency';
-            div.className = 'inst-overlay';
-
-            div.innerHTML = `
-            <div class="instructions-content">
-
-            ${overlayHeader('SCANFREQ_TITLE', 'SCANFREQ_SCAN_DESC', 'svg-tabRadio', { subtitle: 'SCANFREQ_SCAN_DESC' })}
-            <div class="overlay-scroll-content">
-
-            <div class="scan-cards">
-            <div class="scan-card">
-            <div class="labelMAJ">${tr("SCANFREQ_SCAN")}</div>
-            <div class="scan-card-content">
-            <div class="scan-card-icon">
-            <svg><use href="#svg-search"></use></svg>
-            </div>
-            <div class="scan-card-info">
-            <div class="scan-card-main">
-            <span id="spanTestFreq">433.14</span>
-            <small>${tr("UNIT_MHZ")}</small>
-            </div>
-            <div class="scan-card-rssi-row">
-            <span class="rssi-label">${tr('SCANFREQ_DIV_RSSI')}</span>
-            <strong id="spanTestRSSI" class="rssi-value">----</strong>
-            <small class="rssi-unit">${tr("UNIT_DBM")}</small>
-            </div>
-            </div>
-            </div>
-            </div>
-
-            <div class="scan-card optimal">
-            <div class="labelMAJ">${tr("SCANFREQ_FREQUENCY")}</div>
-            <div class="scan-card-content">
-            <div class="scan-card-icon target">
-            <svg><use href="#svg-target"></use></svg>
-            </div>
-            <div class="scan-card-info">
-            <div class="scan-card-main best">
-            <span id="spanBestFreq">---.--</span>
-            <small>${tr("UNIT_MHZ")}</small>
-            </div>
-            <div class="scan-card-rssi-row best">
-            <span class="rssi-label">${tr('SCANFREQ_DIV_RSSI')}</span>
-            <strong id="spanBestRSSI" class="rssi-value">----</strong>
-            <small class="rssi-unit">${tr("UNIT_DBM")}</small>
-            </div>
-            </div>
-            </div>
-            </div>
-            </div>
-
-            <div class="scan-dashboard-bloc">
-            <div class="dashboard-main-action">
-            <div id="scanStatusText" class="scan-status-waiting-text">
-            <span class="spinner-inline"></span>${tr('WAIT_MSG_SCANNING')}
-            </div>
-
-            <div id="scanStatusResult" class="scan-status-result-text" style="display:none">
-            <span>${tr('SCANFREQ_NO_SIGNAL')}</span>
-            </div>
-
-            <button id="btnCopyFrequency" type="button" class="btn-scan-main" style="display:none" onclick="somfy.setScannedFrequency()">
-            <svg class="icon-btn"><use href="#svg-save"></use></svg>
-            ${tr("BT_COPY_FREQUENCY")}
-            </button>
-            </div>
-            </div>
-
-            <details id="graphAccordion" class="uniblocCol scanfreq-help-accordion" open>
-            <summary class="scanfreq-help-trigger">
-            <div class="scanfreq-title-wrapper">
-            <svg class="help-svg"><use href="#svg-wave"></use></svg>
-            <span>${tr('SCANFREQ_GRAPH_TITLE')}</span>
-            </div>
-            <svg class="accordion-arrow"><use href="#svg-arrowDown"></use></svg>
-            </summary>
-
-            <div class="graph-zone-wrapper">
-            <div id="graphCanvasContainer" class="uniblocrRssiCanvas">
-            <canvas id="rssiWave"></canvas>
-            </div>
-            </div>
-            </details>
-
-            <details class="uniblocCol scanfreq-help-accordion">
-            <summary class="scanfreq-help-trigger">
-            <div class="scanfreq-title-wrapper">
-            <svg class="help-svg"><use href="#icon-question"></use></svg>
-            <span>${tr('SCANFREQ_UNDERSTANDING_RSSI')}</span>
-            </div>
-            <svg class="accordion-arrow"><use href="#svg-arrowDown"></use></svg>
-            </summary>
-
-            <div class="rssi-scale-container">
-            <div class="rssi-scale-zone zone-success">
-            <div class="rssi-zone-header">
-            <span class="rssi-badge">
-            <svg class="icon-inline"><use href="#svg-succes"></use></svg>
-            ${tr('SCANFREQ_RSSI_EXCELLENT')}
-            </span>
-            </div>
-            <p class="rssi-zone-desc">${tr('SCANFREQ_RSSI_EXCELLENT_DESC')}</p>
-            <div class="rssi-visual-bar bar-success">
-            <span></span><span></span><span></span><span></span><span></span><span class="off"></span><span class="off"></span>
-            </div>
-            </div>
-
-            <div class="rssi-scale-zone zone-warning">
-            <div class="rssi-zone-header">
-            <span class="rssi-badge">
-            <svg class="icon-inline"><use href="#svg-warning"></use></svg>
-            ${tr('SCANFREQ_RSSI_WEAK')}
-            </span>
-            </div>
-            <p class="rssi-zone-desc">${tr('SCANFREQ_RSSI_WEAK_DESC')}</p>
-            <div class="rssi-visual-bar bar-warning">
-            <span></span><span></span><span></span><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span>
-            </div>
-            </div>
-
-            <div class="rssi-scale-zone zone-error">
-            <div class="rssi-zone-header">
-            <span class="rssi-badge">
-            <svg class="icon-inline"><use href="#svg-error"></use></svg>
-            ${tr('SCANFREQ_RSSI_NOISE')}
-            </span>
-            </div>
-            <p class="rssi-zone-desc">${tr('SCANFREQ_RSSI_NOISE_DESC')}</p>
-            <div class="rssi-visual-bar bar-error">
-            <span></span><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span>
-            </div>
-            </div>
-            </div>
-            </details>
-            </div>
-
-            <div class="hrDivFooter-Instruc"></div>
-
-            <div class="button-container-overlay footer-controls-row">
-            <button id="btnCloseScanning" type="button" line class="btn-scan-action btn-secondary">${tr("BT_CLOSE")}</button>
-
-            <button id="btnRestartScanning" type="button" line class="btn-scan-action btn-success" style="display:none" onclick="somfy.scanFrequency(true)" title="${tr('BT_START_SCAN')}">
-            <svg class="icon-btn"><use href="#svg-play"></use></svg>
-            <span>${tr('BT_START')}</span>
-            </button>
-            <button id="btnStopScanning" type="button" class="btn-scan-action btn-danger" onclick="somfy.stopScanningFrequency(true)" title="${tr('BT_STOP_SCAN')}">
-            <svg class="icon-btn"><use href="#svg-stop"></use></svg>
-            <span>${tr('BT_STOP')}</span>
-            </button>
-
-            </div>
-            </div>`;
-
+            const rx = (parseFloat(get('slidRxFrequency')?.value) || 433420) / 1000;
+            const bw = (parseFloat(get('slidRxBandwidth')?.value) || 9997) / 100;
+            const X = (f) => Math.min(600, Math.max(0, (f - 433) * 600));
+            const winX = X(rx - bw / 2000), winW = Math.max(3, X(rx + bw / 2000) - winX);
+            const axis = [['433.00', 0, 'start'], ['433.25', 150, 'middle'], ['433.50', 300, 'middle'], ['433.75', 450, 'middle'], ['434.00 MHz', 600, 'end']]
+                .map(([t, x, a]) => `<text x="${x}" y="190" text-anchor="${a}">${t}</text>`).join('');
+            const read = (id, key, best) => `<div class="scan-read${best ? ' is-best' : ''}" id="${id}">
+                <span class="genmod-state-key">${tr(key)}</span>
+                <span class="scan-read-val"><b id="span${best ? 'Best' : 'Test'}Freq">---.--</b><small>${tr('UNIT_MHZ')}</small></span>
+                <span class="scan-read-sig"><span id="span${best ? 'Best' : 'Test'}RSSI">--</span> ${tr('UNIT_DBM')} <span class="scan-q" id="scan${best ? 'Best' : 'Test'}Q"></span></span></div>`;
+            const note = (id, cls, ico, title, desc) => `<div class="genmod-note ${cls}" id="${id}" hidden><svg><use href="#svg-${ico}"></use></svg>
+                <div><b${title ? '' : ` id="${id}Title"`}>${title}</b><span${desc ? '' : ` id="${id}Desc"`}>${desc}</span></div></div>`;
+            div = firmware.taskWindow('divScanFrequency', {
+                id: 'scanWin', icon: 'svg-scan', titleKey: 'SCANFREQ_TITLE', descKey: 'SCANFREQ_SCAN_DESC',
+                stateKey: tr('SCANFREQ_CURRENT'), stateValue: rx.toFixed(3) + ' ' + tr('UNIT_MHZ'),
+                stateNote: '± ' + Math.round(bw / 2) + ' ' + tr('UNIT_KHZ'),
+                sideExtra: `<div class="scan-legend">${this.scanLegend()}</div>`,
+                sectionKey: 'SCANFREQ_RUNNING', hintKey: 'SCANFREQ_HINT_RUN', footId: 'scanFoot',
+                bodyHtml: `<p class="scan-intro" id="scanIntro">${tr('SCANFREQ_HOLD_DESC')}</p>
+                ${note('scanFound', 'is-ok', 'succes', '', '')}
+                ${note('scanNone', 'is-warn', 'warning', tr('SCANFREQ_NO_SIGNAL'), tr('SCANFREQ_NO_SIGNAL_DESC'))}
+                <div class="scan-reads">${read('scanReadCur', 'SCANFREQ_SCAN', false)}${read('scanReadBest', 'SCANFREQ_FREQUENCY', true)}</div>
+                <div class="scan-chart">
+                <div class="scan-chart-head"><span class="genmod-state-key">${tr('SCANFREQ_GRAPH_TITLE')}</span><span id="scanPass"></span></div>
+                <svg viewBox="0 0 600 196" role="img" aria-label="${escAttr(tr('SCANFREQ_GRAPH_TITLE'))}">
+                <rect class="scan-win" x="${winX.toFixed(1)}" y="6" width="${winW.toFixed(1)}" height="164" rx="6"></rect>
+                <path class="scan-grid" d="M0 50H600M0 110H600"></path><path class="scan-axis" d="M0 170H600"></path>
+                <path id="scanBarsN" class="scan-bar is-noise"></path><path id="scanBarsW" class="scan-bar is-weak"></path><path id="scanBarsG" class="scan-bar is-ok"></path>
+                <line id="scanCursor" class="scan-cursor" x1="0" y1="2" x2="0" y2="172"></line>
+                <path id="scanBestMark" class="scan-best" hidden></path>
+                <g class="scan-ticks">${axis}</g>
+                </svg>
+                <div class="scan-chart-leg"><span><i class="scan-leg-win"></i>${tr('SCANFREQ_WINDOW')}</span>
+                <span id="scanLegCursor"><i class="scan-leg-cur"></i>${tr('SCANFREQ_CURSOR')}</span>
+                <span id="scanLegBest" hidden><i class="scan-leg-cur"></i>${tr('SCANFREQ_BEST')}</span></div>
+                </div>
+                <div class="scan-legend scan-legend-mob">${this.scanLegend()}</div>`
+            }, 'genmod-assist');
+            div.querySelector('#scanFoot').innerHTML = `
+            <button id="btnCloseScanning" type="button" class="gen-btn" data-genmod-close hidden>${tr('BT_CLOSE')}</button>
+            <button id="btnRestartScanning" type="button" class="gen-btn" onclick="somfy.scanFrequency(true)" hidden>${tr('BT_RESTART')}</button>
+            <button id="btnStopScanning" type="button" class="gen-btn gen-btn-danger" onclick="somfy.stopScanningFrequency(true)">${tr('BT_STOP_SCAN')}</button>
+            <button id="btnCopyFrequency" type="button" class="gen-btn gen-btn-primary" onclick="somfy.setScannedFrequency()" hidden></button>`;
             shOverlay(div);
-            div.querySelector('#btnCloseScanning').onclick = () => requestCloseOverlay(div);
 
             if (this.scanObserver) this.scanObserver.disconnect();
             this.scanObserver = new MutationObserver(() => { if (!get('divScanFrequency')) this.terminateScanUI(true); });
             this.scanObserver.observe(get('divContainer'), { childList: true });
-
-            const graphAccordion = div.querySelector('#graphAccordion');
-            if (graphAccordion) {
-                graphAccordion.addEventListener('toggle', () => {
-                    if (graphAccordion.open && this.rssiGraphWave) this.rssiGraphWave.draw();
-                });
-            }
-
-            if (this._graphResizeObs) this._graphResizeObs.disconnect();
-            if (typeof ResizeObserver === 'function') {
-                this._graphResizeObs = new ResizeObserver(() => {
-                    if (this.rssiGraphWave) this.rssiGraphWave.draw();
-                });
-                this._graphResizeObs.observe(div.querySelector('#rssiWave'));
-            }
-
-                this.rssiGraphWave = {
-                    points: [],
-                    maxPoints: 80,
-                    canvas: get('rssiWave'),
-                    freqMin: 433.00,
-                    freqMax: 434.00,
-                    currentIdx: 0,
-                    optimalFreq: null,
-                    stopped: false,
-
-                    reset() {
-                        this.currentIdx = 0;
-                        this.optimalFreq = null;
-                        this.stopped = false;
-                        this.points = Array(this.maxPoints).fill(-110);
-                    },
-
-                    update(val, currentFreq) {
-                        if (this.points.length === 0) this.points = Array(this.maxPoints).fill(-110);
-
-                        currentFreq = get('spanTestFreq') ? get('spanTestFreq').innerText : currentFreq;
-
-                        let v = parseInt(val);
-                        if (isNaN(v) || v < -110) v = -110;
-                        if (v > -30) v = -30;
-
-                        let freq = NaN;
-                        if (currentFreq !== undefined && currentFreq !== null) {
-                            freq = parseFloat(String(currentFreq).replace(/[^0-9.]/g, ''));
-                        }
-                        if (!isNaN(freq) && freq >= this.freqMin && freq <= this.freqMax) {
-                            const pct = (freq - this.freqMin) / (this.freqMax - this.freqMin);
-                            this.currentIdx = Math.min(Math.max(Math.floor(pct * (this.maxPoints - 1)), 0), this.maxPoints - 1);
-                        } else {
-                            this.currentIdx = (this.currentIdx + 1) % this.maxPoints;
-                        }
-                        this.points[this.currentIdx] = v;
-                        this.draw();
-                    },
-
-                    markResult(bestFreq) {
-                        this.stopped = true;
-                        const f = parseFloat(bestFreq);
-                        this.optimalFreq = (!isNaN(f) && f > 0) ? f : null;
-                        this.draw();
-                    },
-
-                    draw() {
-                        const c = this.canvas;
-                        if (!c) return;
-                        if (typeof c.checkVisibility === 'function' && !c.checkVisibility()) return;
-
-                        const displayW = c.clientWidth;
-                        const displayH = c.clientHeight;
-                        if (!displayW || !displayH) return;
-                        if (this.points.length === 0) this.points = Array(this.maxPoints).fill(-110);
-
-                        const ctx = c.getContext('2d');
-                        const dpr = window.devicePixelRatio || 1;
-                        c.width = displayW * dpr;
-                        c.height = displayH * dpr;
-                        ctx.scale(dpr, dpr);
-
-                        ctx.clearRect(0, 0, displayW, displayH);
-
-                        const rootStyles = getComputedStyle(document.documentElement);
-                        let accent = rootStyles.getPropertyValue('--color-accent').trim() || '#1a5fb4';
-                        let subTextColor = rootStyles.getPropertyValue('--color-text-secondary').trim() || '#888888';
-
-                        const lblW = 30;
-                        const gW = displayW - lblW - 35;
-                        const paddingT = 20;
-                        const paddingB = 25;
-                        const graphH = displayH - paddingT - paddingB;
-                        const getPointY = (rssiVal) => displayH - (((rssiVal + 110) / 80) * graphH) - paddingB;
-                        const getPointX = (index) => lblW + (index * (gW / (this.maxPoints - 1)));
-
-                        // Grille dBm
-                        ctx.strokeStyle = `color-mix(in srgb, ${subTextColor} 10%, transparent)`;
-                        ctx.font = "9px monospace";
-                        ctx.fillStyle = subTextColor;
-                        ctx.lineWidth = 0.5;
-                        ctx.textAlign = "left";
-
-                        ctx.save();
-                        ctx.font = "bold 9px monospace"; // Un peu plus lisible
-                        ctx.fillText("dBm", 2, getPointY(-30) - 12);
-                        ctx.restore();
-
-                        [-30, -50, -70, -90, -110].forEach(lv => {
-                            const y = getPointY(lv);
-                            ctx.beginPath();
-                            ctx.moveTo(lblW, y);
-                            ctx.lineTo(lblW + gW, y);
-                            ctx.stroke();
-                            ctx.fillText(lv, 2, y + 3);
-                        });
-
-                        // Légende Fréquences Fixe
-                        ctx.fillStyle = subTextColor;
-                        ctx.font = "9px monospace";
-                        ctx.textBaseline = "top";
-                        const yLabel = displayH - paddingB + 6;
-
-                        const etendue = this.freqMax - this.freqMin;
-                        const texteEchelon = (pas, unite, i, n) =>
-                            (this.freqMin + i * pas).toFixed(2) + (unite && i === n - 1 ? ' MHz' : '');
-                        const xEchelon = (i, n) => lblW + (i / (n - 1)) * gW;
-                        const tient = (pas, unite) => {
-                            const n = Math.round(etendue / pas) + 1;
-                            if (n < 2) return null;
-                            const emprises = [];
-                            for (let i = 0; i < n; i++) {
-                                const large = ctx.measureText(texteEchelon(pas, unite, i, n)).width;
-                                const x = xEchelon(i, n);
-                                const debut = i === 0 ? x : (i === n - 1 ? x - large : x - large / 2);
-                                emprises.push([debut, debut + large]);
-                            }
-                            for (let i = 1; i < n; i++) {
-                                if (emprises[i][0] - emprises[i - 1][1] < 6) return null;
-                            }
-                            return {pas, n, unite};
-                        };
-                        let echelle = null;
-                        for (const pas of [0.10, 0.20, 0.25, 0.50, 1.00]) {
-                            echelle = tient(pas, true) || tient(pas, false);
-                            if (echelle) break;
-                        }
-                        if (!echelle) echelle = {pas: etendue, n: 2, unite: false};
-
-                        for (let i = 0; i < echelle.n; i++) {
-                            const dernier = i === echelle.n - 1;
-                            ctx.textAlign = dernier ? 'right' : (i === 0 ? 'left' : 'center');
-                            ctx.fillText(texteEchelon(echelle.pas, echelle.unite, i, echelle.n), xEchelon(i, echelle.n), yLabel);
-                        }
-
-                        // Remplissage de la courbe
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.moveTo(getPointX(0), getPointY(this.points[0]));
-                        for (let i = 0; i < this.points.length - 1; i++) {
-                            const x1 = getPointX(i);
-                            const y1 = getPointY(this.points[i]);
-                            const x2 = getPointX(i + 1);
-                            const y2 = getPointY(this.points[i + 1]);
-                            ctx.quadraticCurveTo(x1, y1, (x1 + x2) / 2, (y1 + y2) / 2);
-                        }
-                        ctx.lineTo(getPointX(this.points.length - 1), displayH - paddingB);
-                        ctx.lineTo(getPointX(0), displayH - paddingB);
-                        ctx.closePath();
-
-                        const fillGrad = ctx.createLinearGradient(0, paddingT, 0, displayH - paddingB);
-                        fillGrad.addColorStop(0, `color-mix(in srgb, ${accent} 35%, transparent)`);
-                        fillGrad.addColorStop(0.7, `color-mix(in srgb, ${accent} 5%, transparent)`);
-                        fillGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-                        ctx.fillStyle = fillGrad;
-                        ctx.fill();
-                        ctx.restore();
-
-                        // Ligne Néon
-                        ctx.save();
-                        ctx.strokeStyle = `color-mix(in srgb, ${accent} 85%, #ffffff)`;
-                        ctx.lineWidth = 2.5;
-                        ctx.lineCap = 'round';
-                        ctx.lineJoin = 'round';
-                        ctx.shadowBlur = 8;
-                        ctx.shadowColor = accent;
-                        ctx.beginPath();
-                        ctx.moveTo(getPointX(0), getPointY(this.points[0]));
-                        for (let i = 0; i < this.points.length - 1; i++) {
-                            const x1 = getPointX(i);
-                            const y1 = getPointY(this.points[i]);
-                            const x2 = getPointX(i + 1);
-                            const y2 = getPointY(this.points[i + 1]);
-                            ctx.quadraticCurveTo(x1, y1, (x1 + x2) / 2, (y1 + y2) / 2);
-                        }
-                        ctx.stroke();
-                        ctx.restore();
-
-                        // Dessin du Curseur
-                        let centerX = getPointX(this.currentIdx);
-                        let centerY = getPointY(this.points[this.currentIdx]);
-                        let lineStyle = `color-mix(in srgb, ${accent} 60%, transparent)`;
-                        let isTargetMode = false;
-
-                        if (this.stopped && this.optimalFreq !== null) {
-                            let optPct = (this.optimalFreq - this.freqMin) / (this.freqMax - this.freqMin);
-                            if (optPct >= 0 && optPct <= 1) {
-                                let optIdx = Math.floor(optPct * (this.maxPoints - 1));
-                                centerX = getPointX(optIdx);
-                                centerY = getPointY(this.points[optIdx]);
-                                lineStyle = '#47a4f5';
-                                isTargetMode = true;
-                            }
-                        }
-
-                        ctx.save();
-                        ctx.strokeStyle = lineStyle;
-                        ctx.lineWidth = isTargetMode ? 1.5 : 1;
-                        ctx.setLineDash(isTargetMode ? [] : [3, 3]);
-                        ctx.beginPath();
-                        ctx.moveTo(centerX, paddingT);
-                        ctx.lineTo(centerX, displayH - paddingB);
-                        ctx.stroke();
-                        ctx.restore();
-
-                        ctx.save();
-                        ctx.fillStyle = '#ffffff';
-                        ctx.strokeStyle = isTargetMode ? '#47a4f5' : accent;
-                        ctx.lineWidth = 3;
-                        ctx.shadowBlur = 12;
-                        ctx.shadowColor = isTargetMode ? '#47a4f5' : accent;
-                        ctx.beginPath();
-                        ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.stroke();
-                        ctx.restore();
-
-                        if (isTargetMode) {
-                            ctx.save();
-                            ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
-                            ctx.strokeStyle = "rgba(71, 164, 245, 0.5)";
-                            ctx.lineWidth = 1;
-
-                            const txt1 = `${this.optimalFreq.toFixed(2)} MHz`;
-                            const idxForDbm = Math.floor((centerX - lblW) / (gW / (this.maxPoints - 1)));
-                            const txt2 = `${this.points[idxForDbm] || -110} dBm`;
-
-                            ctx.font = "9px Arial";
-                            const boxW = Math.max(ctx.measureText(txt1).width, ctx.measureText(txt2).width) + 16;
-                            const boxH = 30;
-                            const boxX = Math.max(lblW, Math.min(centerX - boxW / 2, (lblW + gW) - boxW));
-                            const boxY = Math.max(5, centerY - boxH - 10);
-
-                            ctx.beginPath();
-                            ctx.roundRect(boxX, boxY, boxW, boxH, 4);
-                            ctx.fill();
-                            ctx.stroke();
-
-                            ctx.fillStyle = "#ffffff";
-                            ctx.textAlign = "center";
-                            ctx.fillText(txt1, boxX + boxW / 2, boxY + 10);
-                            ctx.fillStyle = "#47a4f5";
-                            ctx.fillText(txt2, boxX + boxW / 2, boxY + 22);
-                            ctx.restore();
-                        }
-                    }
-                };
+            this.scanSetMode(div, 'run');
         }
         if (initScan) {
             div.setAttribute('data-initscan', true);
-
-            // ICI : On réinitialise immédiatement le graphique à l'instant du clic
-            if (this.rssiGraphWave && typeof this.rssiGraphWave.reset === 'function') {
-                this.rssiGraphWave.reset();
-            }
+            div.removeAttribute('data-frequency');
+            this._scan = { pts: Array(100).fill(null), idx: -1, pass: 1 };
+            ['spanTestFreq', 'spanBestFreq'].forEach(id => { div.querySelector('#' + id).textContent = '---.--'; });
+            ['Test', 'Best'].forEach(w => { div.querySelector(`#span${w}RSSI`).textContent = '--'; div.querySelector(`#scan${w}Q`).textContent = ''; });
+            this.scanDraw(div);
+            this.scanSetMode(div, 'run');
 
             putJSONSync('/beginFrequencyScan', {}, (err) => {
-                if (!err) {
-                    if(get('scanStatusText')) get('scanStatusText').style.display = '';
-                    if(get('scanStatusResult')) get('scanStatusResult').style.display = 'none';
-                    if(get('btnStopScanning')) get('btnStopScanning').style.display = '';
-                    ['btnRestartScanning', 'btnCopyFrequency'].forEach(id => {
-                        if(get(id)) get(id).style.display = 'none';
-                    });
-                    // Pas de onConfirm ici : le MutationObserver posé plus haut (cf. scanObserver)
-                    // déclenche déjà terminateScanUI(true) -- donc l'arrêt propre côté firmware
-                    // (/endFrequencyScan) -- dès que ce div quitte le DOM, quel que soit le chemin
-                    // de fermeture emprunté (bouton dédié ou requestCloseOverlay ci-dessous).
-                    setOverlayLock(div, 'confirm', {
-                        titleKey: 'PROMPT_FREQ_SCAN_TITLE',
-                        msgKey: 'PROMPT_FREQ_SCAN_MSG',
-                    });
-                }
+                if (err) return;
+                // Pas de onConfirm ici : le MutationObserver pose plus haut (cf. scanObserver)
+                // declenche deja terminateScanUI(true) -- donc l'arret propre cote firmware
+                // (/endFrequencyScan) -- des que ce div quitte le DOM, quel que soit le chemin.
+                setOverlayLock(div, 'confirm', {
+                    titleKey: 'PROMPT_FREQ_SCAN_TITLE',
+                    msgKey: 'PROMPT_FREQ_SCAN_MSG',
+                });
+                // genModalBusy() vient de griser la croix : ici elle doit rester, et demander
+                // confirmation avant d'arreter le balayage.
+                div.querySelectorAll('.genmod-close').forEach(b => { b.disabled = false; });
             });
         }
         return div;
@@ -1150,32 +798,12 @@ class Somfy {
             closeOverlay(div);
             return;
         }
-        putJSONSync('/endFrequencyScan', {}, (err, trans) => {
-            if (err) {
-                ui.serviceError(err);
-            } else {
-                let freqAttr = div.getAttribute('data-frequency');
-                let freq = parseFloat(freqAttr);
-
-                // Le scan est terminé (résultat reçu) : l'overlay peut de nouveau se fermer
-                // librement, sans confirmation -- cf. setOverlayLock() posé dans scanFrequency().
-                clearOverlayLock(div);
-
-                if (this.rssiGraphWave) this.rssiGraphWave.markResult(freq);
-
-                if (get('scanStatusText')) get('scanStatusText').style.display = 'none';
-
-                if (get('btnStopScanning')) get('btnStopScanning').style.display = 'none';
-                if (get('btnRestartScanning')) get('btnRestartScanning').style.display = '';
-
-                if (typeof freq === 'number' && !isNaN(freq) && freq > 0) {
-                    if (get('btnCopyFrequency')) get('btnCopyFrequency').style.display = '';
-                    if (get('scanStatusResult')) get('scanStatusResult').style.display = 'none';
-                } else {
-                    if (get('btnCopyFrequency')) get('btnCopyFrequency').style.display = 'none';
-                    if (get('scanStatusResult')) get('scanStatusResult').style.display = '';
-                }
-            }
+        putJSONSync('/endFrequencyScan', {}, (err) => {
+            if (err) { ui.serviceError(err); return; }
+            // Le scan est termine : la fenetre peut de nouveau se fermer sans confirmation.
+            clearOverlayLock(div);
+            const freq = parseFloat(div.getAttribute('data-frequency'));
+            this.scanSetMode(div, freq > 0 ? 'found' : 'none');
         });
     }
     terminateScanUI(killScan) {
@@ -1184,10 +812,6 @@ class Somfy {
         if (this.scanObserver) {
             this.scanObserver.disconnect();
             this.scanObserver = null;
-        }
-        if (this._graphResizeObs) {
-            this._graphResizeObs.disconnect();
-            this._graphResizeObs = null;
         }
         if (killScan) {
             putJSONSync('/endFrequencyScan', {}, (err) => {
@@ -3111,20 +2735,17 @@ class Somfy {
         else if (f.remotes.length) { f.remotes = []; f.done = false; }
         let div = get('divRadioWizard');
         if (!div) {
-            div = document.createElement('div');
-            div.id = 'divRadioWizard';
-            div.className = 'inst-overlay';
-            div.innerHTML = `
-            <div class="instructions-content">
-            ${overlayHeader('RADIO_WIZ_TITLE', 'RADIO_WIZ_DESC', 'svg-tabRadio',
-                { subtitle: 'RADIO_WIZ_DESC' })}
-            <div class="overlay-scroll-content">
-            <div id="wizBody"></div>
-            </div>
-            <div class="hrDivFooter-Instruc"></div>
-            <div class="button-container-overlay" id="wizFooter"></div>
-            </div>`;
-            shOverlay(div, () => this.wizAbandon());
+            const win = this.radioWindow;
+            div = firmware.taskWindow('divRadioWizard', {
+                id: 'rw', icon: 'svg-remote', titleKey: 'RADIO_WIZ_TITLE', descKey: 'RADIO_WIZ_DESC',
+                stateKey: tr('RADIO_WIZ_WINDOW'),
+                stateValue: win ? `${win.min.toFixed(3)} – ${win.max.toFixed(3)} ${tr('UNIT_MHZ')}` : '—',
+                sideExtra: `<div class="genmod-state rw-fleet" id="rwFleet"></div>`,
+                sectionKey: 'RADIO_WIZ_TITLE', hintKey: '', footId: 'wizFooter',
+                bodyHtml: `<div id="wizBody" class="rw-body"></div>`
+            }, 'genmod-assist');
+            div._onClosed = () => this.wizAbandon();
+            shOverlay(div);
         }
         if (this.wiz.etat === 'decode') this.wizDecoder();
         else this.wizRender();
@@ -3135,116 +2756,101 @@ class Somfy {
         if (!a || typeof a.rxFrequency !== 'number' || typeof a.rxBandwidth !== 'number') return null;
         return { min: a.rxFrequency - a.rxBandwidth / 2000, max: a.rxFrequency + a.rxBandwidth / 2000 };
     }
-    wizLigne(r, i) {
-        const nom = tr('RADIO_WIZ_REMOTE').replace('{n}', i + 1);
-        if (r.kind === 'ok') return `${nom} — <b>${tr('RADIO_FLEET_OK')}</b> · ID ${escHtml(String(r.address))} · ${r.rssi} ${tr('UNIT_DBM')}`;
-        const emet = tr('RADIO_FLEET_EMITS').replace('{freq}', r.freq.toFixed(3));
-        return `${nom} — <b>${tr(r.kind === 'shift' ? 'RADIO_FLEET_SHIFT' : 'RADIO_FLEET_OTHER')}</b> · ${emet}`;
-    }
     wizRender() {
-        const w = this.wiz, f = this.radioFleet, body = get('wizBody'), foot = get('wizFooter');
-        if (!w || !f || !body || !foot) return;
+        const w = this.wiz, f = this.radioFleet, body = get('wizBody'), foot = get('wizFooter'), div = get('divRadioWizard');
+        if (!w || !f || !body || !foot || !div) return;
         const btn = (id, key, cls, action) =>
-            `<button id="${id}" type="button" ${cls} onclick="somfy.${action}">${tr(key)}</button>`;
-        const liste = () => f.remotes.length
-            ? `<ul class="wiz-liste">${f.remotes.map((r, i) => `<li>${this.wizLigne(r, i)}</li>`).join('')}</ul>` : '';
-        const notice = (cls, ico, titre, texte) => `<div class="wiz-notice ${cls}">
-            <svg><use href="#svg-${ico}"></use></svg>
-            <div class="wiz-notice-texte"><span class="wiz-title">${titre}</span><span>${texte}</span></div></div>`;
+            `<button id="${id}" type="button" class="gen-btn${cls ? ' ' + cls : ''}" onclick="somfy.${action}">${tr(key)}</button>`;
+        const note = (cls, ico, titre, texte) => `<div class="genmod-note ${cls}"><svg><use href="#svg-${ico}"></use></svg>
+            <div><b>${titre}</b><span>${texte}</span></div></div>`;
+        const listen = (heard, label, chrono, pct) => `<div class="rw-listen${heard ? ' is-heard' : ''}">
+            <span class="rw-listen-icon"><svg><use href="#svg-tabRadio"></use></svg></span>
+            <div class="rw-listen-text"><b id="wizNiveau">${label}</b><div class="rw-bar" id="wizBarre"><i style="width:${pct}%"></i></div></div>
+            <span class="rw-chrono" id="wizChrono">${chrono}</span></div>`;
+        const titre = (t, d) => `<h3 class="rw-title">${t}</h3>${d ? `<p class="rw-desc">${d}</p>` : ''}`;
+        const question = `<h3 class="rw-title">${tr('RADIO_WIZ_ANOTHER_Q')}</h3>`;
         const n = f.remotes.length;
         const dernier = f.remotes[n - 1];
-        const autreOuFin = btn('btnWizMore', 'BT_ANOTHER', 'line', 'wizDecoder();') + btn('btnWizDone', 'BT_FINISH', '', 'wizTerminer();');
+        const autreOuFin = btn('btnWizDone', 'BT_FINISH', '', 'wizTerminer();') + btn('btnWizMore', 'BT_ANOTHER', 'gen-btn-primary', 'wizDecoder();');
+        let hint = '', chart = null, step = 1;
         switch (w.etat) {
-            case 'intro':
-                body.innerHTML = `
-                    <div class="empty-state wiz-accueil">
-                    <svg class="empty-icon"><use href="#svg-linkRemot"></use></svg>
-                    <div class="label">${tr('RADIO_WIZ_STEP1_TITLE')}</div>
-                    <div class="empty-subtext">${tr('RADIO_WIZ_STEP1_DESC')}</div>
-                    </div>`;
-                foot.innerHTML = btn('btnWizCancel', 'BT_CANCEL', 'line', 'wizFermer();')
-                               + btn('btnWizGo', 'BT_BEGIN', '', 'wizDecoder();');
+            case 'intro': {
+                step = 0;
+                const etape = (i, k, d) => `<div class="rw-step"><span class="rw-step-num">${i}</span><div><b>${tr(k)}</b><span>${tr(d)}</span></div></div>`;
+                body.innerHTML = titre(tr('RADIO_WIZ_STEP1_TITLE'), tr('RADIO_WIZ_STEP1_DESC'))
+                    + `<div class="rw-steps">${etape(1, 'RADIO_WIZ_INTRO_A', 'RADIO_WIZ_INTRO_A_DESC')}${etape(2, 'RADIO_WIZ_INTRO_B', 'RADIO_WIZ_INTRO_B_DESC')}${etape(3, 'RADIO_WIZ_INTRO_C', 'RADIO_WIZ_INTRO_C_DESC')}</div>`;
+                foot.innerHTML = btn('btnWizCancel', 'BT_CANCEL', '', 'wizFermer();')
+                               + btn('btnWizGo', 'BT_BEGIN', 'gen-btn-primary', 'wizDecoder();');
                 break;
+            }
             case 'decode': {
                 const k = w.dup;
-                body.innerHTML = (k !== null
-                        ? notice('info', 'info', tr('RADIO_WIZ_DUP_TITLE'), tr('RADIO_WIZ_DUP_DESC')
-                            .replace('{n}', k + 1).replace('{id}', escHtml(String(f.remotes[k].address))))
-                        : '')
-                    + `<div class="information-text">
-                    <span class="wiz-title">${tr('RADIO_WIZ_DECODE_TITLE').replace('{n}', n + 1)}</span>
-                    <span>${tr('RADIO_WIZ_DECODE_DESC')}</span></div>
-                    <div class="progress-bar-header">
-                        <span class="progress-bar-label">${tr('RADIO_WIZ_DECODE_LISTEN')}</span>
-                        <span class="progress-bar-value" id="wizChrono">0 s</span>
-                    </div>
-                    <div class="progress-bar" id="wizBarre"><div class="progress-bar-fill"></div></div>
-                    ${liste()}`;
-                foot.innerHTML = btn('btnWizStop', 'BT_STOP_HERE', 'line', 'wizFermer();')
-                               + (n ? btn('btnWizNoMore', 'BT_NO_MORE', '', 'wizTerminer();') : '');
+                body.innerHTML = titre(tr('RADIO_WIZ_DECODE_TITLE').replace('{n}', n + 1), tr('RADIO_WIZ_DECODE_DESC'))
+                    + listen(false, tr('RADIO_WIZ_DECODE_LISTEN'), Math.ceil(this.wizDecodeMs / 1000) + ' s', 0)
+                    + (k !== null ? note('is-info', 'info', tr('RADIO_WIZ_DUP_TITLE'), tr('RADIO_WIZ_DUP_DESC')
+                        .replace('{n}', k + 1).replace('{id}', escHtml(String(f.remotes[k].address)))) : '');
+                foot.innerHTML = btn('btnWizStop', 'BT_STOP_HERE', '', 'wizFermer();')
+                               + (n ? btn('btnWizNoMore', 'BT_NO_MORE', 'gen-btn-primary', 'wizTerminer();') : '');
+                hint = tr('RADIO_WIZ_DECODE_HINT');
                 break;
             }
             case 'reconnue':
-                body.innerHTML = notice('ok', 'succes', tr('RADIO_WIZ_OK_TITLE').replace('{n}', n),
-                        tr('RADIO_WIZ_OK_DESC').replace('{id}', escHtml(String(dernier.address))).replace('{rssi}', dernier.rssi)) + liste();
+                body.innerHTML = note('is-ok', 'succes', tr('RADIO_WIZ_OK_TITLE').replace('{n}', n),
+                        tr('RADIO_WIZ_OK_DESC').replace('{id}', escHtml(String(dernier.address))).replace('{rssi}', dernier.rssi)) + question;
                 foot.innerHTML = autreOuFin;
                 break;
             case 'nonreconnue':
-                body.innerHTML = notice('warning', 'warning', tr('RADIO_WIZ_NOTREC_TITLE').replace('{n}', n + 1), tr('RADIO_WIZ_NOTREC_DESC')) + liste();
-                foot.innerHTML = btn('btnWizRetry', 'BT_RETRY', 'line', 'wizDecoder();')
-                               + btn('btnWizMeasure', 'BT_MEASURE_FREQ', '', 'wizEcouter();');
+                body.innerHTML = note('is-warn', 'warning', tr('RADIO_WIZ_NOTREC_TITLE').replace('{n}', n + 1), tr('RADIO_WIZ_NOTREC_DESC'));
+                foot.innerHTML = btn('btnWizRetry', 'BT_RETRY', '', 'wizDecoder();')
+                               + btn('btnWizMeasure', 'BT_MEASURE_FREQ', 'gen-btn-primary', 'wizEcouter();');
                 break;
             case 'ecoute':
-                body.innerHTML = `<div class="information-text">
-                    <span class="wiz-title">${tr('RADIO_WIZ_PRESS_TITLE').replace('{n}', n + 1)}</span>
-                    <span>${tr('RADIO_WIZ_PRESS_DESC')}</span></div>
-                    <div class="progress-bar-header">
-                        <span class="progress-bar-label" id="wizNiveau">${tr('RADIO_WIZ_LISTENING')}</span>
-                        <span class="progress-bar-value" id="wizChrono">0 s</span>
-                    </div>
-                    <div class="progress-bar" id="wizBarre"><div class="progress-bar-fill"></div></div>
-                    ${liste()}`;
-                foot.innerHTML = btn('btnWizStop', 'BT_CANCEL', 'line', 'wizFermer();');
+                body.innerHTML = titre(tr('RADIO_WIZ_PRESS_TITLE').replace('{n}', n + 1), tr('RADIO_WIZ_PRESS_DESC'))
+                    + listen(false, tr('RADIO_WIZ_LISTENING'), '0 s', 0);
+                foot.innerHTML = btn('btnWizStop', 'BT_CANCEL', '', 'wizFermer();');
+                hint = tr('RADIO_WIZ_LISTEN_HINT');
                 break;
             case 'mesuree': {
                 const win = this.radioWindow;
                 const texte = (dernier.kind === 'shift' ? tr('RADIO_WIZ_SHIFT_DESC') : tr('RADIO_WIZ_INWIN_DESC'))
                     .replace('{freq}', dernier.freq.toFixed(3))
                     .replace('{min}', win ? win.min.toFixed(3) : '?').replace('{max}', win ? win.max.toFixed(3) : '?');
-                body.innerHTML = notice('warning', 'wave', tr('RADIO_WIZ_MEASURED_TITLE').replace('{n}', n), texte) + liste();
+                body.innerHTML = note('is-warn', 'wave', tr('RADIO_WIZ_MEASURED_TITLE').replace('{n}', n), texte) + question;
                 foot.innerHTML = autreOuFin;
+                chart = { shifts: this.wizShifts().map(r => r.freq) };
                 break;
             }
             case 'silence':
-                body.innerHTML = notice('warning', 'warning', tr('RADIO_WIZ_SILENT_TITLE'),
-                        tr(w.meilleur > this.wizConst.seuil ? 'RADIO_WIZ_PARTIAL_DESC' : 'RADIO_WIZ_SILENT_DESC')) + liste();
-                foot.innerHTML = btn('btnWizSkip', 'BT_SKIP', 'line', n ? 'wizTerminer();' : 'wizFermer();')
-                               + btn('btnWizRetry', 'BT_RETRY', '', 'wizEcouter();');
+                body.innerHTML = note('is-warn', 'warning', tr('RADIO_WIZ_SILENT_TITLE'),
+                        tr(w.meilleur > this.wizConst.seuil ? 'RADIO_WIZ_PARTIAL_DESC' : 'RADIO_WIZ_SILENT_DESC'));
+                foot.innerHTML = btn('btnWizSkip', 'BT_SKIP', '', n ? 'wizTerminer();' : 'wizFermer();')
+                               + btn('btnWizRetry', 'BT_RETRY', 'gen-btn-primary', 'wizEcouter();');
                 break;
             case 'fin': {
+                step = 2;
                 const ok = f.remotes.filter(r => r.kind === 'ok').length;
                 const autres = n - ok;
-                body.innerHTML = `
-                    <div class="empty-state wiz-accueil">
-                    <svg class="empty-icon wiz-ok-icon"><use href="#svg-${autres ? 'warning' : 'succes'}"></use></svg>
-                    <div class="label">${autres ? tr('RADIO_FLEET_OTHER_TITLE')
-                        : (ok === 1 ? tr('RADIO_WIZ_END_OK_ONE') : tr('RADIO_WIZ_END_OK_TITLE').replace('{n}', ok))}</div>
-                    <div class="empty-subtext">${tr(autres ? 'RADIO_WIZ_END_OTHER_DESC' : 'RADIO_WIZ_END_OK_DESC')}</div>
-                    </div>${liste()}`;
-                foot.innerHTML = btn('btnWizClose', 'BT_CLOSE', '', 'wizFermer();');
+                body.innerHTML = `<div class="rw-done${autres ? ' is-warn' : ''}"><span class="rw-done-icon"><svg><use href="#svg-${autres ? 'warning' : 'succes'}"></use></svg></span>
+                    <h3 class="rw-title">${autres ? tr('RADIO_FLEET_OTHER_TITLE')
+                        : (ok === 1 ? tr('RADIO_WIZ_END_OK_ONE') : tr('RADIO_WIZ_END_OK_TITLE').replace('{n}', ok))}</h3>
+                    <p class="rw-desc">${tr(autres ? 'RADIO_WIZ_END_OTHER_DESC' : 'RADIO_WIZ_END_OK_DESC')}</p></div>`;
+                foot.innerHTML = btn('btnWizClose', 'BT_CLOSE', 'gen-btn-primary', 'wizFermer();');
                 break;
             }
             case 'aberrante': {
+                step = 2;
                 const r = this.wizCalcul(), i = this.wizAberrante(), m = this.wizShifts()[i];
-                body.innerHTML = notice('warning', 'warning', tr('RADIO_WIZ_OUTLIER_TITLE'), tr('RADIO_WIZ_OUTLIER_DESC')
+                body.innerHTML = note('is-warn', 'warning', tr('RADIO_WIZ_OUTLIER_TITLE'), tr('RADIO_WIZ_OUTLIER_DESC')
                         .replace('{n}', f.remotes.indexOf(m) + 1)
                         .replace('{freq}', m.freq.toFixed(3))
-                        .replace('{ecart}', Math.round(r.etendueKHz))) + liste();
-                foot.innerHTML = btn('btnWizKeepAll', 'BT_CANCEL', 'line', 'wizFermer();')
-                               + btn('btnWizDrop', 'BT_SKIP_DROP', '', `wizExclure(${i});`);
+                        .replace('{ecart}', Math.round(r.etendueKHz)));
+                foot.innerHTML = btn('btnWizKeepAll', 'BT_CANCEL', '', 'wizFermer();')
+                               + btn('btnWizDrop', 'BT_SKIP_DROP', 'gen-btn-primary', `wizExclure(${i});`);
+                chart = { shifts: this.wizShifts().filter(x => x !== m).map(x => x.freq), outlier: m.freq };
                 break;
             }
             case 'resultat': {
+                step = 2;
                 const r = this.wizCalcul();
                 if (!r) { w.etat = 'fin'; this.wizRender(); return; }
                 const ok = f.remotes.filter(x => x.kind === 'ok').length;
@@ -3252,21 +2858,57 @@ class Somfy {
                 const texte = ok
                     ? tr('RADIO_WIZ_RESULT_MIXED').replace('{ok}', ok).replace('{shift}', this.wizShifts().length)
                     : tr(usine ? 'RADIO_WIZ_RESULT_STOCK' : 'RADIO_WIZ_RESULT_WIDENED');
-                body.innerHTML = `<div class="information-text">
-                    <span class="wiz-title">${tr('RADIO_WIZ_RESULT_TITLE')}</span>
-                    <span>${texte}</span>
-                    <span>${tr('RADIO_WIZ_TX_KEPT').replace('{f}', (this.radioApplied?.frequency ?? this.radioDefaults.frequency).toFixed(3))}</span></div>
-                    <div class="wiz-resultat">
-                        <div><span>${tr('RADIO_RX_FREQUENCY')}</span><b>${r.centre.toFixed(3)} MHz</b></div>
-                        <div><span>${tr('RADIO_RX_BANDWIDTH')}</span><b>${r.bande.toFixed(2)} kHz</b></div>
-                    </div>${liste()}`;
-                foot.innerHTML = btn('btnWizMore', 'BT_ANOTHER', 'line', 'wizDecoder();')
-                               + btn('btnWizApply', 'BT_SAVE', '', 'wizAppliquer();');
+                const a = this.radioApplied || {};
+                const val = (k, v, was) => `<div class="rw-val"><span class="genmod-state-key">${tr(k)}</span><b>${v}</b>${was ? `<small>${tr('RADIO_WIZ_WAS').replace('{v}', was)}</small>` : ''}</div>`;
+                body.innerHTML = titre(tr('RADIO_WIZ_RESULT_TITLE'), texte)
+                    + `<div class="rw-vals">${val('RADIO_RX_FREQUENCY', r.centre.toFixed(3) + ' MHz', a.rxFrequency?.toFixed(3))}${val('RADIO_RX_BANDWIDTH', r.bande.toFixed(2) + ' kHz', a.rxBandwidth?.toFixed(2))}</div>
+                    <p class="rw-desc rw-small">${tr('RADIO_WIZ_TX_KEPT').replace('{f}', (a.frequency ?? this.radioDefaults.frequency).toFixed(3))}</p>`;
+                foot.innerHTML = btn('btnWizMore', 'BT_ANOTHER', '', 'wizDecoder();')
+                               + btn('btnWizApply', 'BT_SAVE', 'gen-btn-primary', 'wizAppliquer();');
+                hint = tr('RADIO_WIZ_RESULT_HINT');
+                chart = { shifts: this.wizShifts().map(x => x.freq), prop: r };
                 break;
             }
         }
+        if (chart) body.insertAdjacentHTML('beforeend', this.wizChart(chart));
+        get('rwHint').textContent = hint;
+        div.querySelector('.genmod-head-title').innerHTML = ['RADIO_WIZ_STEP_PREP', 'RADIO_WIZ_STEP_TEST', 'RADIO_WIZ_STEP_SET']
+            .map((k, i) => `<span class="rw-stp${i === step ? ' is-on' : i < step ? ' is-done' : ''}"><i>${i < step ? '✓' : i + 1}</i>${tr(k)}</span>`).join('<span class="rw-sep" aria-hidden="true"></span>');
+        this.wizFleetSide();
         this.wizMajVerrou();
         this.renderRadioFleet();
+    }
+    // Liste des télécommandes testées, dans la colonne d'identité : c'est ce que l'appareil sait.
+    wizFleetSide() {
+        const box = get('rwFleet'), w = this.wiz, f = this.radioFleet;
+        if (!box || !f) return;
+        const ligne = (dot, nom, txt) => `<div class="rw-row"><i class="rw-dot ${dot}"></i><b>${nom}</b><span>${txt}</span></div>`;
+        const nom = (i) => tr('RADIO_WIZ_REMOTE').replace('{n}', i + 1);
+        let rows = f.remotes.map((r, i) => r.kind === 'ok'
+            ? ligne('is-ok', nom(i), `${tr('RADIO_FLEET_OK')} · ${r.rssi} ${tr('UNIT_DBM')}`)
+            : ligne(r.kind === 'shift' ? 'is-shift' : 'is-no', nom(i), r.kind === 'shift' ? `${tr('RADIO_FLEET_SHIFT')} · ${r.freq.toFixed(3)}` : tr('RADIO_FLEET_OTHER'))).join('');
+        if (w && ['decode', 'nonreconnue', 'ecoute', 'silence'].includes(w.etat)) rows += ligne('is-cur', nom(f.remotes.length), tr('RADIO_WIZ_PENDING'));
+        box.innerHTML = `<span class="genmod-state-key">${tr('RADIO_FLEET_TESTED')}${f.remotes.length ? ' · ' + f.remotes.length : ''}</span>`
+            + (rows || `<span class="rw-none">${tr('RADIO_WIZ_FLEET_NONE')}</span>`);
+    }
+    // Fenêtre actuelle, fenêtre proposée et fréquences mesurées sur un même axe, borné à ce qu'il
+    // faut montrer (fenêtre et mesures, plus une marge).
+    wizChart(c) {
+        const win = this.radioWindow;
+        const fs = [...c.shifts, ...(c.outlier ? [c.outlier] : []), ...(win ? [win.min, win.max] : []), ...(c.prop ? [c.prop.centre - c.prop.bande / 2000, c.prop.centre + c.prop.bande / 2000] : [])];
+        const lo = Math.floor((Math.min(...fs) - 0.05) * 20) / 20, hi = Math.ceil((Math.max(...fs) + 0.05) * 20) / 20;
+        const X = (f) => ((f - lo) / (hi - lo) * 600).toFixed(1);
+        const rect = (a, b, cls, y, h) => `<rect class="${cls}" x="${X(a)}" y="${y}" width="${Math.max(3, X(b) - X(a)).toFixed(1)}" height="${h}" rx="8"></rect>`;
+        const dot = (f, cls) => `<circle class="${cls}" cx="${X(f)}" cy="70" r="8"></circle>`;
+        const leg = (cls, k) => `<span><i class="${cls}"></i>${tr(k)}</span>`;
+        return `<div class="rw-chart"><div class="rw-chart-head"><span class="genmod-state-key">${tr('RADIO_WIZ_CHART_TITLE')}</span></div>
+            <svg viewBox="0 0 600 120" role="img" aria-label="${escAttr(tr('RADIO_WIZ_CHART_TITLE'))}">
+            <path class="rw-axis" d="M0 70H600"></path>
+            ${win ? rect(win.min, win.max, 'rw-win', 40, 60) : ''}
+            ${c.prop ? rect(c.prop.centre - c.prop.bande / 2000, c.prop.centre + c.prop.bande / 2000, 'rw-prop', 30, 80) : ''}
+            ${c.shifts.map(f => dot(f, 'rw-shift')).join('')}${c.outlier ? dot(c.outlier, 'rw-outlier') : ''}
+            <text x="0" y="16">${lo.toFixed(2)}</text><text x="600" y="16" text-anchor="end">${hi.toFixed(2)} MHz</text>
+            </svg><div class="rw-chart-leg">${win ? leg('rw-leg-win', 'RADIO_WIZ_LEG_CURRENT') : ''}${c.prop ? leg('rw-leg-prop', 'RADIO_WIZ_LEG_PROPOSED') : ''}${leg('rw-leg-shift', 'RADIO_FLEET_SHIFT')}${c.outlier ? leg('rw-leg-outlier', 'RADIO_WIZ_LEG_OUTLIER') : ''}</div></div>`;
     }
     get wizDecodeMs() { return 12000; }
     wizDecoder() {
@@ -3328,7 +2970,7 @@ class Somfy {
             el.textContent = entendu
                 ? tr('RADIO_WIZ_HEARD').replace('{rssi}', w.meilleur)
                 : tr('RADIO_WIZ_LISTENING');
-            el.classList.toggle('heard', entendu);
+            el.closest('.rw-listen')?.classList.toggle('is-heard', entendu);
         }
         const c = get('wizChrono');
         if (c) c.textContent = Math.floor(ecoule / 1000) + ' s';
@@ -3506,10 +3148,13 @@ class Somfy {
     wizMajVerrou() {
         const div = get('divRadioWizard');
         if (!div) return;
-        if (this.wiz && this.wiz.etat === 'ecoute')
+        if (this.wiz && this.wiz.etat === 'ecoute') {
             setOverlayLock(div, 'confirm', { titleKey: 'PROMPT_FREQ_SCAN_TITLE', msgKey: 'PROMPT_FREQ_SCAN_MSG' });
-        else
+            // Comme le balayage : la croix reste active et demande confirmation.
+            div.querySelectorAll('.genmod-close').forEach(b => { b.disabled = false; });
+        } else {
             clearOverlayLock(div);
+        }
     }
     wizArreterBalayage() {
         // Leve AVANT le PUT : la trame finale du boitier peut arriver pendant que l'assistant se
