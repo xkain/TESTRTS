@@ -909,6 +909,7 @@ bool ShadeConfigFile::readSettingsRecord() {
         for(const char *c = pack; ok && *c; c++) ok = islower((unsigned char)*c) || isdigit((unsigned char)*c) || *c == '-';
         if(ok) strlcpy(settings.iconPack, pack, sizeof(settings.iconPack));
       }
+      if(!this->atRecordEnd()) settings.dashCompact = this->readUInt8(0) & 0x03;
     }
     // Taille annoncée trop courte de v2.5.1 à v2.6.1 : ne drainer que si la fin de ligne n'est
     // pas déjà lue, sinon l'enregistrement réseau est avalé et la radio jamais relue.
@@ -1274,7 +1275,8 @@ bool ShadeConfigFile::writeSettingsRecord() {
   this->writeUInt8(settings.ledColorOrder);
   this->writeVarString(settings.ledColorActivity);
   this->writeBool(settings.ledRfBlink);
-  this->writeVarString(settings.iconPack, CFG_REC_END);
+  this->writeVarString(settings.iconPack);
+  this->writeUInt8(settings.dashCompact, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeNetRecord() {

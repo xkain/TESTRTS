@@ -66,7 +66,7 @@
       window.__jsFallbackLoaded = true;
       var files = ['js/00-bootstrap.js', 'js/10-core-utils.js', 'js/15-icons.js', 'js/20-shell.js', 'js/30-ui-binder.js',
        'js/35-security.js', 'js/40-general.js', 'js/50-wifi.js', 'js/60-onboarding.js',
-       'js/70-somfy.js', 'js/71-schedule.js', 'js/72-setup.js', 'js/73-group-setup.js', 'js/90-mqtt.js', 'js/95-firmware.js'];
+       'js/70-somfy.js', 'js/71-schedule.js', 'js/72-setup.js', 'js/73-group-setup.js', 'js/74-dash-scene.js', 'js/90-mqtt.js', 'js/95-firmware.js'];
       var remaining = files.length;
       var onSettled = function(){ if (--remaining === 0) window.__resolveJsReady(); };
       files.forEach(function(f){
@@ -2300,20 +2300,22 @@
             dans overlays.css. checkEmptyState() la retire/remet ensuite à chaque rendu selon le
             nombre de groupes réel, une fois this.dataLoaded passé à true (Somfy.loadSomfy()). -->
             <div id="divHomePnl" class="no-groups" style="display: none;">
-                <div class="dash-topbar">
+                <aside class="dash-rooms">
+                    <div class="dash-rooms-title" tr="DASH_HOUSE_TITLE">Maison</div>
+                    <div class="dash-rooms-label" tr="SUBTAB_ROOMS">Pièces</div>
                     <div class="room-nav-container">
                         <div id="divRoomSelector" class="room-selector" data-roomid="0"></div>
                     </div>
-                    <div class="dash-summary">
-                        <span class="dash-summary-room"></span>
-                        <span class="column-summary" data-col="shade" data-moving="0" data-direction="0">
-                            <span class="column-summary-count"></span>
-                            <button class="column-summary-moving" type="button" onclick="somfy.scrollToMovingCard('shade');">
-                                <svg class="sum-arrow-up"><use href="#svg-up"></use></svg>
-                                <svg class="sum-arrow-down"><use href="#svg-down"></use></svg>
-                                <span class="sum-moving-count"></span>
-                            </button>
-                        </span>
+                </aside>
+                <div class="dash-main">
+                <div class="dash-topbar">
+                    <div class="dash-house">
+                        <div class="dash-house-txt"><b tr="DASH_HOUSE_ALL">Toute la maison</b><span class="dash-house-sub"></span></div>
+                        <div class="dcard-bar dash-house-bar" role="group">
+                            <button type="button" class="dcard-btn" onclick="somfy.houseCommand('up');"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg><span class="dcard-lbl" tr="DASH_OPEN_ALL">Tout ouvrir</span></button>
+                            <button type="button" class="dcard-btn dcard-mid-btn dash-house-stop" onclick="somfy.houseCommand('stop');"><i class="dcard-sq"></i></button>
+                            <button type="button" class="dcard-btn" onclick="somfy.houseCommand('down');"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span class="dcard-lbl" tr="DASH_CLOSE_ALL">Tout fermer</span></button>
+                        </div>
                     </div>
                     <button type="button" class="dash-edit-btn" onclick="somfy.startDashEdit();"><svg><use href="#svg-edit"></use></svg><span tr="BT_CUSTOMIZE"></span></button>
                 </div>
@@ -2331,6 +2333,11 @@
                     <button class="tab-btn" id="tabDevices" onclick="somfy.switchMobileTab('devices', true)">
                         <span tr="SUBTAB_DEVICES">Équipements</span>
                     </button>
+                </div>
+
+                <div id="divNoDevice" class="empty-state-container" style="display:none;">
+                    <svg class="icon-svg"><use href="#svg-placeholder"></use></svg>
+                    <p tr="NO_DEVICE"></p>
                 </div>
 
                 <!-- CONTENEUR SPLIT-VIEW (2 COLONNES SUR PC) -->
@@ -2369,11 +2376,13 @@
                     </section>
 
                 </div>
-
-                <div id="divNoDevice" class="empty-state-container" style="display:none;">
-                    <svg class="icon-svg"><use href="#svg-placeholder"></use></svg>
-                    <p tr="NO_DEVICE"></p>
                 </div>
+                <div class="dash-move-toast" role="status" hidden>
+                    <span class="dash-move-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></span>
+                    <span class="dash-move-txt"><b></b><span></span></span>
+                    <button type="button" class="dash-move-btn" onclick="somfy.showMovingCard();"><span tr="BT_SEE">Voir</span></button>
+                </div>
+
             </div>
 
         </div>

@@ -433,6 +433,8 @@ class ConfigSettings: BaseSettings {
     // Activé par défaut, contrairement à showRadioActivity ci-dessus : c'est le comportement des
     // cartes, l'option sert à le retirer pour qui le trouve trop présent.
     bool showMovementIndicator = true;
+    // Cartes compactes du tableau de bord : bit 0 = groupes (une ligne), bit 1 = équipements (sans scène).
+    uint8_t dashCompact = 0;
     // Position géographique pour le calcul lever/coucher du soleil (cf. SunCalc). Sentinelle
     // "non configuré" : geoLat=99.0, hors plage valide -90..90 -- et non NaN, qui n'est pas un
     // nombre JSON (_fmtFloat l'intercepte désormais, cf. WResp.cpp, mais une sentinelle DANS la

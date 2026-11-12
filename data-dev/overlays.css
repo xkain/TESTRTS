@@ -2534,6 +2534,94 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     background-color: var(--color-accent-transp-80);
 }
 
+/* --- Carte d'équipement : en-tête, scène et barre (dcard) ----------------
+   Gabarit de dashCardHtml() (70-somfy.js), scène dessinée par dashScene (74-dash-scene.js).
+   Le haut du ciel reprend le fond de la carte : l'en-tête se fond dans la scène sans bande. */
+/* Teintes des pastilles et de la barre, communes aux cartes d'équipement et de groupe. */
+.somfyShadeCtl.dcard, .somfyGroupCtl.gcard { --dcard-pill: var(--color-bg-alt); --dcard-mid: var(--color-bg-alt); --dcard-mid-h: var(--color-bg-input); --dcard-out: var(--color-border); }
+.somfyShadeCtl.dcard {
+    --dsc-sk1: var(--color-bg-card); --dsc-sk2: #e9f0f9; --dsc-gnd: #efece6; --dsc-drive: #e5e1d9; --dsc-bush: #cbd8c4;
+    --dsc-wall: #fbfbfa; --dsc-wall2: #eeece8; --dsc-roof: #56627d; --dsc-trim: #d3d6dc; --dsc-int: #2b3347; --dsc-door: #4a5772;
+    --dsc-line: #6b7488; --dsc-gl1: #bcd6f0; --dsc-gl2: #e9f2fb; --dsc-slat: #a3abb9; --dsc-slat2: #858ea0; --dsc-fab: #bfc5cf;
+    --dsc-lamp: #4a5772; --dsc-canA: #2f6fea; --dsc-canB: #e9eef8; --dsc-cone: 0; --dsc-glow: 0;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 12px 10px;
+    border-radius: 22px;
+    box-shadow: none;
+    background: var(--color-bg-card);
+}
+:root[data-theme="dark"] .somfyShadeCtl.dcard {
+    --dsc-sk2: #25335a; --dsc-gnd: #141b30; --dsc-drive: #1b2440; --dsc-bush: #0e1427; --dsc-wall: #3a4a70; --dsc-wall2: #2f3d5e;
+    --dsc-roof: #5a6b92; --dsc-trim: #7a8db5; --dsc-int: #0a0f1d; --dsc-door: #27324e; --dsc-line: #46567d; --dsc-gl1: #2c4069;
+    --dsc-gl2: #405a8e; --dsc-slat: #8592ad; --dsc-slat2: #6a7896; --dsc-fab: #8e9ab3; --dsc-lamp: #dfe6f6; --dsc-cone: 1; --dsc-glow: .55;
+}
+.dcard-head { display: flex; align-items: center; gap: 10px; min-width: 0; overflow: hidden; }
+.dcard-ico { flex: none; width: 30px; height: 30px; display: grid; place-items: center; color: var(--color-text-main); }
+.dcard-ico svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
+/* Les <button> héritent de base.css (pleine largeur, capitales, fond d'accent) : chaque bouton de la carte les annule. */
+.dcard-name, .dcard-name:hover { display: block; flex: 1; width: auto; min-width: 0; overflow: hidden; margin: 0; padding: 0; border: 0; background: none; color: var(--color-text-main); text-align: left; text-transform: none; cursor: pointer; font: inherit; }
+.dcard-name .shadectl-name { display: block; font-size: 1rem; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dcard-sun-btn, .dcard-sun-btn:hover { flex: none; width: 32px; height: 32px; margin: 0; padding: 0; border: 0; border-radius: 999px; background: var(--dcard-pill); color: var(--color-text-main); display: grid; place-items: center; cursor: pointer; opacity: .75; }
+.dcard-sun-btn svg { width: 17px; height: 17px; fill: currentColor; }
+.dcard-sun-btn[data-on="true"] { background: #f5b301; color: #3a2a00; opacity: 1; }
+.dcard-pill { flex: none; max-width: 46%; height: 32px; padding: 0 12px; box-sizing: border-box; display: flex; align-items: center; gap: 7px; border-radius: 999px; background: var(--dcard-pill); color: var(--color-text-main); font-size: .8em; font-weight: 600; white-space: nowrap; overflow: hidden; font-variant-numeric: tabular-nums; }
+.dcard-pill-txt { overflow: hidden; text-overflow: ellipsis; }
+.dcard-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--color-text-secondary); }
+.dcard[data-open="true"] .dcard-dot { background: #16a34a; }
+:root[data-theme="dark"] .dcard[data-open="true"] .dcard-dot { background: #4ade80; }
+.dcard-arrow { display: none; flex: none; width: 13px; height: 13px; fill: none; stroke: var(--color-accent); stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.dcard[data-arrow="down"] .dcard-arrow { display: block; }
+.dcard[data-arrow="up"] .dcard-arrow { display: block; transform: rotate(180deg); }
+.dcard:not([data-arrow=""]) .dcard-dot { background: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 25%, transparent); }
+.dcard-stage { position: relative; height: 136px; margin: 0 -12px; overflow: hidden; background: var(--dsc-sk1); }
+.dcard-svg, .dcard-svg svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.dcard-tilt { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 3px; border-radius: 14px; background: color-mix(in srgb, var(--color-bg-card) 88%, transparent); color: var(--color-text-main); box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
+.dcard-tilt-val { padding: 2px 0 1px; font-size: 10.5px; font-weight: 700; opacity: .75; font-variant-numeric: tabular-nums; }
+.dcard-tilt button { flex: none; text-transform: none; width: 34px; height: 30px; margin: 0; padding: 0; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; font-size: 12px; font-weight: 800; display: grid; place-items: center; cursor: pointer; }
+.dcard-tilt button:hover { background: var(--dcard-pill); }
+.dcard-tilt svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+/* Barre « Contour » : boutons au trait, « my » plein et plus large ; le bleu ne marque que le mouvement (Stop). */
+.dcard-bar { display: flex; gap: 8px; min-width: 0; }
+.dcard-btn { flex: 1 1 0; width: auto; min-width: 0; text-transform: none; letter-spacing: normal; transition: background .2s; height: 42px; margin: 0; padding: 0 6px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px solid var(--dcard-out); border-radius: 999px; background: var(--color-bg-card); color: var(--color-text-main); font: inherit; font-size: .9em; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.dcard-btn:hover { background: var(--dcard-pill); }
+.dcard-btn svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.dcard-btn svg:has(use) { fill: currentColor; stroke: none; }
+.dcard-lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dcard-mid-btn { flex: 0 0 60px; padding: 0; border-color: transparent; background: var(--dcard-mid); font-weight: 800; }
+.dcard-mid-btn:hover { background: var(--dcard-mid-h); }
+.dcard-sq { display: none; width: 12px; height: 12px; border-radius: 2px; background: currentColor; }
+.dcard-mid-btn.no-my .dcard-my { display: none; }
+.dcard-mid-btn.no-my .dcard-sq { display: block; }
+.dcard:is([data-direction="1"], [data-direction="-1"]) .dcard-mid-btn { border-color: #2f6fea; background: #2f6fea; color: #fff; box-shadow: 0 6px 16px rgba(47, 111, 234, .45); }
+.dcard:is([data-direction="1"], [data-direction="-1"]) .dcard-my { display: none; }
+.dcard:is([data-direction="1"], [data-direction="-1"]) .dcard-sq { display: block; }
+/* Équipements compacts (dashCompact, bit 1) : en-tête et barre, sans la scène. */
+#divHomePnl.dash-compact-shades .dcard-stage { display: none; }
+
+/* --- Carte de groupe (gcard) : la barre des équipements, sans icône ni scène -------- */
+.somfyGroupCtl.gcard { flex-direction: column; gap: 10px; padding: 14px 14px 12px 18px; border-radius: 22px; box-shadow: none; background: var(--color-bg-card); }
+/* overflow:hidden sur l'en-tête et le nom : certains navigateurs ne rétrécissent pas un <button>
+   sous la largeur de son texte, qui pousserait alors la barre hors de la carte. */
+.gcard-head { display: flex; align-items: center; gap: 10px; min-width: 0; overflow: hidden; }
+.gcard-name, .gcard-name:hover { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; flex: 1; width: auto; min-width: 0; overflow: hidden; margin: 0 0 0 -2px; padding: 0 0 0 2px; border: 0; background: none; color: var(--color-text-main); text-align: left; text-transform: none; font: inherit; cursor: pointer; }
+.gcard-name .groupctl-name { display: block; font-size: 1rem; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gcard-sum { display: none; font-size: .8em; font-weight: 600; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gcard[data-moving="true"] .dcard-mid-btn { border-color: #2f6fea; background: #2f6fea; color: #fff; box-shadow: 0 6px 16px rgba(47, 111, 234, .45); }
+.gcard[data-moving="true"] .dcard-my { display: none; }
+.gcard[data-moving="true"] .dcard-sq { display: block; }
+/* Compact : une ligne, résumé sous le nom, ▲ my ▼ sans libellé. */
+#divHomePnl.dash-compact-groups .somfyGroupCtl.gcard { flex-direction: row; align-items: center; gap: 8px; padding: 10px 10px 10px 18px; }
+#divHomePnl.dash-compact-groups .gcard-head { flex: 1; }
+#divHomePnl.dash-compact-groups .gcard-sum { display: block; }
+#divHomePnl.dash-compact-groups .gcard-pill { display: none; }
+#divHomePnl.dash-compact-groups .gcard-bar { flex: none; gap: 4px; }
+/* Largeurs explicites, pas seulement flex-basis : Firefox mesure la barre d'après le contenu des boutons
+   (flèche, « my »), lui donne trop peu de place, et la carte coupe les boutons qui débordent. */
+#divHomePnl.dash-compact-groups .gcard-bar .dcard-btn { flex: 0 0 38px; width: 38px; height: 36px; padding: 0; }
+#divHomePnl.dash-compact-groups .gcard-bar .dcard-mid-btn { flex: 0 0 52px; width: 52px; }
+#divHomePnl.dash-compact-groups .gcard-bar .dcard-lbl { display: none; }
+
 /* --- Témoin de mouvement ------------------------------------------------
    Deux organes complémentaires : un halo qui respire sur toute la carte, et l'icône de la commande
    en cours qui se colore pour le sens -- visible uniquement sur la page Boutons du carrousel (sur

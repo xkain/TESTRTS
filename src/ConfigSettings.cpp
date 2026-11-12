@@ -290,6 +290,7 @@ bool ConfigSettings::load() {
   pref.getString("iconPack", this->iconPack, sizeof(this->iconPack));
   this->showRadioActivity = pref.getBool("showRadioAct", false);
   this->showMovementIndicator = pref.getBool("showMoveInd", true);
+  this->dashCompact = pref.getUChar("dashCompact", 0) & 0x03;
   this->geoLat = pref.getFloat("geoLat", 99.0f);
   this->geoLon = pref.getFloat("geoLon", 0.0f);
   this->connType = static_cast<conn_types_t>(pref.getChar("connType", 0x00));
@@ -348,6 +349,7 @@ bool ConfigSettings::save() {
   ok &= nvsPutOk(pref.putString("iconPack", this->iconPack), this->iconPack);
   ok &= nvsPutOk(pref.putBool("showRadioAct", this->showRadioActivity));
   ok &= nvsPutOk(pref.putBool("showMoveInd", this->showMovementIndicator));
+  ok &= nvsPutOk(pref.putUChar("dashCompact", this->dashCompact));
   ok &= nvsPutOk(pref.putFloat("geoLat", this->geoLat));
   ok &= nvsPutOk(pref.putFloat("geoLon", this->geoLon));
   ok &= nvsPutOk(pref.putString("pendingLang", this->pendingLang), this->pendingLang);
@@ -379,6 +381,7 @@ void ConfigSettings::toJSON(JsonFormatter &json) {
   json.addElem("defaultMobileTab", this->defaultMobileTab);
   json.addElem("showRadioActivity", this->showRadioActivity);
   json.addElem("showMovementIndicator", this->showMovementIndicator);
+  json.addElem("dashCompact", this->dashCompact);
   json.addElem("geoLat", this->geoLat);
   json.addElem("geoLon", this->geoLon);
 }
@@ -411,6 +414,7 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     if(obj.containsKey("defaultMobileTab")) this->parseValueString(obj, "defaultMobileTab", this->defaultMobileTab, sizeof(this->defaultMobileTab));
     if(obj.containsKey("showRadioActivity")) this->showRadioActivity = obj["showRadioActivity"];
     if(obj.containsKey("showMovementIndicator")) this->showMovementIndicator = obj["showMovementIndicator"];
+    if(obj.containsKey("dashCompact")) this->dashCompact = obj["dashCompact"].as<uint8_t>() & 0x03;
     // Validation de plage (-90..90 / -180..180) en amont, dans /setgeneral. Arrondi à 2 décimales
     // ici quelle que soit la précision reçue : c'est la seule jamais persistée.
     if(obj.containsKey("geoLat")) this->geoLat = roundf(obj["geoLat"].as<float>() * 100.0f) / 100.0f;
@@ -453,7 +457,8 @@ uint16_t ConfigSettings::calcSettingsRecSize() {
     + 4   // ledColorOrder
     + strlen(this->ledColorActivity) + 3
     + 6   // ledRfBlink
-    + strlen(this->iconPack) + 3;
+    + strlen(this->iconPack) + 3
+    + 4;  // dashCompact
 }
 uint16_t ConfigSettings::calcNetRecSize() {
   return 4 // connType

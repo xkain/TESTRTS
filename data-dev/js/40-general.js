@@ -472,7 +472,8 @@ class General {
                 // Activé par défaut côté firmware : une valeur absente (réponse d'un boîtier plus
                 // ancien) doit donc valoir true, pas false -- d'où le test sur !== false plutôt
                 // qu'une double négation.
-                showMovementIndicator: settings.showMovementIndicator !== false
+                showMovementIndicator: settings.showMovementIndicator !== false,
+                dashCompact: (parseInt(settings.dashCompact, 10) || 0) & 3
             };
             this.applyDashboardPrefs(this._dashboardPrefs);
             // L'onglet mobile par défaut ne s'applique qu'UNE SEULE fois, au tout premier rendu :
@@ -681,7 +682,12 @@ class General {
         // pas sur #dashboardContainer directement : un seul toggle pilote l'inversion desktop
         // (colonnes) ET son pendant mobile (ordre des onglets Groupes/Équipements), cf. overlays.css.
         const homePnl = get('divHomePnl');
-        if (homePnl) homePnl.classList.toggle('reverse-columns', !!p.reverseDashboardColumns);
+        if (homePnl) {
+            homePnl.classList.toggle('reverse-columns', !!p.reverseDashboardColumns);
+            // dashCompact : bit 0 = groupes sur une ligne, bit 1 = équipements sans scène.
+            homePnl.classList.toggle('dash-compact-groups', !!(p.dashCompact & 1));
+            homePnl.classList.toggle('dash-compact-shades', !!(p.dashCompact & 2));
+        }
     }
     // Réglage serveur (NVS + /setgeneral), contrairement aux retours d'appui ci-dessus qui restent
     // 100% client -- mais même déroulé de saisie dans les deux cas : sauvegarde par bouton
@@ -690,7 +696,7 @@ class General {
     // doit pas laisser un sous-ensemble de champs appliqué silencieusement.
     DashboardPrefsOverlay() {
         if (get('divDashboardPrefsOverlay')) return;
-        const p = this._dashboardPrefs || { headerMobileDisplay: 0, reverseDashboardColumns: false, defaultMobileTab: 'groups', showRadioActivity: false, showMovementIndicator: true };
+        const p = this._dashboardPrefs || { headerMobileDisplay: 0, reverseDashboardColumns: false, defaultMobileTab: 'groups', showRadioActivity: false, showMovementIndicator: true, dashCompact: 0 };
 
         const div = document.createElement('div');
         div.id = 'divDashboardPrefsOverlay';
@@ -750,6 +756,18 @@ class General {
 
         <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('DASHB_PREFS_SECTION_HEADER_2')}</h3>
+        <div class="uniRow dirty-target">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-list"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="selDashCompact">${tr('DASHB_PREFS_COMPACT_CARDS')}</label>
+        <select id="selDashCompact" class="inputAndSelect">
+        ${[[0, 'DASHB_PREFS_COMPACT_NONE'], [1, 'SUBTAB_GROUPS'], [2, 'SUBTAB_DEVICES'], [3, 'DASHB_PREFS_COMPACT_BOTH']].map(([v, k]) => `<option value="${v}" ${p.dashCompact === v ? 'selected' : ''}>${tr(k)}</option>`).join('')}
+        </select>
+        <div class="uniStatus">${tr('DASHB_PREFS_COMPACT_CARDS_DESC')}</div>
+        </div>
+        </div>
+        </div>
         <label class="uniRow dirty-target" for="cbReverseDashboardColumns">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-column"></use></svg></div>
@@ -800,7 +818,8 @@ class General {
                 reverseDashboardColumns: get('cbReverseDashboardColumns').checked,
                 defaultMobileTab: div.querySelector('input[name="defaultMobileTab"]:checked')?.value || 'groups',
                 showRadioActivity: get('cbShowRadioActivity').checked,
-                showMovementIndicator: get('cbShowMovementIndicator').checked
+                showMovementIndicator: get('cbShowMovementIndicator').checked,
+                dashCompact: parseInt(get('selDashCompact').value, 10) || 0
             };
             putJSONSync('/setgeneral', payload, (err) => {
                 if (err) { ui.serviceError(err); return; }

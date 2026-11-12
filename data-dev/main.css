@@ -1666,18 +1666,31 @@ body.is-home-welcome .container {
     }
     /* align-items: le flex-start de la règle de base vise l'axe vertical tant que la direction
        est `row` ; ici elle bascule en `column` et le même mot gouverne la largeur. */
+    /* Les deux colonnes côte à côte, une par écran : on passe de l'une à l'autre en glissant ou par
+       les onglets (switchMobileTab). Chacune garde son propre défilement vertical. */
     .dashboard-split-container {
-        flex-direction: column;
+        flex-direction: row;
         gap: 0;
         max-width: 100%;
         align-items: stretch;
+        overflow-x: auto !important;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
     }
+    .dashboard-split-container::-webkit-scrollbar { display: none; }
     .dashboard-column.column-groups,
-    .dashboard-split-container.show-devices .dashboard-column.column-shades {
+    .dashboard-column.column-shades {
         display: flex;
+        flex: 0 0 100%;
+        width: 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
     }
-    .dashboard-column.column-shades,
-    .dashboard-split-container.show-devices .dashboard-column.column-groups,
+    #divHomePnl.reverse-columns .dashboard-column.column-groups { order: 2; }
+    /* Le soulignement suit le glissement : --tab-p va de 0 (premier onglet) à 1 (second). */
+    #divHomePnl .mobile-tabs::after { transform: translateX(calc(var(--tab-p, 0) * 100%)) !important; transition: none; }
     .column-header {
         display: none;
     }
@@ -6292,13 +6305,71 @@ input.gen-input.mqtt-mono {
 .switch-bottom { fill: #000; opacity: calc(var(--fpos, 0%) * .12); transition: opacity .4s ease; }
 .switch-led { fill: color-mix(in srgb, var(--color-accent) var(--fpos, 0%), #9aa0a6); transition: fill .4s ease; }
 .switch-glow { fill: color-mix(in srgb, var(--color-accent) 45%, transparent); opacity: var(--fpos, 0%); transition: opacity .4s ease; }
-#divHomePnl .dash-topbar { display: flex; align-items: center; gap: 16px; width: 100%; box-sizing: border-box; padding-right: 20px; background: var(--color-room-bar-bg); border-bottom: 1px solid var(--color-border); }
+#divHomePnl .dash-topbar { display: flex; align-items: center; gap: 16px; width: 100%; box-sizing: border-box; padding: 18px clamp(16px, 2.6vw, 40px) 8px; }
 #divHomePnl .dash-topbar.is-empty { display: none; }
-#divHomePnl .dash-topbar .room-nav-container { flex: 1 1 auto; min-width: 0; width: auto; background: none; }
-#divHomePnl .dash-summary { flex: none; display: flex; align-items: center; gap: 6px; min-height: 44px; }
-#divHomePnl .dash-topbar:not(:has(.room-nav-container[style*="flex"])) .dash-summary { padding-left: 20px; }
-#divHomePnl .dash-summary-room { font-size: 0.8em; font-weight: 600; color: var(--color-text-main); white-space: nowrap; }
-#divHomePnl .dash-summary-room:empty { display: none; }
+/* Haut de page : colonne « Maison » des pièces (ordinateur) ou rangée de puces (tablette, mobile),
+   commandes de toute la maison, message de mouvement. Gabarit de la maquette A2 du tableau de bord. */
+#divHomePnl .dash-rooms { display: flex; flex-direction: column; gap: 10px; min-width: 0; box-sizing: border-box; padding: 16px 15px 4px; }
+#divHomePnl .dash-rooms-title { font-size: 1.6em; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; color: var(--color-text-main); }
+#divHomePnl .dash-rooms-label { display: none; font-size: .75em; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-secondary); }
+#divHomePnl .dash-rooms .room-nav-container { background: none; }
+#divHomePnl .dash-rooms .room-selector { padding: 0 0 4px; gap: 6px; }
+/* Puces (tablette, mobile) : blanches, nombre discret, pièce choisie en plein foncé (bouton neutre A2). */
+#divHomePnl .dash-rooms .room-pill { gap: 7px; height: 40px; padding: 0 14px; border-radius: 999px; background: var(--color-bg-card); font-size: .85em; font-weight: 700; box-shadow: none; }
+#divHomePnl .dash-rooms .room-pill:hover { background: var(--color-bg-alt); }
+#divHomePnl .dash-rooms .room-pill.active { background: var(--color-text-main); color: var(--color-bg-card); box-shadow: none; }
+#divHomePnl .dash-rooms .room-count { min-width: 0; height: auto; padding: 0; background: none; font-size: 1em; font-weight: 600; opacity: .6; }
+#divHomePnl .dash-rooms .room-pill.active .room-count { background: none; }
+#divHomePnl .dash-rooms .room-pill-sum { display: none; }
+#divHomePnl .dash-main { display: flex; flex-direction: column; flex: 1 1 0%; min-width: 0; min-height: 0; }
+/* Pièce vide : le message (affiché par checkEmptyState) remplace les colonnes, titres compris. */
+#divHomePnl #divNoDevice:not([style*="none"]) ~ .dashboard-split-container { display: none; }
+#divHomePnl .dash-house { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; flex-wrap: wrap; }
+#divHomePnl .dash-house-txt { display: flex; flex-direction: column; min-width: 0; }
+#divHomePnl .dash-house-txt b { font-size: 1.1em; font-weight: 800; color: var(--color-text-main); }
+#divHomePnl .dash-house-sub { font-size: .75em; color: var(--color-text-secondary); }
+#divHomePnl .dash-house-bar { flex: 0 1 360px; min-width: 280px; --dcard-pill: var(--color-bg-alt); --dcard-mid: var(--color-bg-alt); --dcard-mid-h: var(--color-bg-input); --dcard-out: var(--color-border); }
+#divHomePnl .dash-house-bar .dcard-btn { height: 44px; }
+#divHomePnl .dash-house-stop .dcard-sq { display: block; }
+#divHomePnl .dash-house-stop.is-moving { border-color: #2f6fea; background: #2f6fea; color: #fff; box-shadow: 0 6px 16px rgba(47, 111, 234, .45); }
+#divHomePnl .dash-move-toast { position: fixed; right: 24px; bottom: 24px; z-index: 1400; display: flex; align-items: center; gap: 12px; width: 420px; max-width: calc(100vw - 24px); box-sizing: border-box; padding: 12px 14px 12px 16px; border-radius: 14px; background: #17181c; color: #fff; box-shadow: 0 10px 24px rgba(0, 0, 0, .2); animation: dashToastIn .35s cubic-bezier(.16, 1, .3, 1); }
+#divHomePnl .dash-move-toast[hidden] { display: none; }
+:root[data-theme="dark"] #divHomePnl .dash-move-toast { background: #2e343e; border: 1px solid #3d4551; }
+#divHomePnl .dash-move-ico { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; background: #1b2c44; color: #8ab8f2; }
+#divHomePnl .dash-move-ico svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#divHomePnl .dash-move-toast[data-arrow="up"] .dash-move-ico svg { transform: rotate(180deg); }
+#divHomePnl .dash-move-txt { flex: 1; min-width: 0; font-size: .9em; }
+#divHomePnl .dash-move-txt b { display: block; }
+#divHomePnl .dash-move-txt span { display: block; font-size: .9em; color: #c9ccd3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#divHomePnl .dash-move-btn, #divHomePnl .dash-move-btn:hover { flex: none; width: auto; min-height: 36px; margin: 0; padding: 0 6px; border: 0; background: transparent; color: #9ec3f0; font-size: .9em; font-weight: 700; text-transform: none; }
+@keyframes dashToastIn { from { transform: translateY(140%); opacity: 0; } to { transform: none; opacity: 1; } }
+/* Ordinateur : la colonne des pièces à gauche, le reste dans une seule zone qui défile ; les groupes
+   passent au-dessus des équipements (reverse-columns les met dessous). */
+@media (min-width: 1001px) {
+    #divHomePnl { display: grid !important; grid-template-columns: minmax(240px, 22%) minmax(0, 1fr); }
+    #divHomePnl .dash-rooms { gap: 14px; padding: 28px 22px; overflow-y: auto; background: var(--color-bg-surface-1); }
+    #divHomePnl .dash-rooms-title { font-size: 2.1em; }
+    #divHomePnl .dash-rooms-label { display: block; }
+    #divHomePnl .dash-rooms .room-nav-container { display: flex; -webkit-mask-image: none; mask-image: none; }
+    #divHomePnl .dash-rooms .room-selector { flex-direction: column !important; overflow: visible !important; padding: 0; gap: 4px; cursor: default; }
+    #divHomePnl .dash-rooms .room-pill { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px 8px; width: 100%; height: auto; box-sizing: border-box; padding: 10px 12px; border-radius: 14px; background: transparent; font-size: 1em; }
+    #divHomePnl .dash-rooms .room-pill-name { font-size: .95em; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #divHomePnl .dash-rooms .room-pill-sum { display: block; grid-column: 1 / -1; font-size: .75em; font-weight: 500; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #divHomePnl .dash-main { overflow-y: auto; }
+    #divHomePnl .dashboard-split-container { flex-direction: column; flex: none; gap: 10px; max-width: none; margin: 0; padding: 4px clamp(16px, 2.6vw, 40px) 32px; overflow: visible !important; }
+    #divHomePnl.reverse-columns .dashboard-split-container { flex-direction: column-reverse; }
+    #divHomePnl .dashboard-column { flex: none !important; width: 100%; height: auto; }
+    #divHomePnl #divShadeControls, #divHomePnl #divGroupControls { overflow: visible !important; padding: 10px 0 0 !important; -webkit-mask-image: none; mask-image: none; }
+}
+/* Tablette et mobile : puces des pièces, puis « Toute la maison » sur toute la largeur. */
+@media (max-width: 1000px) {
+    #divHomePnl .dash-topbar { position: relative; padding: 10px 15px 8px; }
+    #divHomePnl .dash-house { flex-direction: column; align-items: stretch; gap: 10px; }
+    #divHomePnl .dash-house-txt { padding-right: 130px; }
+    #divHomePnl .dash-house-bar { flex: none; min-width: 0; }
+    #divHomePnl .dash-edit-btn { position: absolute; top: 12px; right: 15px; }
+    #divHomePnl .dash-move-toast { left: 12px; right: 12px; bottom: 12px; width: auto; max-width: none; }
+}
 #divHomePnl .column-count { font-size: 0.8em; font-weight: 600; color: var(--color-text-secondary); }
 #divHomePnl #divShadeControls,
 #divHomePnl #divGroupControls { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); grid-auto-rows: max-content; align-items: start !important; align-content: start !important; gap: 12px 14px !important; }
@@ -6447,7 +6518,23 @@ body.is-offline .shadectl-state { opacity: .45; }
 #divHomePnl .card-sheet-tab.active { color: var(--color-accent); }
 #divHomePnl .card-sheet-mymode button { height: 34px; }
 #divHomePnl .card-sheet-hint { margin: 0; font-size: 0.78em; line-height: 1.45; color: var(--color-text-secondary); }
-#divHomePnl :is(.somfyShadeCtl, .somfyGroupCtl).card-compact :is(.shadectl-controls-wrapper, .groupctl-buttons) { display: none; }
+/* Ordinateur : la fiche devient un panneau pleine hauteur à droite (maquette A2 « feuille ouverte »),
+   onglets en pilule sous l'en-tête. Le contenu des onglets ne change pas. fitCardSheetHeight() pose
+   un flex en ligne sur le corps, pensé pour la feuille du bas : le panneau le remplace. */
+@media (min-width: 1001px) {
+    #divHomePnl .card-sheet-overlay { align-items: stretch; justify-content: flex-end; }
+    #divHomePnl .card-sheet-overlay.open { background: rgba(0, 0, 0, 0.35); }
+    #divHomePnl .card-sheet { width: 440px; max-width: 100%; height: 100%; max-height: none; border: 0; border-left: 1px solid var(--color-border); border-radius: 0; background: var(--color-bg-surface-1); box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15); transform: translateX(100%); }
+    #divHomePnl .card-sheet-grip { display: none; }
+    #divHomePnl .card-sheet-head { padding: 18px 20px 14px; border-bottom: 0; }
+    #divHomePnl .card-sheet-head > .somfy-shade-icon { width: 48px; height: 48px; }
+    #divHomePnl .card-sheet-title b { font-size: 1.1em; font-weight: 700; }
+    #divHomePnl .card-sheet-tabs { order: 1; gap: 4px; margin: 0 20px 6px; padding: 4px; border: 0; border-radius: 999px; background: var(--color-bg-card); }
+    #divHomePnl .card-sheet-tab { flex-direction: row; justify-content: center; gap: 7px; min-height: 40px; padding: 0 10px; border-radius: 999px; font-size: 0.85em; font-weight: 600; }
+    #divHomePnl .card-sheet-tab svg { width: 18px; height: 18px; }
+    #divHomePnl .card-sheet-tab.active { background: var(--color-text-main); color: var(--color-bg-card); }
+    #divHomePnl .card-sheet-body { order: 2; flex: 1 1 auto !important; padding: 14px 20px 20px; }
+}
 #divHomePnl :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: none; }
 #divHomePnl.show-hidden-cards :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: flex; opacity: 0.5; }
 #divHomePnl .dash-edit-btn { display: inline-flex; align-items: center; gap: 6px; flex: none; width: auto; min-width: 0; height: 32px; margin: 0; padding: 0 12px; border-radius: var(--radius-btn); border: 1px solid var(--color-control-border); background: var(--color-control-bg); color: var(--color-accent); font-size: 0.8em; font-weight: 600; text-transform: none; letter-spacing: normal; cursor: pointer; }
@@ -6760,25 +6847,12 @@ body.is-offline .shadectl-state { opacity: .45; }
     #divHomePnl .somfyGroupCtl { min-width: 314px; }
 }
 @media (max-width: 1000px) {
-    #divHomePnl .dash-topbar { flex-direction: column; align-items: stretch; gap: 0; padding-right: 0; }
-    #divHomePnl .dash-summary { min-height: 0; padding: 0 15px 8px; }
-    #divHomePnl .dash-topbar:not(:has(.room-nav-container[style*="flex"])) .dash-summary { padding: 8px 15px; }
-    #divHomePnl .dash-topbar { position: relative; }
-    #divHomePnl .dash-summary { min-height: 30px; padding-right: 120px; }
-    #divHomePnl .dash-edit-btn { position: absolute; right: 15px; bottom: 6px; height: 28px; }
     #divHomePnl .dash-edit-bar { margin: 12px 12px 0; }
     #divHomePnl #divShadeControls,
     #divHomePnl #divGroupControls { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 420px) {
     #divHomePnl .card-grid { grid-template-columns: minmax(0, 1fr); }
-}
-@media (min-width: 768px) {
-    #divHomePnl .dash-topbar { position: fixed; top: 0; left: var(--sidebar-width); right: 72px; width: auto; height: var(--topbar-height); z-index: 1000; flex-direction: row; align-items: center; gap: 16px; padding-right: 0; background: none; border-bottom: 0; }
-    #divHomePnl .dash-topbar .room-nav-container { align-self: stretch; }
-    #divHomePnl .dash-summary { min-height: 0; padding: 0; }
-    #divHomePnl .dash-topbar:not(:has(.room-nav-container[style*="flex"])) .dash-summary { padding: 0 0 0 30px; }
-    #divHomePnl .dash-edit-btn { position: static; height: 32px; }
 }
 /* Au repos : la même teinte que le survol, en plus léger, pour que la zone se détache du fond. */
 .file-drop { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; box-sizing: border-box; padding: 18px; border: 1.5px dashed color-mix(in srgb, var(--color-accent), transparent 55%); background: color-mix(in srgb, var(--color-accent), transparent 97%); border-radius: var(--radius-row); cursor: pointer; text-align: center; color: var(--color-text-secondary); font-size: .85em; transition: border-color .2s, background .2s; }
