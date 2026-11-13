@@ -1637,48 +1637,6 @@ function fileDropZone(inputId, titleKey, titleId = '') {
     });
 })();
 
-function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
-    const subtitle = options.subtitle ? `<span class="overlayHeader-subtitle">${tr(options.subtitle)}</span>` : '';
-    const stateBadge = options.stateBadge ? `<span class="overlayHeader-state" style="display:none;">${tr(options.stateBadge)}</span>` : '';
-    const titleLine = stateBadge
-        ? `<div class="overlayHeader-titleRow"><span class="overlayHeader-title">${tr(title)}</span>${stateBadge}</div>`
-        : `<span class="overlayHeader-title">${tr(title)}</span>`;
-    let actionHTML = '';
-
-    // Menu libre : [{ id, label (déjà traduit), active, action (JS inline) }]. L'appelant tient
-    // lui-même l'état actif, via les data-menu des entrées.
-    if (Array.isArray(options.menu)) {
-        actionHTML = `
-        <div class="overlayHeader-dropdown-container">
-        <button type="button" class="overlayHeader-btn-action" title="${tr("OPTION")}" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show');">
-        <svg><use href="#svg-menuVertical"></use></svg>
-        </button>
-        <div class="overlayHeader-dropdown-menu">
-        ${options.menu.map(m => `<div class="dropdown-item${m.active ? ' active' : ''}" data-menu="${m.id}" onclick="this.parentElement.classList.remove('show'); ${m.action}">${m.label}</div>`).join('')}
-        </div>
-        </div>`;
-    }
-
-    return `
-    <div class="overlayHeader">
-    <div class="overlayHeader-block">
-    <div class="overlayHeader-badge">
-    <svg><use href="#${icon}"></use></svg>
-    </div>
-    <div class="overlayHeader-texts">
-    ${titleLine}
-    ${subtitle}
-    </div>
-    </div>
-    <div class="overlayHeader-right">
-    ${actionHTML}
-    <div close onclick="closeOverlay(this.closest('.inst-overlay, .modal-overlay'))">
-    <svg><use href="#svg-closeOverlay"></use></svg>
-    </div>
-    </div>
-    </div>`;
-}
-
 document.addEventListener('click', () => {
     document.querySelectorAll('.overlayHeader-dropdown-menu.show').forEach(menu => menu.classList.remove('show'));
 });

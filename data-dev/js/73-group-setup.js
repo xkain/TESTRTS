@@ -4,26 +4,6 @@ class GroupSetup {
     icoOf(shade) { return (somfy.shadeTypes.find(x => x.type === shade.shadeType) || {}).indic || 'svg-indicShutter'; }
     $(sel) { return this.div ? this.div.querySelector(sel) : null; }
 
-    mount(title, sub, menu) {
-        get('divShadeSetup')?.remove();
-        const div = document.createElement('div');
-        div.className = 'inst-overlay';
-        div.id = 'divShadeSetup';
-        div.innerHTML = `<div class="instructions-content">
-            ${overlayHeader(title, '', 'svg-group', menu ? { subtitle: title, menu } : { subtitle: title })}
-            <div class="overlay-scroll-content"><div class="setup-body"></div></div>
-            <div class="hrDivFooter-Instruc"></div>
-            <div class="button-container-overlay setup-foot"></div></div>`;
-        this.div = div;
-        div._onClosed = () => { if (this.div === div) this.onClose(); };
-        this.head(tr(title), sub);
-        shOverlay(div);
-    }
-    head(title, sub) {
-        const t = this.$('.overlayHeader-title'), u = this.$('.overlayHeader-subtitle');
-        if (t) t.textContent = title;
-        if (u) u.textContent = sub;
-    }
     close() { if (this.div) requestCloseOverlay(this.div); }
     onClose() {
         const s = this.s, cb = s && s.changed ? s.onDone : null;
@@ -47,14 +27,14 @@ class GroupSetup {
             this.renderWiz();
         });
     }
-    mountWiz() {
+    mountWiz(titleKey = 'GSETUP_TITLE') {
         get('divGroupSetup')?.remove();
         const div = document.createElement('div');
         div.id = 'divGroupSetup';
         div.className = 'modal-overlay genmod-overlay wiz-overlay';
         div.innerHTML = `<div class="message-content wiz-window">
             <aside class="wiz-side">
-            <div class="wiz-side-head"><h2 class="wiz-title">${tr('GSETUP_TITLE')}</h2>
+            <div class="wiz-side-head"><h2 class="wiz-title">${tr(titleKey)}</h2>
             <button type="button" class="wiz-close" data-wiz-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
             <ol class="wiz-steps"></ol><div class="wiz-pbar" aria-hidden="true"></div>
             <div class="wiz-sum"><span class="wiz-sum-icon"><svg><use href="#svg-group"></use></svg></span><span class="wiz-sum-text"><b></b><span></span></span></div>
@@ -68,6 +48,7 @@ class GroupSetup {
     }
     // keepMain : appelé pendant la frappe du nom, on ne redessine que la colonne et le pied.
     renderWiz(keepMain) {
+        if (this.w.mode) return this.renderLink();
         const c = this.c, s = this.s, step = this.w.step, name = c.name.trim();
         const links = s ? s.tasks : [];
         const linked = links.filter(T => T.state === 'done').length;
@@ -126,13 +107,7 @@ class GroupSetup {
             if (T) {
                 const nm = escHtml(T.name), memOk = T.sub === 'grp' || T.sub === 'grpq';
                 // Oui / Non neutres : aucun des deux ne doit paraître déjà choisi.
-                const memBody = T.sub === 'memwait' ? `<p class="gen-tile-desc">${tr('GSETUP_MEM_DESC')}</p><div class="gen-btn-row"><button type="button" class="gen-btn gen-btn-primary wiz-busy" aria-disabled="true"><span class="wiz-spin"></span>${tr('GSETUP_MEM_SENDING')}</button></div>`
-                    : T.sub === 'mem' ? `<p class="gen-tile-desc">${tr('GSETUP_MEM_DESC')}</p><div class="gen-btn-row"><button type="button" class="gen-btn gen-btn-primary" onclick="groupSetup.openMemory()">${tr('GSETUP_MEM_BTN')}</button></div>`
-                    : T.sub === 'memq' ? `<p class="wiz-q">${this.t('GSETUP_MEM_Q', { name: nm })}</p><div class="gen-btn-row"><button type="button" class="gen-btn" onclick="groupSetup.sub('memno')">${tr('BT_NO')}</button><button type="button" class="gen-btn" onclick="groupSetup.sub('grp')">${tr('BT_YES')}</button></div>`
-                    : T.sub === 'memno' ? `<p class="wiz-warn">${this.t('GSETUP_MEM_NO', { name: nm })}</p><div class="gen-btn-row"><button type="button" class="gen-btn" onclick="groupSetup.sub('mem')">${tr('BT_RETRY')}</button><button type="button" class="gen-btn" onclick="groupSetup.sub('grp')">${tr('GSETUP_MEM_OTHER')}</button></div>`
-                    : `<p class="wiz-ok"><svg><use href="#svg-check"></use></svg>${tr('GSETUP_MEM_OK')}</p>`;
-                const grpBody = T.sub === 'grpq' ? `<p class="wiz-q">${this.t('GSETUP_GRP_Q', { name: nm })}</p><div class="gen-btn-row"><button type="button" class="gen-btn" onclick="groupSetup.sub('grp')">${tr('SETUP_RETRY_NO')}</button><button type="button" class="gen-btn" onclick="groupSetup.confirmLink()">${tr('GSETUP_GRP_YES')}</button></div>`
-                    : `<p class="gen-tile-desc">${tr('GSETUP_GRP_DESC')}</p><div class="gen-btn-row"><button type="button" id="btnGsetupHold" class="gen-btn gen-btn-primary"${memOk ? '' : ' disabled'} onmousedown="groupSetup.holdStart(event)" ontouchstart="event.preventDefault(); groupSetup.holdStart()" onmouseup="groupSetup.holdEnd(event)" ontouchend="groupSetup.holdEnd()">${tr('GSETUP_GRP_BTN')}</button></div>`;
+                const memBody = this.memBody(T, nm, 'GSETUP_MEM_DESC'), grpBody = this.pairBody(T, nm, false, memOk);
                 main.innerHTML = `${head(this.t('GSETUP_T_LINK', { name: nm }), ' · ' + tr('GSETUP_W_LINK_POS').replace('{I}', s.cur + 1).replace('{T}', links.length))}
                 <div class="wiz-grid">
                 <div class="gen-tile"><h3 class="gen-tile-title">${this.t('GSETUP_MEM_TITLE', { name: nm })}</h3>${memBody}</div>
@@ -196,7 +171,7 @@ class GroupSetup {
                 const sh = somfy.shades.find(x => x.shadeId === id);
                 return { id: 'link', shadeId: id, name: sh ? sh.name : '', sub: 'mem', state: null };
             });
-            this.s = { group, tasks, cur: 0, single: false, changed: true,
+            this.s = { group, tasks, cur: 0, changed: true,
                 flip: group.flipCommands ? 'inv' : 'normal', rep: group.repeats ?? 1, led: group.ledFeedback ? 'oui' : 'non' };
             this.wizStep(2);
         });
@@ -211,13 +186,29 @@ class GroupSetup {
         });
     }
 
-    start(group, tasks, single, onDone) {
-        this.w = null;
-        this.s = { group, tasks, cur: 0, single, onDone, changed: false };
-        if (!this.div || !this.div.isConnected) this.mount('SETUP_RESUME_TITLE', '');
-        this.head(tr('SETUP_RESUME_TITLE'), group.name);
-        this.$('.overlayHeader-dropdown-container')?.remove();
-        this.render();
+    // Oui / Non neutres : aucun des deux ne doit paraître déjà choisi.
+    memBody(T, nm, descKey) {
+        if (T.sub === 'memwait') return `<p class="gen-tile-desc">${tr(descKey)}</p><div class="gen-btn-row"><button type="button" class="gen-btn gen-btn-primary wiz-busy" aria-disabled="true"><span class="wiz-spin"></span>${tr('GSETUP_MEM_SENDING')}</button></div>`;
+        if (T.sub === 'mem') return `<p class="gen-tile-desc">${tr(descKey)}</p><div class="gen-btn-row"><button type="button" class="gen-btn gen-btn-primary" onclick="groupSetup.openMemory()">${tr('GSETUP_MEM_BTN')}</button></div>`;
+        if (T.sub === 'memq') return `<p class="wiz-q">${this.t('GSETUP_MEM_Q', { name: nm })}</p><div class="gen-btn-row"><button type="button" class="gen-btn" onclick="groupSetup.sub('memno')">${tr('BT_NO')}</button><button type="button" class="gen-btn" onclick="groupSetup.sub('grp')">${tr('BT_YES')}</button></div>`;
+        if (T.sub === 'memno') return `<p class="wiz-warn">${this.t('GSETUP_MEM_NO', { name: nm })}</p><div class="gen-btn-row"><button type="button" class="gen-btn" onclick="groupSetup.sub('mem')">${tr('BT_RETRY')}</button><button type="button" class="gen-btn" onclick="groupSetup.sub('grp')">${tr('GSETUP_MEM_OTHER')}</button></div>`;
+        return `<p class="wiz-ok"><svg><use href="#svg-check"></use></svg>${tr('GSETUP_MEM_OK')}</p>`;
+    }
+    // Appairage : appui long maintenu ; retrait : un appui court suffit.
+    pairBody(T, nm, un, memOk) {
+        if (T.state === 'done') return `<p class="wiz-ok"><svg><use href="#svg-check"></use></svg>${this.t(un ? 'GSETUP_L_UNDONE' : 'GSETUP_L_DONE', { name: nm })}</p>`;
+        if (T.sub === 'grpq') return `<p class="wiz-q">${this.t('GSETUP_GRP_Q', { name: nm })}</p><div class="gen-btn-row"><button type="button" class="gen-btn" onclick="groupSetup.sub('grp')">${tr('SETUP_RETRY_NO')}</button><button type="button" class="gen-btn" onclick="groupSetup.confirmLink()">${tr(un ? 'GSETUP_UNGRP_YES' : 'GSETUP_GRP_YES')}</button></div>`;
+        if (un) return `<p class="gen-tile-desc">${tr('GSETUP_UNGRP_DESC')}</p><div class="gen-btn-row"><button type="button" class="gen-btn gen-btn-primary" onclick="groupSetup.groupProgOnce()">${tr('GSETUP_UNGRP_BTN')}</button></div>`;
+        return `<p class="gen-tile-desc">${tr('GSETUP_GRP_DESC')}</p><div class="gen-btn-row"><button type="button" id="btnGsetupHold" class="gen-btn gen-btn-primary"${memOk ? '' : ' disabled'} onmousedown="groupSetup.holdStart(event)" ontouchstart="event.preventDefault(); groupSetup.holdStart()" onmouseup="groupSetup.holdEnd(event)" ontouchend="groupSetup.holdEnd()">${tr('GSETUP_GRP_BTN')}</button></div>`;
+    }
+
+    // ---------- Associer / retirer depuis la fiche du groupe : même coque, 3 ou 2 étapes ----------
+    startLink(mode, group, tasks) {
+        this.c = null;
+        this.s = { group, tasks, cur: 0, changed: false, onDone: () => somfy.openEditGroup(group.groupId) };
+        this.w = { step: 0, mode, pick: null };
+        this.mountWiz(mode === 'unlink' ? 'GSETUP_UNLINK_TIP' : 'BT_LINK_DEVICE');
+        this.renderWiz();
     }
     runLink(groupId) {
         getJSONSync(`/groupOptions?groupId=${groupId}`, (err, data) => {
@@ -225,7 +216,7 @@ class GroupSetup {
             const avail = data.availShades || [];
             if (!avail.length) return ui.errorMessage(tr('ERR_NO_DEVICE_AVAILABLE_GROUP'));
             this.avail = avail;
-            this.start(data, [{ id: 'pick', state: null }], true, () => somfy.openEditGroup(groupId));
+            this.startLink('link', data, []);
         });
     }
     runUnlink(groupId, shadeId) {
@@ -233,71 +224,71 @@ class GroupSetup {
             if (err) return ui.serviceError(err);
             const sh = (group.linkedShades || []).find(x => x.shadeId === shadeId);
             if (!sh) return ui.errorMessage(tr('ERR_DEVICE_NOT_FOUND_GROUP'));
-            this.start(group, [{ id: 'unlink', shadeId, name: sh.name, sub: 'mem', state: null }], true, () => somfy.openEditGroup(groupId));
+            this.startLink('unlink', group, [{ id: 'unlink', shadeId, name: sh.name, sub: 'mem', state: null }]);
         });
     }
-
-    title(T) {
-        if (T.id === 'link') return this.t('GSETUP_T_LINK', { name: escHtml(T.name) });
-        if (T.id === 'unlink') return this.t('GSETUP_T_UNLINK', { name: escHtml(T.name) });
-        if (T.id === 'pick') return tr('BT_LINK_DEVICE');
-        return tr('OPTION');
+    linkKeys() { return this.w.mode === 'unlink' ? ['mem', 'pair'] : ['pick', 'mem', 'pair']; }
+    renderLink() {
+        const w = this.w, s = this.s, un = w.mode === 'unlink', L = this.linkKeys(), key = L[w.step], T = s.tasks[0];
+        const nm = T ? escHtml(T.name) : '', memOk = !!T && (T.state === 'done' || T.sub === 'grp' || T.sub === 'grpq');
+        const steps = {
+            pick: ['GSETUP_L_STEP_DEVICE', T ? T.name : (this.avail.find(a => a.shadeId === w.pick) || {}).name || tr('GSETUP_W_TO_CHOOSE')],
+            mem: ['GSETUP_L_STEP_MEM', tr(memOk ? 'GSETUP_L_MEM_OPEN' : 'SETUP_S_TODO')],
+            pair: [un ? 'GSETUP_L_STEP_UNPAIR' : 'GSETUP_W_STEP_LINK', tr(T && T.state === 'done' ? (un ? 'GSETUP_S_UNLINKED' : 'GSETUP_S_LINKED') : 'SETUP_S_TODO')]
+        };
+        const bar = wizStepsHtml(L.map((k, i) => ({ title: tr(steps[k][0]), desc: steps[k][1], state: i === w.step ? 'on' : i < w.step ? 'done' : '' })));
+        this.$('.wiz-steps').innerHTML = bar.steps;
+        this.$('.wiz-pbar').innerHTML = bar.bar;
+        this.$('.wiz-sum-text b').textContent = s.group.name;
+        this.$('.wiz-sum-text span').textContent = tr('GSETUP_W_COUNT').replace('{N}', (s.group.linkedShades || []).length);
+        const head = (title) => `<div class="wiz-head"><div class="wiz-kick">${tr('GSETUP_L_KICK').replace('{N}', w.step + 1).replace('{T}', L.length)}</div><h2 class="wiz-h">${title}</h2></div>`;
+        const main = this.$('.wiz-main');
+        let ok, hint = '';
+        if (key === 'pick') {
+            main.innerHTML = `${head(tr('GSETUP_PICK_Q'))}<p class="wiz-lead">${this.t('GSETUP_L_PICK_DESC', { name: escHtml(s.group.name) })}</p>
+            <div class="wiz-grid">${this.avail.map(a => {
+                const sh = (somfy.shades || []).find(x => x.shadeId === a.shadeId) || a, on = w.pick === a.shadeId;
+                const sub = [tr(somfy.shadeTypeKey(sh.shadeType) || ''), sh.roomId !== undefined ? somfy._cfgRoomName(sh.roomId) : ''].filter(Boolean).join(' · ');
+                return `<button type="button" class="wiz-check${on ? ' on' : ''}" aria-pressed="${on}" onclick="groupSetup.pickLink(${a.shadeId})">
+                <span class="wiz-check-icon"><svg><use href="#${this.icoOf(sh)}"></use></svg></span>
+                <span class="wiz-check-text"><b>${escHtml(a.name)}</b>${sub ? `<small>${escHtml(sub)}</small>` : ''}</span>
+                <span class="wiz-check-box"><svg><use href="#svg-check"></use></svg></span></button>`;
+            }).join('')}</div>`;
+            ok = w.pick !== null;
+        } else if (key === 'mem') {
+            main.innerHTML = `${head(this.t('GSETUP_L_MEM_H', { name: nm }))}<div class="wiz-grid"><div class="gen-tile"><h3 class="gen-tile-title">${tr('GSETUP_L_MEM_T')}</h3>${this.memBody(T, nm, un ? 'GSETUP_MEM_DESC_UN' : 'GSETUP_MEM_DESC')}</div></div>`;
+            ok = memOk;
+            if (!ok) hint = tr('GSETUP_L_MEM_HINT');
+        } else {
+            main.innerHTML = `${head(this.t(un ? 'GSETUP_T_UNLINK' : 'GSETUP_L_PAIR_H', { name: nm }))}<div class="wiz-grid"><div class="gen-tile"><h3 class="gen-tile-title">${tr(un ? 'GSETUP_L_UNPAIR_T' : 'GSETUP_L_PAIR_T')}</h3>${this.pairBody(T, nm, un, true)}</div></div>`;
+            ok = T.state === 'done';
+            if (!ok) hint = tr(un ? 'GSETUP_L_UNPAIR_HINT' : 'GSETUP_L_PAIR_HINT');
+        }
+        wizScrollTop(this.w, main, `${w.step}`);
+        const last = w.step === L.length - 1;
+        const btn = (cls, attrs, k) => `<button type="button" class="gen-btn${cls}" ${attrs}>${tr(k)}</button>`;
+        this.$('.wiz-foot').innerHTML = `${key === 'mem' && !un ? btn('', 'onclick="groupSetup.linkBack()"', 'BT_GO_BACK') : ''}
+            <span class="wiz-foot-gap"></span><span class="wiz-foot-hint">${escHtml(hint)}</span>
+            ${btn(' wiz-quit', 'data-wiz-close', 'BT_CANCEL')}
+            ${btn(' gen-btn-primary', `onclick="groupSetup.linkNext()"${ok ? '' : ' disabled'}`, last ? 'SETUP_FINISH' : 'BT_CONTINUE')}`;
     }
-    render() {
-        if (this.w) return this.renderWiz();
-        const s = this.s;
-        if (s.cur >= s.tasks.length) return this.closeDone();
-        this.$('.setup-body').innerHTML = `<div class="setup-tasks">${s.tasks.map((T, k) => {
-            const cls = k === s.cur ? 'active' : (T.state || '');
-            const n = T.state === 'done' ? '<svg><use href="#svg-check"></use></svg>' : k + 1;
-            const st = T.state === 'done' ? (T.note || '') : k === s.cur ? '' : tr('SETUP_S_TODO');
-            const body = k === s.cur ? `<div class="setup-task-b">${this.body(T)}${s.single ? '' : `<div class="setup-nav"><span></span><button type="button" class="setup-link" onclick="groupSetup.skip()">${tr('SETUP_SKIP')}</button></div>`}</div>` : '';
-            return s.single && k !== s.cur ? '' : `<div class="setup-task ${cls}${s.single ? ' setup-single' : ''}">${s.single ? '' : `<div class="setup-task-h"><div class="setup-task-n">${n}</div><div class="setup-task-t">${this.title(T)}</div><div class="setup-task-s">${st}</div></div>`}${body}</div>`;
-        }).join('')}</div>`;
-        this.$('.setup-foot').innerHTML = `<button type="button" line onclick="groupSetup.close()">${tr(s.single ? 'BT_CLOSE' : 'SETUP_LATER')}</button>`;
+    pickLink(id) { this.w.pick = id; this.renderWiz(); }
+    linkBack() { this.s.tasks = []; this.w.step = 0; this.renderWiz(); }
+    linkNext() {
+        const w = this.w, key = this.linkKeys()[w.step];
+        if (key === 'pick') {
+            const a = this.avail.find(x => x.shadeId === w.pick);
+            this.s.tasks = [{ id: 'link', shadeId: w.pick, name: a ? a.name : '', sub: 'mem', state: null }];
+            this.s.cur = 0;
+        }
+        if (key !== 'pair') { w.step++; return this.renderWiz(); }
+        const T = this.s.tasks[0];
+        ui.toast(this.t(w.mode === 'unlink' ? 'GSETUP_L_TOAST_UNLINK' : 'GSETUP_L_TOAST_LINK', { name: T.name }));
+        this.closeDone();
     }
-    body(T) {
-        if (T.id === 'pick') return this.bodyPick();
-        const name = escHtml(T.name), un = T.id === 'unlink';
-        if (T.sub === 'mem') return `
-            <p class="setup-p"><b>${this.t('GSETUP_MEM_TITLE', { name })}</b></p>
-            <p class="setup-p sub">${tr(un ? 'GSETUP_MEM_DESC_UN' : 'GSETUP_MEM_DESC')}</p>
-            <div class="setup-actions"><button type="button" onclick="groupSetup.openMemory()">${tr('GSETUP_MEM_BTN')}</button></div>`;
-        if (T.sub === 'memwait') return `<p class="setup-p sub">${tr('GSETUP_MEM_SENDING')}</p>`;
-        if (T.sub === 'memq') return `
-            <p class="setup-p">${this.t('GSETUP_MEM_Q', { name })}</p>
-            <div class="setup-actions"><button type="button" line onclick="groupSetup.sub('memno')">${tr('BT_NO')}</button><button type="button" class="btn-success" onclick="groupSetup.sub('grp')">${tr('BT_YES')}</button></div>`;
-        if (T.sub === 'memno') return `
-            <div class="setup-warn">${this.t('GSETUP_MEM_NO', { name })}</div>
-            <div class="setup-actions"><button type="button" line onclick="groupSetup.sub('mem')">${tr('BT_RETRY')}</button><button type="button" onclick="groupSetup.sub('grp')">${tr('GSETUP_MEM_OTHER')}</button></div>`;
-        const ok = `<div class="setup-okline"><svg><use href="#svg-check"></use></svg><span>${tr('GSETUP_MEM_OK')}</span></div>`;
-        if (T.sub === 'grp' && un) return `${ok}
-            <p class="setup-p"><b>${tr('GSETUP_UNGRP_TITLE')}</b></p>
-            <p class="setup-p sub">${tr('GSETUP_UNGRP_DESC')}</p>
-            <div class="setup-actions"><button type="button" onclick="groupSetup.groupProgOnce()">${tr('GSETUP_UNGRP_BTN')}</button></div>`;
-        if (T.sub === 'grp') return `${ok}
-            <p class="setup-p"><b>${tr('GSETUP_GRP_TITLE')}</b></p>
-            <p class="setup-p sub">${tr('GSETUP_GRP_DESC')}</p>
-            <div class="setup-actions"><button type="button" id="btnGsetupHold" onmousedown="groupSetup.holdStart(event)" ontouchstart="event.preventDefault(); groupSetup.holdStart()" onmouseup="groupSetup.holdEnd(event)" ontouchend="groupSetup.holdEnd()">${tr('GSETUP_GRP_BTN')}</button></div>`;
-        if (T.sub === 'grpq') return `
-            <p class="setup-p">${this.t('GSETUP_GRP_Q', { name })}</p>
-            <div class="setup-actions"><button type="button" line onclick="groupSetup.sub('grp')">${tr('SETUP_RETRY_NO')}</button><button type="button" class="btn-success" onclick="groupSetup.confirmLink()">${tr(un ? 'GSETUP_UNGRP_YES' : 'GSETUP_GRP_YES')}</button></div>`;
-        return '';
-    }
-    bodyPick() {
-        const opts = this.avail.map(sh => `<option value="${sh.shadeId}">${escHtml(sh.name)}</option>`).join('');
-        return `<div class="uniRow"><div class="unifield-content"><label class="label" for="gsetupPick">${tr('GSETUP_PICK_Q')}</label>
-            <select id="gsetupPick" class="inputAndSelect">${opts}</select></div></div>
-            <div class="setup-actions"><button type="button" onclick="groupSetup.pick()">${tr('BT_NEXT')}</button></div>`;
-    }
-    pick() {
-        const id = parseInt(this.$('#gsetupPick').value, 10), sh = this.avail.find(x => x.shadeId === id);
-        this.s.tasks = [{ id: 'link', shadeId: id, name: sh ? sh.name : '', sub: 'mem', state: null }];
-        this.render();
-    }
-    opt(k, v) { this.s[k] = v; this.render(); }
-    setRep(v) { this.s.rep = v; this.render(); }
-    sub(v) { this.s.tasks[this.s.cur].sub = v; this.render(); }
+    opt(k, v) { this.s[k] = v; this.renderWiz(); }
+    setRep(v) { this.s.rep = v; this.renderWiz(); }
+    sub(v) { this.s.tasks[this.s.cur].sub = v; this.renderWiz(); }
     task() { return this.s.tasks[this.s.cur]; }
 
     // L'appui long dure 2 à 4 s avant la réponse : on l'affiche tout de suite, sinon on reclique.
@@ -335,8 +326,8 @@ class GroupSetup {
             this.done(tr(un ? 'GSETUP_S_UNLINKED' : 'GSETUP_S_LINKED'));
         });
     }
-    done(note) { const T = this.task(); T.state = 'done'; T.note = note; this.s.cur++; this.render(); }
-    skip() { this.task().state = 'skipped'; this.s.cur++; this.render(); }
+    done(note) { const T = this.task(); T.state = 'done'; T.note = note; this.s.cur++; this.renderWiz(); }
+    skip() { this.task().state = 'skipped'; this.s.cur++; this.renderWiz(); }
     closeDone() { if (this.div) closeOverlay(this.div); }
     // Fiche groupe : tuiles des pages-listes, la tuile d'ajout en premier.
     renderMembers(group) {
