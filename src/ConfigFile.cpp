@@ -12,8 +12,8 @@
 // 26 = v2.6.2 (25 + couleur d'accentuation), 27 = v3 : les champs propres à la v3 se gardent à 27.
 #define SHADE_HDR_VER 27
 #define SHADE_HDR_SIZE 76
-#define SHADE_REC_SIZE 444
-#define GROUP_REC_SIZE 206
+#define SHADE_REC_SIZE 477
+#define GROUP_REC_SIZE 239
 #define SCHEDULE_HDR_VER 1
 #define SCHEDULE_REC_SIZE 79   // dayMask..enabled (60) + retries (4) + positionMode (4) + timeRef (4) + sunOffset (7)
 #define TRANS_REC_SIZE 79
@@ -949,6 +949,9 @@ bool ShadeConfigFile::readGroupRecord(SomfyGroup *group) {
   if(this->header.version >= 24) group->lastRollingCode = this->readUInt16(0);
   // Lu ici, à la place exacte qu'occupe l'écriture : le bloc NVS qui suit ne touche pas au fichier.
   if(this->header.version >= 27) group->ledFeedback = this->readBool(false);
+  // Absent d'un enregistrement plus ancien : vidé, sinon une restauration garderait le choix courant.
+  if(this->header.version >= 27 && this->header.groupRecordSize >= 239) this->readString(group->remoteModel, sizeof(group->remoteModel));
+  else group->remoteModel[0] = '\0';
   if(group->getRemoteAddress() != 0) {
     uint16_t rc = pref.getUShort(group->getRemotePrefId(), 0);
     group->lastRollingCode = max(rc, group->lastRollingCode);
@@ -1091,7 +1094,10 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
         shade->linkedRemotes[SOMFY_LEGACY_LINKED_REMOTES + j].setRemoteAddress(this->readUInt32(0));
       }
     }
+    if(this->header.shadeRecordSize >= 477) this->readString(shade->remoteModel, sizeof(shade->remoteModel));
+    else shade->remoteModel[0] = '\0';
   }
+  else shade->remoteModel[0] = '\0';
   if(this->file.position() != startPos + this->header.shadeRecordSize) {
     DBG_PRINTLN("Reading to end of shade record");
     this->seekChar(CFG_REC_END);
@@ -1170,7 +1176,8 @@ bool ShadeConfigFile::writeGroupRecord(SomfyGroup *group) {
   this->writeBool(group->flipCommands);
   this->writeUInt8(group->roomId);
   this->writeUInt16(group->lastRollingCode);
-  this->writeBool(group->ledFeedback, CFG_REC_END);
+  this->writeBool(group->ledFeedback);
+  this->writeString(group->remoteModel, sizeof(group->remoteModel), CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeRepeaterRecord(SomfyShadeController *s) {
@@ -1246,9 +1253,9 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeUInt8(static_cast<uint8_t>(shade->stateVocab));
   this->writeUInt8(shade->setupSteps);
   for(uint8_t j = 0; j < SOMFY_EXTRA_LINKED_REMOTES; j++) {
-    this->writeUInt32(shade->linkedRemotes[SOMFY_LEGACY_LINKED_REMOTES + j].getRemoteAddress(),
-      j == SOMFY_EXTRA_LINKED_REMOTES - 1 ? CFG_REC_END : CFG_VALUE_SEP);
+    this->writeUInt32(shade->linkedRemotes[SOMFY_LEGACY_LINKED_REMOTES + j].getRemoteAddress());
   }
+  this->writeString(shade->remoteModel, sizeof(shade->remoteModel), CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeSettingsRecord() {

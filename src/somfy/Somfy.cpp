@@ -134,6 +134,7 @@ void SomfyShade::clear() {
   this->flipPosition = false;
   this->flipCommands = false;
   this->ledFeedback = false;
+  this->remoteModel[0] = '\0';
   this->setupSteps = 0;
   this->lastRollingCode = 0;
   this->shadeType = shade_types::roller;
@@ -176,8 +177,22 @@ void SomfyGroup::clear() {
   this->repeats = 1;
   this->roomId = 0;
   this->ledFeedback = false;
+  this->remoteModel[0] = '\0';
   this->name[0] = 0x00;
   memset(&this->linkedShades, 0x00, sizeof(this->linkedShades));
+}
+// Même règle que l'identifiant d'un pack d'icônes : [a-z0-9-], 32 au plus, vide accepté. Tout le
+// reste est refusé sans rien changer : la valeur repart telle quelle dans shades.cfg et le JSON.
+bool SomfyRemote::setRemoteModel(const char *id) {
+  if(!id) return false;
+  size_t n = strlen(id);
+  if(n >= sizeof(this->remoteModel)) return false;
+  for(size_t i = 0; i < n; i++) {
+    char c = id[i];
+    if(!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-')) return false;
+  }
+  memcpy(this->remoteModel, id, n + 1);
+  return true;
 }
 int8_t SomfyShade::linkRemote(uint32_t address, uint16_t rollingCode) {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h

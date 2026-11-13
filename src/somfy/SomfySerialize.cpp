@@ -231,6 +231,7 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
     }
     if(obj.containsKey("flipCommands")) this->flipCommands = obj["flipCommands"].as<bool>();
     if(obj.containsKey("ledFeedback")) this->ledFeedback = obj["ledFeedback"].as<bool>();
+    if(obj.containsKey("remoteModel")) this->setRemoteModel(obj["remoteModel"] | "");
     if(obj.containsKey("flipPosition")) this->flipPosition = obj["flipPosition"].as<bool>();
     if(obj.containsKey("repeats")) this->repeats = max(obj["repeats"].as<uint8_t>(), (uint8_t)1);
     if(obj.containsKey("tiltType")) {
@@ -339,6 +340,7 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
   json.addElem("flags", this->flags);
   json.addElem("flipCommands", this->flipCommands);
   json.addElem("ledFeedback", this->ledFeedback);
+  json.addElem("remoteModel", this->remoteModel);
   json.addElem("flipPosition", this->flipPosition);
   json.addElem("inGroup", this->isInGroup());
   json.addElem("sunSensor", this->hasSunSensor());
@@ -409,6 +411,7 @@ int8_t SomfyGroup::fromJSON(JsonObject &obj) {
   if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
   if(obj.containsKey("flipCommands")) this->flipCommands = obj["flipCommands"].as<bool>();
   if(obj.containsKey("ledFeedback")) this->ledFeedback = obj["ledFeedback"].as<bool>();
+  if(obj.containsKey("remoteModel")) this->setRemoteModel(obj["remoteModel"] | "");
 
   //if(obj.containsKey("sunSensor")) this->hasSunSensor() = obj["sunSensor"];  This is calculated
   if(obj.containsKey("repeats")) this->repeats = max(obj["repeats"].as<uint8_t>(), (uint8_t)1);
@@ -458,6 +461,7 @@ void SomfyGroup::toJSONHead(JsonFormatter &json, bool secrets) {
   json.addElem("sunSensor", this->hasSunSensor());
   json.addElem("flipCommands", this->flipCommands);
   json.addElem("ledFeedback", this->ledFeedback);
+  json.addElem("remoteModel", this->remoteModel);
   json.addElem("flags", this->flags);
   json.addElem("repeats", this->repeats);
   json.addElem("sortOrder", this->sortOrder);

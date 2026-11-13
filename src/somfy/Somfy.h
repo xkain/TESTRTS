@@ -152,6 +152,10 @@ class SomfyRemote {
     // bit libre de `flags` : SomfyGroup::updateFlags() recalcule cet octet intégralement depuis les
     // équipements membres, ce qui effacerait silencieusement une préférence de groupe rangée là.
     bool ledFeedback = false;
+    // Télécommande virtuelle choisie, identifiant d'un pack (../audit/CONTRAT-TELECOMMANDES-v1.md).
+    // Vide = celle que l'interface déduit du type. Le firmware ne fait que la garder.
+    char remoteModel[33] = "";
+    bool setRemoteModel(const char *id);
     uint16_t lastRollingCode = 0;
     uint8_t flags = 0;
     uint8_t bitLength = 0;
