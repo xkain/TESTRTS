@@ -193,8 +193,6 @@ void somfy_frame_t::encode80BitFrame(byte *frame, uint8_t repeat) {
       frame[9] |= this->calc80Checksum(frame[7], frame[8], frame[9]);
       break;
     case somfy_commands::Toggle:
-      frame[0] = 164;
-      frame[1] |= 0xF0;
       frame[7] = this->encode80Byte7(196, repeat);
       frame[8] = 0;
       frame[9] = 0x10;
@@ -317,8 +315,14 @@ void somfy_frame_t::encodeFrame(byte *frame) {
     }
 
   }
-  else {
-    if(this->bitLength == 80) this->encode80BitFrame(&frame[0], this->repeats);
+  else if(this->bitLength == 80) {
+    // Les répétitions ne rappellent que encode80BitFrame(), sur des octets 1 à 6 déjà brouillés :
+    // l'en-tête du Toggle ne peut s'écrire qu'ici, sur la trame en clair.
+    if(this->cmd == somfy_commands::Toggle) {
+      frame[0] = 164;
+      frame[1] = 0xF0;
+    }
+    this->encode80BitFrame(&frame[0], this->repeats);
   }
   byte checksum = 0;
 
