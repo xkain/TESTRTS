@@ -1317,8 +1317,8 @@ class ShadeSetup {
         h += `<div class="setup-optq"><div class="setup-q2">${tr('SETUP_REACH_Q')}</div>
             <p class="setup-p sub">${tr('SETUP_REACH_DESC')}</p>
             ${(() => {
-                // Équipement : le nombre exact (0 à 20, plafond du firmware) plutôt que Normale/Renforcée.
-                const opts = Array.from({ length: 21 }, (_, v) => `<option value="${v}"${s.rep === v ? ' selected' : ''}>${tr(v ? `OPT_${v}TIME` : 'OPT_NO_REPEAT')}</option>`).join('');
+                // Équipement : le nombre exact (1 à 20) plutôt que Normale/Renforcée.
+                const opts = Array.from({ length: 20 }, (_, i) => i + 1).map(v => `<option value="${v}"${s.rep === v ? ' selected' : ''}>${tr(`OPT_${v}TIME`)}</option>`).join('');
                 const sel = `<select class="${wiz ? 'gen-input' : 'inputAndSelect'}" aria-label="${escAttr(tr('REPEAT_COMMANDS'))}" onchange="shadeSetup.setRep(parseInt(this.value, 10))">${opts}</select>`;
                 return wiz ? `<div class="gen-input-box">${sel}</div>` : sel;
             })()}</div>`;

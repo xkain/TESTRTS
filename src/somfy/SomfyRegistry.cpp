@@ -688,6 +688,7 @@ SomfyGroup *SomfyShadeController::addGroup() {
   return group;
 }
 void SomfyShadeController::sendFrame(somfy_frame_t &frame, uint8_t repeat) {
+  repeat = constrain(repeat, 1, MAX_TX_REPEATS);
   somfy.transceiver.beginTransmit();
   byte frm[10];
   frame.encodeFrame(frm);

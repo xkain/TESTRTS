@@ -173,7 +173,7 @@ void SomfyRoom::clear() {
 void SomfyGroup::clear() {
   this->setGroupId(255);
   this->setRemoteAddress(0);
-  this->repeats = 0;
+  this->repeats = 1;
   this->roomId = 0;
   this->ledFeedback = false;
   this->name[0] = 0x00;
@@ -1003,6 +1003,7 @@ void SomfyRemote::repeatFrame(uint8_t repeat) {
     this->triggerGPIOs(this->lastFrame);
     return;
   }
+  repeat = constrain(repeat, 1, MAX_TX_REPEATS);
   somfy.transceiver.beginTransmit();
   // Une seule source pour la longueur, résolue ici, avec exactement le même repli que
   // sendCommand() : `this->lastFrame.bitLength` sert à choisir l'encodage (ligne du

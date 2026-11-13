@@ -938,7 +938,7 @@ bool ShadeConfigFile::readGroupRecord(SomfyGroup *group) {
     // Do this to eliminate gaps.
     if(shadeId > 0) group->linkedShades[lsd++] = shadeId;
   }
-  if(this->header.version >= 12) group->repeats = this->readUInt8(1);
+  if(this->header.version >= 12) group->repeats = max(this->readUInt8(1), (uint8_t)1);
   if(this->header.version >= 13) group->sortOrder = this->readUInt8(group->getGroupId() - 1);
   else group->sortOrder = group->getGroupId() - 1;
   
@@ -1046,7 +1046,7 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   shade->tiltTarget = floor(shade->currentTiltPos);
   if(this->header.version >= 9) shade->flipCommands = this->readBool(false);
   if(this->header.version >= 10) shade->flipPosition = this->readBool(false);
-  if(this->header.version >= 12) shade->repeats = this->readUInt8(1);
+  if(this->header.version >= 12) shade->repeats = max(this->readUInt8(1), (uint8_t)1);
   if(this->header.version >= 13) shade->sortOrder = this->readUInt8(shade->getShadeId() - 1);
   else shade->sortOrder = shade->getShadeId() - 1;
   if(this->header.version > 14) {

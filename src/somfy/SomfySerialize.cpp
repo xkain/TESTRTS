@@ -232,7 +232,7 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
     if(obj.containsKey("flipCommands")) this->flipCommands = obj["flipCommands"].as<bool>();
     if(obj.containsKey("ledFeedback")) this->ledFeedback = obj["ledFeedback"].as<bool>();
     if(obj.containsKey("flipPosition")) this->flipPosition = obj["flipPosition"].as<bool>();
-    if(obj.containsKey("repeats")) this->repeats = obj["repeats"];
+    if(obj.containsKey("repeats")) this->repeats = max(obj["repeats"].as<uint8_t>(), (uint8_t)1);
     if(obj.containsKey("tiltType")) {
       if(obj["tiltType"].is<const char *>()) {
         if(strncmp(obj["tiltType"].as<const char *>(), "none", 4) == 0)
@@ -411,7 +411,7 @@ int8_t SomfyGroup::fromJSON(JsonObject &obj) {
   if(obj.containsKey("ledFeedback")) this->ledFeedback = obj["ledFeedback"].as<bool>();
 
   //if(obj.containsKey("sunSensor")) this->hasSunSensor() = obj["sunSensor"];  This is calculated
-  if(obj.containsKey("repeats")) this->repeats = obj["repeats"];
+  if(obj.containsKey("repeats")) this->repeats = max(obj["repeats"].as<uint8_t>(), (uint8_t)1);
   if(obj.containsKey("linkedShades")) {
     // Ce bloc remplissait un tableau LOCAL qui mourait en fin de portée : la composition d'un
     // groupe envoyée à /addGroup ou /saveGroup était donc silencieusement ignorée. L'interface ne

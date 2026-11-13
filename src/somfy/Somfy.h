@@ -42,6 +42,9 @@ static_assert(SOMFY_LEGACY_LINKED_REMOTES + SOMFY_EXTRA_LINKED_REMOTES == SOMFY_
 // et SomfyPositioning.cpp s'en servent tous les deux.
 #define SETMY_REPEATS 35
 #define TILT_REPEATS 15
+// L'appui long sur Prog de l'assistant de groupe en demande 40 ; au-delà, une salve occuperait
+// la tâche appelante plus de 6 s.
+#define MAX_TX_REPEATS 40
 
 // Enums du modèle de domaine (par opposition à radio_proto/somfy_commands, propres au protocole
 // radio et déplacés dans SomfyRadioCodec.h) : restent ici, avec les classes qui les utilisent.
