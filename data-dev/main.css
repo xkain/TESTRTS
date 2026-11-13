@@ -5170,11 +5170,19 @@ div.frame-pulses {
     height: 16px;
     color: var(--color-text-secondary);
 }
-.settings-row.is-off {
-    opacity: 0.55;
+.settings-row.is-off .settings-row-desc {
+    color: var(--color-warning);
+    font-weight: 600;
 }
-.settings-row.is-off b {
-    text-decoration: line-through;
+.settings-row-toggle {
+    cursor: default;
+}
+.settings-row-toggle .gen-seg {
+    flex: none;
+    font-size: 14px;
+}
+.mobile-related {
+    display: none;
 }
 body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     content: "";
@@ -5186,6 +5194,119 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     margin-top: -4.5px;
     border-radius: var(--radius-full);
     background: var(--color-danger);
+}
+
+/* =======================================================================
+ *  NAVIGATION MOBILE : en-tête (retour, titre, +, aide) et barre de trois onglets
+ *  ======================================================================= */
+.mobile-tabbar,
+.mobile-title {
+    display: none;
+}
+@media (max-width: 767px) {
+    :root {
+        --tabbar-h: calc(60px + env(safe-area-inset-bottom, 0px));
+    }
+    .container {
+        padding-bottom: var(--tabbar-h);
+    }
+    .header-left {
+        flex: 1;
+        min-width: 0;
+    }
+    .mobile-title {
+        display: block;
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--color-text-main);
+    }
+    #appHeader.is-root #btnMobileBack,
+    #appHeader:not(.is-root.is-home) #btnMobileAdd {
+        display: none;
+    }
+    #appHeader.is-root .header-left {
+        padding-left: 8px;
+    }
+    #btnMobileBack svg {
+        color: var(--color-accent);
+    }
+    .settings-help {
+        display: none;
+    }
+    .mobile-tabbar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        height: var(--tabbar-h);
+        padding: 6px 6px env(safe-area-inset-bottom, 0px);
+        box-sizing: border-box;
+        background: var(--panel);
+        border-top: 1px solid var(--divider);
+    }
+    .mobile-tabbar button {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        min-width: 0;
+        margin: 0;
+        padding: 4px 0;
+        border: 0;
+        background: none;
+        color: var(--text-3);
+        font-size: 11px;
+        text-transform: none;
+        letter-spacing: normal;
+        cursor: pointer;
+    }
+    .mobile-tabbar button:hover,
+    .mobile-tabbar button:focus {
+        background: none;
+        color: var(--text-3);
+    }
+    .mobile-tabbar button.is-active {
+        color: var(--accent);
+        font-weight: 700;
+    }
+    .mobile-tabbar svg {
+        width: 24px;
+        height: 24px;
+    }
+    .mobile-tabbar-dot {
+        display: none;
+        position: absolute;
+        top: 2px;
+        left: calc(50% + 8px);
+        width: 9px;
+        height: 9px;
+        border-radius: var(--radius-full);
+        border: 2px solid var(--panel);
+        background: var(--color-danger);
+    }
+    body.fw-update .mobile-tabbar-dot {
+        display: block;
+    }
+    body.onboarding-active .mobile-tabbar {
+        display: none;
+    }
+    .mobile-related {
+        display: flex;
+        margin: 8px 14px 24px;
+    }
+    :root:not([data-ui-advanced]) .adv-only {
+        display: none !important;
+    }
 }
 .section-breadcrumb {
     display: flex;
@@ -5647,8 +5768,10 @@ body:has(.inst-overlay, .modal-overlay) :is(#divSettingsPnl) > .button-container
     :is(#divSettingsPnl) > .button-container-footerHtml { left: var(--sidebar-width); }
 }
 @media (max-width: 767px) {
-    :is(#divSettingsPnl) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
-    :is(#divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
+    /* Au fil de la liste : fixé en bas, il recouvrirait la barre d'onglets. */
+    :is(#divSettingsPnl) > .button-container-footerHtml { position: static; z-index: auto; justify-content: center; padding: 20px 0 0; gap: 10px; transform: none; animation: none; visibility: visible; background: none; border: 0; box-shadow: none; }
+    :is(#divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; }
+    :is(#divSettingsPnl) { padding-bottom: 24px; }
 }
 /* --- Page Connexion (#divNetAdapter) sur le gabarit Général : tête d'état, types, résumé --- */
 #divNetAdapter .net-off {
@@ -6272,7 +6395,7 @@ input.gen-input.mqtt-mono {
     #divHomePnl .dash-house-txt { padding-right: 130px; }
     #divHomePnl .dash-house-bar { flex: none; min-width: 0; }
     #divHomePnl .dash-edit-btn { position: absolute; top: 12px; right: 15px; }
-    #divHomePnl .dash-move-toast { left: 12px; right: 12px; bottom: 12px; width: auto; max-width: none; }
+    #divHomePnl .dash-move-toast { left: 12px; right: 12px; bottom: calc(12px + var(--tabbar-h, 0px)); width: auto; max-width: none; }
 }
 #divHomePnl .column-count { font-size: 0.8em; font-weight: 600; color: var(--color-text-secondary); }
 #divHomePnl #divShadeControls,

@@ -250,7 +250,8 @@
 
             <div class="header" id="appHeader">
                 <div class="header-left">
-                    <button type="button" id="btnMobileHome" class="mobile-menu-btn" onclick="confirmDiscardChanges(() => activateGrpid('divHomePnl'));"><svg><use href="#svg-tabHome"></use></svg></button>
+                    <button type="button" id="btnMobileBack" class="mobile-menu-btn" onclick="mobileNav.back();" tr="BT_GO_BACK" title=""><svg><use href="#svg-arrowLeft"></use></svg></button>
+                    <h1 id="mobileTitle" class="mobile-title"></h1>
                 </div>
                 <div class="header-right">
                     <div class="mobile-status-cluster">
@@ -288,42 +289,33 @@
                             </div>
                         </div>
                     </div>
-                    <button type="button" id="btnMobileSettings" class="mobile-menu-btn" onclick="confirmDiscardChanges(() => activateGrpid('divSettingsPnl'));"><svg><use href="#svg-tabSettings"></use></svg></button>
+                    <button type="button" id="btnMobileAdd" class="mobile-menu-btn" onclick="mobileNav.addMenu();" tr="BT_ADD" title=""><svg><use href="#svg-add"></use></svg></button>
+                    <button type="button" id="btnMobileHelp" class="mobile-menu-btn" onclick="openPageHelp();" tr="HELP_THIS_PAGE" title=""><svg><use href="#svg-navHelp"></use></svg></button>
                 </div>
             </div>
+            <nav id="mobileTabBar" class="mobile-tabbar" role="tablist">
+                <button type="button" role="tab" data-tab-root="divHomePnl"><svg><use href="#svg-tabHome"></use></svg><span tr="DASH_HOUSE_TITLE">Maison</span></button>
+                <button type="button" role="tab" data-tab-root="divSomfySchedules"><svg><use href="#svg-navSchedule"></use></svg><span tr="SUBTAB_SCHEDULES">Plannings</span></button>
+                <button type="button" role="tab" data-tab-root="divSettingsPnl"><svg><use href="#svg-tabSettings"></use></svg><span tr="SETTINGS_TITLE">Réglages</span><i class="mobile-tabbar-dot" aria-hidden="true"></i></button>
+            </nav>
             <div id="divConfigPnl" style="display:none;">
                 <div id="divSettingsPnl" style="display:none;">
                     <div class="settings-head">
                         <h2 class="settings-title" tr="SETTINGS_TITLE">Réglages</h2>
                         <button type="button" class="settings-help" onclick="openPageHelp();"><svg><use href="#svg-navHelp"></use></svg></button>
                     </div>
-                    <div class="settings-sec" tr="TAB_SOMFY"></div>
                     <div class="settings-list">
-                        <a class="settings-row" data-grpid="divSomfyMotors"><span class="uniblocSvg-F"><svg><use href="#svg-indicShutter"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_DEVICES"></b><span class="settings-row-desc" tr="SETTINGS_DESC_MOTORS"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divSomfyGroups"><span class="uniblocSvg-F"><svg><use href="#svg-group"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_GROUPS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_GROUPS"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divSomfyRooms"><span class="uniblocSvg-F"><svg><use href="#svg-navRoom"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_ROOMS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_ROOMS"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divSomfySchedules"><span class="uniblocSvg-F"><svg><use href="#svg-navSchedule"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_SCHEDULES"></b><span class="settings-row-desc" tr="SETTINGS_DESC_SCHEDULES"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                    </div>
-                    <div class="settings-sec" tr="TAB_RADIO"></div>
-                    <div class="settings-list">
-                        <a class="settings-row" data-grpid="divTransceiverSettings"><span class="uniblocSvg-F"><svg><use href="#svg-antenna"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_RADIO"></b><span class="settings-row-desc" tr="SETTINGS_DESC_TRANSCEIVER"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divRepeater"><span class="uniblocSvg-F"><svg><use href="#svg-repeater"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_REPEATER"></b><span class="settings-row-desc" tr="SETTINGS_DESC_REPEATER"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divFrameLog"><span class="uniblocSvg-F"><svg><use href="#svg-list"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_LOGS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_FRAMELOG"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                    </div>
-                    <div class="settings-sec" tr="TAB_NETWORK"></div>
-                    <div class="settings-list">
-                        <a class="settings-row" data-grpid="divNetAdapter"><span class="uniblocSvg-F"><svg><use href="#svg-tabReseau"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_CONNECTION"></b><span class="settings-row-desc" tr="SETTINGS_DESC_CONNECTION"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                    </div>
-                    <div class="settings-sec" tr="TAB_INTEGRATIONS"></div>
-                    <div class="settings-list">
+                        <a class="settings-row" data-grpid="divNetAdapter"><span class="uniblocSvg-F"><svg><use href="#svg-tabReseau"></use></svg></span><span class="settings-row-text"><b tr="TAB_NETWORK"></b><span class="settings-row-desc" tr="SETTINGS_DESC_CONNECTION"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" data-grpid="divTransceiverSettings"><span class="uniblocSvg-F"><svg><use href="#svg-antenna"></use></svg></span><span class="settings-row-text"><b tr="TAB_RADIO"></b><span class="settings-row-desc" tr="SETTINGS_DESC_TRANSCEIVER"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
                         <a class="settings-row" data-grpid="divHomeAssistant"><span class="uniblocSvg-F"><svg><use href="#svg-homeAssistant0"></use></svg></span><span class="settings-row-text"><b tr="MARKETP"></b><span class="settings-row-desc" tr="SETTINGS_DESC_HA"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divMQTT"><span class="uniblocSvg-F"><svg><use href="#svg-mqtt"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_MQTT"></b><span class="settings-row-desc" tr="SETTINGS_DESC_MQTT"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divListener"><span class="uniblocSvg-F"><svg><use href="#svg-remote"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_LISTENERS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_LISTENERS"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                    </div>
-                    <div class="settings-sec" tr="TAB_SYSTEM"></div>
-                    <div class="settings-list">
                         <a class="settings-row" data-grpid="divSystemOptions"><span class="uniblocSvg-F"><svg><use href="#svg-tabSystem"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_GENERAL"></b><span class="settings-row-desc" tr="SETTINGS_DESC_GENERAL"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
                         <a class="settings-row" data-grpid="divFirmware"><span class="uniblocSvg-F"><svg><use href="#svg-navFirmware"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_DEVICE"></b><span class="settings-row-desc" tr="SETTINGS_DESC_FIRMWARE"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" onclick="openPageHelp();"><span class="uniblocSvg-F"><svg><use href="#svg-navHelp"></use></svg></span><span class="settings-row-text"><b tr="FW_TILE_HELP"></b><span class="settings-row-desc" tr="FW_CREDITS_DOC_DESC"></span></span><svg class="settings-row-chev"><use href="#svg-linkOut"></use></svg></a>
+                    </div>
+                    <div class="settings-sec" tr="SETUP_ADVANCED"></div>
+                    <div class="settings-list">
+                        <label class="settings-row settings-row-toggle"><span class="settings-row-text"><b tr="SETTINGS_ADV_SHOW"></b><span class="settings-row-desc" tr="SETTINGS_ADV_SHOW_DESC"></span></span><span class="gen-seg gen-seg-bool"><input id="cbUiAdvanced" type="checkbox" onchange="uiAdvanced.set(this.checked);"><span class="gen-seg-yes" tr="BT_YES"></span><span class="gen-seg-no" tr="BT_NO"></span></span></label>
+                        <a class="settings-row adv-only" data-grpid="divFrameLog"><span class="uniblocSvg-F"><svg><use href="#svg-list"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_LOGS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_FRAMELOG"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
                     </div>
                     <div class="button-container-footerHtml">
                         <button type="button" line onclick="general.rebootDevice();"><svg><use href="#svg-restart"></use></svg><span tr="BT_REBOOT">Redémarrer</span></button>
@@ -525,7 +517,7 @@
                                     <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="FW_UPDATE_GIT"></button>
                                     <button type="button" class="gen-tab" role="tab" data-tab="1" tr="FW_TAB_STATUS"></button>
                                     <button type="button" class="gen-tab" role="tab" data-tab="2" tr="FW_TAB_BACKUP"></button>
-                                    <button type="button" class="gen-tab" role="tab" data-tab="3" tr="FW_TILE_TROUBLESHOOT"></button>
+                                    <button type="button" class="gen-tab adv-only" role="tab" data-tab="3" tr="FW_TILE_TROUBLESHOOT"></button>
                                     <button type="button" class="gen-tab" role="tab" data-tab="4" tr="FW_TAB_ABOUT"></button>
                                 </nav>
                                 <div id="fwPanels" class="gen-panels">
@@ -642,7 +634,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="gen-grid" role="tabpanel" data-tab="3" hidden>
+                                    <div class="gen-grid adv-only" role="tabpanel" data-tab="3" hidden>
                                         <header class="gen-sec-head"><h2 tr="FW_TILE_TROUBLESHOOT"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i><i></i></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="FW_TILE_DEBUG"></h3>
@@ -1103,6 +1095,10 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div class="settings-list mobile-related">
+                        <a class="settings-row" data-grpid="divMQTT"><span class="uniblocSvg-F"><svg><use href="#svg-mqtt"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_MQTT"></b><span class="settings-row-desc" tr="SETTINGS_DESC_MQTT"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row" data-grpid="divListener"><span class="uniblocSvg-F"><svg><use href="#svg-remote"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_LISTENERS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_LISTENERS"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
                         </div>
                     </div>
                     <div id="divMQTT" class="subtab-content" style="display:none;">
@@ -2227,6 +2223,10 @@
                                     <button type="button" id="btnRdcNext" class="gen-btn gen-pager-btn gen-pager-next"><span></span><svg><use href="#svg-arrowRight"></use></svg></button>
                                 </nav>
                             </div>
+                        </div>
+                        <div class="settings-list mobile-related">
+                        <a class="settings-row" data-grpid="divRepeater"><span class="uniblocSvg-F"><svg><use href="#svg-repeater"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_REPEATER"></b><span class="settings-row-desc" tr="SETTINGS_DESC_REPEATER"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
+                        <a class="settings-row adv-only" data-grpid="divFrameLog"><span class="uniblocSvg-F"><svg><use href="#svg-list"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_LOGS"></b><span class="settings-row-desc" tr="SETTINGS_DESC_FRAMELOG"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
                         </div>
                     </div>
                     <div id="divRepeater" style="display:none;" class="subtab-content">

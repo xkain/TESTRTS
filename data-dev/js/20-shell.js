@@ -946,6 +946,7 @@ function _setBreadcrumbLink(el, targetGrpid) {
     }
 }
 function _updateBreadcrumb(topId, leafId, detailLabel = null) {
+    mobileNav.sync(topId, leafId, detailLabel);
     const bc = get('divSectionBreadcrumb');
     if (!bc) return;
     const parentEl = bc.querySelector('.section-breadcrumb-parent');
@@ -973,6 +974,110 @@ function _updateBreadcrumb(topId, leafId, detailLabel = null) {
     _setBreadcrumbLink(parentEl, (inEditor || leafId !== _resolveDefaultChild(topId)) ? topId : null);
     _setBreadcrumbLink(activeEl, (inEditor && activeEl.textContent) ? leafId : null);
 }
+// Navigation mobile : trois onglets (Maison, Plannings, Réglages), un titre et un retour.
+// La pile ne retient que les pas faits DANS l'appli ; vide (lien direct, F5), le retour remonte
+// au parent logique au lieu de quitter la page par history.back().
+const MOBILE_HOME_LEAVES = new Set(['divSomfyMotors', 'divSomfyGroups', 'divSomfyRooms']);
+const mobileNav = {
+    stack: [],
+    pushing: false,
+    tab: 'divHomePnl',
+    state: { topId: 'divHomePnl', leafId: 'divHomePnl', editor: false },
+    tabOf(topId, leafId) {
+        if (topId === 'divHomePnl' || MOBILE_HOME_LEAVES.has(leafId)) return 'divHomePnl';
+        if (leafId === 'divSomfySchedules') return 'divSomfySchedules';
+        return 'divSettingsPnl';
+    },
+    // Appelé avant chaque location.hash posé par l'appli : mémorise d'où l'on part.
+    willPush(fromSlug) { if (!this.pushing && fromSlug) this.stack.push(fromSlug); },
+    // hashchange venu du navigateur : si c'est un retour d'un cran, la pile suit.
+    onBrowserNav(slug) { if (this.stack[this.stack.length - 1] === slug) this.stack.pop(); },
+    parentOf() {
+        const { leafId, editor } = this.state;
+        if (editor) return leafId;
+        if (MOBILE_HOME_LEAVES.has(leafId)) return 'divHomePnl';
+        return 'divSettingsPnl';
+    },
+    isRoot() {
+        const { topId, leafId, editor } = this.state;
+        if (editor) return false;
+        return topId === 'divHomePnl' || leafId === 'divSettingsPnl' || leafId === 'divSomfySchedules';
+    },
+    back() {
+        confirmDiscardChanges(() => {
+            if (this.stack.length) { this.stack.pop(); history.back(); return; }
+            activateGrpid(this.parentOf());
+        });
+    },
+    goTab(root) {
+        if (this.isRoot() && this.tab === root) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+        confirmDiscardChanges(() => { activateGrpid(root); this.stack = []; });
+    },
+    sync(topId, leafId, detailLabel) {
+        this.state = { topId, leafId, editor: detailLabel !== null && detailLabel !== undefined };
+        this.tab = this.tabOf(topId, leafId);
+        document.querySelectorAll('#mobileTabBar [data-tab-root]').forEach(b => {
+            const on = b.getAttribute('data-tab-root') === this.tab;
+            b.classList.toggle('is-active', on);
+            b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        const root = this.isRoot();
+        const header = get('appHeader');
+        if (header) {
+            header.classList.toggle('is-root', root);
+            header.classList.toggle('is-home', topId === 'divHomePnl');
+        }
+        const title = get('mobileTitle');
+        if (title) {
+            const leafLabel = document.querySelector(`.subtab-container > span[data-grpid="${leafId}"]`)?.textContent.trim()
+                || document.querySelector(`.settings-row[data-grpid="${leafId}"] b`)?.textContent.trim() || '';
+            title.textContent = root ? '' : (detailLabel || leafLabel);
+        }
+    },
+    bind() {
+        document.querySelectorAll('#mobileTabBar [data-tab-root]').forEach(b =>
+            b.addEventListener('click', () => this.goTab(b.getAttribute('data-tab-root'))));
+    },
+    addMenu() {
+        const row = (icon, title, desc, act) => `<button type="button" class="settings-row" data-act="${act}"><span class="uniblocSvg-F"><svg><use href="#${icon}"></use></svg></span><span class="settings-row-text"><b>${tr(title)}</b>${desc ? `<span class="settings-row-desc">${tr(desc)}</span>` : ''}</span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></button>`;
+        const div = document.createElement('div');
+        div.className = 'modal-overlay mobile-add-menu';
+        div.innerHTML = `<div class="message-content">${modalHeader('BT_ADD', 'svg-add')}
+            <div class="settings-list">
+                ${row('svg-indicShutter', 'WELCOME_ADD_DEVICE_TITLE', 'LIST_ADD_DEVICE_DESC', 'shade')}
+                ${row('svg-group', 'BT_ADD_GROUP', 'LIST_ADD_GROUP_DESC', 'group')}
+                ${row('svg-navRoom', 'BT_ADD_ROOM', 'LIST_ADD_ROOM_DESC', 'room')}
+            </div>
+            <div class="settings-sec" tr="DASH_MANAGE"></div>
+            <div class="settings-list">
+                ${row('svg-indicShutter', 'SUBTAB_DEVICES', 'SETTINGS_DESC_MOTORS', 'divSomfyMotors')}
+                ${row('svg-group', 'SUBTAB_GROUPS', 'SETTINGS_DESC_GROUPS', 'divSomfyGroups')}
+                ${row('svg-navRoom', 'SUBTAB_ROOMS', 'SETTINGS_DESC_ROOMS', 'divSomfyRooms')}
+            </div></div>`;
+        div.addEventListener('click', (e) => {
+            const b = e.target.closest('[data-act]');
+            if (!b) return;
+            const act = b.getAttribute('data-act');
+            requestCloseOverlay(div);
+            if (act === 'shade') shadeSetup.open();
+            else if (act === 'group') groupSetup.open();
+            else if (act === 'room') somfy.openEditRoom();
+            else activateGrpid(act);
+        });
+        shOverlay(div);
+    },
+};
+// Options avancées : préférence du navigateur, pas de l'appareil (chaque téléphone choisit).
+const uiAdvanced = {
+    get() { try { return localStorage.getItem('uiAdvanced') === '1'; } catch (e) { return false; } },
+    set(on) { try { localStorage.setItem('uiAdvanced', on ? '1' : '0'); } catch (e) { /* stockage refusé */ } this.apply(); },
+    apply() {
+        const on = this.get();
+        document.documentElement.toggleAttribute('data-ui-advanced', on);
+        const cb = get('cbUiAdvanced');
+        if (cb) cb.checked = on;
+    },
+};
 const DOC_PAGES = {
     divHomePnl: 'tableau-de-bord/',
     divSomfyMotors: 'somfy/equipements/',
@@ -1030,6 +1135,7 @@ function routeSetEditor(leafId, editorId, opts) {
         if (location.hash.slice(1) !== slug) {
             if (o.replace || (wasNew && editorId != null)) history.replaceState(null, '', location.pathname + location.search + '#' + slug);
             else {
+                mobileNav.willPush(location.hash.slice(1));
                 isApplyingHash = true;
                 location.hash = slug;
             }
@@ -1181,6 +1287,7 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
     const slug = _routeSlug(leafId, activeEditor);
     currentSlug = slug;
     if (updateHash && location.hash.slice(1) !== slug) {
+        mobileNav.willPush(location.hash.slice(1) || 'dashboard');
         isApplyingHash = true;
         location.hash = slug;
     }
@@ -1216,7 +1323,9 @@ function bindNavigation() {
     const mq = window.matchMedia('(max-width: 767px)');
     _placeMobileParts(mq);
     mq.addEventListener('change', () => _placeMobileParts(mq));
-    document.querySelectorAll('.nav-item, .sub-nav-item, .settings-row').forEach(item => {
+    mobileNav.bind();
+    uiAdvanced.apply();
+    document.querySelectorAll('.nav-item, .sub-nav-item, .settings-row[data-grpid]').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const grpid = item.getAttribute('data-grpid');
@@ -1244,6 +1353,7 @@ function bindNavigation() {
         // provoqué par le bouton Précédent/Suivant ou une saisie manuelle de l'URL, si.
         if (isApplyingHash) { isApplyingHash = false; return; }
         const target = _parseRoute(location.hash);
+        mobileNav.onBrowserNav(location.hash.slice(1));
         if (isDirty) {
             // Un hashchange déjà survenu (Précédent/Suivant) ne peut pas être annulé : on
             // rétablit immédiatement l'URL affichée avant de demander confirmation ; si

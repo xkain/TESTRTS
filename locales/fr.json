@@ -55,6 +55,8 @@
     "SETTINGS_DESC_MQTT": "Courtier, identifiants, topics",
     "SETTINGS_DESC_GENERAL": "Langue, apparence, sécurité",
     "SETTINGS_DESC_FIRMWARE": "Mises à jour, état, sauvegarde",
+    "SETTINGS_ADV_SHOW": "Afficher les options avancées",
+    "SETTINGS_ADV_SHOW_DESC": "Journal radio, dépannage",
 
 "INDEX_PAGE_LOGIN": "PAGE LOGIN",
     "LOGIN_ATTEMPT_LABEL": "Essai",
@@ -139,6 +141,7 @@
 
 "INDEX_PAGE_DASHBOARD": "PAGE DASHBOARD",
     "DASH_HOUSE_TITLE": "Maison",
+    "DASH_MANAGE": "Gérer",
     "DASH_ALL_ROOMS": "Toutes les pièces",
     "DASH_SHOW_ALL": "Tout afficher",
     "DASH_HOUSE_ALL": "Toute la maison",

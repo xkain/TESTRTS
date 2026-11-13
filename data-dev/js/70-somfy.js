@@ -4179,7 +4179,7 @@ class Somfy {
             <span class="dcard-pill"><i class="dcard-dot"></i><svg class="dcard-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg><span class="dcard-pill-txt">${this.dashPillText(shade)}</span></span>
             <button type="button" class="dash-edit-eye" title="${tr('CARD_OPT_HIDE')}" onclick="somfy.toggleCardHidden('shade', ${id});"><svg class="eye-on"><use href="#svg-eyeOn"></use></svg><svg class="eye-off"><use href="#svg-eyeOff"></use></svg></button>
             </div>
-            <div class="dcard-stage"><span class="dcard-svg">${dashScene.svg(shade, p, t)}</span>${tilt}</div>
+            <div class="dcard-stage" onclick="if (!event.target.closest('button')) somfy.openCardSheet('shade', ${id});"><span class="dcard-svg">${dashScene.svg(shade, p, t)}</span>${tilt}</div>
             <div class="dcard-bar">${bar}</div>
             </div>`;
     }
@@ -4426,7 +4426,8 @@ class Somfy {
         return `${hero}
         <div class="card-sheet-buttons">${buttons}</div>
         ${hasPosition ? slider(false) : ''}${hasPosition && shade.tiltType > 0 ? slider(true) : ''}
-        ${this.shadeSheetInfoHtml(shade)}`;
+        ${this.shadeSheetInfoHtml(shade)}
+        ${this.cardSheetSettingsRow('shade', id)}`;
     }
     shadeSheetMyHtml(shade) {
         const cs = this._cardSheet;
@@ -4614,7 +4615,8 @@ class Somfy {
         <span class="card-sheet-state">${summary}</span>
         </div>
         <div class="card-sheet-buttons">${btn('up', 'BT_OPEN')}${btn('my', 'BT_MY')}${btn('down', 'BT_CLOSE')}<div class="button-outline cmd-button btn-somfy-svg animScale button-sunflag" data-cmd="sunflag" data-groupid="${id}" data-on="${(group.flags & 0x01) ? 'true' : 'false'}" style="${group.sunSensor ? '' : 'display:none'}" title="${tr('VR_SUN_FLAG')}" onclick="somfy.sendGroupCommand(${id}, makeBool(this.dataset.on) ? 'flag' : 'sunflag');"><svg><use href="#svg-sun"></use></svg></div></div>
-        ${this.cardSchedulesHtml('group', id)}`;
+        ${this.cardSchedulesHtml('group', id)}
+        ${this.cardSheetSettingsRow('group', id)}`;
     }
     groupSheetMembersHtml(group) {
         const members = (group.linkedShades || []).map(m => (this.shades || []).find(x => x.shadeId === m.shadeId) || m);
@@ -4626,7 +4628,12 @@ class Somfy {
         return `<div class="card-block"><div class="card-block-head"><span>${tr('GROUP_LINKED_S')}</span></div>${rows || `<div class="card-empty">${tr('GROUP_LINKED_COUNT').replace('{n}', 0)}</div>`}</div>`;
     }
     openCardEditor(kind, id) {
+        mobileNav.willPush(location.hash.slice(1) || 'dashboard');
         location.hash = _routeSlug(kind === 'shade' ? 'divSomfyMotors' : 'divSomfyGroups', id);
+    }
+    // Entrée des réglages en bas de l'onglet Commandes : la fiche et l'éditeur ne font qu'un objet.
+    cardSheetSettingsRow(kind, id) {
+        return `<button type="button" class="settings-row" onclick="somfy.closeCardSheet(); somfy.openCardEditor('${kind}', ${id});"><span class="uniblocSvg-F"><svg><use href="#svg-tabSettings"></use></svg></span><span class="settings-row-text"><b>${tr('SUBTAB_SETTINGS')}</b></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></button>`;
     }
     // lastSentAgo est un écart figé au moment du chargement de /shades : on le convertit une fois en
     // date absolue (_sentAt), que onCardShadeCommand() avance ensuite à chaque émission et que

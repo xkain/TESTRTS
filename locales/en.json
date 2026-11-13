@@ -55,6 +55,8 @@
     "SETTINGS_DESC_MQTT": "Broker, credentials, topics",
     "SETTINGS_DESC_GENERAL": "Language, appearance, security",
     "SETTINGS_DESC_FIRMWARE": "Updates, status, backup",
+    "SETTINGS_ADV_SHOW": "Show advanced options",
+    "SETTINGS_ADV_SHOW_DESC": "Radio log, troubleshooting",
 
 "INDEX_PAGE_LOGIN": "PAGE LOGIN",
     "LOGIN_ATTEMPT_LABEL": "Attempt",
@@ -139,6 +141,7 @@
 
 "INDEX_PAGE_DASHBOARD": "PAGE DASHBOARD",
     "DASH_HOUSE_TITLE": "Home",
+    "DASH_MANAGE": "Manage",
     "DASH_ALL_ROOMS": "All rooms",
     "DASH_SHOW_ALL": "Show everything",
     "DASH_HOUSE_ALL": "Whole house",
