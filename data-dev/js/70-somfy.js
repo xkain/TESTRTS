@@ -4344,13 +4344,34 @@ class Somfy {
         body.style.flex = `0 1 ${Math.ceil(h + pad)}px`;
         body.scrollTop = top;
     }
+    // Volet 0 = commandes + lignes ; les autres volets s'ouvrent depuis une ligne, avec un retour.
     cardSheetTab(index) {
         if (!this._cardSheet) return;
         this._cardSheet.tab = index;
-        document.querySelectorAll('.card-sheet-pane').forEach((p, i) => { p.hidden = i !== index; });
-        document.querySelectorAll('.card-sheet-tab').forEach((b, i) => b.classList.toggle('active', i === index));
         const body = document.querySelector('.card-sheet-body');
         if (body) body.scrollTop = 0;
+        this.renderCardSheet();
+    }
+    cardSheetRowsHtml(rows) {
+        return `<div class="settings-list card-sheet-rows">${rows.map(r => `<button type="button" class="settings-row" onclick="${r.go}"><span class="uniblocSvg-F"><svg><use href="#${r.icon}"></use></svg></span><span class="settings-row-text"><b>${tr(r.label)}</b></span>${r.val ? `<span class="card-sheet-row-val">${r.val}</span>` : ''}<svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></button>`).join('')}</div>`;
+    }
+    shadeSheetRowsHtml(shade) {
+        const id = shade.shadeId, edit = (t) => `somfy.closeCardSheet(); somfy.openCardEditor('shade', ${id}, ${t});`;
+        const rows = [];
+        if (this.shadeTypeSupportsMy(this.shadeTypeOf(shade))) rows.push({ icon: 'svg-favori', label: 'SETMYPOS_TITLE', val: escHtml(this.myBadgeText(shade).replace(/^ · My /, '')), go: 'somfy.cardSheetTab(1);' });
+        rows.push({ icon: 'svg-remote', label: 'SUBTAB_REMOTES', val: String((shade.linkedRemotes || []).length || ''), go: edit(1) });
+        rows.push({ icon: 'svg-edit', label: 'GSETUP_W_STEP_NAME', go: edit(0) });
+        rows.push({ icon: 'svg-tabSettings', label: 'SUBTAB_SETTINGS', go: edit(2) });
+        rows.push({ icon: 'svg-eyeOn', label: 'OPTION', go: `somfy.cardSheetTab(${rows[0].label === 'SETMYPOS_TITLE' ? 2 : 1});` });
+        return this.cardSheetRowsHtml(rows);
+    }
+    groupSheetRowsHtml(group) {
+        const id = group.groupId, edit = (t) => `somfy.closeCardSheet(); somfy.openCardEditor('group', ${id}, ${t});`;
+        return this.cardSheetRowsHtml([
+            { icon: 'svg-list', label: 'SUBTAB_DEVICES', val: String((group.linkedShades || []).length), go: 'somfy.cardSheetTab(1);' },
+            { icon: 'svg-edit', label: 'GSETUP_W_STEP_NAME', go: edit(0) },
+            { icon: 'svg-eyeOn', label: 'OPTION', go: 'somfy.cardSheetTab(2);' },
+        ]);
     }
     renderCardSheet() {
         const cs = this._cardSheet;
@@ -4373,9 +4394,8 @@ class Somfy {
         }
         ov.innerHTML = `<div class="card-sheet" role="dialog" aria-modal="true" ${isShade ? `data-shadeid="${item.shadeId}" data-tilt="${item.tiltType || 0}"` : `data-groupid="${item.groupId}"`}>
         <div class="card-sheet-grip"></div>
-        <div class="card-sheet-head">${icon}<div class="card-sheet-title"><b>${escHtml(item.name)}</b>${room ? `<span>${escHtml(room)}</span>` : ''}</div><div close title="${tr('BT_CLOSE')}" onclick="somfy.closeCardSheet();"><svg><use href="#svg-closeOverlay"></use></svg></div></div>
+        <div class="card-sheet-head">${cs.tab ? `<button type="button" class="card-sheet-back" title="${tr('BT_GO_BACK')}" onclick="somfy.cardSheetTab(0);"><svg><use href="#svg-arrowLeft"></use></svg></button>` : icon}<div class="card-sheet-title"><b>${escHtml(item.name)}</b>${room ? `<span>${escHtml(room)}</span>` : ''}</div><div close title="${tr('BT_CLOSE')}" onclick="somfy.closeCardSheet();"><svg><use href="#svg-closeOverlay"></use></svg></div></div>
         <div class="card-sheet-body">${tabs.map((t, i) => `<div class="card-sheet-pane"${i === cs.tab ? '' : ' hidden'}>${t.html}</div>`).join('')}</div>
-        <nav class="card-sheet-tabs">${tabs.map((t, i) => `<button type="button" class="card-sheet-tab${i === cs.tab ? ' active' : ''}" onclick="somfy.cardSheetTab(${i});"><svg><use href="#${t.icon}"></use></svg><span>${tr(t.label)}</span></button>`).join('')}</nav>
         </div>`;
         ov.querySelector('.card-sheet-body').scrollTop = top;
         const panes = ov.querySelectorAll('.card-sheet-pane');
@@ -4426,8 +4446,8 @@ class Somfy {
         return `${hero}
         <div class="card-sheet-buttons">${buttons}</div>
         ${hasPosition ? slider(false) : ''}${hasPosition && shade.tiltType > 0 ? slider(true) : ''}
-        ${this.shadeSheetInfoHtml(shade)}
-        ${this.cardSheetSettingsRow('shade', id)}`;
+        ${this.shadeSheetRowsHtml(shade)}
+        ${this.shadeSheetInfoHtml(shade)}`;
     }
     shadeSheetMyHtml(shade) {
         const cs = this._cardSheet;
@@ -4597,7 +4617,6 @@ class Somfy {
         return `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_SHORTCUTS')}</span></div>
         <div class="sheet-links">
         <button type="button" class="sheet-link-btn" onclick="somfy.closeCardSheet(); somfy.openVirtualRemote('${kind}', ${id});"><svg><use href="#svg-remote"></use></svg><span>${tr('SUBTAB_VIRTUAL_REMOTE_S')}</span></button>
-        <button type="button" class="sheet-link-btn" onclick="somfy.closeCardSheet(); somfy.openCardEditor('${kind}', ${id});"><svg><use href="#svg-edit"></use></svg><span>${tr('BT_EDIT')}</span></button>
         <button type="button" class="sheet-link-btn" onclick="somfy.closeCardSheet(); somfy.openAddScheduleInline('${kind}', ${id});"><svg><use href="#svg-schedule"></use></svg><span>${tr('CARD_ADD_SCHEDULE')}</span></button>
         ${kind === 'shade' ? `<button type="button" class="sheet-link-btn" onclick="somfy.openCardRadioLog(${id});"><svg><use href="#svg-wave"></use></svg><span>${tr('SUBTAB_LOGS')}</span></button>` : ''}
         </div></div>
@@ -4615,8 +4634,8 @@ class Somfy {
         <span class="card-sheet-state">${summary}</span>
         </div>
         <div class="card-sheet-buttons">${btn('up', 'BT_OPEN')}${btn('my', 'BT_MY')}${btn('down', 'BT_CLOSE')}<div class="button-outline cmd-button btn-somfy-svg animScale button-sunflag" data-cmd="sunflag" data-groupid="${id}" data-on="${(group.flags & 0x01) ? 'true' : 'false'}" style="${group.sunSensor ? '' : 'display:none'}" title="${tr('VR_SUN_FLAG')}" onclick="somfy.sendGroupCommand(${id}, makeBool(this.dataset.on) ? 'flag' : 'sunflag');"><svg><use href="#svg-sun"></use></svg></div></div>
-        ${this.cardSchedulesHtml('group', id)}
-        ${this.cardSheetSettingsRow('group', id)}`;
+        ${this.groupSheetRowsHtml(group)}
+        ${this.cardSchedulesHtml('group', id)}`;
     }
     groupSheetMembersHtml(group) {
         const members = (group.linkedShades || []).map(m => (this.shades || []).find(x => x.shadeId === m.shadeId) || m);
@@ -4627,14 +4646,15 @@ class Somfy {
         }).join('');
         return `<div class="card-block"><div class="card-block-head"><span>${tr('GROUP_LINKED_S')}</span></div>${rows || `<div class="card-empty">${tr('GROUP_LINKED_COUNT').replace('{n}', 0)}</div>`}</div>`;
     }
-    openCardEditor(kind, id) {
+    openCardEditor(kind, id, tab) {
+        if (tab !== undefined) {
+            const ids = kind === 'shade' ? ['shdTabs', 'somfyShade'] : ['grpTabs', 'somfyGroup'];
+            try { sessionStorage.setItem('genTab:' + ids[0], JSON.stringify({ key: `${ids[1]}:${id}`, i: tab })); } catch (e) { /* stockage indisponible */ }
+        }
         mobileNav.willPush(location.hash.slice(1) || 'dashboard');
         location.hash = _routeSlug(kind === 'shade' ? 'divSomfyMotors' : 'divSomfyGroups', id);
     }
-    // Entrée des réglages en bas de l'onglet Commandes : la fiche et l'éditeur ne font qu'un objet.
-    cardSheetSettingsRow(kind, id) {
-        return `<button type="button" class="settings-row" onclick="somfy.closeCardSheet(); somfy.openCardEditor('${kind}', ${id});"><span class="uniblocSvg-F"><svg><use href="#svg-tabSettings"></use></svg></span><span class="settings-row-text"><b>${tr('SUBTAB_SETTINGS')}</b></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></button>`;
-    }
+
     // lastSentAgo est un écart figé au moment du chargement de /shades : on le convertit une fois en
     // date absolue (_sentAt), que onCardShadeCommand() avance ensuite à chaque émission et que
     // tickCardAgo() relit chaque seconde pour faire vieillir le « il y a » sans rechargement ; le

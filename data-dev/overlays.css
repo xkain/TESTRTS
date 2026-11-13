@@ -4461,8 +4461,15 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     text-align: left;
     font-weight: 400;
 }
-.card-sheet .settings-row {
-    margin-top: 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
+.card-sheet-rows {
+    margin: 16px 0;
+}
+.card-sheet-row-val {
+    flex: none;
+    max-width: 40%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-text-secondary);
+    font-size: 13px;
 }
