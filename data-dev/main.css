@@ -6250,7 +6250,7 @@ input.gen-input.mqtt-mono {
 /* Ordinateur : la colonne des pièces à gauche, le reste dans une seule zone qui défile ; les groupes
    passent au-dessus des équipements (reverse-columns les met dessous). */
 @media (min-width: 1001px) {
-    #divHomePnl { display: grid !important; grid-template-columns: minmax(240px, 22%) minmax(0, 1fr); }
+    #divHomePnl { display: grid; grid-template-columns: minmax(240px, 22%) minmax(0, 1fr); }
     #divHomePnl .dash-rooms { gap: 14px; padding: 28px 22px; overflow-y: auto; background: var(--color-bg-surface-1); }
     #divHomePnl .dash-rooms-title { font-size: 2.1em; }
     #divHomePnl .dash-rooms-label { display: block; }
@@ -6452,7 +6452,6 @@ body.is-offline .shadectl-state { opacity: .45; }
 #divHomePnl .dash-edit-bar button { width: auto; min-width: 0; height: 38px; margin: 0; padding: 0 16px; border-radius: var(--radius-btn); font-size: 0.85em; font-weight: 700; text-transform: none; letter-spacing: normal; cursor: pointer; }
 #divHomePnl .dash-edit-bar .dash-edit-prefs { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--color-control-border); background: var(--color-bg-card); color: var(--color-accent); }
 #divHomePnl .dash-edit-bar .dash-edit-prefs svg { width: 16px; height: 16px; fill: currentColor; }
-#divHomePnl .dash-edit-bar .dash-edit-cancel { border: 1px solid var(--color-control-border); background: var(--color-bg-card); color: var(--color-text-secondary); }
 #divHomePnl .dash-edit-bar .dash-edit-done { border: 0; background: var(--color-accent); color: var(--color-text-on-accent); }
 #divHomePnl .dash-edit-eye { display: none; place-items: center; flex: none; width: 32px; height: 32px; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: var(--radius-btn); background: var(--color-control-bg); color: var(--color-accent); cursor: pointer; }
 #divHomePnl .dash-edit-eye svg { width: 17px; height: 17px; fill: currentColor; }
@@ -6462,33 +6461,10 @@ body.is-offline .shadectl-state { opacity: .45; }
 #divHomePnl.dash-editing .dash-edit-eye { display: grid; pointer-events: auto; }
 #divHomePnl.dash-editing .card-expand,
 #divHomePnl.dash-editing .column-hidden-toggle { display: none; }
-@keyframes dashWiggle { from { rotate: -0.9deg; } to { rotate: 0.9deg; } }
-#divHomePnl.dash-editing :is(.somfyShadeCtl, .somfyGroupCtl) { animation: dashWiggle 0.26s ease-in-out var(--wig-delay, 0s) infinite alternate; border-color: color-mix(in srgb, var(--color-accent), transparent 60%); cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#divHomePnl.dash-editing :is(.somfyShadeCtl, .somfyGroupCtl) { border-color: color-mix(in srgb, var(--color-accent), transparent 60%); }
 #divHomePnl.dash-editing :is(.somfyShadeCtl, .somfyGroupCtl) * { pointer-events: none; }
 #divHomePnl.dash-editing :is(.shadectl-controls-wrapper, .groupctl-buttons) { opacity: 0.35; filter: grayscale(1); }
 #divHomePnl.dash-editing :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: flex; opacity: 0.55; border-style: dashed; }
-#divHomePnl :is(.somfyShadeCtl, .somfyGroupCtl, .dash-room-title).dash-lifted { z-index: 1000; animation: none; rotate: 2deg; scale: 1.03; opacity: 1; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28); cursor: grabbing; }
-#divHomePnl .dash-drop-slot { box-sizing: border-box; border-radius: var(--radius-block); border: 2px dashed var(--color-accent); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
-#divHomePnl .dash-drop-slot.is-room { grid-column: 1 / -1; border-radius: var(--radius-lg); }
-#divHomePnl .dash-drop-slot.is-pill { border-radius: 14px; }
-#divHomePnl.dash-editing .room-pill:not([data-roomid="0"]) { cursor: grab; touch-action: pan-x; }
-#divHomePnl .room-pill.dash-lifted { z-index: 1000; rotate: 2deg; scale: 1.03; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25); }
-#divHomePnl .dash-room-grip { display: none; }
-#divHomePnl.dash-editing .dash-room-title:not([data-roomid="0"]) { align-items: center; cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-#divHomePnl.dash-editing .dash-room-title:not([data-roomid="0"]) .dash-room-grip { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg-card)); color: var(--color-accent); }
-#divHomePnl .dash-room-grip svg { width: 14px; height: 14px; }
-#divHomePnl .dash-rooms-collapsed .somfyShadeCtl { display: none !important; }
-/* Pièces vides : titre et zone de dépôt visibles seulement en mode Personnaliser, pour y glisser une carte. */
-#divHomePnl .dash-room-title.is-empty, #divHomePnl .dash-room-zone { display: none; }
-#divHomePnl.dash-editing .dash-room-title.is-empty:not([style*="none"]) { display: flex; }
-#divHomePnl.dash-editing .dash-room-title.is-empty:not([style*="none"]) + .dash-room-zone { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; min-height: 64px; border: 1.5px dashed var(--color-border); border-radius: 22px; color: var(--color-text-secondary); font-size: .85em; }
-#divHomePnl .dash-rooms-collapsed .dash-room-zone { display: none !important; }
-/* Cible dans une autre pièce (carte, titre, zone vide, pièce de la colonne ou puce) : la carte y ira au dépôt. */
-#divHomePnl.dash-editing .dash-drop-target { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-#divHomePnl .dash-rooms-collapsed .dash-room-title { margin: 0; padding: 8px 12px; border-radius: var(--radius-lg); border: 1px solid var(--color-border); background: var(--color-bg-card); }
-@media (prefers-reduced-motion: reduce) {
-    #divHomePnl.dash-editing :is(.somfyShadeCtl, .somfyGroupCtl) { animation: none; border-style: dashed; }
-}
 /* =======================================================================
  *  PAGES SOMFY - LISTES (Équipements, Groupes, Pièces, Plannings, maquette A2)
  *  Gabarit de Général (.gen-layout, .gen-hero, .gen-body) ; s'y ajoutent la capacité, les
@@ -6619,6 +6595,12 @@ body.is-offline .shadectl-state { opacity: .45; }
 .cfg-tile { position: relative; display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: var(--tile-minh); box-sizing: border-box; padding: var(--tile-pad); border-radius: var(--r-5); background: var(--surface); color: var(--text); cursor: pointer; transition: box-shadow .15s ease; }
 .cfg-tile:hover { box-shadow: 0 0 0 2px var(--on-fill); }
 .cfg-tile:has(.overlayHeader-dropdown-menu.show) { z-index: 5; }
+.cfg-sortable .cfg-tile:not(.cfg-tile-add) { cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.cfg-tile.cfg-lifted { z-index: 1000; rotate: 2deg; scale: 1.03; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28); cursor: grabbing; }
+.cfg-drop-slot { box-sizing: border-box; border-radius: var(--r-5); border: 2px dashed var(--color-accent); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+.cfg-drop-zone { display: grid; place-items: center; min-height: 72px; box-sizing: border-box; padding: 12px; border-radius: var(--r-5); border: 2px dashed var(--border); color: var(--text-3); font-size: var(--fs-3); font-weight: 600; text-align: center; }
+.cfg-drop-target { outline: 2px solid var(--color-accent); outline-offset: 3px; border-radius: var(--r-5); }
+.cfg-tiles-title.cfg-drop-target { border-radius: var(--r-2); }
 .cfg-tile-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .cfg-tile-icon { display: grid; place-items: center; flex: none; width: var(--tile-icon); height: var(--tile-icon); border-radius: var(--r-3); background: var(--surface-2); color: var(--text-2); }
 .cfg-tile-icon svg { width: 28px; height: 28px; }
@@ -6704,6 +6686,7 @@ body.is-offline .shadectl-state { opacity: .45; }
     .cfg-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .sched-tiles { grid-template-columns: minmax(0, 1fr); }
     .cfg-tile { --tile-pad: 14px; --tile-minh: 150px; --tile-icon: 40px; gap: 8px; border-radius: var(--r-4); }
+    .cfg-drop-slot, .cfg-drop-zone { border-radius: var(--r-4); }
     .cfg-tile-icon { border-radius: var(--r-2); }
     .cfg-tile-icon svg { width: 24px; height: 24px; }
     .cfg-tile-name .name-text { font-size: var(--fs-4); }

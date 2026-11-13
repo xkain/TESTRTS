@@ -1256,7 +1256,7 @@
                                 <button type="button" class="gen-hero-menu" onclick="somfy.toggleCfgTools('shade');" tr="LIST_SEARCH_SORT" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
                                 <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
                                 <nav class="gen-filters"><h3 class="gen-filters-title" tr="SUBTAB_ROOMS"></h3><div class="gen-filters-list"></div></nav>
-                                <p class="gen-hero-note"><span tr="DRAG_SORT"></span><button type="button" class="gen-btn" onclick="somfy.cfgNoteAction('shade');" tr="BT_REORDER_DASH"></button></p>
+                                <p class="gen-hero-note"><span tr="DRAG_SORT"></span></p>
                             </section>
                             <div class="gen-body">
                                 <div class="gen-tools">
@@ -1591,7 +1591,7 @@
                                 <button type="button" class="gen-hero-menu" onclick="somfy.toggleCfgTools('group');" tr="LIST_SEARCH_SORT" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
                                 <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
                                 <nav class="gen-filters"><h3 class="gen-filters-title" tr="SUBTAB_ROOMS"></h3><div class="gen-filters-list"></div></nav>
-                                <p class="gen-hero-note"><span tr="DRAG_SORT"></span><button type="button" class="gen-btn" onclick="somfy.cfgNoteAction('group');" tr="BT_REORDER_DASH"></button></p>
+                                <p class="gen-hero-note"><span tr="DRAG_SORT"></span></p>
                             </section>
                             <div class="gen-body">
                                 <div class="gen-tools">
@@ -1749,11 +1749,16 @@
                                 <button type="button" class="gen-hero-menu" onclick="somfy.toggleCfgTools('room');" tr="LIST_SEARCH_SORT" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
                                 <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
                                 <nav class="gen-filters"><h3 class="gen-filters-title" tr="LIST_FILTER_CONTENT"></h3><div class="gen-filters-list"></div></nav>
-                                <p class="gen-hero-note"><span tr="LIST_ROOMS_NOTE"></span><button type="button" class="gen-btn" onclick="somfy.cfgNoteAction('room');" tr="BT_REORDER_DASH"></button></p>
+                                <p class="gen-hero-note"><span tr="LIST_ROOMS_NOTE"></span></p>
                             </section>
                             <div class="gen-body">
                                 <div class="gen-tools">
                                     <label class="gen-search"><svg><use href="#svg-search"></use></svg><input type="search" class="gen-search-input" oninput="somfy.setCfgSearch('room', this.value);" tr="LIST_SEARCH_ROOMS"></label>
+                                    <span class="gen-tools-label" tr="LIST_SORT"></span>
+                                    <div class="cfg-sort" data-kind="room" role="group">
+                                        <button type="button" data-sort="az" aria-pressed="false" onclick="somfy.setCfgSort('room', 'az');" tr="SORT_AZ"></button>
+                                        <button type="button" data-sort="order" aria-pressed="false" onclick="somfy.setCfgSort('room', 'order');" tr="SORT_MANUAL"></button>
+                                    </div>
                                 </div>
                                 <div class="cfg-empty"><h3 class="cfg-empty-title" tr="EMPTY_ROOM_TITLE"></h3><p class="cfg-empty-desc" tr="EMPTY_ROOM_DESC"></p></div>
                                 <div id="divRoomList" class="cfg-tiles"></div>
@@ -2334,11 +2339,10 @@
                     <button type="button" class="dash-edit-btn" onclick="somfy.startDashEdit();"><svg><use href="#svg-edit"></use></svg><span tr="BT_CUSTOMIZE"></span></button>
                 </div>
                 <div class="dash-edit-bar">
-                    <svg class="dash-edit-bar-icon"><use href="#svg-drag"></use></svg>
+                    <svg class="dash-edit-bar-icon"><use href="#svg-eyeOn"></use></svg>
                     <span class="dash-edit-hint" tr="DASH_EDIT_HINT"></span>
                     <button type="button" class="dash-edit-prefs" onclick="general.DashboardPrefsOverlay();"><svg><use href="#svg-tabSettings"></use></svg><span tr="CARD_DISPLAY"></span></button>
-                    <button type="button" class="dash-edit-cancel" onclick="somfy.endDashEdit(false);"><span tr="BT_CANCEL"></span></button>
-                    <button type="button" class="dash-edit-done" onclick="somfy.endDashEdit(true);"><span tr="BT_DONE"></span></button>
+                    <button type="button" class="dash-edit-done" onclick="somfy.endDashEdit();"><span tr="BT_DONE"></span></button>
                 </div>
                 <div class="mobile-tabs margineB">
                     <button class="tab-btn active" id="tabGroups" onclick="somfy.switchMobileTab('groups', true)">
@@ -3417,9 +3421,6 @@
         </symbol>
         <symbol id="svg-toggleHand" viewBox="0 0 96 48">
             <path d="m56 28c0 4.42-3.58 8-8 8-3.26 0-6.19-1.99-7.4-5.02l-3.03-7.61c-0.313-0.788 0.434-1.58 1.24-1.32l0.79 0.26c0.56 0.18 1.02 0.61 1.24 1.16l1.28 3.21c0.08 0.2 0.26 0.32 0.46 0.32h0.42v-11.8c0-1.67 2.5-1.67 2.5 0v8.25c0 0.28 0.22 0.5 0.5 0.5s0.5-0.22 0.5-0.5v-10.2c0-1.67 2.5-1.67 2.5 0v10.2c0 0.28 0.22 0.5 0.5 0.5s0.5-0.22 0.5-0.5v-8.75c0-1.67 2.5-1.67 2.5 0v8.75c0 0.28 0.22 0.5 0.5 0.5s0.5-0.22 0.5-0.5v-5.75c0-1.67 2.5-1.67 2.5 0z" fill="currentColor"/>
-        </symbol>
-        <symbol id="svg-drag" viewBox="0 0 24 24">
-            <path fill="currentColor" fill-rule="evenodd" d="M16 2a2 2 0 1 1 0 4a2 2 0 0 1 0-4m0 8a2 2 0 1 1 0 4a2 2 0 0 1 0-4m-8 8a2 2 0 1 1 0 4a2 2 0 0 1 0-4m8 0a2 2 0 1 1 0 4a2 2 0 0 1 0-4M8 2a2 2 0 1 1 0 4a2 2 0 0 1 0-4m0 8a2 2 0 1 1 0 4a2 2 0 0 1 0-4" clip-rule="evenodd" />
         </symbol>
         <symbol id="svg-trash" viewBox="0 0 24 24">
             <path fill="currentColor" d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M7,6H17V19H7V6M9,8V17H11V8H9M13,8V17H15V8H13Z" />
