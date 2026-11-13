@@ -370,7 +370,29 @@ void Web::handleDeserializationError(AsyncWebServerRequest *request, Deserializa
       break;
     }
 }
+static String hostOf(String authority) {
+  int scheme = authority.indexOf("://");
+  if(scheme >= 0) authority = authority.substring(scheme + 3);
+  int end = authority.indexOf('/');
+  if(end >= 0) authority = authority.substring(0, end);
+  end = authority.indexOf(':');
+  if(end >= 0) authority = authority.substring(0, end);
+  authority.toLowerCase();
+  return authority;
+}
+// Sans CORS, une page tierce ne lit pas les réponses mais peut toujours ENVOYER une requête
+// simple (formulaire, image) : c'est ce qui est refusé ici, sécurité désactivée comprise.
+bool Web::fromForeignSite(AsyncWebServerRequest *request) {
+#ifdef ENABLE_DEV_CORS
+  return false;
+#else
+  if(request->hasHeader("Sec-Fetch-Site")) return request->header("Sec-Fetch-Site").equalsIgnoreCase("cross-site");
+  if(!request->hasHeader("Origin")) return false;
+  return hostOf(request->header("Origin")) != hostOf(request->header("Host"));
+#endif
+}
 bool Web::checkAuth(AsyncWebServerRequest *request, bool cfg) {
+  if(this->fromForeignSite(request)) return false;
   if(settings.Security.type == security_types::None) return true;
   if(!cfg && (settings.Security.permissions & static_cast<uint8_t>(security_permissions::ConfigOnly)) == 0x01) return true;
   if(!request->hasHeader("apikey")) return false;
@@ -390,6 +412,10 @@ bool Web::checkAuth(AsyncWebServerRequest *request, bool cfg) {
 bool Web::isAuthenticated(AsyncWebServerRequest *request, bool cfg) {
   DBG_PRINTLN("Checking authentication");
   if(this->checkAuth(request, cfg)) return true;
+  if(this->fromForeignSite(request)) {
+    request->send(403, _encoding_text, "Forbidden");
+    return false;
+  }
   // Une clé présente mais invalide DOIT répondre comme une clé absente : sans ce send(), la
   // requête restait sans réponse et le client attendait son timeout au lieu de voir un refus
   // explicite (et donc de redemander une authentification).

@@ -56,6 +56,7 @@ public:
   // reviendrait à écrire au milieu de la réception. isAuthenticated() n'est plus qu'un
   // enrobage qui y ajoute le 401.
   bool checkAuth(AsyncWebServerRequest *request, bool cfg = false);
+  bool fromForeignSite(AsyncWebServerRequest *request);
   bool isAuthenticated(AsyncWebServerRequest *request, bool cfg = false);
 
   // Draine les réponses fichier LittleFS encore en cours d'émission sur la tâche async_tcp. À
