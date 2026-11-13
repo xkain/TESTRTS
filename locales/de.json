@@ -1746,6 +1746,7 @@
     "PAIR_X_NOTE_LINK": "Die zweite kurze Auf- und Abbewegung ist die einzige Rückmeldung des Motors: Diese Schaltfläche fügt es der Gruppe hinzu.",
     "PAIR_X_NOTE_UNLINK": "Die zweite kurze Auf- und Abbewegung ist die einzige Rückmeldung des Motors: Diese Schaltfläche entfernt es aus der Gruppe.",
     "PAIR_X_GRP_PROG": "PROG der Gruppe",
+    "PAIR_X_SENT": "Prog gesendet",
     "PAIR_X_MEM_SENT": "Prog an „{name}“ gesendet",
     "PAIR_X_PROG_SENT": "PROG der Gruppe gesendet",
 

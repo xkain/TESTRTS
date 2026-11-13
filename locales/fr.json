@@ -1746,6 +1746,7 @@
     "PAIR_X_NOTE_LINK": "Le second va-et-vient est le seul retour du moteur : ce bouton l’ajoute au groupe.",
     "PAIR_X_NOTE_UNLINK": "Le second va-et-vient est le seul retour du moteur : ce bouton le retire du groupe.",
     "PAIR_X_GRP_PROG": "PROG du groupe",
+    "PAIR_X_SENT": "Prog envoyé",
     "PAIR_X_MEM_SENT": "Prog envoyé à « {name} »",
     "PAIR_X_PROG_SENT": "PROG du groupe envoyé",
 

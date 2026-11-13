@@ -1746,6 +1746,7 @@
     "PAIR_X_NOTE_LINK": "The second jog is the motor’s only feedback: this button adds it to the group.",
     "PAIR_X_NOTE_UNLINK": "The second jog is the motor’s only feedback: this button removes it from the group.",
     "PAIR_X_GRP_PROG": "Group PROG",
+    "PAIR_X_SENT": "Prog sent",
     "PAIR_X_MEM_SENT": "Prog sent to “{name}”",
     "PAIR_X_PROG_SENT": "Group PROG sent",
 

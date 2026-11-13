@@ -303,11 +303,18 @@ class GroupSetup {
     }
     setPairMode(on) { pairMode.set(on); this.renderWiz(); }
     xShade() { return this.w.mode === 'unlink' ? this.s.tasks[0] : this.avail.find(a => a.shadeId === this.w.pick); }
-    xStatus(text) { const el = this.$('#gsetupXStatus'); if (el) el.textContent = text; }
+    xStatus(text, busy) {
+        const el = this.$('#gsetupXStatus');
+        if (!el) return;
+        el.textContent = text;
+        el.classList.toggle('is-busy', !!busy);
+    }
     xMem() {
         const sh = this.xShade();
+        // 40 répétitions : 5 à 8 s sans réponse, on l'affiche tout de suite pour ne pas reprendre l'appui.
+        this.xStatus(tr('GSETUP_MEM_SENDING'), true);
         putJSONSync('/shadeCommand', { shadeId: sh.shadeId, command: 'prog', repeat: 40 }, (err) => {
-            if (err) return ui.serviceError(err);
+            if (err) { this.xStatus(''); return ui.serviceError(err); }
             this.xStatus(this.t('PAIR_X_MEM_SENT', { name: sh.name }));
         });
     }

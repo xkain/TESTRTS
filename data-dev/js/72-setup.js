@@ -841,8 +841,9 @@ class ShadeSetup {
             somfy.sendCommand(id, 'prog', null, fnRep);
             this.s.sent = true;
             if (!this.w && !this.$('.genmod-window')) btn.setAttribute('line', '');
-            const after = this.$('#setupAfterProg');
+            const after = this.$('#setupAfterProg'), xs = this.$('#setupXStatus');
             if (after) after.hidden = false;
+            if (xs) xs.textContent = tr('PAIR_X_SENT');
         };
         btn.addEventListener('mousedown', press, true);
         btn.addEventListener('touchstart', (e) => { e.preventDefault(); press(); }, true);
@@ -906,7 +907,7 @@ class ShadeSetup {
         if (pairMode.expert()) return { head: tr('PAIR_MODE_EXPERT'), body: `<div class="pair-mode-col">
             <button type="button" id="btnSetupProg" class="gen-btn">${tr('BT_PROG')}</button>
             <button type="button" class="gen-btn gen-btn-primary" onclick="shadeSetup.${un ? 'unpairDone' : 'pairDone'}()">${tr('PAIR_X_JOGGED')}</button></div>
-            <p class="gen-tile-desc">${tr('PAIR_X_NOTE')}</p>` };
+            <p class="gen-tile-desc">${tr('PAIR_X_NOTE')}</p><p class="pair-mode-status" id="setupXStatus" aria-live="polite"></p>` };
         const progT = tr(un ? 'SETUP_TW_H_UNPROG' : 'SETUP_TW_H_PROG');
         if (T.sub === 'view') return { head: tr('SETUP_TW_H_DONE'), body: `<p class="tw-ok"><svg><use href="#svg-check"></use></svg><span>${tr('SETUP_TW_PAIR_OK')}</span></p>
             <p class="gen-tile-desc">${tr('SETUP_TW_PAIR_OK_D')}</p>

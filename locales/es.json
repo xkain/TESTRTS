@@ -1746,6 +1746,7 @@
     "PAIR_X_NOTE_LINK": "El segundo vaivén es la única respuesta del motor: este botón lo añade al grupo.",
     "PAIR_X_NOTE_UNLINK": "El segundo vaivén es la única respuesta del motor: este botón lo retira del grupo.",
     "PAIR_X_GRP_PROG": "PROG del grupo",
+    "PAIR_X_SENT": "Prog enviado",
     "PAIR_X_MEM_SENT": "Prog enviado a «{name}»",
     "PAIR_X_PROG_SENT": "PROG del grupo enviado",
 
