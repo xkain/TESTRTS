@@ -413,16 +413,26 @@ class Firmware {
         const r = await this.getReleaseInfo(this._latestTag);
         this.notesModal(this._latestTag, r?.info?.body ? this.parseMarkdown(r.info.body) : `<p>${tr('ERR_GIT_NOTE')}</p>`);
     }
-    // Modale ordinaire (fermeture au clic dehors et par la poignée) : ui.infoMessage() est une
-    // alerte critique, exclue de cette fermeture.
+    // Lecture : panneau latéral comme la fiche d'un équipement, feuille du bas sur mobile.
+    // ui.infoMessage() ne convient pas : c'est une alerte critique, exclue de la fermeture au clic.
     notesModal(tag, html) {
-        const m = document.createElement('div');
-        m.className = 'modal-overlay';
-        m.innerHTML = `<div class="message-content">
-        ${modalHeader(tr('FW_UPDATE_NOTES_TITLE').replace('%1', escHtml(tag)), 'svg-doc')}
-        <div class="overlay-scroll-content release-notes-preview">${html}</div>
-        </div>`;
-        shOverlay(m);
+        const url = `https://github.com/xkain/TESTRTS/releases/tag/${encodeURIComponent(tag)}`;
+        const div = document.createElement('div');
+        div.className = 'side-panel-overlay is-sheet';
+        div.innerHTML = `
+        <aside class="side-panel" role="dialog" aria-modal="true" aria-labelledby="notesPanelTitle">
+        <div class="side-panel-head">
+        <span class="side-panel-icon"><svg><use href="#svg-doc"></use></svg></span>
+        <div><span class="side-panel-kicker">${tr('NOTES_KICKER')}</span><h2 id="notesPanelTitle">${escHtml(tag)}</h2></div>
+        <button type="button" class="genmod-close" data-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button>
+        </div>
+        <div class="side-panel-body"><div class="side-panel-sec side-panel-md">${html}</div></div>
+        <div class="side-panel-foot"><div class="genmod-foot-btns">
+        <a class="gen-btn" href="${url}" target="_blank" rel="noopener"><span>${tr('NOTES_GITHUB')}</span><svg><use href="#svg-linkOut"></use></svg></a>
+        <button type="button" class="gen-btn gen-btn-primary" data-close>${tr('BT_CLOSE')}</button>
+        </div></div>
+        </aside>`;
+        openSidePanel(div);
     }
 
     // Barre de progression de l'écran d'installation (cf. renderGitInstallProgress).
@@ -437,7 +447,7 @@ class Firmware {
         const status = get('divGitPostStatus');
         const textEl = get('spanGitPostStatusText');
         if (!status || !textEl) return;
-        status.style.display = '';
+        status.hidden = false;
         textEl.textContent = text;
     }
     // Étape de l'écran d'installation : le stepper, et sous lui UNE barre qui mesure l'étape en
@@ -445,7 +455,14 @@ class Firmware {
     // attend que l'appareil revienne, puis le renvoi des langues -- et la barre cède la place au
     // rouage de divGitPostStatus.
     setInstallPhase(div, step, label) {
-        ui.wizSetStep(div, step);
+        div.querySelectorAll('.git-istep').forEach(el => {
+            const n = parseInt(el.dataset.istep, 10);
+            el.classList.toggle('is-done', n < step);
+            el.classList.toggle('is-current', n === step);
+            el.querySelector('.genmod-step-num').innerHTML = n < step ? '<svg><use href="#svg-check"></use></svg>' : n;
+        });
+        const busy = div.querySelector('#btnGitInstBusy span:last-child');
+        if (busy) busy.textContent = tr(step < 3 ? 'GIT_INSTALL_BUSY' : 'GIT_INSTALL_REBOOTING');
         const bar = div.querySelector('#divInstallBar');
         if (bar) bar.style.display = step < 3 ? '' : 'none';
         if (step < 3) {
@@ -463,95 +480,37 @@ class Firmware {
         return match ? parseInt(match[1], 10) : 0;
     }
 
-    // Rendu de l'écran de progression de installGitRelease, partagé entre le flux réel et le
-    // mode DEBUG_FAKE_OTA ci-dessous.
-    //
-    // Stepper à 3 étapes, piloté par installGitRelease()/finishInstall() via setInstallPhase() :
-    // 1 = téléchargement de l'image depuis Pages, 2 = envoi à /updateFirmware, 3 = redémarrage
-    // puis renvoi des packs de langue. Une seule barre, celle de l'étape en cours.
+    // Écran de progression de installGitRelease, partagé entre le flux réel et DEBUG_FAKE_OTA.
+    // Trois étapes en rail, comme le téléversement : 1 = téléchargement depuis Pages, 2 = envoi à
+    // /updateFirmware, 3 = redémarrage puis renvoi des packs de langue. Une seule barre, celle de
+    // l'étape en cours. Même fenêtre que la sélection de version, sauf sur mobile : genmod-task
+    // retiré, elle devient la feuille montante des fenêtres au lieu du plein écran.
     renderGitInstallProgress(div, verName) {
-        const desc = tr('GIT_RELEASE_DESC').replace('%1', verName);
-
-        // divGitInstall bascule de .inst-overlay (écran de sélection de version, potentiellement
-        // long avec les notes de release -- cf. updateGithub()) à .modal-overlay pour cet écran de
-        // progression, beaucoup plus court (stepper + barre + footer) : dialogue centré sur
-        // desktop (au lieu d'un panneau plein cadre), scroll du fond verrouillé sur tous les
-        // écrans via body.modal-open (au lieu de l'astuce CSS mobile-only de .inst-overlay, cf.
-        // .container:has(.inst-overlay) dans main.css), et bottom-sheet sur mobile "gratuit" via
-        // .message-content (cf. plus bas) -- le bottom-sheet standard cible déjà cette classe, pas
-        // besoin de le reproduire. Son text-align:center par défaut (pensé pour des dialogues
-        // courts type confirmation) ne convient pas au contenu en blocs de cet écran (stepper,
-        // barres, footer) : neutralisé spécifiquement pour #divGitInstall dans overlays.css.
-        // classList.remove/add plutôt qu'un className direct : préserve 'overlay-entered', déjà
-        // posée par shOverlay() lors de l'ouverture initiale (écran de sélection de version) --
-        // l'écraser ferait recalculer l'élément à opacity:0 (état de départ commun aux deux
-        // classes) puisque plus rien ne redéclencherait la transition d'entrée.
-        div.classList.remove('inst-overlay', 'genmod-overlay', 'genmod-task');
-        div.classList.add('modal-overlay');
-        // shOverlay() ne pose body.modal-open qu'à l'ouverture initiale (alors encore
-        // .inst-overlay, donc ignoré) -- le reposer ici manuellement ; son retrait reste géré par
-        // closeOverlay()/clearOverlays() génériques (cf. leurs commentaires respectifs), qui ne
-        // dépendent que de la présence d'un .modal-overlay dans le DOM, pas de qui l'a posé.
-        document.body.classList.add('modal-open');
-        // Devenu .modal-overlay, divGitInstall reste hors du champ de ui.clearErrors(), qui ne
-        // ferme que les fenêtres d'alerte (.msg-alert, cf. 30-ui-binder.js).
-
-        div.innerHTML = `
-        <div class="message-content">
-
-        ${modalHeader('GIT_RELEASE_TITLE', 'svg-cloudDownload', {
-            subtitle: '',
-            // Pas de rightContent/[close] ici volontairement : l'utilisateur doit confirmer AVANT
-            // de lancer le flash (cf. confirmInstallGitRelease(), appelée par btnUpdate) en étant
-            // prévenu qu'il ne pourra plus rien arrêter ensuite -- une icône de fermeture sur cet
-            // écran laisserait croire le contraire une fois l'installation en cours.
-        })}
-
-        ${wizardStepper(3, 'GIT_RELEASE_TITLE')}
-
-        <div class="overlay-scroll-content">
-
-        <div id="divInstallBar">
-        <div class="progress-bar-header"><span class="progress-bar-label" id="spanInstallPhase"></span><span class="progress-bar-value" id="progInstall-value">0%</span></div>
-        <div class="progress-bar" id="progInstall"><div class="progress-bar-fill"></div></div>
-        </div>
-
-        <!-- Étape 3, à la place de la barre : attente du redémarrage, puis renvoi des packs de
-        langue (cf. setInstallPhase, finishInstall). -->
-        <div id="divGitPostStatus" class="information remote-search-status" style="display:none;">
-        <div class="information-header">
-        <span class="remote-search-spinner"></span>
-        <b id="spanGitPostStatusText"></b>
-        </div>
-        </div>
-        </div>
-
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-
-        <div class="git-install-footer-info">
-        <svg><use href="#svg-power"></use></svg>
-        <span>${tr('GIT_RELEASE_KEEP_POWERED')}</span>
-        </div>
-        </div>
-        </div>
-        </div>`;
-
-        const hP = div.querySelector('.instructions-header p');
-        if (hP) hP.innerHTML = desc;
-
-        // Pas de bouton Annuler ici : une fois l'image envoyée, l'appareil redémarre dessus quoi
-        // qu'il arrive, donc aucune annulation n'est réellement possible -- en proposer une serait
-        // trompeur. Aucun
-        // [close] dans le header (pas de rightContent sur modalHeader() ci-dessus) ni de poignée
-        // mobile (cf. #divGitInstall .modalHeader-handle dans overlays.css) : le seul geste qui
-        // reste est le clic hors-modale, déjà intercepté par requestCloseOverlay() via l'écouteur
-        // générique (cf. 20-shell.js) -- qui refuse la fermeture tant que le verrou 'hard' posé
-        // ci-dessus est actif (cf. flashOverlayLocked). La confirmation avant de lancer le flash
-        // (cf. confirmInstallGitRelease()) est donc la seule porte de sortie réelle.
-
-        // État initial : étape 1 (téléchargement) active.
+        div.classList.remove('genmod-task');
+        div.removeAttribute('data-mode');
+        const step = (n, k, d) => `<div class="genmod-step git-istep" data-istep="${n}">
+            <div class="genmod-step-rail"><span class="genmod-step-num">${n}</span><span class="genmod-step-line"></span></div>
+            <div class="genmod-step-body"><b>${tr(k)}</b><span>${tr(d)}</span></div></div>`;
+        div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
+            id: 'gitInst', icon: 'svg-cloudDownload', titleKey: 'FIRMWARE_OTA_TITLE', descKey: 'GIT_INSTALL_DESC',
+            stateKey: tr('FIRMWARE_MT_INSTALLED'), stateValue: `v${escHtml(this.fwInfo?.appVersion?.name || '')}`,
+            sideExtra: `<div class="genmod-state">${genModalState(tr('GIT_INSTALL_NEW'), escHtml(verName))}</div>`,
+            sectionKey: 'GIT_RELEASE_TITLE', hintKey: 'GIT_INSTALL_HINT', footId: 'gitInstFoot',
+            bodyHtml: `<div class="git-isteps">
+                ${step(1, 'GIT_RELEASE_TITLE_STEP1', 'GIT_INSTALL_STEP1_DESC')}
+                ${step(2, 'GIT_RELEASE_TITLE_STEP2', 'GIT_INSTALL_STEP2_DESC')}
+                ${step(3, 'GIT_RELEASE_TITLE_STEP3', 'GIT_INSTALL_STEP3_DESC')}</div>
+                <div id="divInstallBar">
+                <div class="progress-bar-header"><span class="progress-bar-label" id="spanInstallPhase"></span><span class="progress-bar-value" id="progInstall-value">0%</span></div>
+                <div class="progress-bar" id="progInstall"><div class="progress-bar-fill"></div></div></div>
+                <div id="divGitPostStatus" class="genmod-note is-info git-post-status" hidden><span class="wiz-spin" aria-hidden="true"></span><div><b id="spanGitPostStatusText"></b><span>${tr('GIT_INSTALL_RECONNECT')}</span></div></div>
+                <div class="genmod-note is-warn"><svg><use href="#svg-warning"></use></svg><div><b>${tr('GIT_INSTALL_POWER_TITLE')}</b><span>${tr('GIT_INSTALL_POWER_DESC')}</span></div></div>`
+        })}</div>`;
+        div.querySelector('.genmod-head-title').textContent = tr('GIT_INSTALL_HEAD').replace('%1', verName);
+        div.querySelector('#gitInstFoot').innerHTML = `<button type="button" class="gen-btn gen-btn-primary" id="btnGitInstBusy" disabled><span class="wiz-spin" aria-hidden="true"></span><span>${tr('GIT_INSTALL_BUSY')}</span></button>`;
+        // Pas de fermeture ici : l'installation ne peut pas être interrompue, et une croix laisserait
+        // croire le contraire. Le verrou 'hard' posé par installGitRelease() garde aussi le fond.
+        div.querySelectorAll('.genmod-close').forEach(b => { b.disabled = true; });
         this.setInstallPhase(div, 1, tr('GIT_RELEASE_PHASE_DOWNLOAD').replace('%1', verName));
     }
 
@@ -633,7 +592,7 @@ class Firmware {
         clearTimeout(this._installTimer);
         this._pendingInstall = null;
         clearOverlayLock(div);
-        div.remove();
+        closeOverlay(div);
         ui.errorMessage(msg);
     }
     // Retour de l'appareil après l'envoi : la version qu'il annonce dit si l'image a pris. Sinon,
@@ -658,9 +617,9 @@ class Firmware {
             catch (e) { langFailed = true; logger.error('Language pack refresh failed for ' + codes[i] + ':', e); }
         }
         // Au-delà de la dernière étape : les trois puces passent à « terminé ».
-        ui.wizSetStep(div, 4);
+        this.setInstallPhase(div, 4, '');
         clearOverlayLock(div);
-        div.remove();
+        closeOverlay(div);
         const subMsg = langFailed
             ? `${tr('GIT_RELEASE_SUCCESS_1')}<br>${tr('GIT_LANG_RESTORE_FAILED').replace('%1', codes.join(', '))}`
             : `${tr('GIT_RELEASE_SUCCESS_1')}<br>${tr('GIT_RELEASE_SUCCESS_2')}`;

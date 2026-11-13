@@ -1578,6 +1578,24 @@ function genModalShell(o) {
 // Verrou en vol : la croix et les moyens d'import cessent de répondre. Appelée par
 // setOverlayLock / clearOverlayLock, donc tout chemin qui pose ou lève un verrou est couvert
 // sans avoir à y penser. Sans effet hors des fenêtres genmod-.
+// Panneau latéral (side-panel-, overlays.css) : 440 px collé à droite, feuille du bas sur mobile
+// si is-sheet. Fermé par la croix ou tout [data-close], un clic sur le fond et Échap.
+function openSidePanel(div) {
+    const close = () => {
+        if (div.dataset.closing) return;
+        div.dataset.closing = 'true';
+        document.removeEventListener('keydown', onKey);
+        div.classList.remove('open');
+        setTimeout(() => div.remove(), 250);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    div.addEventListener('click', (e) => { if (e.target === div || e.target.closest('[data-close]')) close(); });
+    get('divContainer').appendChild(div);
+    void div.offsetWidth;
+    div.classList.add('open');
+    return close;
+}
 function genModalBusy(div, busy) {
     if (!div || !div.querySelector('.genmod-window')) return;
     div.querySelectorAll('.genmod-close').forEach(b => { b.disabled = !!busy; });
