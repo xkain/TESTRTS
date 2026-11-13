@@ -2473,7 +2473,6 @@ label.gen-row {
     }
     .gen-hero-host,
     .gen-hero-chips,
-    .gen-tabs,
     #genPager,
     #netPager,
     #rdcPager,
@@ -2494,13 +2493,25 @@ label.gen-row {
         gap: 0;
         padding: 0 16px 140px;
     }
-    #divSystemOptions .gen-grid[hidden],
-    #divFirmware .gen-grid[hidden],
-    #divNetAdapter .gen-grid[hidden],
-    #divTransceiverSettings .gen-grid[hidden],
-    #somfyGroup .gen-grid[hidden],
-    #somfyShade .gen-grid[hidden] {
-        display: grid;
+    /* Un onglet à la fois, comme sur PC : empilées, les sections faisaient 4 à 5 écrans. La
+       bande d'onglets reste collée sous l'en-tête et nomme la section, d'où le titre retiré. */
+    .gen-tabs {
+        position: sticky;
+        top: var(--gen-stick-top, var(--mobile-header-height));
+        z-index: 3;
+        align-self: stretch;
+        margin: 0 -16px 8px;
+        padding: 6px 16px;
+        border-radius: 0;
+        background: var(--bg);
+    }
+    .gen-tab {
+        min-height: 36px;
+        padding: 6px 14px;
+        background: var(--surface);
+    }
+    .gen-tabs ~ .gen-panels > .gen-grid > .gen-sec-head {
+        display: none;
     }
     .gen-grid {
         grid-template-columns: minmax(0, 1fr);
