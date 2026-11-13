@@ -137,6 +137,9 @@ bool somfy_rx_queue_t::pop(somfy_rx_t *rx) {
   return false;
 }
 
+#define TX_FRAME_SILENCE_US 27434
+static uint32_t g_lastTxEndUs = 0;
+
 void Transceiver::sendFrame(byte *frame, uint8_t sync, uint8_t bitLength) {
   if(!this->config.enabled) return;
   // Dernière ligne de défense : la boucle d'émission plus bas indexe `frame[i / 8]`
@@ -209,12 +212,13 @@ void Transceiver::sendFrame(byte *frame, uint8_t sync, uint8_t bitLength) {
   // Inter-frame silence for 56-bit protocols are around 34ms.  However, an 80 bit protocol should
   // reduce this by the transmission of SYMBOL * 24 or 15,360us
   REG_WRITE(GPIO_OUT_W1TC_REG, pin);
+  g_lastTxEndUs = micros();
   // Below are the original calculations for inter-frame silence.  However, when actually inspecting this from
   // the remote it appears to be closer to 27500us.  The delayMicoseconds call cannot be called with
   // values larger than 16383.
   if(bitLength != 80) {
-    delayMicroseconds(13717);
-    delayMicroseconds(13717);
+    delayMicroseconds(TX_FRAME_SILENCE_US / 2);
+    delayMicroseconds(TX_FRAME_SILENCE_US / 2);
   }
 }
 void RECEIVE_ATTR Transceiver::handleReceive() {
@@ -1057,6 +1061,10 @@ static SemaphoreHandle_t g_radioMutex = xSemaphoreCreateRecursiveMutex();
 
 void Transceiver::beginTransmit() {
     xSemaphoreTakeRecursive(g_radioMutex, portMAX_DELAY);
+    // Une salve 80 bits ne se termine par aucun silence : sans ce plancher, la suivante lui serait
+    // collée.
+    const uint32_t quiet = micros() - g_lastTxEndUs;
+    if(quiet < TX_FRAME_SILENCE_US) delay((TX_FRAME_SILENCE_US - quiet) / 1000 + 1);
     // Point de passage unique d'une SALVE (les répétitions bouclent ensuite sur sendFrame), et
     // surtout situé hors de la section à timing critique : sendFrame() enchaîne des
     // delayMicroseconds calibrés, y insérer un digitalWrite fausserait la trame.
