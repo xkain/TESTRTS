@@ -267,7 +267,7 @@ bool ConfigSettings::load() {
   this->swShowGpio = pref.getBool("swShowGpio", false);
   this->enableDebugLogs = pref.getBool("enableDebugLogs", false);
   // Recovery lit ces mêmes clés directement via Preferences, bien avant ce point : sa fenêtre de
-  // détection s'ouvre avant settings.begin() (cf. SomfyController.ino). Les deux lectures doivent
+  // détection s'ouvre avant settings.begin() (cf. main.cpp). Les deux lectures doivent
   // donc rester d'accord sur les noms de clés et les défauts.
   this->ledPin = pref.getChar("ledPin", -1);
   this->ledActiveLow = pref.getBool("ledActiveLow", false);
