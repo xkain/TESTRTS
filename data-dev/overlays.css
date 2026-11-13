@@ -2437,6 +2437,8 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 .gcard-name, .gcard-name:hover { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; flex: 1; width: auto; min-width: 0; overflow: hidden; margin: 0 0 0 -2px; padding: 0 0 0 2px; border: 0; background: none; color: var(--color-text-main); text-align: left; text-transform: none; font: inherit; cursor: pointer; }
 .gcard-name .groupctl-name { display: block; font-size: 1rem; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gcard-sum { display: none; font-size: .8em; font-weight: 600; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gcard-room { display: none; margin-top: 2px; padding: 1px 8px; border-radius: 999px; background: var(--dcard-pill); font-size: .75em; font-weight: 600; color: var(--color-text-secondary); }
+#divHomePnl.dash-editing .gcard-room { display: inline-block; }
 .gcard[data-moving="true"] .dcard-mid-btn { border-color: #2f6fea; background: #2f6fea; color: #fff; box-shadow: 0 6px 16px rgba(47, 111, 234, .45); }
 .gcard[data-moving="true"] .dcard-my { display: none; }
 .gcard[data-moving="true"] .dcard-sq { display: block; }

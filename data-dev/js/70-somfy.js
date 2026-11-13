@@ -1346,6 +1346,8 @@ class Somfy {
         }
         this.dashEditing = true;
         this._dashPending = {};
+        this._dashMoves = new Map();
+        this._dashGroupMoves = new Map();
         this._dashSnapshot = this._dashOrder();
         pnl.classList.add('dash-editing');
         pnl.querySelectorAll('.somfyShadeCtl, .somfyGroupCtl').forEach(c => c.style.setProperty('--wig-delay', `-${(Math.random() * 0.3).toFixed(2)}s`));
@@ -1358,8 +1360,12 @@ class Somfy {
         const order = this._dashOrder();
         const before = this._dashSnapshot;
         const pending = this._dashPending || {};
+        const moves = this._dashMoves || new Map();
+        const groupMoves = this._dashGroupMoves || new Map();
         this.dashEditing = false;
         this._dashPending = null;
+        this._dashMoves = null;
+        this._dashGroupMoves = null;
         get('divHomePnl')?.classList.remove('dash-editing');
         const rooms = pending.rooms || _rooms.slice(1);
         const shades = pending.shades || this.shades || [];
@@ -1372,7 +1378,8 @@ class Somfy {
             if (!same(order.shades, before.shades)) jobs.push(['/shadeSortOrder', this._mergeOrder(sorted(shades, 'shadeId'), order.shades), shades, 'shadeId']);
             if (!same(order.groups, before.groups)) jobs.push(['/groupSortOrder', this._mergeOrder(sorted(groups, 'groupId'), order.groups), groups, 'groupId']);
         }
-        const roomsTouched = !!pending.rooms || jobs.some(j => j[0] === '/roomSortOrder');
+        // Annuler doit aussi remettre la barre des pièces, que le glisser a réordonnée en direct.
+        const roomsTouched = !!pending.rooms || !same(order.rooms, before.rooms);
         const render = () => {
             const active = parseInt(document.querySelector('.room-pill.active')?.getAttribute('data-roomid') || '0', 10);
             if (roomsTouched) this.setRoomsList(rooms);
@@ -1389,7 +1396,17 @@ class Somfy {
                 run(i + 1);
             });
         };
-        run(0);
+        // Les changements de pièce partent avant l'ordre : /saveShade, comme la fenêtre Pièce. Annuler
+        // n'envoie rien, et render() redessine depuis this.shades, que rien n'a encore touché.
+        const moveOps = !save ? [] : [...moves].map(([shadeId, roomId]) => ({ url: '/saveShade', body: { shadeId, roomId } }))
+            .concat([...groupMoves].map(([groupId, roomId]) => ({ url: '/saveGroup', body: { groupId, roomId } })));
+        if (!moveOps.length) return run(0);
+        this._putSequence(moveOps, (err) => {
+            if (err) { ui.serviceError(err); return render(); }
+            moves.forEach((roomId, shadeId) => { const sh = shades.find(x => x.shadeId === shadeId); if (sh) sh.roomId = roomId; });
+            groupMoves.forEach((roomId, groupId) => { const g = groups.find(x => x.groupId === groupId); if (g) g.roomId = roomId; });
+            run(0);
+        });
     }
     toggleCardHidden(kind, id) {
         this.setCardUIPrefs(kind, id, { hidden: !this.cardUIPrefs(kind, id).hidden });
@@ -1399,7 +1416,7 @@ class Somfy {
         return {
             shades: ids('#divShadeControls .somfyShadeCtl', 'data-shadeid'),
             groups: ids('#divGroupControls .somfyGroupCtl', 'data-groupid'),
-            rooms: ids('#divShadeControls .dash-room-title', 'data-roomid').filter(id => id !== 0)
+            rooms: ids('#divRoomSelector .room-pill', 'data-roomid').filter(id => id !== 0)
         };
     }
     _mergeOrder(full, visible) {
@@ -1414,6 +1431,8 @@ class Somfy {
         pnl.addEventListener('pointerdown', (e) => this._dashPointerDown(e));
         pnl.addEventListener('touchmove', (e) => { if (this._dashDrag?.live && e.cancelable) e.preventDefault(); }, { passive: false });
         pnl.addEventListener('contextmenu', (e) => { if (this.dashEditing) e.preventDefault(); });
+        // Le clic qui suit un dépôt ne doit pas choisir la pièce (ou ouvrir la carte) restée sous le pointeur.
+        pnl.addEventListener('click', (e) => { if (this._dashNoClick > Date.now()) { e.stopPropagation(); e.preventDefault(); } }, true);
         document.addEventListener('keydown', (e) => {
             if (!this.dashEditing || e.key !== 'Escape') return;
             if (document.querySelector('.modal-overlay')) return;
@@ -1425,11 +1444,12 @@ class Somfy {
         if (!this.dashEditing || this._dashDrag || (e.pointerType === 'mouse' && e.button !== 0)) return;
         if (e.target.closest('.dash-edit-eye')) return;
         const title = e.target.closest('#divShadeControls .dash-room-title');
-        const el = title || e.target.closest('.somfyShadeCtl, .somfyGroupCtl');
-        if (!el || (title && parseInt(title.dataset.roomid, 10) === 0)) return;
+        const pill = e.target.closest('#divRoomSelector .room-pill');
+        const el = title || pill || e.target.closest('.somfyShadeCtl, .somfyGroupCtl');
+        if (!el || ((title || pill) && parseInt(el.dataset.roomid, 10) === 0)) return;
         if (e.pointerType === 'mouse') e.preventDefault();
         const r = el.getBoundingClientRect();
-        const st = { el, room: !!title, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, gx: e.clientX - r.left, gy: e.clientY - r.top, pid: e.pointerId, live: false, lock: 0 };
+        const st = { el, room: !!title, pill: !!pill, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, gx: e.clientX - r.left, gy: e.clientY - r.top, pid: e.pointerId, live: false, lock: 0 };
         this._dashDrag = st;
         const off = () => {
             clearTimeout(st.timer);
@@ -1472,8 +1492,9 @@ class Somfy {
         if (st.room) st.box.classList.add('dash-rooms-collapsed');
         const r = el.getBoundingClientRect();
         const slot = document.createElement('div');
-        slot.className = 'dash-drop-slot' + (st.room ? ' is-room' : '');
+        slot.className = 'dash-drop-slot' + (st.room ? ' is-room' : '') + (st.pill ? ' is-pill' : '');
         slot.style.height = r.height + 'px';
+        if (st.pill) { slot.style.width = r.width + 'px'; slot.style.flex = 'none'; }
         el.before(slot);
         const left = st.x - Math.min(st.gx, r.width - 12), top = st.y - Math.min(st.gy, r.height - 12);
         Object.assign(el.style, { position: 'fixed', left: left + 'px', top: top + 'px', width: r.width + 'px', height: r.height + 'px', margin: '0' });
@@ -1494,6 +1515,14 @@ class Somfy {
             if (st.y < b.top + edge) v = -Math.ceil((b.top + edge - st.y) / 5);
             else if (st.y > b.bottom - edge) v = Math.ceil((st.y - b.bottom + edge) / 5);
             if (v) { st.scroller.scrollBy(0, v); this._dashHit(st); }
+            // Puces (mobile) : la rangée défile d'elle-même quand le doigt approche d'un bord.
+            if (st.pill && st.box.scrollWidth > st.box.clientWidth + 2) {
+                const bx = st.box.getBoundingClientRect();
+                let h = 0;
+                if (st.x < bx.left + 40) h = -Math.ceil((bx.left + 40 - st.x) / 4);
+                else if (st.x > bx.right - 40) h = Math.ceil((st.x - bx.right + 40) / 4);
+                if (h) { st.box.scrollBy(h, 0); this._dashHit(st); }
+            }
             st.raf = requestAnimationFrame(loop);
         };
         st.raf = requestAnimationFrame(loop);
@@ -1509,7 +1538,8 @@ class Somfy {
         const el = st.el;
         let list;
         if (st.room) list = [...st.box.querySelectorAll('.dash-room-title')].filter(t => t.dataset.roomid !== '0');
-        else if (el.classList.contains('somfyShadeCtl')) list = [...st.box.querySelectorAll('.somfyShadeCtl')].filter(c => c.dataset.roomid === el.dataset.roomid);
+        else if (st.pill) list = [...st.box.querySelectorAll('.room-pill')].filter(p => p.dataset.roomid !== '0');
+        else if (el.classList.contains('somfyShadeCtl')) list = [...st.box.querySelectorAll('.somfyShadeCtl, .dash-room-title, .dash-room-zone')];
         else list = [...st.box.querySelectorAll('.somfyGroupCtl')];
         return list.filter(c => c !== el && c.offsetParent !== null);
     }
@@ -1519,6 +1549,8 @@ class Somfy {
     }
     _dashHit(st) {
         if (Date.now() < st.lock) return;
+        if (!st.room && st.el.classList.contains('somfyShadeCtl')) return this._dashHitShade(st);
+        if (!st.room && !st.pill && this._dashHitGroupRoom(st)) return;
         const items = this._dashCandidates(st);
         if (!items.length) return;
         const inside = (r) => st.x >= r.left && st.x <= r.right && st.y >= r.top && st.y <= r.bottom;
@@ -1538,6 +1570,83 @@ class Somfy {
         });
         st.lock = Date.now() + 160;
     }
+    // Équipement : dans sa pièce actuelle, l'emplacement suit le pointeur comme avant. Vers une autre
+    // pièce (carte, titre, zone vide, ou pièce de la colonne / puce), la cible est seulement surlignée
+    // et l'emplacement n'y va qu'au dépôt : le déplacer en direct décalerait toutes les cartes entre
+    // les deux pièces, et le pointeur tomberait sur une autre cible. Enregistré à « Terminé ».
+    _dashHitShade(st) {
+        const inside = (r) => st.x >= r.left && st.x <= r.right && st.y >= r.top && st.y <= r.bottom;
+        const box = st.box, slot = st.slot;
+        const items = this._dashCandidates(st).filter(c => c.offsetParent !== null);
+        const pill = [...document.querySelectorAll('#divRoomSelector .room-pill')].find(p => p.offsetParent !== null && inside(p.getBoundingClientRect()));
+        const target = pill || items.find(c => inside(c.getBoundingClientRect()));
+        const mark = (el) => document.querySelectorAll('#divHomePnl .dash-drop-target').forEach(x => { if (x !== el) x.classList.remove('dash-drop-target'); });
+        st.pending = null;
+        if (!target) { mark(null); return; }
+        const room = target.dataset.roomid;
+        if (!pill && room === this._dashSectionRoom(slot) && target.classList.contains('somfyShadeCtl')) {
+            mark(null);
+            const slotFirst = !!(slot.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING);
+            this._dashFlip(items, () => { if (slotFirst) target.after(slot); else target.before(slot); });
+            st.lock = Date.now() + 160;
+            return;
+        }
+        mark(target);
+        target.classList.add('dash-drop-target');
+        let place;
+        if (pill) {
+            // Fin de la section visée : juste avant le titre de la pièce suivante.
+            const title = box.querySelector(`.dash-room-title[data-roomid="${room}"]`);
+            let next = title ? title.nextElementSibling : null;
+            while (next && !next.classList.contains('dash-room-title')) next = next.nextElementSibling;
+            place = () => { if (next) next.before(slot); else box.appendChild(slot); };
+        }
+        else if (target.classList.contains('somfyShadeCtl')) place = () => target.before(slot);
+        else {
+            const zone = box.querySelector(`.dash-room-zone[data-roomid="${room}"]`);
+            place = () => (zone || target).after(slot);
+        }
+        st.pending = { room, place };
+    }
+    // Range les sections de la liste des équipements (titre, zone, cartes) dans l'ordre donné.
+    _dashApplyRoomOrder(ids) {
+        const box = get('divShadeControls');
+        if (!box) return;
+        const cards = [...box.querySelectorAll('.somfyShadeCtl')];
+        ids.forEach(id => {
+            const t = box.querySelector(`.dash-room-title[data-roomid="${id}"]`);
+            if (!t) return;
+            box.appendChild(t);
+            const zone = box.querySelector(`.dash-room-zone[data-roomid="${id}"]`);
+            if (zone) box.appendChild(zone);
+            cards.filter(c => c.dataset.roomid === String(id)).forEach(c => box.appendChild(c));
+        });
+    }
+    // Groupe : la grille des groupes n'a pas de sections, la pièce se choisit en déposant le groupe sur
+    // une pièce de la colonne ou une puce. Renvoie true si le pointeur en survole une.
+    _dashHitGroupRoom(st) {
+        const inside = (r) => st.x >= r.left && st.x <= r.right && st.y >= r.top && st.y <= r.bottom;
+        const pill = [...document.querySelectorAll('#divRoomSelector .room-pill')].find(p => p.offsetParent !== null && inside(p.getBoundingClientRect()));
+        document.querySelectorAll('#divHomePnl .dash-drop-target').forEach(x => { if (x !== pill) x.classList.remove('dash-drop-target'); });
+        st.pending = pill ? { room: pill.dataset.roomid } : null;
+        if (pill) pill.classList.add('dash-drop-target');
+        return !!pill;
+    }
+    // Pièce de la section où se trouve un nœud de la liste : celle du titre qui le précède.
+    _dashSectionRoom(node) {
+        let n = node.previousElementSibling;
+        while (n && !n.classList.contains('dash-room-title')) n = n.previousElementSibling;
+        return n ? n.dataset.roomid : null;
+    }
+    // Pièce vide = aucune carte entre son titre et le suivant : son titre et sa zone ne se montrent
+    // qu'en mode Personnaliser (cf. main.css).
+    _dashSyncEmptyRooms() {
+        document.querySelectorAll('#divShadeControls .dash-room-title').forEach(t => {
+            let n = t.nextElementSibling, has = false;
+            while (n && !n.classList.contains('dash-room-title')) { if (n.classList.contains('somfyShadeCtl')) { has = true; break; } n = n.nextElementSibling; }
+            t.classList.toggle('is-empty', !has);
+        });
+    }
     _dashFlip(items, fn) {
         const first = new Map(items.map(it => [it, it.getBoundingClientRect()]));
         fn();
@@ -1549,6 +1658,7 @@ class Somfy {
     }
     _dashDrop(st, cancel) {
         st.off?.();
+        this._dashNoClick = Date.now() + 350;
         st.live = false;
         cancelAnimationFrame(st.raf);
         this._dashDrag = null;
@@ -1557,14 +1667,26 @@ class Somfy {
         const a = el.getBoundingClientRect();
         Object.assign(el.style, { position: '', left: '', top: '', width: '', height: '', margin: '', transform: '' });
         el.classList.remove('dash-lifted');
+        document.querySelectorAll('#divHomePnl .dash-drop-target').forEach(x => x.classList.remove('dash-drop-target'));
+        let newRoom = null;
+        if (!cancel && !st.room && el.classList.contains('somfyShadeCtl')) {
+            if (st.pending) st.pending.place();
+            newRoom = this._dashSectionRoom(st.slot);
+        }
         if (cancel) st.slot.remove();
         else st.slot.replaceWith(el);
+        if (st.pill) {
+            this._dashApplyRoomOrder([...st.box.querySelectorAll('.room-pill')].map(p => p.dataset.roomid));
+            return;
+        }
         if (st.room) {
             const box = st.box;
             const titles = [...box.querySelectorAll('.dash-room-title')];
             const cards = [...box.querySelectorAll('.somfyShadeCtl')];
             titles.forEach(t => {
                 box.appendChild(t);
+                const zone = box.querySelector(`.dash-room-zone[data-roomid="${t.dataset.roomid}"]`);
+                if (zone) box.appendChild(zone);
                 cards.filter(c => c.dataset.roomid === t.dataset.roomid).forEach(c => box.appendChild(c));
             });
             box.classList.remove('dash-rooms-collapsed');
@@ -1574,6 +1696,24 @@ class Somfy {
                 ids.forEach(id => { const p = pills.querySelector(`.room-pill[data-roomid="${id}"]`); if (p) pills.appendChild(p); });
             }
             return;
+        }
+        if (!cancel && el.classList.contains('somfyGroupCtl') && st.pending && st.pending.room !== el.dataset.roomid) {
+            const room = parseInt(st.pending.room, 10);
+            el.dataset.roomid = st.pending.room;
+            this._dashGroupMoves?.set(parseInt(el.dataset.groupid, 10), room);
+            const badge = el.querySelector('.gcard-room');
+            if (badge) badge.textContent = room ? this._cfgRoomName(room) : tr('DASH_NO_ROOM');
+            const active = parseInt(document.querySelector('.room-pill.active')?.dataset.roomid || '0', 10);
+            if (active && active !== room) el.style.display = 'none';
+        }
+        if (newRoom != null && newRoom !== el.dataset.roomid) {
+            el.dataset.roomid = newRoom;
+            this._dashMoves?.set(parseInt(el.dataset.shadeid, 10), parseInt(newRoom, 10));
+            // Déposé dans une pièce que le filtre masque : la carte suit sa nouvelle pièce.
+            const active = parseInt(document.querySelector('.room-pill.active')?.dataset.roomid || '0', 10);
+            if (active && active !== parseInt(newRoom, 10)) el.style.display = 'none';
+            this._dashSyncEmptyRooms();
+            this.queueColumnSummary();
         }
         const b = el.getBoundingClientRect();
         const dx = a.left - b.left, dy = a.top - b.top;
@@ -3480,7 +3620,7 @@ class Somfy {
 
         // Filtre les deux types de cartes -- l'ancienne version ne touchait qu'aux équipements,
         // laissant les groupes visibles quelle que soit la pièce sélectionnée.
-        document.querySelectorAll('.somfyShadeCtl, #divShadeControls .dash-room-title').forEach(x => {
+        document.querySelectorAll('.somfyShadeCtl, #divShadeControls .dash-room-title, #divShadeControls .dash-room-zone').forEach(x => {
             const rId = parseInt(x.getAttribute('data-roomid'), 10);
             x.style.display = (roomId === 0 || rId === roomId) ? '' : 'none';
         });
@@ -3847,6 +3987,7 @@ class Somfy {
             // Drag-to-scroll à la souris (PC)
             let isDown = false, startX, scrollLeft;
             c.onmousedown = (e) => {
+                if (this.dashEditing) return;
                 isDown = true;
                 c.style.cursor = 'grabbing';
                 startX = e.pageX - c.offsetLeft;
@@ -4137,15 +4278,21 @@ class Somfy {
             if (!byRoom.has(shade.roomId)) byRoom.set(shade.roomId, []);
             byRoom.get(shade.roomId).push(card);
         }
-        const roomOrder = _rooms.map(r => r.roomId).filter(id => byRoom.has(id));
-        byRoom.forEach((v, id) => { if (!roomOrder.includes(id)) roomOrder.push(id); });
+        // Toutes les pièces ont leur titre, même vides : une pièce vide n'apparaît qu'en mode
+        // Personnaliser (.is-empty + zone de dépôt), pour pouvoir y glisser un équipement.
         const withTitles = _rooms.length > 1;
+        const roomOrder = withTitles ? _rooms.map(r => r.roomId) : _rooms.map(r => r.roomId).filter(id => byRoom.has(id));
+        byRoom.forEach((v, id) => { if (!roomOrder.includes(id)) roomOrder.push(id); });
         roomOrder.forEach(id => {
+            const cards = byRoom.get(id) || [];
             if (withTitles) {
-                const room = _rooms.find(r => r.roomId === id) || { name: tr('HOME') };
-                divCtl += `<div class="dash-room-title" data-roomid="${id}" style="${roomId === 0 || roomId === id ? '' : 'display:none'}"><span class="dash-room-grip"><svg><use href="#svg-drag"></use></svg></span><span>${escHtml(room.name)}</span><span class="dash-room-count"></span></div>`;
+                // La section 0 regroupe ce qui n'a pas de pièce : « Sans pièce », plus parlant que « Accueil ».
+                const room = id === 0 ? { name: tr('DASH_NO_ROOM') } : _rooms.find(r => r.roomId === id) || { name: tr('HOME') };
+                const vis = roomId === 0 || roomId === id ? '' : 'display:none';
+                divCtl += `<div class="dash-room-title${cards.length ? '' : ' is-empty'}" data-roomid="${id}" style="${vis}"><span class="dash-room-grip"><svg><use href="#svg-drag"></use></svg></span><span>${escHtml(room.name)}</span><span class="dash-room-count"></span></div>`;
+                divCtl += `<div class="dash-room-zone" data-roomid="${id}" style="${vis}">${tr('DASH_DROP_HERE')}</div>`;
             }
-            divCtl += byRoom.get(id).join('');
+            divCtl += cards.join('');
         });
         this.syncVRLayout();
         this.renderCfgPage('shade');
@@ -5743,7 +5890,7 @@ class Somfy {
         const btn = (cmd, label) => `<button type="button" class="cmd-button dcard-btn" data-cmd="${cmd}" data-groupid="${id}" aria-label="${label}">${chev(cmd)}<span class="dcard-lbl">${label}</span></button>`;
         return `<div class="somfyGroupCtl gcard" style="${visible ? '' : 'display:none'}" data-groupid="${id}" data-roomid="${group.roomId}" data-remoteaddress="${group.remoteAddress}">
             <div class="gcard-head">
-            <button type="button" class="gcard-name" onclick="somfy.openCardSheet('group', ${id});"><span class="groupctl-name">${escHtml(group.name)}</span><span class="groupctl-open gcard-sum">${summary}</span></button>
+            <button type="button" class="gcard-name" onclick="somfy.openCardSheet('group', ${id});"><span class="groupctl-name">${escHtml(group.name)}</span><span class="groupctl-open gcard-sum">${summary}</span><span class="gcard-room">${escHtml(group.roomId ? this._cfgRoomName(group.roomId) : tr('DASH_NO_ROOM'))}</span></button>
             <button type="button" class="cmd-button button-sunflag dcard-sun-btn" data-cmd="sunflag" data-groupid="${id}" data-on="${sunOn}" title="${tr('VR_SUN_FLAG')}" style="${group.sunSensor ? '' : 'display:none'}"><svg><use href="#svg-sun"></use></svg></button>
             <span class="dcard-pill gcard-pill"><span class="groupctl-open">${summary}</span></span>
             <button type="button" class="dash-edit-eye" title="${tr('CARD_OPT_HIDE')}" onclick="somfy.toggleCardHidden('group', ${id});"><svg class="eye-on"><use href="#svg-eyeOn"></use></svg><svg class="eye-off"><use href="#svg-eyeOff"></use></svg></button>
