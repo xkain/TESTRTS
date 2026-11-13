@@ -2489,6 +2489,11 @@ label.gen-row {
         margin: -4px 0 0;
         line-height: 1.45;
     }
+    /* L'introduction fixe d'une page se lit une fois ; l'aide de l'en-tête la remplace. Les
+       descriptions sans [tr] portent un état (type, pièce, radio) et restent. */
+    .gen-hero-desc[tr] {
+        display: none;
+    }
     .gen-body {
         gap: 0;
         padding: 0 16px 140px;
@@ -6313,6 +6318,17 @@ input.gen-input.mqtt-mono {
     }
     #mqttOffNote {
         grid-column: 1 / -1;
+    }
+}
+@media (min-width: 768px) {
+    #divHomeAssistant .ha-tabs {
+        display: none;
+    }
+}
+@media (max-width: 767px) {
+    #divHomeAssistant:not([data-ha-tab="1"]) .gen-grid[data-ha="1"],
+    #divHomeAssistant[data-ha-tab="1"] .gen-grid[data-ha="0"] {
+        display: none;
     }
 }
 @media (max-width: 999px) {

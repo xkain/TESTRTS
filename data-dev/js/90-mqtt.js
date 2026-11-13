@@ -25,6 +25,16 @@ class MQTT {
         this._haBar = new SaveBar(ha, { onSave: () => this.saveDiscovery(), onRevert: () => this.revertPage() });
     }
 
+    // Onglets mobiles de la page Home Assistant ; sur PC les deux sections partagent une grille.
+    haTab(i) {
+        const page = get('divHomeAssistant');
+        page.dataset.haTab = String(i);
+        page.querySelectorAll('.ha-tabs .gen-tab').forEach((b, n) => {
+            b.classList.toggle('selected', n === i);
+            b.setAttribute('aria-selected', n === i ? 'true' : 'false');
+        });
+    }
+
     async loadMQTT() {
         getJSONSync('/mqttsettings', (err, settings) => {
             if (err) {
