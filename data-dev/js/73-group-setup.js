@@ -229,6 +229,13 @@ class GroupSetup {
     }
     linkKeys() { return this.w.mode === 'unlink' ? ['mem', 'pair'] : ['pick', 'mem', 'pair']; }
     renderLink() {
+        const x = pairMode.expert();
+        this.$('.wiz-side-head .pair-mode-menu')?.remove();
+        this.$('.pair-mode-badge')?.remove();
+        this.$('.wiz-title').insertAdjacentHTML('afterend', pairMode.menu('groupSetup.setPairMode'));
+        this.$('.wiz-steps').hidden = x;
+        this.$('.wiz-pbar').hidden = x;
+        if (x) return this.renderLinkExpert();
         const w = this.w, s = this.s, un = w.mode === 'unlink', L = this.linkKeys(), key = L[w.step], T = s.tasks[0];
         const nm = T ? escHtml(T.name) : '', memOk = !!T && (T.state === 'done' || T.sub === 'grp' || T.sub === 'grpq');
         const steps = {
@@ -272,6 +279,53 @@ class GroupSetup {
             ${btn(' wiz-quit', 'data-wiz-close', 'BT_CANCEL')}
             ${btn(' gen-btn-primary', `onclick="groupSetup.linkNext()"${ok ? '' : ' disabled'}`, last ? 'SETUP_FINISH' : 'BT_CONTINUE')}`;
     }
+    // Mode expert : les boutons de la v2, sans question. Seul le second va-et-vient renseigne
+    // sur le moteur, d'où un bouton qui l'enregistre plutôt qu'un « réussi ».
+    renderLinkExpert() {
+        const w = this.w, s = this.s, un = w.mode === 'unlink';
+        if (!un && w.pick === null) w.pick = this.avail[0].shadeId;
+        this.$('.wiz-pbar').insertAdjacentHTML('afterend', pairMode.badge());
+        this.$('.wiz-sum-text b').textContent = s.group.name;
+        this.$('.wiz-sum-text span').textContent = tr('GSETUP_W_COUNT').replace('{N}', (s.group.linkedShades || []).length);
+        const dev = un ? `<p class="wiz-lead"><b>${escHtml(s.tasks[0].name)}</b></p>`
+            : `<div class="gen-field"><label class="gen-field-label" for="gsetupXPick">${tr('GSETUP_L_STEP_DEVICE')}</label><div class="gen-input-box"><select id="gsetupXPick" class="gen-input" onchange="groupSetup.w.pick = parseInt(this.value, 10)">${this.avail.map(a => `<option value="${a.shadeId}"${a.shadeId === w.pick ? ' selected' : ''}>${escHtml(a.name)}</option>`).join('')}</select></div></div>`;
+        const prog = un ? 'onclick="groupSetup.xProgOnce()"'
+            : 'onmousedown="groupSetup.holdStart(event)" ontouchstart="event.preventDefault(); groupSetup.holdStart()" onmouseup="groupSetup.holdEnd(event)" ontouchend="groupSetup.holdEnd()"';
+        const main = this.$('.wiz-main');
+        main.innerHTML = `${dev}<div class="pair-mode-col">
+            <button type="button" class="gen-btn" onclick="groupSetup.xMem()">${tr('GSETUP_MEM_BTN')}</button>
+            <button type="button" class="gen-btn" ${prog}>${tr('PAIR_X_GRP_PROG')}</button>
+            <button type="button" class="gen-btn gen-btn-primary" onclick="groupSetup.xDone()">${tr('PAIR_X_JOGGED')}</button></div>
+            <p class="gen-tile-desc">${tr(un ? 'PAIR_X_NOTE_UNLINK' : 'PAIR_X_NOTE_LINK')}</p>
+            <p class="pair-mode-status" id="gsetupXStatus" aria-live="polite"></p>`;
+        wizScrollTop(w, main, 'x');
+        this.$('.wiz-foot').innerHTML = `<span class="wiz-foot-gap"></span><button type="button" class="gen-btn wiz-quit" data-wiz-close>${tr('BT_CANCEL')}</button>`;
+    }
+    setPairMode(on) { pairMode.set(on); this.renderWiz(); }
+    xShade() { return this.w.mode === 'unlink' ? this.s.tasks[0] : this.avail.find(a => a.shadeId === this.w.pick); }
+    xStatus(text) { const el = this.$('#gsetupXStatus'); if (el) el.textContent = text; }
+    xMem() {
+        const sh = this.xShade();
+        putJSONSync('/shadeCommand', { shadeId: sh.shadeId, command: 'prog', repeat: 40 }, (err) => {
+            if (err) return ui.serviceError(err);
+            this.xStatus(this.t('PAIR_X_MEM_SENT', { name: sh.name }));
+        });
+    }
+    xProgOnce() {
+        putJSONSync('/groupCommand', { groupId: this.s.group.groupId, command: 'prog', repeat: 1 }, (err) => {
+            if (err) return ui.serviceError(err);
+            this.xStatus(tr('PAIR_X_PROG_SENT'));
+        });
+    }
+    xDone() {
+        const sh = this.xShade(), un = this.w.mode === 'unlink';
+        putJSONSync(un ? '/unlinkFromGroup' : '/linkToGroup', { groupId: this.s.group.groupId, shadeId: sh.shadeId }, (err) => {
+            if (err) return ui.serviceError(err);
+            this.s.changed = true;
+            ui.toast(this.t(un ? 'GSETUP_L_TOAST_UNLINK' : 'GSETUP_L_TOAST_LINK', { name: sh.name }));
+            this.closeDone();
+        });
+    }
     pickLink(id) { this.w.pick = id; this.renderWiz(); }
     linkBack() { this.s.tasks = []; this.w.step = 0; this.renderWiz(); }
     linkNext() {
@@ -309,6 +363,7 @@ class GroupSetup {
     holdEnd(evt) {
         if (!isPrimaryPress(evt) || !this.holding) return;
         this.holding = false;
+        if (this.w && this.w.mode && pairMode.expert()) return this.xStatus(tr('PAIR_X_PROG_SENT'));
         this.sub('grpq');
     }
     groupProgOnce() {

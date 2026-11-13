@@ -14,6 +14,22 @@ const SETUP_MIN_MS = 500, SETUP_MAX_MS = 180000, SETUP_LISTEN_MS = 30000;
 // Temps de réaction retiré du clic « Il s'est arrêté » de l'apprentissage My.
 const SETUP_REACT_MS = 300;
 
+// Appairage d'un équipement et liaison d'un groupe : guidé (étapes) ou expert (les boutons seuls,
+// comme la v2). Le choix est retenu par navigateur et se change par le menu ⋮ du titre, dans les
+// deux sens : l'ancien mode expert, sans chemin de retour, enfermait l'utilisateur.
+const pairMode = {
+    expert() { try { return localStorage.getItem('pairMode') === 'expert'; } catch (e) { return false; } },
+    set(on) { try { localStorage.setItem('pairMode', on ? 'expert' : 'guided'); } catch (e) { /* stockage refusé : le choix vaut pour la page */ } },
+    menu(fn) {
+        const x = this.expert(), item = (on, k, d) => `<div class="dropdown-item pair-mode-item" role="menuitemradio" aria-checked="${on === x}" onclick="this.parentElement.classList.remove('show'); ${fn}(${on})">
+            <span class="pair-mode-check">${on === x ? '<svg><use href="#svg-check"></use></svg>' : ''}</span><span><b>${tr(k)}</b><small>${tr(d)}</small></span></div>`;
+        return `<div class="pair-mode-menu overlayHeader-dropdown-container" onclick="event.stopPropagation();">
+            <button type="button" class="pair-mode-btn" aria-label="${escAttr(tr('OPTION'))}" aria-haspopup="menu" onclick="somfy.toggleTileMenu(this);"><svg><use href="#svg-menuVertical"></use></svg></button>
+            <div class="overlayHeader-dropdown-menu" role="menu">${item(false, 'PAIR_MODE_GUIDED', 'PAIR_MODE_GUIDED_D')}${item(true, 'PAIR_MODE_EXPERT', 'PAIR_MODE_EXPERT_D')}</div></div>`;
+    },
+    badge() { return `<span class="pair-mode-badge">${tr('PAIR_MODE_EXPERT')}</span>`; }
+};
+
 // Bandeau d'étapes de la coque wiz-, partagé avec « Créer un groupe ». items : { title, desc,
 // state ('on', 'done', 'skipped' ou ''), phase (titre posé avant l'étape), pick (code onclick) }.
 // prev / next servent au mobile, qui n'affiche que la précédente, la courante et la suivante ;
@@ -849,7 +865,15 @@ class ShadeSetup {
         if (ico) this.$('.genmod-side-icon use').setAttribute('href', `#${ico}`);
         const side = { pair: ['PAIRING', 'SETUP_TW_PAIR_DESC'], unpair: ['UNPAIR_TITLE', 'SETUP_TW_UNPAIR_DESC'], remote: ['SUBTAB_REMOTES', 'DEVICE_REMOTES_TIP'], my: ['SETMYPOS_TITLE', 'SETUP_MY_DESC'] }[id];
         const n = (s.shade.linkedRemotes || []).length, max = somfy.maxLinkedRemotes || 15;
-        this.$('.genmod-side-title').textContent = side ? tr(side[0]) : this.title(T);
+        const title = this.$('.genmod-side-title'), pm = ['pair', 'unpair'].includes(id);
+        title.textContent = side ? tr(side[0]) : this.title(T);
+        title.parentElement.querySelector('.pair-mode-menu')?.remove();
+        this.$('.pair-mode-badge')?.remove();
+        if (pm) {
+            title.classList.add('pair-mode-title');
+            title.insertAdjacentHTML('afterend', pairMode.menu('shadeSetup.setPairMode'));
+            if (pairMode.expert()) this.$('#taskWinState').insertAdjacentHTML('afterend', pairMode.badge());
+        } else title.classList.remove('pair-mode-title');
         this.$('.genmod-side-desc').innerHTML = side ? tr(side[1]) : tr({ dir: 'SETUP_TW_DESC_DIR', cal: 'SETUP_TW_DESC_CAL', tilt: 'SETUP_TW_DESC_TILT', order: 'SETUP_TW_DESC_ORDER', opts: 'SETUP_TW_DESC_OPTS' }[id]);
         const stateVal = remote ? `${n}/${max}` : ['pair', 'unpair'].includes(id) ? tr(s.shade.paired ? 'SETUP_PILL_PAIRED' : 'DEVICE_NOT_PAIRED')
             : id === 'my' ? (s.shade.myPos >= 0 ? `${s.shade.myPos} %` : tr('CARD_MY_NONE')) : T.state === 'done' ? this.valueFor(s.shade, id) : tr('SETUP_S_TODO');
@@ -879,6 +903,10 @@ class ShadeSetup {
     }
     // Désappairer suit le même geste : mémoire ouverte avec une télécommande appairée, puis PROG.
     twPair(T, un) {
+        if (pairMode.expert()) return { head: tr('PAIR_MODE_EXPERT'), body: `<div class="pair-mode-col">
+            <button type="button" id="btnSetupProg" class="gen-btn">${tr('BT_PROG')}</button>
+            <button type="button" class="gen-btn gen-btn-primary" onclick="shadeSetup.${un ? 'unpairDone' : 'pairDone'}()">${tr('PAIR_X_JOGGED')}</button></div>
+            <p class="gen-tile-desc">${tr('PAIR_X_NOTE')}</p>` };
         const progT = tr(un ? 'SETUP_TW_H_UNPROG' : 'SETUP_TW_H_PROG');
         if (T.sub === 'view') return { head: tr('SETUP_TW_H_DONE'), body: `<p class="tw-ok"><svg><use href="#svg-check"></use></svg><span>${tr('SETUP_TW_PAIR_OK')}</span></p>
             <p class="gen-tile-desc">${tr('SETUP_TW_PAIR_OK_D')}</p>
@@ -894,6 +922,7 @@ class ShadeSetup {
         return { head: tr('SETUP_TW_H_OPEN'), hint: tr('SETUP_PAIR_2MIN'), body: `<div class="tw-steps">${this.twStep('', 1, tr('SETUP_TW_H_OPEN'), open)}${this.twStep('off', 2, progT, tr('SETUP_TW_S2_LATER'))}</div>`,
             primary: `<button type="button" class="gen-btn gen-btn-primary" onclick="shadeSetup.go('prog')">${tr('SETUP_PAIR_JOGGED')}</button>` };
     }
+    setPairMode(on) { pairMode.set(on); this.render(); }
     pairDone() {
         putJSON('/setPaired', { shadeId: this.shadeId, paired: true }, (err) => {
             if (err) return ui.serviceError(err);

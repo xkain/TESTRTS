@@ -3702,6 +3702,26 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .tw-rt-t b { font-size: var(--fs-3); }
 .tw-rt-t small { font-size: var(--fs-1); color: var(--text-3); }
 .tw-rt .linkedRemote-signal { margin-left: auto; }
+/* --- Mode expert de l'appairage et de la liaison d'un groupe (pairMode, 72-setup.js) : menu ⋮ sur la
+   ligne du titre, pastille, puis les boutons de la v2 en colonne. --- */
+.genmod-side-title.pair-mode-title { display: inline; vertical-align: middle; }
+.pair-mode-menu { flex: none; margin-left: 4px; vertical-align: middle; text-align: left; }
+.pair-mode-btn, .pair-mode-btn:hover { display: grid; place-items: center; width: 36px; height: 36px; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--text-3); }
+.pair-mode-btn:hover { background: var(--surface-2); color: var(--text); }
+.pair-mode-btn svg { width: 18px; height: 18px; fill: currentColor; }
+.pair-mode-menu .overlayHeader-dropdown-menu { width: 200px; min-width: 0; }
+.pair-mode-item { align-items: flex-start; }
+.pair-mode-item b { display: block; color: var(--text); }
+.pair-mode-item small { display: block; font-size: var(--fs-1); }
+.pair-mode-check { flex: none; width: 16px; height: 16px; }
+.pair-mode-badge { align-self: center; display: inline-flex; align-items: center; min-height: 24px; padding: 0 10px; border-radius: var(--r-pill); background: var(--warn-bg); color: var(--warn); font-size: var(--fs-1); font-weight: 700; }
+.wiz-side .pair-mode-badge { align-self: flex-start; }
+.wiz-window .wiz-steps[hidden], .wiz-window .wiz-pbar[hidden] { display: none; }
+.pair-mode-col { display: flex; flex-direction: column; gap: 10px; max-width: 360px; }
+.pair-mode-col .gen-btn { width: 100%; margin: 0; }
+.pair-mode-status { margin: 0; min-height: 1.4em; font-size: var(--fs-3); font-weight: 700; color: var(--ok); }
+@media (max-width: 767px) { .pair-mode-col { max-width: none; } }
+
 /* --- Fenêtres de planning : programmation (ScheduleOverlay, gabarit genmod-) et horaire posé dessus. --- */
 .sw-sec { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 4px; font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
 .sw-days { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
