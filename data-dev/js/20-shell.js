@@ -1046,17 +1046,18 @@ const mobileNav = {
             b.addEventListener('click', () => this.goTab(b.getAttribute('data-tab-root'))));
     },
     addMenu() {
-        const row = (icon, title, desc, act) => `<button type="button" class="settings-row" data-act="${act}"><span class="uniblocSvg-F"><svg><use href="#${icon}"></use></svg></span><span class="settings-row-text"><b>${tr(title)}</b>${desc ? `<span class="settings-row-desc">${tr(desc)}</span>` : ''}</span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></button>`;
+        // Mêmes tuiles que l'écran Réglages (.set-tile) : une grille, pas une liste.
+        const row = (icon, title, desc, act) => `<button type="button" class="set-tile" data-act="${act}"><span class="set-tile-icon"><svg><use href="#${icon}"></use></svg></span><b>${tr(title)}</b>${desc ? `<span class="set-tile-val">${tr(desc)}</span>` : ''}</button>`;
         const div = document.createElement('div');
         div.className = 'modal-overlay mobile-add-menu';
         div.innerHTML = `<div class="message-content">${modalHeader('BT_ADD', 'svg-add')}
-            <div class="settings-list">
+            <div class="set-grid add-grid">
                 ${row('svg-indicShutter', 'WELCOME_ADD_DEVICE_TITLE', 'LIST_ADD_DEVICE_DESC', 'shade')}
                 ${row('svg-group', 'BT_ADD_GROUP', 'LIST_ADD_GROUP_DESC', 'group')}
                 ${row('svg-navRoom', 'BT_ADD_ROOM', 'LIST_ADD_ROOM_DESC', 'room')}
             </div>
             <div class="settings-sec" tr="DASH_MANAGE"></div>
-            <div class="settings-list">
+            <div class="set-grid add-grid">
                 ${row('svg-indicShutter', 'SUBTAB_DEVICES', 'SETTINGS_DESC_MOTORS', 'divSomfyMotors')}
                 ${row('svg-group', 'SUBTAB_GROUPS', 'SETTINGS_DESC_GROUPS', 'divSomfyGroups')}
                 ${row('svg-navRoom', 'SUBTAB_ROOMS', 'SETTINGS_DESC_ROOMS', 'divSomfyRooms')}
@@ -1585,19 +1586,27 @@ function fillGenSecMini(sections) {
 
 // --- Onglets d'une page migrée (Général, Appareil, Connexion) -----------------------------
 // L'onglet précédent/suivant n'apparaît en pied de page que si l'onglet affiché dépasse de l'écran.
-// Mobile : seuls l'onglet courant et ses voisins s'écrivent, sur une barre segmentée qui reste
-// seule collée sous l'en-tête pendant le défilement (.is-min). Les onglets masqués, par
-// leur attribut ou par les options avancées, sortent de la barre.
+// Mobile : tous les onglets s'écrivent sur une ligne qui défile, au-dessus d'une barre segmentée
+// qui reste seule collée sous l'en-tête pendant le défilement (.is-min). Les onglets masqués,
+// par leur attribut ou par les options avancées, sortent de la barre.
 function genTabsVisible(strip) {
-    const adv = document.documentElement.hasAttribute('data-ui-advanced');
-    return [...strip.querySelectorAll('.gen-tab')].filter(t => !t.hidden && (adv || !t.classList.contains('adv-only')));
+    // Affichage réel : un onglet peut sortir par son attribut, une classe (type de connexion)
+    // ou les options avancées (.adv-only).
+    return [...strip.querySelectorAll('.gen-tab')].filter(t => !t.hidden && getComputedStyle(t).display !== 'none');
 }
 function genTabsSync(strip) {
     if (!strip) return;
+    let names = strip.querySelector('.gen-tabs-names');
+    if (!names) {
+        names = document.createElement('div');
+        names.className = 'gen-tabs-names';
+        strip.querySelectorAll(':scope > .gen-tab').forEach(t => names.appendChild(t));
+        strip.prepend(names);
+    }
     const tabs = genTabsVisible(strip), cur = tabs.findIndex(t => t.classList.contains('selected'));
-    strip.querySelectorAll('.gen-tab').forEach(t => t.classList.remove('gen-tab-prev', 'gen-tab-next'));
-    tabs[cur - 1]?.classList.add('gen-tab-prev');
-    tabs[cur + 1]?.classList.add('gen-tab-next');
+    const sel = tabs[cur], over = names.scrollWidth > names.clientWidth + 1;
+    names.classList.toggle('is-overflow', over);
+    if (sel && over) names.scrollLeft = sel.offsetLeft - names.offsetLeft - (names.clientWidth - sel.offsetWidth) / 2;
     let bar = strip.querySelector('.gen-tabs-bar');
     if (!bar) {
         bar = document.createElement('span');
@@ -1630,6 +1639,7 @@ function bindGenTabs(page, ids) {
     const update = () => {
         if (!panels.offsetParent) return;
         sections();
+        genTabsSync(strip);
         const list = tabs(), pos = list.findIndex(t => parseInt(t.dataset.tab, 10) === current);
         [[ids.prev, pos - 1], [ids.next, pos + 1]].forEach(([id, n]) => {
             const btn = get(id);

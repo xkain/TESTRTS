@@ -4452,13 +4452,32 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 /* =======================================================================
  *  MENU « + » DE LA MAISON (mobileNav.addMenu, 20-shell.js)
  *  ======================================================================= */
-.mobile-add-menu .settings-row {
-    width: 100%;
-    margin: 0;
-    text-transform: none;
-    letter-spacing: normal;
+.mobile-add-menu .message-content {
+    background: var(--panel);
+    color: var(--text);
     text-align: left;
-    font-weight: 400;
+}
+.mobile-add-menu .add-grid,
+.mobile-add-menu .settings-sec {
+    margin-left: 16px;
+    margin-right: 16px;
+}
+.mobile-add-menu .add-grid:last-child {
+    margin-bottom: 16px;
+}
+.mobile-add-menu .set-tile {
+    align-items: flex-start;
+    text-align: left;
+}
+.mobile-add-menu .set-tile b {
+    font-size: 14px;
+}
+.mobile-add-menu .set-tile-val {
+    white-space: normal;
+}
+/* Trois tuiles par groupe : la dernière prend la ligne (deux colonnes, cf. tuile-largeur-max). */
+.mobile-add-menu .set-tile:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
 }
 .sheet-tiles {
     display: grid;

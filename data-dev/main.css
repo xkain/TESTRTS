@@ -1981,6 +1981,13 @@ body.is-home-welcome .container {
 .gen-tabs::-webkit-scrollbar {
     display: none;
 }
+/* Conteneur des noms et barre segmentée (genTabsSync) : sans effet sur PC, cf. bloc mobile. */
+.gen-tabs-names {
+    display: contents;
+}
+.gen-tabs-bar {
+    display: none;
+}
 .gen-tab {
     flex: none;
     width: auto;
@@ -2503,17 +2510,18 @@ label.gen-row {
         gap: 0;
         padding: 0 16px 140px;
     }
-    /* Un onglet à la fois, comme sur PC : empilées, les sections faisaient 4 à 5 écrans. Seuls
-       l'onglet courant et ses voisins s'écrivent ; la barre segmentée (genTabsSync) dit où l'on
-       est. Collée sous l'en-tête (.is-min), la bande se réduit à cette barre, bord à bord. */
+    /* Un onglet à la fois, comme sur PC : empilées, les sections faisaient 4 à 5 écrans. Tous
+       les onglets s'écrivent sur une ligne qui défile, le courant ramené dans la vue ; la barre
+       segmentée dessous dit où l'on est. Collée sous l'en-tête (.is-min), la bande se réduit à
+       cette barre, bord à bord. */
     .gen-tabs {
         position: sticky;
         top: var(--gen-stick-top, var(--mobile-header-height));
         z-index: 3;
         align-self: stretch;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0 16px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
         max-width: none;
         margin: 0 -16px 8px;
         padding: 6px 16px 8px;
@@ -2522,48 +2530,41 @@ label.gen-row {
         overflow: hidden;
         transition: padding .22s ease;
     }
-    .gen-tab {
+    .gen-tabs-names {
+        display: flex;
+        gap: 20px;
+        max-height: 34px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        transition: max-height .22s ease, opacity .16s ease;
+    }
+    .gen-tabs-names::-webkit-scrollbar {
         display: none;
+    }
+    .gen-tabs-names.is-overflow {
+        -webkit-mask-image: linear-gradient(to right, #000 82%, transparent);
+        mask-image: linear-gradient(to right, #000 82%, transparent);
+    }
+    .gen-tab {
         flex: none;
         min-height: 0;
-        max-height: 28px;
-        padding: 4px 0;
+        padding: 6px 0;
         border-radius: 0;
         background: none;
         color: var(--text-3);
         font-size: var(--fs-4);
         font-weight: 700;
-        transition: max-height .22s ease, opacity .16s ease, padding .22s ease;
     }
     .gen-tab:hover {
         background: none;
-    }
-    .gen-tab.selected,
-    .gen-tab-prev,
-    .gen-tab-next {
-        display: block;
     }
     .gen-tab.selected {
         background: none;
         color: var(--text);
     }
-    .gen-tab-prev {
-        max-width: 28%;
-        overflow: hidden;
-        -webkit-mask-image: linear-gradient(to left, #000 20%, transparent 95%);
-        mask-image: linear-gradient(to left, #000 20%, transparent 95%);
-    }
-    .gen-tab-next {
-        flex: 1 1 0;
-        min-width: 0;
-        overflow: hidden;
-        text-align: left;
-        -webkit-mask-image: linear-gradient(to right, #000 20%, transparent 95%);
-        mask-image: linear-gradient(to right, #000 20%, transparent 95%);
-    }
     .gen-tabs-bar {
         display: flex;
-        flex: 0 0 100%;
+        flex: none;
         gap: 3px;
         margin-top: 4px;
         transition: gap .22s ease, margin .22s ease;
@@ -2572,7 +2573,7 @@ label.gen-row {
         flex: 1;
         height: 4px;
         border-radius: 2px;
-        background: var(--sunken);
+        background: color-mix(in srgb, var(--text-3) 30%, transparent);
         transition: height .22s ease, border-radius .22s ease;
     }
     .gen-tabs-bar i.on {
@@ -2581,9 +2582,8 @@ label.gen-row {
     .gen-tabs.is-min {
         padding: 0;
     }
-    .gen-tabs.is-min .gen-tab {
+    .gen-tabs.is-min .gen-tabs-names {
         max-height: 0;
-        padding: 0;
         opacity: 0;
     }
     .gen-tabs.is-min .gen-tabs-bar {
@@ -5347,8 +5347,7 @@ body.fw-update .set-fw-new {
 .mobile-title,
 .mobile-nav,
 .net-banner,
-.gen-hero-help,
-.gen-tabs-bar {
+.gen-hero-help {
     display: none;
 }
 @media (max-width: 767px) {
