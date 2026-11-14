@@ -54,7 +54,7 @@ class GroupSetup {
         const linked = links.filter(T => T.state === 'done').length;
         const n = c.members.length;
         const steps = [
-            ['GSETUP_W_STEP_NAME', name || tr('GSETUP_W_TO_CHOOSE')],
+            ['NAME_AND_ROOM', name || tr('GSETUP_W_TO_CHOOSE')],
             ['GSETUP_W_STEP_DEVICES', tr('GSETUP_W_CHOSEN').replace('{N}', n)],
             ['GSETUP_W_STEP_LINK', tr('GSETUP_W_LINKED').replace('{N}', linked).replace('{T}', n)],
             ['GSETUP_W_STEP_OPTS', tr('GSETUP_W_OPTS_DESC')]

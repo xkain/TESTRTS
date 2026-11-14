@@ -42,7 +42,7 @@
 
 "INDEX_SETTINGS_PANEL": "SETTINGS PANEL",
     "SETTINGS_TITLE": "Réglages",
-    "SETTINGS_DESC_MOTORS": "Volets, stores et portes",
+    "SETTINGS_DESC_MOTORS": "Stores, rideaux, portes et portails",
     "SETTINGS_DESC_GROUPS": "Plusieurs à la fois",
     "SETTINGS_DESC_ROOMS": "Ranger par zone",
     "SETTINGS_DESC_SCHEDULES": "Horaires et soleil",
@@ -681,7 +681,6 @@
 
 "INDEX_OVERLAY_SETUP_GROUP": "OVERLAY SETUP GROUP",
     "GSETUP_TITLE": "Créer un groupe",
-    "GSETUP_W_STEP_NAME": "Nom et pièce",
     "GSETUP_W_STEP_DEVICES": "Équipements",
     "GSETUP_W_STEP_LINK": "Appairage",
     "GSETUP_W_STEP_OPTS": "Options",
@@ -1620,6 +1619,7 @@
     "MSG_WARNING": "AVERTISEMENT !",
     "MSG_ALERT": "ATTENTION !",
     "ROOM": "Pièce",
+    "NAME_AND_ROOM": "Nom et pièce",
     "COMMUNICATION": "Communication",
     "ACTIVITY": "Activité",
     "PAIRING": "Appairage",

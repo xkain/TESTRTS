@@ -42,7 +42,7 @@
 
 "INDEX_SETTINGS_PANEL": "SETTINGS PANEL",
     "SETTINGS_TITLE": "Ajustes",
-    "SETTINGS_DESC_MOTORS": "Persianas, toldos y puertas",
+    "SETTINGS_DESC_MOTORS": "Toldos, cortinas, puertas y portones",
     "SETTINGS_DESC_GROUPS": "Varios a la vez",
     "SETTINGS_DESC_ROOMS": "Ordenar por zona",
     "SETTINGS_DESC_SCHEDULES": "Horarios y sol",
@@ -681,7 +681,6 @@
 
 "INDEX_OVERLAY_SETUP_GROUP": "OVERLAY SETUP GROUP",
     "GSETUP_TITLE": "Crear un grupo",
-    "GSETUP_W_STEP_NAME": "Nombre y habitación",
     "GSETUP_W_STEP_DEVICES": "Dispositivos",
     "GSETUP_W_STEP_LINK": "Emparejamiento",
     "GSETUP_W_STEP_OPTS": "Opciones",
@@ -1620,6 +1619,7 @@
     "MSG_WARNING": "¡ADVERTENCIA!",
     "MSG_ALERT": "¡ALERTA!",
     "ROOM": "Habitación",
+    "NAME_AND_ROOM": "Nombre y habitación",
     "COMMUNICATION": "Comunicación",
     "ACTIVITY": "Actividad",
     "PAIRING": "Emparejamiento",

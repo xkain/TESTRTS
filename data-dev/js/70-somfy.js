@@ -4360,7 +4360,7 @@ class Somfy {
         const rows = [];
         if (this.shadeTypeSupportsMy(this.shadeTypeOf(shade))) rows.push({ icon: 'svg-favori', label: 'SETMYPOS_TITLE', val: escHtml(this.myBadgeText(shade).replace(/^ · My /, '')), go: 'somfy.cardSheetTab(1);' });
         rows.push({ icon: 'svg-remote', label: 'SUBTAB_REMOTES', val: String((shade.linkedRemotes || []).length || ''), go: edit(1) });
-        rows.push({ icon: 'svg-edit', label: 'GSETUP_W_STEP_NAME', go: edit(0) });
+        rows.push({ icon: 'svg-edit', label: 'NAME_AND_ROOM', go: edit(0) });
         rows.push({ icon: 'svg-tabSettings', label: 'SUBTAB_SETTINGS', go: edit(2) });
         rows.push({ icon: 'svg-eyeOn', label: 'OPTION', go: `somfy.cardSheetTab(${rows[0].label === 'SETMYPOS_TITLE' ? 2 : 1});` });
         return this.cardSheetRowsHtml(rows);
@@ -4369,7 +4369,7 @@ class Somfy {
         const id = group.groupId, edit = (t) => `somfy.closeCardSheet(); somfy.openCardEditor('group', ${id}, ${t});`;
         return this.cardSheetRowsHtml([
             { icon: 'svg-list', label: 'SUBTAB_DEVICES', val: String((group.linkedShades || []).length), go: 'somfy.cardSheetTab(1);' },
-            { icon: 'svg-edit', label: 'GSETUP_W_STEP_NAME', go: edit(0) },
+            { icon: 'svg-edit', label: 'NAME_AND_ROOM', go: edit(0) },
             { icon: 'svg-eyeOn', label: 'OPTION', go: 'somfy.cardSheetTab(2);' },
         ]);
     }

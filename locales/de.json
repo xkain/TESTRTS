@@ -42,7 +42,7 @@
 
 "INDEX_SETTINGS_PANEL": "SETTINGS PANEL",
     "SETTINGS_TITLE": "Einstellungen",
-    "SETTINGS_DESC_MOTORS": "Rollläden, Markisen und Tore",
+    "SETTINGS_DESC_MOTORS": "Jalousien, Vorhänge, Türen und Tore",
     "SETTINGS_DESC_GROUPS": "Mehrere gleichzeitig",
     "SETTINGS_DESC_ROOMS": "Nach Bereich ordnen",
     "SETTINGS_DESC_SCHEDULES": "Zeiten und Sonne",
@@ -681,7 +681,6 @@
 
 "INDEX_OVERLAY_SETUP_GROUP": "OVERLAY SETUP GROUP",
     "GSETUP_TITLE": "Gruppe erstellen",
-    "GSETUP_W_STEP_NAME": "Name und Raum",
     "GSETUP_W_STEP_DEVICES": "Geräte",
     "GSETUP_W_STEP_LINK": "Anlernen",
     "GSETUP_W_STEP_OPTS": "Optionen",
@@ -1620,6 +1619,7 @@
     "MSG_WARNING": "WARNUNG !",
     "MSG_ALERT": "ALARM !",
     "ROOM": "Raum",
+    "NAME_AND_ROOM": "Name und Raum",
     "COMMUNICATION": "Kommunikation",
     "ACTIVITY": "Aktivität",
     "PAIRING": "Kopplung",

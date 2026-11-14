@@ -42,7 +42,7 @@
 
 "INDEX_SETTINGS_PANEL": "SETTINGS PANEL",
     "SETTINGS_TITLE": "Settings",
-    "SETTINGS_DESC_MOTORS": "Shades, blinds and doors",
+    "SETTINGS_DESC_MOTORS": "Blinds, curtains, doors and gates",
     "SETTINGS_DESC_GROUPS": "Several at once",
     "SETTINGS_DESC_ROOMS": "Sort by area",
     "SETTINGS_DESC_SCHEDULES": "Times and sun",
@@ -681,7 +681,6 @@
 
 "INDEX_OVERLAY_SETUP_GROUP": "OVERLAY SETUP GROUP",
     "GSETUP_TITLE": "Create a group",
-    "GSETUP_W_STEP_NAME": "Name and room",
     "GSETUP_W_STEP_DEVICES": "Devices",
     "GSETUP_W_STEP_LINK": "Pairing",
     "GSETUP_W_STEP_OPTS": "Options",
@@ -1620,6 +1619,7 @@
     "MSG_WARNING": "WARNING !",
     "MSG_ALERT": "ALERT !",
     "ROOM": "Room",
+    "NAME_AND_ROOM": "Name and room",
     "COMMUNICATION": "Communication",
     "ACTIVITY": "Activity",
     "PAIRING": "Pairing",
