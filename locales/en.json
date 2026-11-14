@@ -42,9 +42,6 @@
 
 "INDEX_SETTINGS_PANEL": "SETTINGS PANEL",
     "SETTINGS_TITLE": "Settings",
-    "SETTINGS_DESC_MOTORS": "Blinds, curtains, doors and gates",
-    "SETTINGS_DESC_GROUPS": "Several at once",
-    "SETTINGS_DESC_ROOMS": "Sort by area",
     "SETTINGS_DESC_TRANSCEIVER": "Module, pins, frequency",
     "SETTINGS_DESC_LISTENERS": "Captured remotes",
     "SETTINGS_DESC_REPEATER": "Relay frames",
@@ -140,7 +137,8 @@
 
 "INDEX_PAGE_DASHBOARD": "PAGE DASHBOARD",
     "DASH_HOUSE_TITLE": "Home",
-    "DASH_MANAGE": "Manage",
+    "DASH_ADD_MENU_TITLE": "Create and manage",
+    "DASH_ADD_MENU_DESC": "Tap a tile to open the list, “+” to add one.",
     "DASH_ALL_ROOMS": "All rooms",
     "DASH_SHOW_ALL": "Show everything",
     "DASH_HOUSE_ALL": "Whole house",

@@ -42,9 +42,6 @@
 
 "INDEX_SETTINGS_PANEL": "SETTINGS PANEL",
     "SETTINGS_TITLE": "Ajustes",
-    "SETTINGS_DESC_MOTORS": "Toldos, cortinas, puertas y portones",
-    "SETTINGS_DESC_GROUPS": "Varios a la vez",
-    "SETTINGS_DESC_ROOMS": "Ordenar por zona",
     "SETTINGS_DESC_TRANSCEIVER": "Módulo, pines, frecuencia",
     "SETTINGS_DESC_LISTENERS": "Mandos capturados",
     "SETTINGS_DESC_REPEATER": "Retransmitir tramas",
@@ -140,7 +137,8 @@
 
 "INDEX_PAGE_DASHBOARD": "PAGE DASHBOARD",
     "DASH_HOUSE_TITLE": "Casa",
-    "DASH_MANAGE": "Gestionar",
+    "DASH_ADD_MENU_TITLE": "Crear y gestionar",
+    "DASH_ADD_MENU_DESC": "Pulse un mosaico para abrir la lista, «+» para añadir.",
     "DASH_ALL_ROOMS": "Todas las estancias",
     "DASH_SHOW_ALL": "Mostrar todo",
     "DASH_HOUSE_ALL": "Toda la casa",

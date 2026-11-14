@@ -42,9 +42,6 @@
 
 "INDEX_SETTINGS_PANEL": "SETTINGS PANEL",
     "SETTINGS_TITLE": "Einstellungen",
-    "SETTINGS_DESC_MOTORS": "Jalousien, Vorhänge, Türen und Tore",
-    "SETTINGS_DESC_GROUPS": "Mehrere gleichzeitig",
-    "SETTINGS_DESC_ROOMS": "Nach Bereich ordnen",
     "SETTINGS_DESC_TRANSCEIVER": "Modul, Pins, Frequenz",
     "SETTINGS_DESC_LISTENERS": "Erfasste Fernbedienungen",
     "SETTINGS_DESC_REPEATER": "Rahmen weiterleiten",
@@ -140,7 +137,8 @@
 
 "INDEX_PAGE_DASHBOARD": "PAGE DASHBOARD",
     "DASH_HOUSE_TITLE": "Zuhause",
-    "DASH_MANAGE": "Verwalten",
+    "DASH_ADD_MENU_TITLE": "Erstellen und verwalten",
+    "DASH_ADD_MENU_DESC": "Tippen Sie auf eine Kachel, um die Liste zu öffnen, auf „+“, um etwas hinzuzufügen.",
     "DASH_ALL_ROOMS": "Alle Räume",
     "DASH_SHOW_ALL": "Alles anzeigen",
     "DASH_HOUSE_ALL": "Ganzes Haus",

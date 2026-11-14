@@ -977,10 +977,10 @@ function _updateBreadcrumb(topId, leafId, detailLabel = null) {
     _setBreadcrumbLink(parentEl, parentId && parentId !== 'settings' ? parentId : (!parentId && inEditor ? leafId : null));
     _setBreadcrumbLink(activeEl, (inEditor && activeEl.textContent) ? leafId : null);
 }
-// Navigation mobile : trois onglets (Maison, Plannings, Réglages), un titre et un retour.
+// Navigation mobile : deux onglets (Maison, Réglages), un titre et un retour.
 // La pile ne retient que les pas faits DANS l'appli ; vide (lien direct, F5), le retour remonte
 // au parent logique au lieu de quitter la page par history.back().
-const MOBILE_HOME_LEAVES = new Set(['divSomfyMotors', 'divSomfyGroups', 'divSomfyRooms']);
+const MOBILE_HOME_LEAVES = new Set(['divSomfyMotors', 'divSomfyGroups', 'divSomfyRooms', 'divSomfySchedules']);
 const mobileNav = {
     stack: [],
     pushing: false,
@@ -988,7 +988,6 @@ const mobileNav = {
     state: { topId: 'divHomePnl', leafId: 'divHomePnl', editor: false },
     tabOf(topId, leafId) {
         if (topId === 'divHomePnl' || MOBILE_HOME_LEAVES.has(leafId)) return 'divHomePnl';
-        if (leafId === 'divSomfySchedules') return 'divSomfySchedules';
         return 'divSettingsPnl';
     },
     // Appelé avant chaque location.hash posé par l'appli : mémorise d'où l'on part.
@@ -1004,7 +1003,7 @@ const mobileNav = {
     isRoot() {
         const { topId, leafId, editor } = this.state;
         if (editor) return false;
-        return topId === 'divHomePnl' || leafId === 'divSettingsPnl' || leafId === 'divSomfySchedules';
+        return topId === 'divHomePnl' || leafId === 'divSettingsPnl';
     },
     back() {
         confirmDiscardChanges(() => {
@@ -1035,7 +1034,7 @@ const mobileNav = {
         if (title) {
             const leafLabel = document.querySelector(`.subtab-container > span[data-grpid="${leafId}"]`)?.textContent.trim()
                 || document.querySelector(`.set-tile[data-grpid="${leafId}"] b`)?.textContent.trim() || '';
-            const ROOT_TITLES = { divHomePnl: 'DASH_HOUSE_TITLE', divSomfySchedules: 'SUBTAB_SCHEDULES', divSettingsPnl: 'SETTINGS_TITLE' };
+            const ROOT_TITLES = { divHomePnl: 'DASH_HOUSE_TITLE', divSettingsPnl: 'SETTINGS_TITLE' };
             title.textContent = root ? tr(ROOT_TITLES[this.tab]) : (detailLabel || leafLabel);
             // La marque vit dans l'onglet du navigateur, plus dans l'en-tête.
             document.title = (title.textContent ? title.textContent + ' · ' : '') + 'ESPSomfy-RTS';
@@ -1046,31 +1045,30 @@ const mobileNav = {
             b.addEventListener('click', () => this.goTab(b.getAttribute('data-tab-root'))));
     },
     addMenu() {
-        // Mêmes tuiles que l'écran Réglages (.set-tile) : une grille, pas une liste.
-        const row = (icon, title, desc, act) => `<button type="button" class="set-tile" data-act="${act}"><span class="set-tile-icon"><svg><use href="#${icon}"></use></svg></span><b>${tr(title)}</b>${desc ? `<span class="set-tile-val">${tr(desc)}</span>` : ''}</button>`;
+        // La tuile ouvre la liste, le rond « + » ajoute : deux boutons frères, pas imbriqués.
+        const KINDS = [
+            ['shade', 'svg-indicShutter', 'SUBTAB_DEVICES', 'BT_ADD_DEVICE', 'divSomfyMotors'],
+            ['group', 'svg-group', 'SUBTAB_GROUPS', 'BT_ADD_GROUP', 'divSomfyGroups'],
+            ['room', 'svg-navRoom', 'SUBTAB_ROOMS', 'BT_ADD_ROOM', 'divSomfyRooms'],
+            ['schedule', 'svg-navSchedule', 'SUBTAB_SCHEDULES', 'SCHEDULE_ADD', 'divSomfySchedules'],
+        ];
+        const tile = ([kind, icon, title, addKey, page]) => {
+            const n = somfy._cfgItems(kind).length, max = somfy._cfgConf(kind).max;
+            const cap = max ? `${n} ${tr('LIST_CAP_OF').replace('{MAX}', max)}` : `${n}`;
+            return `<div class="add-tile add-tile-${kind}"><button type="button" class="set-tile" data-page="${page}"><span class="set-tile-icon"><svg><use href="#${icon}"></use></svg></span><b>${tr(title)}<svg><use href="#svg-arrowRight"></use></svg></b><span class="set-tile-val">${cap}</span></button>`
+                + `<button type="button" class="add-tile-plus" data-add="${kind}" aria-label="${tr(addKey)}" title="${tr(addKey)}"${max && n >= max ? ' disabled' : ''}><svg><use href="#svg-add"></use></svg></button></div>`;
+        };
         const div = document.createElement('div');
         div.className = 'modal-overlay mobile-add-menu';
-        div.innerHTML = `<div class="message-content">${modalHeader('BT_ADD', 'svg-add')}
-            <div class="set-grid add-grid">
-                ${row('svg-indicShutter', 'WELCOME_ADD_DEVICE_TITLE', 'LIST_ADD_DEVICE_DESC', 'shade')}
-                ${row('svg-group', 'BT_ADD_GROUP', 'LIST_ADD_GROUP_DESC', 'group')}
-                ${row('svg-navRoom', 'BT_ADD_ROOM', 'LIST_ADD_ROOM_DESC', 'room')}
-            </div>
-            <div class="settings-sec" tr="DASH_MANAGE"></div>
-            <div class="set-grid add-grid">
-                ${row('svg-indicShutter', 'SUBTAB_DEVICES', 'SETTINGS_DESC_MOTORS', 'divSomfyMotors')}
-                ${row('svg-group', 'SUBTAB_GROUPS', 'SETTINGS_DESC_GROUPS', 'divSomfyGroups')}
-                ${row('svg-navRoom', 'SUBTAB_ROOMS', 'SETTINGS_DESC_ROOMS', 'divSomfyRooms')}
-            </div></div>`;
+        div.innerHTML = `<div class="message-content">${modalHeader('DASH_ADD_MENU_TITLE', 'svg-add', { subtitle: 'DASH_ADD_MENU_DESC' })}
+            <div class="set-grid add-grid">${KINDS.map(tile).join('')}</div></div>`;
         div.addEventListener('click', (e) => {
-            const b = e.target.closest('[data-act]');
-            if (!b) return;
-            const act = b.getAttribute('data-act');
+            const add = e.target.closest('[data-add]');
+            const page = e.target.closest('[data-page]');
+            if (!add && !page) return;
             requestCloseOverlay(div);
-            if (act === 'shade') shadeSetup.open();
-            else if (act === 'group') groupSetup.open();
-            else if (act === 'room') somfy.openEditRoom();
-            else activateGrpid(act);
+            if (page) return activateGrpid(page.getAttribute('data-page'));
+            ({ shade: () => shadeSetup.open(), group: () => groupSetup.open(), room: () => somfy.openEditRoom(), schedule: () => somfy.openEditScheduleGroup() })[add.getAttribute('data-add')]();
         });
         shOverlay(div);
     },

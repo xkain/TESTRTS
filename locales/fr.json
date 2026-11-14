@@ -42,9 +42,6 @@
 
 "INDEX_SETTINGS_PANEL": "SETTINGS PANEL",
     "SETTINGS_TITLE": "Réglages",
-    "SETTINGS_DESC_MOTORS": "Stores, rideaux, portes et portails",
-    "SETTINGS_DESC_GROUPS": "Plusieurs à la fois",
-    "SETTINGS_DESC_ROOMS": "Ranger par zone",
     "SETTINGS_DESC_TRANSCEIVER": "Module, broches, fréquence",
     "SETTINGS_DESC_LISTENERS": "Télécommandes captées",
     "SETTINGS_DESC_REPEATER": "Relayer les trames",
@@ -140,7 +137,8 @@
 
 "INDEX_PAGE_DASHBOARD": "PAGE DASHBOARD",
     "DASH_HOUSE_TITLE": "Maison",
-    "DASH_MANAGE": "Gérer",
+    "DASH_ADD_MENU_TITLE": "Créer et gérer",
+    "DASH_ADD_MENU_DESC": "Touchez une tuile pour ouvrir la liste, « + » pour en ajouter.",
     "DASH_ALL_ROOMS": "Toutes les pièces",
     "DASH_SHOW_ALL": "Tout afficher",
     "DASH_HOUSE_ALL": "Toute la maison",

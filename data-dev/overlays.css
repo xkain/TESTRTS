@@ -4457,27 +4457,61 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     color: var(--text);
     text-align: left;
 }
-.mobile-add-menu .add-grid,
-.mobile-add-menu .settings-sec {
-    margin-left: 16px;
-    margin-right: 16px;
+.mobile-add-menu .add-grid {
+    margin: 0 16px 16px;
 }
-.mobile-add-menu .add-grid:last-child {
-    margin-bottom: 16px;
+.add-tile {
+    position: relative;
+    display: flex;
+    min-width: 0;
 }
-.mobile-add-menu .set-tile {
+/* Équipements et Plannings prennent la ligne ; Groupes et Pièces se la partagent. */
+.add-tile-shade,
+.add-tile-schedule {
+    grid-column: 1 / -1;
+}
+.add-tile .set-tile {
+    flex: 1;
     align-items: flex-start;
     text-align: left;
 }
-.mobile-add-menu .set-tile b {
+.add-tile .set-tile b {
+    display: flex;
+    align-items: center;
+    gap: 2px;
     font-size: 14px;
 }
-.mobile-add-menu .set-tile-val {
-    white-space: normal;
+.add-tile .set-tile b svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    fill: var(--text-3);
 }
-/* Trois tuiles par groupe : la dernière prend la ligne (deux colonnes, cf. tuile-largeur-max). */
-.mobile-add-menu .set-tile:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
+.add-tile-plus {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-fill-text);
+    cursor: pointer;
+}
+.add-tile-plus svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+.add-tile-plus:disabled {
+    background: var(--surface-2);
+    color: var(--text-3);
+    cursor: default;
 }
 .sheet-tiles {
     display: grid;
