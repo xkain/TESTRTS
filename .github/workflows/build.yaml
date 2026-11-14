@@ -126,6 +126,18 @@ jobs:
       - name: Rename filesystem to Standard Name
         run: cp .pio/build/esp32/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
 
+      - name: Build per-language filesystem images (4 MB)
+        if: github.event_name == 'release'
+        run: |
+          mkdir -p fs_langs
+          for code in $(python3 -c "import json; print(' '.join(sorted(json.load(open('locales/manifest.json'))['langs'])))"); do
+            [ "$code" = "en" ] && continue
+            ESPSOMFY_EXTRA_LANG="$code" pio run -e esp32 -t buildfs
+            cp .pio/build/esp32/littlefs.bin "ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_4mb.bin"
+            zip -j "fs_langs/ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_4mb.zip" \
+              "ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_4mb.bin"
+          done
+
       # Filesystem dédié aux boîtiers BOX (langue "fr" embarquée, cf. commentaire ci-dessus), fusionné
       # dans les images factory des deux BOX (cf. matrix.fsname). BOX-wifi et BOX-eth partagent le
       # même (build_data_image.py::_embedded_lang_for_env donne "fr" pour les deux). Sans lui, un BOX
@@ -167,6 +179,46 @@ jobs:
 
       - name: Rename filesystem to C6 Name
         run: cp .pio/build/esp32c6/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
+
+      - name: Build per-language filesystem images (C6)
+        if: github.event_name == 'release'
+        run: |
+          mkdir -p fs_langs
+          for code in $(python3 -c "import json; print(' '.join(sorted(json.load(open('locales/manifest.json'))['langs'])))"); do
+            [ "$code" = "en" ] && continue
+            ESPSOMFY_EXTRA_LANG="$code" pio run -e esp32c6 -t buildfs
+            cp .pio/build/esp32c6/littlefs.bin "ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_c6.bin"
+            zip -j "fs_langs/ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_c6.zip" \
+              "ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_c6.bin"
+          done
+
+      - name: Write language filesystem descriptor
+        if: github.event_name == 'release'
+        run: |
+          python3 - "${{ steps.safe_ref.outputs.name }}" <<'EOF'
+          import csv, json, sys
+          tag = sys.argv[1]
+          def spiffs_offset(path):
+              for row in csv.reader(open(path)):
+                  if row and row[0].strip() == "spiffs":
+                      return row[3].strip()
+          cat = json.load(open("locales/manifest.json"))["langs"]
+          langs = sorted(c for c in cat if c != "en")
+          desc = {
+              "offsets": {"4mb": spiffs_offset("partitions_common_4mb.csv"),
+                          "c6": spiffs_offset("partitions_custom_c6_8mb.csv")},
+              "natives": {c: cat[c].get("native", c) for c in langs},
+              "langs": {c: {v: f"ESPSomfyRTS_{tag}_fs_{c}_{v}.zip" for v in ("4mb", "c6")} for c in langs},
+          }
+          with open(f"fs_langs/ESPSomfyRTS_{tag}_fs_langs.json", "w") as f:
+              json.dump(desc, f, indent=1)
+          EOF
+
+      - name: Upload language filesystem images to Release
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.ref_name }}" fs_langs/* --clobber
 
       # ATTENTION si un filesystem doit un jour être retiré de la liste ci-dessous : `path:` est une
       # chaîne multi-ligne, pas du YAML. Un "#" n'y commente rien et serait transmis tel quel comme

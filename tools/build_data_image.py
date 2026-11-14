@@ -550,21 +550,28 @@ def process_file(src_path: str, dst_path: str, build_version: str):
     shutil.copy2(src_path, dst_path)
     return "copy", original_size, original_size
 
-def _embed_default_language(dst_dir, build_version):
-    """Copie (minifiée + gzippée) la seule langue embarquée par défaut pour cet environnement de
-    build, depuis locales/<code>.json vers data/locale/<code>.json.gz -- même format que les
-    autres fichiers de langue, lu tel quel par handleLang() (Content-Encoding: gzip)."""
-    lang = _embedded_lang_for_env()
+def _embed_language(dst_dir, build_version, lang, label):
     src_path = os.path.join(_locales_dir(), f"{lang}.json")
     if not os.path.isfile(src_path):
-        print(f"[data-image] ATTENTION : langue par défaut '{lang}' introuvable dans {LOCALES_DIR_NAME}/ ({src_path})")
+        print(f"[data-image] ATTENTION : langue '{lang}' introuvable dans {LOCALES_DIR_NAME}/ ({src_path})")
         return
     rel_path = os.path.join("locale", f"{lang}.json")
     dst_path = os.path.join(dst_dir, rel_path)
     action, old_sz, new_sz = process_file(src_path, dst_path, build_version)
     saved = old_sz - new_sz
     pct = (saved / old_sz * 100) if old_sz > 0 else 0
-    print(f"  {rel_path:<30} {old_sz:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [{action}] (embarquée d'usine)")
+    print(f"  {rel_path:<30} {old_sz:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [{action}] ({label})")
+
+def _embed_default_language(dst_dir, build_version):
+    """Copie (minifiée + gzippée) la langue embarquée par défaut pour cet environnement de build,
+    depuis locales/<code>.json vers data/locale/<code>.json.gz -- même format que les autres
+    fichiers de langue, lu tel quel par handleLang() (Content-Encoding: gzip).
+    ESPSOMFY_EXTRA_LANG=<code> ajoute un second pack à côté (images de système de fichiers par
+    langue, cf. build.yaml et l'épreuve sur banc) ; absente, rien ne change."""
+    _embed_language(dst_dir, build_version, _embedded_lang_for_env(), "embarquée d'usine")
+    extra = os.environ.get("ESPSOMFY_EXTRA_LANG", "").strip().lower()
+    if extra and extra != _embedded_lang_for_env():
+        _embed_language(dst_dir, build_version, extra, "ESPSOMFY_EXTRA_LANG")
 
 def _embed_manifest(dst_dir):
     """Copie locales/manifest.json -- minifié mais SANS gzip, contrairement aux fichiers de
