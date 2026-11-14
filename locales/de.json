@@ -15,12 +15,8 @@
     "RADIO_ACTIVITY_TOOLTIP": "Funk-/Bewegungsaktivität",
 
 "INDEX_TAB": "TAB",
-    "TAB_DASHBOARD": "Dashboard",
-    "TAB_SOMFY": "Installation",
     "TAB_RADIO": "Funk",
     "TAB_NETWORK": "Netzwerk",
-    "TAB_INTEGRATIONS": "Integrationen",
-    "TAB_SYSTEM": "System",
 
 "INDEX_SUBTAB": "SUBTAB",
     "SUBTAB_DEVICES": "Geräte",

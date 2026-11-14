@@ -15,12 +15,8 @@
     "RADIO_ACTIVITY_TOOLTIP": "Actividad de radio / movimiento",
 
 "INDEX_TAB": "TAB",
-    "TAB_DASHBOARD": "Panel",
-    "TAB_SOMFY": "Instalación",
     "TAB_RADIO": "Radio",
     "TAB_NETWORK": "Red",
-    "TAB_INTEGRATIONS": "Integraciones",
-    "TAB_SYSTEM": "Sistema",
 
 "INDEX_SUBTAB": "SUBTAB",
     "SUBTAB_DEVICES": "Dispositivos",
