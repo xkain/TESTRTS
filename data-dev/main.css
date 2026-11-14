@@ -2505,15 +2505,59 @@ label.gen-row {
         top: var(--gen-stick-top, var(--mobile-header-height));
         z-index: 3;
         align-self: stretch;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 0;
         margin: 0 -16px 8px;
-        padding: 6px 16px;
+        padding: 8px 32px 6px;
         border-radius: 0;
         background: var(--bg);
+        overflow: visible;
+        counter-reset: gen-tab;
+    }
+    /* Rail du stepper, du centre de la première pastille au centre de la dernière. */
+    .gen-tabs::before {
+        content: "";
+        position: absolute;
+        top: 22px;
+        left: 46px;
+        right: 46px;
+        height: 2px;
+        background: var(--border);
+    }
+    .gen-tabs::after {
+        content: attr(data-label);
+        flex: 0 0 100%;
+        margin-top: 4px;
+        text-align: center;
+        font-size: var(--fs-3);
+        font-weight: 700;
+        color: var(--text);
     }
     .gen-tab {
-        min-height: 36px;
-        padding: 6px 14px;
+        position: relative;
+        width: 28px;
+        min-height: 0;
+        height: 28px;
+        padding: 0;
+        border: 2px solid var(--border);
+        border-radius: var(--r-pill);
         background: var(--surface);
+        font-size: 0;
+        counter-increment: gen-tab;
+    }
+    .gen-tab::before {
+        content: counter(gen-tab);
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-3);
+    }
+    .gen-tab.selected {
+        border-color: var(--on-fill);
+        background: var(--on-fill);
+    }
+    .gen-tab.selected::before {
+        color: var(--on-fill-text);
     }
     .gen-tabs ~ .gen-panels > .gen-grid > .gen-sec-head {
         display: none;

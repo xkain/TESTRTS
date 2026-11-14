@@ -1021,6 +1021,7 @@ const mobileNav = {
             b.classList.toggle('is-active', on);
             b.setAttribute('aria-selected', on ? 'true' : 'false');
         });
+        document.querySelectorAll('.gen-tabs').forEach(genTabsLabel);
         const root = this.isRoot();
         const header = get('appHeader');
         if (header) {
@@ -1578,6 +1579,12 @@ function fillGenSecMini(sections) {
 // --- Onglets d'une page migrée (Général, Appareil, Connexion) -----------------------------
 // Sous 768 px les onglets deviennent des sections empilées (bindGenSections). L'onglet
 // précédent/suivant n'apparaît que si l'onglet affiché dépasse de l'écran.
+// Mobile : les onglets deviennent les pastilles d'un stepper ; seul le nom de l'onglet actif
+// s'écrit, en entier, sous le rail (.gen-tabs::after lit data-label).
+function genTabsLabel(strip) {
+    const sel = strip.querySelector('.gen-tab.selected');
+    strip.dataset.label = sel ? sel.textContent.trim() : '';
+}
 function bindGenTabs(page, ids) {
     const strip = get(ids.tabs), panels = get(ids.panels), pager = get(ids.pager);
     // Un onglet masqué (page Connexion : selon le type choisi) sort de la navigation.
@@ -1615,6 +1622,7 @@ function bindGenTabs(page, ids) {
             if (on && strip.scrollWidth > strip.clientWidth) strip.scrollLeft = t.offsetLeft - strip.offsetLeft - (strip.clientWidth - t.offsetWidth) / 2;
         });
         panels.querySelectorAll(':scope > [data-tab]').forEach(p => { p.hidden = parseInt(p.dataset.tab, 10) !== i; });
+        genTabsLabel(strip);
         update();
         return true;
     };
