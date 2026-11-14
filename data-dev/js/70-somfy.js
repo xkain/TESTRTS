@@ -4352,16 +4352,21 @@ class Somfy {
         if (body) body.scrollTop = 0;
         this.renderCardSheet();
     }
+    // Tuiles résumé de la fiche : un réglage, sa valeur ; le toucher ouvre la sous-vue ou l'éditeur.
     cardSheetRowsHtml(rows) {
-        return `<div class="settings-list card-sheet-rows">${rows.map(r => `<button type="button" class="settings-row" onclick="${r.go}"><span class="uniblocSvg-F"><svg><use href="#${r.icon}"></use></svg></span><span class="settings-row-text"><b>${tr(r.label)}</b></span>${r.val ? `<span class="card-sheet-row-val">${r.val}</span>` : ''}<svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></button>`).join('')}</div>`;
+        return `<div class="sheet-tiles">${rows.map(r => `<button type="button" class="sheet-tile${r.warn ? ' is-warn' : ''}" onclick="${r.go}"><span class="sheet-tile-icon"><svg><use href="#${r.icon}"></use></svg></span><b>${tr(r.label)}</b>${r.val ? `<span class="sheet-tile-val">${r.val}</span>` : ''}</button>`).join('')}</div>`;
+    }
+    cardSheetRoomName(item) {
+        return escHtml((_rooms.find(r => r.roomId === item.roomId) || { name: '' }).name);
     }
     shadeSheetRowsHtml(shade) {
         const id = shade.shadeId, edit = (t) => `somfy.closeCardSheet(); somfy.openCardEditor('shade', ${id}, ${t});`;
         const rows = [];
-        if (this.shadeTypeSupportsMy(this.shadeTypeOf(shade))) rows.push({ icon: 'svg-favori', label: 'SETMYPOS_TITLE', val: escHtml(this.myBadgeText(shade).replace(/^ · My /, '')), go: 'somfy.cardSheetTab(1);' });
-        rows.push({ icon: 'svg-remote', label: 'SUBTAB_REMOTES', val: String((shade.linkedRemotes || []).length || ''), go: edit(1) });
-        rows.push({ icon: 'svg-edit', label: 'NAME_AND_ROOM', go: edit(0) });
-        rows.push({ icon: 'svg-tabSettings', label: 'SUBTAB_SETTINGS', go: edit(2) });
+        if (this.shadeTypeSupportsMy(this.shadeTypeOf(shade))) rows.push({ icon: 'svg-favori', label: 'SETMYPOS_TITLE', val: escHtml(this.myBadgeText(shade).replace(/^ · My /, '')) || tr('CARD_MY_NONE'), go: 'somfy.cardSheetTab(1);' });
+        rows.push({ icon: 'svg-remote', label: 'SUBTAB_REMOTES', val: String((shade.linkedRemotes || []).length), go: edit(1) });
+        rows.push({ icon: 'svg-edit', label: 'NAME_AND_ROOM', val: this.cardSheetRoomName(shade), go: edit(0) });
+        const missing = typeof shadeSetup !== 'undefined' ? shadeSetup.missingSteps(shade) : 0;
+        rows.push({ icon: 'svg-tabSettings', label: 'SUBTAB_SETTINGS', warn: missing > 0, val: missing > 1 ? shadeSetup.t('SETUP_BADGE_MANY', { n: missing }) : missing ? tr('SETUP_BADGE_ONE') : '', go: edit(2) });
         rows.push({ icon: 'svg-eyeOn', label: 'OPTION', go: `somfy.cardSheetTab(${rows[0].label === 'SETMYPOS_TITLE' ? 2 : 1});` });
         return this.cardSheetRowsHtml(rows);
     }
@@ -4369,7 +4374,7 @@ class Somfy {
         const id = group.groupId, edit = (t) => `somfy.closeCardSheet(); somfy.openCardEditor('group', ${id}, ${t});`;
         return this.cardSheetRowsHtml([
             { icon: 'svg-list', label: 'SUBTAB_DEVICES', val: String((group.linkedShades || []).length), go: 'somfy.cardSheetTab(1);' },
-            { icon: 'svg-edit', label: 'NAME_AND_ROOM', go: edit(0) },
+            { icon: 'svg-edit', label: 'NAME_AND_ROOM', val: this.cardSheetRoomName(group), go: edit(0) },
             { icon: 'svg-eyeOn', label: 'OPTION', go: 'somfy.cardSheetTab(2);' },
         ]);
     }

@@ -319,6 +319,7 @@ class Wifi {
         get('sidebarNetIcon')?.setAttribute('href', ICONS[type] || '#svg-wifi');
         get('sidebarNetDot')?.classList.toggle('is-up', up);
         get('sidebarNetDot')?.classList.toggle('is-down', !up);
+        this.updateNetBanner(type);
         if (!use || !dot) return;
         use.setAttribute('href', ICONS[type] || '#svg-wifi');
 
@@ -328,6 +329,78 @@ class Wifi {
             const label = (type === 'hotspot') ? 'HOTSPOT' : type.toUpperCase();
             wrap.setAttribute('title', `${label} — ${tr(up ? 'NET_STATUS_UP' : 'NET_STATUS_DOWN')}`);
         }
+    }
+    // Micro-bandeau sous l'en-tête mobile : rien quand tout va bien. Une liaison perdue avec le
+    // téléphone a déjà son écran (« Connexion à l'appareil… ») ; on ne signale ici que ce qui
+    // reste joignable mais fragile. -80 dBm : en dessous, les trames radio relayées se perdent.
+    netBannerState(type) {
+        const s = this._settings || {}, saved = (s.wifi && s.wifi.ssid) || '';
+        if (type === 'hotspot') return saved
+            ? { tone: 'warn', icon: 'hotspot', text: tr('NETBANNER_AP').replace('{SSID}', saved), go: true }
+            : { tone: 'info', icon: 'hotspot', text: tr('NETBANNER_FIRST'), go: false };
+        if (parseInt(s.connType, 10) === 3 && !this._ethLinkUp && this._wifiLinkUp)
+            return { tone: 'warn', icon: 'ethernet', text: tr('NETBANNER_FALLBACK'), go: true };
+        if (type === 'wifi' && this._wifiLinkUp && this._wifiRssi <= -80)
+            return { tone: 'warn', icon: 'wifi', text: tr('NETBANNER_WEAK').replace('{DBM}', this._wifiRssi), go: true };
+        return null;
+    }
+    netLabel(type) {
+        if (type === 'hotspot') return tr('CONNEXION_HERO_AP');
+        const s = this._settings || {};
+        if ((type === 'lan' || type === 'poe') && !(parseInt(s.connType, 10) === 3 && !this._ethLinkUp && this._wifiLinkUp))
+            return type === 'poe' ? 'PoE' : tr('CONNEXION_ETHERNET');
+        return this._wifiSsid || (s.wifi && s.wifi.ssid) || tr('CONNEXION_WIFI');
+    }
+    updateNetBanner(type) {
+        const st = this.netBannerState(type);
+        // Tuile d'état et tuile Réseau de l'écran Réglages : même calcul que le micro-bandeau.
+        const tile = get('setStateTile');
+        if (tile) tile.dataset.tone = st ? st.tone : 'ok';
+        const label = this.netLabel(type);
+        if (get('setStateSub')) get('setStateSub').textContent = label;
+        const v = get('setValNet');
+        if (v) {
+            v.removeAttribute('tr');
+            v.textContent = label;
+            v.classList.toggle('is-warn', !!st && st.tone === 'warn');
+        }
+        const b = get('netBanner');
+        if (!b) return;
+        b.hidden = !st;
+        this._bannerGo = !!(st && st.go);
+        if (!st) return;
+        b.dataset.tone = st.tone;
+        b.querySelector('.net-banner-icon use').setAttribute('href', '#svg-' + st.icon);
+        b.querySelector('.net-banner-text').textContent = st.text;
+    }
+    // Fiche d'état (tuile d'état de Réglages) : ce que l'en-tête ne montre plus. Tout est déjà
+    // dans la page ; l'adresse est celle par laquelle le téléphone joint l'appareil.
+    openStatus() {
+        const type = this._netType || (this.isHotspot ? 'hotspot' : 'wifi');
+        const st = this.netBannerState(type);
+        const txt = (sel) => document.querySelector(sel)?.textContent.trim() || '--';
+        const kv = (k, v) => `<div class="dstat-kv"><span>${tr(k)}</span><b>${escHtml(String(v))}</b></div>`;
+        const onWifi = this._wifiLinkUp && this.netLabel(type) !== tr('CONNEXION_ETHERNET') && type !== 'poe';
+        const div = document.createElement('div');
+        div.className = 'modal-overlay dstat-sheet';
+        div.innerHTML = `<div class="message-content">${modalHeader('MQTT_P_STATUS', 'svg-logo')}
+            ${st ? `<p class="dstat-alert" data-tone="${st.tone}">${escHtml(st.text)}</p>` : ''}
+            <div class="dstat-block"><h4>${tr('SUBTAB_CONNECTION')}</h4>
+                ${kv('TAB_NETWORK', this.netLabel(type))}
+                ${onWifi && type !== 'hotspot' ? kv('M_SIGNAL', `${this._wifiRssi} ${tr('UNIT_DBM')}`) : ''}
+                ${kv('RADIO_ADDRESS', location.hostname)}
+            </div>
+            <div class="dstat-block">
+                ${kv('TOPBAR_UPTIME', txt('.uptime-display'))}
+                ${kv('FW_DIAG_RESET', txt('.info-reset'))}
+                ${kv('FIRMWARE_MT_INSTALLED', txt('.fw-version'))}
+            </div>
+            <button type="button" class="settings-row dstat-help" onclick="openPageHelp();"><span class="uniblocSvg-F"><svg><use href="#svg-navHelp"></use></svg></span><span class="settings-row-text"><b>${tr('HELP_THIS_PAGE')}</b></span><svg class="settings-row-chev"><use href="#svg-linkOut"></use></svg></button>
+        </div>`;
+        shOverlay(div);
+    }
+    onBannerClick() {
+        if (this._bannerGo) confirmDiscardChanges(() => activateGrpid('divNetAdapter'));
     }
     // mode : 1 Wi-Fi, 2 Ethernet, 3 Ethernet + Wi-Fi de secours (= connType).
     pickConnType(mode) {

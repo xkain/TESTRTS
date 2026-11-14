@@ -678,7 +678,7 @@ class UIBinder {
     placeToasts() {
         const stack = get('divToastStack');
         if (!stack) return;
-        const covered = [...document.querySelectorAll('.save-bar, .button-container-footerHtml, #mobileTabBar')]
+        const covered = [...document.querySelectorAll('.save-bar, .button-container-footerHtml')]
             .map(b => b.getBoundingClientRect()).filter(r => r.height > 0 && r.top < innerHeight)
             .map(r => innerHeight - r.top);
         stack.style.setProperty('--toast-offset', Math.max(0, ...covered) + 'px');

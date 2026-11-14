@@ -718,8 +718,7 @@ class General {
                 <label><input type="radio" name="defaultMobileTab" value="groups"${tab === 'groups' ? ' checked' : ''}><span>${tr('SUBTAB_GROUPS')}</span></label>
                 <label><input type="radio" name="defaultMobileTab" value="devices"${tab === 'devices' ? ' checked' : ''}><span>${tr('SUBTAB_DEVICES')}</span></label></span>`)}
             <h3 class="dp-sec">${tr('DASHB_PREFS_SECTION_HEADER')}</h3>
-            ${row('DASHB_PREFS_RADIO_ACTIVITY', 'DASHB_PREFS_RADIO_ACTIVITY_DESC', bool('cbShowRadioActivity', p.showRadioActivity))}
-            ${row('DASHB_PREFS_HEADER_MOBILE_DISPLAY', 'DASHB_PREFS_HEADER_MOBILE_DISPLAY_DESC', sel('selHeaderMobileDisplay', [[0, 'DASHB_PREFS_HEADER_MOBILE_ALL'], [1, 'DASHB_PREFS_HEADER_MOBILE_NET'], [2, 'DASHB_PREFS_HEADER_MOBILE_UPTIME'], [3, 'DASHB_PREFS_HEADER_MOBILE_NONE']], p.headerMobileDisplay))}`
+            ${row('DASHB_PREFS_RADIO_ACTIVITY', 'DASHB_PREFS_RADIO_ACTIVITY_DESC', bool('cbShowRadioActivity', p.showRadioActivity))}`
         })}</div>`;
         // Aperçu de la disposition dans la colonne d'identité : il suit les choix avant tout envoi.
         div.querySelector('.genmod-state-val').outerHTML = `<div class="dp-prev">
@@ -746,7 +745,8 @@ class General {
 
         div.querySelector('#btnDashboardPrefsApply').onclick = () => {
             const payload = {
-                headerMobileDisplay: parseInt(div.querySelector('#selHeaderMobileDisplay').value, 10),
+                // L'en-tête mobile n'affiche plus réseau ni durée : la valeur stockée est renvoyée telle quelle.
+                headerMobileDisplay: p.headerMobileDisplay,
                 reverseDashboardColumns: div.querySelector('#cbReverseDashboardColumns').checked,
                 defaultMobileTab: div.querySelector('input[name="defaultMobileTab"]:checked')?.value || 'groups',
                 showRadioActivity: div.querySelector('#cbShowRadioActivity').checked,

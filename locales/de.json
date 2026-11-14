@@ -13,6 +13,10 @@
     "TOPBAR_NET_ETH": "Ethernet / PoE:",
     "TOPBAR_NET_AP": "Zugangspunkt (AP):",
     "RADIO_ACTIVITY_TOOLTIP": "Funk-/Bewegungsaktivität",
+    "NETBANNER_AP": "Notfall-Zugangspunkt: „{SSID}“ antwortet nicht",
+    "NETBANNER_FIRST": "Sie sind mit dem Netzwerk des Geräts verbunden. Wählen Sie Ihr WLAN unter Einstellungen › Netzwerk.",
+    "NETBANNER_WEAK": "Schwaches WLAN-Signal ({DBM} dBm): Befehle können verloren gehen",
+    "NETBANNER_FALLBACK": "Ethernet-Kabel getrennt: Das Gerät ist auf WLAN umgestiegen",
 
 "INDEX_TAB": "TAB",
     "TAB_RADIO": "Funk",

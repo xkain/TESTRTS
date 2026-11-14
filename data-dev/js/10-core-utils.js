@@ -563,12 +563,11 @@ function setSidebarRadioState(on) {
     if (!cell) return;
     cell.classList.toggle('is-off', !on);
     cell.title = tr(on ? 'RADIO_ACTIVITY_TOOLTIP' : 'RADIO_DISABLED');
-    const row = document.querySelector('#divSettingsPnl .settings-row[data-grpid="divTransceiverSettings"]');
-    if (!row) return;
-    row.classList.toggle('is-off', !on);
-    const desc = row.querySelector('.settings-row-desc');
-    desc.setAttribute('tr', on ? 'SETTINGS_DESC_TRANSCEIVER' : 'RADIO_DISABLED');
-    desc.textContent = tr(desc.getAttribute('tr'));
+    const val = get('setValRadio');
+    if (!val) return;
+    val.classList.toggle('is-warn', !on);
+    val.setAttribute('tr', on ? 'LANG_MODAL_ACTIVE' : 'RADIO_DISABLED');
+    val.textContent = tr(val.getAttribute('tr'));
 }
 var errors = [
     { code: -10, key: 'ERR_PIN_TRANSCEIVER' },

@@ -33,7 +33,7 @@ class MQTT {
             b.classList.toggle('selected', n === i);
             b.setAttribute('aria-selected', n === i ? 'true' : 'false');
         });
-        genTabsLabel(page.querySelector('.ha-tabs'));
+        genTabsSync(page.querySelector('.ha-tabs'));
     }
 
     async loadMQTT() {

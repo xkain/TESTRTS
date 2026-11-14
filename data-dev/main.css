@@ -430,9 +430,6 @@ body.onboarding-active .toast[data-toast-id="langPrompt"] {
 /* Indicateurs réseau + uptime de l'en-tête mobile : n'existent que sous 768px, où .top-bar (qui
    les porte sur desktop) est masquée. Déclarés masqués ici pour que le desktop ne les voie jamais,
    même le temps d'un chargement de feuille de style. */
-.mobile-status-cluster {
-    display: none;
-}
 
 /* Indicateur logiciel d'activité radio RTS / mouvement (general.showRadioActivity, cf.
    applyDashboardPrefs() + DashboardPrefsOverlay() dans 40-general.js). Un seul élément partagé
@@ -2388,13 +2385,21 @@ label.gen-row {
     gap: 12px;
     padding-top: 8px;
 }
-.gen-pager-btn {
-    flex: 0 1 calc(50% - 6px);
-    min-height: 48px;
-    padding: 6px 16px;
-    border-radius: var(--r-3);
-    background: var(--surface);
+.gen-pager-btn,
+.gen-pager-btn:hover {
+    flex: 0 1 auto;
+    max-width: 48%;
+    min-height: 32px;
+    padding: 0 4px;
+    border-radius: var(--r-2);
+    background: none;
     line-height: 1.25;
+}
+.gen-pager-btn svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    fill: var(--accent);
 }
 .gen-pager-next {
     justify-content: flex-end;
@@ -2477,12 +2482,7 @@ label.gen-row {
         height: 30px;
     }
     .gen-hero-host,
-    .gen-hero-chips,
-    #genPager,
-    #netPager,
-    #rdcPager,
-    #grpPager,
-    #shdPager {
+    .gen-hero-chips {
         display: none;
     }
     .gen-hero-title {
@@ -2503,66 +2503,99 @@ label.gen-row {
         gap: 0;
         padding: 0 16px 140px;
     }
-    /* Un onglet à la fois, comme sur PC : empilées, les sections faisaient 4 à 5 écrans. La
-       bande d'onglets reste collée sous l'en-tête et nomme la section, d'où le titre retiré. */
+    /* Un onglet à la fois, comme sur PC : empilées, les sections faisaient 4 à 5 écrans. Seuls
+       l'onglet courant et ses voisins s'écrivent ; la barre segmentée (genTabsSync) dit où l'on
+       est. Collée sous l'en-tête (.is-min), la bande se réduit à cette barre, bord à bord. */
     .gen-tabs {
         position: sticky;
         top: var(--gen-stick-top, var(--mobile-header-height));
         z-index: 3;
         align-self: stretch;
         flex-wrap: wrap;
-        justify-content: space-between;
-        gap: 0;
+        align-items: center;
+        gap: 0 16px;
+        max-width: none;
         margin: 0 -16px 8px;
-        padding: 8px 32px 6px;
+        padding: 6px 16px 8px;
         border-radius: 0;
         background: var(--bg);
-        overflow: visible;
-        counter-reset: gen-tab;
-    }
-    /* Rail du stepper, du centre de la première pastille au centre de la dernière. */
-    .gen-tabs::before {
-        content: "";
-        position: absolute;
-        top: 22px;
-        left: 46px;
-        right: 46px;
-        height: 2px;
-        background: var(--border);
-    }
-    .gen-tabs::after {
-        content: attr(data-label);
-        flex: 0 0 100%;
-        margin-top: 4px;
-        text-align: center;
-        font-size: var(--fs-3);
-        font-weight: 700;
-        color: var(--text);
+        overflow: hidden;
+        transition: padding .22s ease;
     }
     .gen-tab {
-        position: relative;
-        width: 28px;
+        display: none;
+        flex: none;
         min-height: 0;
-        height: 28px;
-        padding: 0;
-        border: 2px solid var(--border);
-        border-radius: var(--r-pill);
-        background: var(--surface);
-        font-size: 0;
-        counter-increment: gen-tab;
-    }
-    .gen-tab::before {
-        content: counter(gen-tab);
-        font-size: 12px;
-        font-weight: 700;
+        max-height: 28px;
+        padding: 4px 0;
+        border-radius: 0;
+        background: none;
         color: var(--text-3);
+        font-size: var(--fs-4);
+        font-weight: 700;
+        transition: max-height .22s ease, opacity .16s ease, padding .22s ease;
+    }
+    .gen-tab:hover {
+        background: none;
+    }
+    .gen-tab.selected,
+    .gen-tab-prev,
+    .gen-tab-next {
+        display: block;
     }
     .gen-tab.selected {
-        border-color: var(--on-fill);
+        background: none;
+        color: var(--text);
+    }
+    .gen-tab-prev {
+        max-width: 28%;
+        overflow: hidden;
+        -webkit-mask-image: linear-gradient(to left, #000 20%, transparent 95%);
+        mask-image: linear-gradient(to left, #000 20%, transparent 95%);
+    }
+    .gen-tab-next {
+        flex: 1 1 0;
+        min-width: 0;
+        overflow: hidden;
+        text-align: left;
+        -webkit-mask-image: linear-gradient(to right, #000 20%, transparent 95%);
+        mask-image: linear-gradient(to right, #000 20%, transparent 95%);
+    }
+    .gen-tabs-bar {
+        display: flex;
+        flex: 0 0 100%;
+        gap: 3px;
+        margin-top: 4px;
+        transition: gap .22s ease, margin .22s ease;
+    }
+    .gen-tabs-bar i {
+        flex: 1;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--sunken);
+        transition: height .22s ease, border-radius .22s ease;
+    }
+    .gen-tabs-bar i.on {
         background: var(--on-fill);
     }
-    .gen-tab.selected::before {
-        color: var(--on-fill-text);
+    .gen-tabs.is-min {
+        padding: 0;
+    }
+    .gen-tabs.is-min .gen-tab {
+        max-height: 0;
+        padding: 0;
+        opacity: 0;
+    }
+    .gen-tabs.is-min .gen-tabs-bar {
+        gap: 2px;
+        margin-top: 0;
+    }
+    .gen-tabs.is-min .gen-tabs-bar i {
+        height: 3px;
+        border-radius: 0;
+    }
+    .gen-tabs.is-min .gen-tabs-bar i:not(.on) {
+        background: color-mix(in srgb, var(--text-3) 38%, transparent);
     }
     .gen-tabs ~ .gen-panels > .gen-grid > .gen-sec-head {
         display: none;
@@ -5148,40 +5181,107 @@ div.frame-pulses {
     text-transform: uppercase;
     color: var(--color-text-secondary);
 }
-.settings-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 4px 2px 6px;
+/* Écran Réglages (mobile) : grille de tuiles résumé, la tuile d'état de l'appareil en tête. */
+.set-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
 }
-.settings-title {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--color-text-main);
-}
-.settings-help {
+.set-tile {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
+    flex-direction: column;
+    gap: 4px;
     min-width: 0;
     margin: 0;
-    padding: 0;
+    padding: 14px;
     border: 0;
-    background: none;
-    color: var(--color-text-secondary);
+    border-radius: var(--r-5);
+    background: var(--surface);
+    color: var(--text);
+    text-align: left;
+    text-decoration: none;
+    text-transform: none;
+    letter-spacing: normal;
     cursor: pointer;
 }
-.settings-help:hover,
-.settings-help:focus {
-    background: none;
-    color: var(--color-text-main);
+.set-tile b {
+    margin-top: 6px;
+    font-size: 15px;
 }
-.settings-help svg {
-    width: 22px;
-    height: 22px;
+.set-tile-icon {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--r-3);
+    background: var(--surface-2);
+    color: var(--accent);
+}
+.set-tile-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+.set-tile-val {
+    overflow: hidden;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-3);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.set-tile-val.is-warn {
+    color: var(--warn);
+    font-weight: 700;
+}
+.set-fw-new,
+body.fw-update .set-fw-idle {
+    display: none;
+}
+body.fw-update .set-fw-new {
+    display: block;
+    color: var(--color-danger);
+    font-weight: 700;
+}
+.set-state {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+.set-state b {
+    margin: 0;
+}
+.set-state-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+.set-state-dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-full);
+    background: var(--ok);
+    box-shadow: 0 0 0 4px var(--ok-bg);
+}
+.set-state[data-tone="warn"] {
+    background: var(--warn-bg);
+}
+.set-state[data-tone="warn"] .set-state-dot {
+    background: var(--warn);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--warn) 20%, transparent);
+}
+.set-state[data-tone="info"] .set-state-dot {
+    background: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.set-state-chev {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    fill: var(--text-3);
 }
 .settings-list {
     display: flex;
@@ -5235,41 +5335,23 @@ div.frame-pulses {
     height: 16px;
     color: var(--color-text-secondary);
 }
-.settings-row.is-off .settings-row-desc {
-    color: var(--color-warning);
-    font-weight: 600;
-}
 .page-related {
     display: flex;
     max-width: 720px;
     margin: 0 clamp(20px, 3vw, 48px) 32px;
 }
-body.fw-update .settings-row[data-grpid="divFirmware"]::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    right: 38px;
-    width: 9px;
-    height: 9px;
-    margin-top: -4.5px;
-    border-radius: var(--radius-full);
-    background: var(--color-danger);
-}
 
 /* =======================================================================
- *  NAVIGATION MOBILE : en-tête (retour, titre, +, aide) et barre de trois onglets
+ *  NAVIGATION MOBILE : en-tête (retour, titre, +, trois destinations) et micro-bandeau
  *  ======================================================================= */
-.mobile-tabbar,
-.mobile-title {
+.mobile-title,
+.mobile-nav,
+.net-banner,
+.gen-hero-help,
+.gen-tabs-bar {
     display: none;
 }
 @media (max-width: 767px) {
-    :root {
-        --tabbar-h: calc(60px + env(safe-area-inset-bottom, 0px));
-    }
-    .container {
-        padding-bottom: var(--tabbar-h);
-    }
     .header-left {
         flex: 1;
         min-width: 0;
@@ -5284,84 +5366,129 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        color: var(--color-text-main);
+        text-align: left;
+        color: var(--text);
+    }
+    #appHeader.is-root .mobile-title {
+        font-size: 20px;
     }
     #appHeader.is-root #btnMobileBack,
     #appHeader:not(.is-root.is-home) #btnMobileAdd {
         display: none;
     }
     #appHeader.is-root .header-left {
-        padding-left: 8px;
+        padding-left: 10px;
     }
-    #btnMobileBack svg {
-        color: var(--color-accent);
+    #btnMobileBack svg,
+    #btnMobileAdd svg {
+        color: var(--accent);
     }
-    .settings-help {
-        display: none;
-    }
-    .mobile-tabbar {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 999;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        height: var(--tabbar-h);
-        padding: 6px 6px env(safe-area-inset-bottom, 0px);
-        box-sizing: border-box;
-        background: var(--panel);
-        border-top: 1px solid var(--divider);
-    }
-    .mobile-tabbar button {
-        position: relative;
+    .mobile-nav {
         display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: 3px;
-        min-width: 0;
-        margin: 0;
-        padding: 4px 0;
-        border: 0;
-        background: none;
+    }
+    .mobile-nav .mobile-menu-btn {
+        position: relative;
+        width: 42px;
         color: var(--text-3);
-        font-size: 11px;
+    }
+    .mobile-nav .mobile-menu-btn.is-active,
+    .mobile-nav .mobile-menu-btn.is-active:hover,
+    .mobile-nav .mobile-menu-btn.is-active:focus {
+        color: var(--accent);
+    }
+    /* Mise à jour disponible : un point sur l'engrenage, comme avant l'interface A2. */
+    body.fw-update .mobile-nav-settings::after {
+        content: "";
+        position: absolute;
+        top: 7px;
+        right: 7px;
+        width: 9px;
+        height: 9px;
+        border-radius: var(--radius-full);
+        border: 2px solid var(--bg);
+        background: var(--color-danger);
+    }
+    body.onboarding-active .mobile-nav {
+        visibility: hidden;
+    }
+    .net-banner {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 0;
+        margin: 0;
+        padding: 7px 14px;
+        border: 0;
+        border-radius: 0;
+        font-size: 12.5px;
+        font-weight: 700;
+        line-height: 1.3;
+        text-align: left;
         text-transform: none;
         letter-spacing: normal;
         cursor: pointer;
     }
-    .mobile-tabbar button:hover,
-    .mobile-tabbar button:focus {
-        background: none;
+    .net-banner[hidden] {
+        display: none;
+    }
+    .net-banner[data-tone="warn"] {
+        background: var(--warn-bg);
+        color: var(--warn);
+    }
+    .net-banner[data-tone="info"] {
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+        color: var(--accent);
+        cursor: default;
+    }
+    .net-banner-icon,
+    .net-banner-chev {
+        flex: none;
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+    }
+    .net-banner-text {
+        flex: 1;
+        min-width: 0;
+    }
+    .net-banner[data-tone="info"] .net-banner-chev {
+        display: none;
+    }
+    /* Aide de la page : en haut à droite de son en-tête (l'en-tête mobile n'a plus de « ? »). */
+    /* top: auto -- la règle PC (collante) donne un top que relative appliquerait en décalage. */
+    .gen-hero {
+        position: relative;
+        top: auto;
+    }
+    .gen-hero-help {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: var(--radius-full);
+        background: var(--surface-2);
         color: var(--text-3);
     }
-    .mobile-tabbar button.is-active {
-        color: var(--accent);
-        font-weight: 700;
-    }
-    .mobile-tabbar svg {
-        width: 24px;
-        height: 24px;
-    }
-    .mobile-tabbar-dot {
-        display: none;
-        position: absolute;
-        top: 2px;
-        left: calc(50% + 8px);
-        width: 9px;
-        height: 9px;
-        border-radius: var(--radius-full);
-        border: 2px solid var(--panel);
-        background: var(--color-danger);
-    }
-    body.fw-update .mobile-tabbar-dot {
-        display: block;
-    }
-    body.onboarding-active .mobile-tabbar {
-        display: none;
+    .gen-hero-help svg {
+        width: 18px;
+        height: 18px;
+        fill: currentColor;
     }
     .page-related {
         margin: 8px 14px 24px;
+    }
+    /* L'en-tête porte déjà « Maison ». */
+    #divHomePnl .dash-rooms-title {
+        display: none;
     }
     :root:not([data-ui-advanced]) .adv-only {
         display: none !important;
@@ -5448,29 +5575,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
         z-index: 1000;
         background: var(--color-bg-page);
     }
-    #divSettingsPnl .sidebar-status {
-        padding: 0;
-        margin: 8px 0 4px;
-        border: 0;
-        color: var(--color-text-main);
-    }
-    #divSettingsPnl .status-cell {
-        background: var(--color-bg-nav-row);
-        border: 1px solid var(--color-border);
-        color: var(--color-text-main);
-        border-radius: 12px;
-    }
-    #divSettingsPnl .status-cell-icon {
-        color: var(--color-text-secondary);
-    }
-    #divSettingsPnl .sidebar-status .opt-badge.active {
-        color: var(--color-text-main);
-    }
-    #divSettingsPnl #sidebarRadioStatus.is-off {
-        background: var(--color-bg-nav-row);
-        color: var(--color-text-secondary);
-        opacity: 0.6;
-    }
     .container {
         margin: 0 auto;
         background: var(--color-bg-page);
@@ -5538,24 +5642,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
         align-items: center;
         gap: 2px;
     }
-    .mobile-status-cluster {
-        display: flex;
-        align-items: center;
-        gap: 2px;
-    }
-    .mobile-status-btn {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 7px;
-        cursor: pointer;
-    }
-    .mobile-status-svg {
-        width: 22px;
-        height: 22px;
-        color: var(--color-text-main);
-    }
     /* Gabarit mobile de l'indicateur d'activité radio : même balisage que le desktop (cf.
        .radio-activity-radar plus haut), ramené à la taille des icônes voisines du cluster pour ne
        pas dépasser. Sélecteurs #id : ils doivent emporter les .radio-activity-radar* de la feuille
@@ -5574,56 +5660,6 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
        de la feuille principale, et le pulse ne se verrait plus en mobile. */
     #headerRadioActivityMobile:not(.pulse) .radio-activity-radar-icon {
         color: var(--color-text-main);
-    }
-    /* Pastille posée sur l'angle bas-droit de l'icône. Le liseré reprend la couleur du fond de
-       page : sans lui, la pastille se confondrait avec les tracés du SVG en dessous. */
-    .mobile-status-dot {
-        position: absolute;
-        right: 2px;
-        bottom: 4px;
-        width: 10px;
-        height: 10px;
-        border-radius:var(--radius-full);
-        border: 2px solid var(--color-bg-page);
-        box-sizing: border-box;
-        background-color: var(--color-text-secondary);
-    }
-    .mobile-status-dot.is-up {
-        background-color: var(--color-success);
-    }
-    .mobile-status-dot.is-down {
-        background-color: var(--color-danger);
-    }
-    /* general.headerMobileDisplay (cf. DashboardPrefsOverlay(), 40-general.js) : sélecteurs #id
-       donc plus spécifiques que .mobile-status-btn{display:flex} ci-dessus quel que soit l'ordre
-       des règles dans la feuille -- pas besoin de !important. */
-    body:not(.fw-update) #mobileFwUpdate {
-        display: none;
-    }
-    #mobileFwUpdate .mobile-status-svg {
-        color: var(--color-danger);
-    }
-    #mobileFwUpdate .mobile-status-dot {
-        top: 4px;
-        bottom: auto;
-    }
-    [data-header-mobile-display="1"] #mobileUptime {
-        display: none;
-    }
-    [data-header-mobile-display="2"] #mobileNetStatus {
-        display: none;
-    }
-    [data-header-mobile-display="3"] #mobileNetStatus,
-    [data-header-mobile-display="3"] #mobileUptime {
-        display: none;
-    }
-    /* Le tooltip s'ouvre aussi au tap (classe posée par bindMobileUptimeTooltip) : :hover seul est
-       imprévisible sur tactile, où il reste collé après le toucher. */
-    .mobile-status-btn.uptime-open .uptime-tooltip {
-        visibility: visible;
-        opacity: 1;
-        pointer-events: auto;
-        transform: translateY(0);
     }
     #divSomfyRooms,
     #divSomfyMotors,
@@ -6467,7 +6503,7 @@ input.gen-input.mqtt-mono {
     #divHomePnl .dash-edit-btn { position: absolute; top: 12px; right: 57px; }
     #divHomePnl .dash-add-btn { right: 15px; width: 34px; padding: 0; justify-content: center; }
     #divHomePnl .dash-add-btn span { display: none; }
-    #divHomePnl .dash-move-toast { left: 12px; right: 12px; bottom: calc(12px + var(--tabbar-h, 0px)); width: auto; max-width: none; }
+    #divHomePnl .dash-move-toast { left: 12px; right: 12px; bottom: 12px; width: auto; max-width: none; }
 }
 #divHomePnl .column-count { font-size: 0.8em; font-weight: 600; color: var(--color-text-secondary); }
 #divHomePnl #divShadeControls,
@@ -6549,7 +6585,7 @@ body.is-offline .shadectl-state { opacity: .45; }
 #divHomePnl .card-btn svg { width: 15px; height: 15px; fill: currentColor; }
 #divHomePnl .card-sheet-overlay { position: fixed; inset: 0; z-index: 1500; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, 0); transition: background 0.25s ease; }
 #divHomePnl .card-sheet-overlay.open { background: rgba(0, 0, 0, 0.5); }
-#divHomePnl .card-sheet { display: flex; flex-direction: column; width: 100%; max-width: 560px; max-height: 92vh; max-height: 92dvh; background: var(--color-bg-card); border: 1px solid var(--color-border); border-bottom: 0; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35); transform: translateY(100%); transition: transform 0.25s ease; overflow: hidden; }
+#divHomePnl .card-sheet { display: flex; flex-direction: column; width: 100%; max-width: 560px; max-height: 92vh; max-height: 92dvh; background: var(--panel); border: 0; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35); transform: translateY(100%); transition: transform 0.25s ease; overflow: hidden; }
 #divHomePnl .card-sheet-overlay.open .card-sheet { transform: none; }
 #divHomePnl .card-sheet-grip { flex: none; align-self: center; width: 38px; height: 4px; margin-top: 8px; border-radius: 2px; background: var(--color-control-border); }
 #divHomePnl .card-sheet-head { flex: none; display: flex; align-items: center; gap: 12px; padding: 8px 16px 12px; border-bottom: 1px solid var(--color-border); }

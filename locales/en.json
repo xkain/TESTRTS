@@ -13,6 +13,10 @@
     "TOPBAR_NET_ETH": "Ethernet / PoE:",
     "TOPBAR_NET_AP": "Access Point (AP):",
     "RADIO_ACTIVITY_TOOLTIP": "Radio / movement activity",
+    "NETBANNER_AP": "Backup access point: “{SSID}” is not responding",
+    "NETBANNER_FIRST": "You are connected to the device's own network. Choose your Wi-Fi in Settings › Network.",
+    "NETBANNER_WEAK": "Weak Wi-Fi signal ({DBM} dBm): commands may get lost",
+    "NETBANNER_FALLBACK": "Ethernet cable unplugged: the device switched to Wi-Fi",
 
 "INDEX_TAB": "TAB",
     "TAB_RADIO": "Radio",

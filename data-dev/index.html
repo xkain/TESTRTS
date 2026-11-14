@@ -145,6 +145,7 @@
     };
     </script>
     <link rel="stylesheet" href="index.css?v={{VERSION}}" onerror="window.__onAssetError('css')">
+    <title>ESPSomfy-RTS</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <script src="index.js?v={{VERSION}}" onload="window.__resolveJsReady()" onerror="window.__onAssetError('js')"></script>
@@ -243,63 +244,31 @@
                     <h1 id="mobileTitle" class="mobile-title"></h1>
                 </div>
                 <div class="header-right">
-                    <div class="mobile-status-cluster">
-                        <div id="mobileFwUpdate" class="mobile-status-btn" onclick="confirmDiscardChanges(() => activateGrpid('divFirmware'));">
-                            <svg class="mobile-status-svg"><use href="#svg-download"></use></svg>
-                            <span class="mobile-status-dot is-down"></span>
-                        </div>
-                        <!-- Indicateur logiciel d'activité radio/mouvement (general.showRadioActivity) :
-                             élément indépendant du réglage headerMobileDisplay ci-dessous, qui ne
-                             gouverne QUE mobileNetStatus/mobileUptime. Visibilité pilotée par
-                             [data-show-radio-activity] sur <html>, pulse posé par le socket
-                             'radioActivity' (cf. 70-somfy.js). -->
-                        <span id="headerRadioActivityMobile" class="radio-activity-dot radio-activity-radar" tr="RADIO_ACTIVITY_TOOLTIP" title="">
-                            <span class="radio-activity-radar-glow" aria-hidden="true"></span>
-                            <svg class="radio-activity-radar-icon"><use href="#svg-tabRadio"></use></svg>
-                        </span>
-                        <div id="mobileNetStatus" class="mobile-status-btn">
-                            <svg class="mobile-status-svg"><use id="mobileNetIcon" href="#svg-wifi"></use></svg>
-                            <span id="mobileNetDot" class="mobile-status-dot"></span>
-                        </div>
-                        <div id="mobileUptime" class="uptime-tooltip-container mobile-status-btn">
-                            <svg class="mobile-status-svg"><use href="#svg-horloge"></use></svg>
-                            <div class="uptime-tooltip app-tooltip">
-                                <div class="app-tooltip-title" tr="TOPBAR_UPTIME"></div>
-                                <div class="app-tooltip-row">
-                                    <span class="app-tooltip-dot device"></span>
-                                    <span class="app-tooltip-label" tr="TOPBAR_DEVICE">Appareil</span>
-                                    <span class="uptime-display value">--j --h --m --s</span>
-                                </div>
-                                <div class="app-tooltip-row">
-                                    <span class="app-tooltip-dot network"></span>
-                                    <span class="app-tooltip-label net-uptime-label" tr="CONNEXION_WIFI_NETWORK">Réseau</span>
-                                    <span class="net-display value">--j --h --m --s</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Indicateur logiciel d'activité radio/mouvement (general.showRadioActivity) : visibilité
+                         pilotée par [data-show-radio-activity] sur <html>, pulse posé par le socket 'radioActivity'. -->
+                    <span id="headerRadioActivityMobile" class="radio-activity-dot radio-activity-radar" tr="RADIO_ACTIVITY_TOOLTIP" title="">
+                        <span class="radio-activity-radar-glow" aria-hidden="true"></span>
+                        <svg class="radio-activity-radar-icon"><use href="#svg-tabRadio"></use></svg>
+                    </span>
                     <button type="button" id="btnMobileAdd" class="mobile-menu-btn" onclick="mobileNav.addMenu();" tr="BT_ADD" title=""><svg><use href="#svg-add"></use></svg></button>
-                    <button type="button" id="btnMobileHelp" class="mobile-menu-btn" onclick="openPageHelp();" tr="HELP_THIS_PAGE" title=""><svg><use href="#svg-navHelp"></use></svg></button>
+                    <nav id="mobileNav" class="mobile-nav">
+                        <button type="button" class="mobile-menu-btn" data-tab-root="divHomePnl" tr="DASH_HOUSE_TITLE" title=""><svg><use href="#svg-tabHome"></use></svg></button>
+                        <button type="button" class="mobile-menu-btn" data-tab-root="divSomfySchedules" tr="SUBTAB_SCHEDULES" title=""><svg><use href="#svg-navSchedule"></use></svg></button>
+                        <button type="button" class="mobile-menu-btn mobile-nav-settings" data-tab-root="divSettingsPnl" tr="SETTINGS_TITLE" title=""><svg><use href="#svg-tabSettings"></use></svg></button>
+                    </nav>
                 </div>
             </div>
-            <nav id="mobileTabBar" class="mobile-tabbar" role="tablist">
-                <button type="button" role="tab" data-tab-root="divHomePnl"><svg><use href="#svg-tabHome"></use></svg><span tr="DASH_HOUSE_TITLE">Maison</span></button>
-                <button type="button" role="tab" data-tab-root="divSomfySchedules"><svg><use href="#svg-navSchedule"></use></svg><span tr="SUBTAB_SCHEDULES">Plannings</span></button>
-                <button type="button" role="tab" data-tab-root="divSettingsPnl"><svg><use href="#svg-tabSettings"></use></svg><span tr="SETTINGS_TITLE">Réglages</span><i class="mobile-tabbar-dot" aria-hidden="true"></i></button>
-            </nav>
+            <button type="button" id="netBanner" class="net-banner" hidden onclick="wifi.onBannerClick();"><svg class="net-banner-icon"><use href="#svg-wifi"></use></svg><span class="net-banner-text"></span><svg class="net-banner-chev"><use href="#svg-arrowRight"></use></svg></button>
             <div id="divConfigPnl" style="display:none;">
                 <div id="divSettingsPnl" style="display:none;">
-                    <div class="settings-head">
-                        <h2 class="settings-title" tr="SETTINGS_TITLE">Réglages</h2>
-                        <button type="button" class="settings-help" onclick="openPageHelp();"><svg><use href="#svg-navHelp"></use></svg></button>
-                    </div>
-                    <div class="settings-list">
-                        <a class="settings-row" data-grpid="divNetAdapter"><span class="uniblocSvg-F"><svg><use href="#svg-tabReseau"></use></svg></span><span class="settings-row-text"><b tr="TAB_NETWORK"></b><span class="settings-row-desc" tr="SETTINGS_DESC_CONNECTION"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divTransceiverSettings"><span class="uniblocSvg-F"><svg><use href="#svg-antenna"></use></svg></span><span class="settings-row-text"><b tr="TAB_RADIO"></b><span class="settings-row-desc" tr="SETTINGS_DESC_TRANSCEIVER"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divHomeAssistant"><span class="uniblocSvg-F"><svg><use href="#svg-homeAssistant0"></use></svg></span><span class="settings-row-text"><b tr="MARKETP"></b><span class="settings-row-desc" tr="SETTINGS_DESC_HA"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divSystemOptions"><span class="uniblocSvg-F"><svg><use href="#svg-tabSystem"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_GENERAL"></b><span class="settings-row-desc" tr="SETTINGS_DESC_GENERAL"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" data-grpid="divFirmware"><span class="uniblocSvg-F"><svg><use href="#svg-navFirmware"></use></svg></span><span class="settings-row-text"><b tr="SUBTAB_DEVICE"></b><span class="settings-row-desc" tr="SETTINGS_DESC_FIRMWARE"></span></span><svg class="settings-row-chev"><use href="#svg-arrowRight"></use></svg></a>
-                        <a class="settings-row" onclick="openPageHelp();"><span class="uniblocSvg-F"><svg><use href="#svg-navHelp"></use></svg></span><span class="settings-row-text"><b tr="FW_TILE_HELP"></b><span class="settings-row-desc" tr="FW_CREDITS_DOC_DESC"></span></span><svg class="settings-row-chev"><use href="#svg-linkOut"></use></svg></a>
+                    <div class="set-grid">
+                        <button type="button" id="setStateTile" class="set-tile set-state" onclick="wifi.openStatus();"><span class="set-state-dot"></span><span class="set-state-text"><b tr="NET_STATUS_UP"></b><span id="setStateSub" class="set-tile-val"></span></span><svg class="set-state-chev"><use href="#svg-arrowRight"></use></svg></button>
+                        <a class="set-tile" data-grpid="divNetAdapter"><span class="set-tile-icon"><svg><use href="#svg-tabReseau"></use></svg></span><b tr="TAB_NETWORK"></b><span id="setValNet" class="set-tile-val" tr="SETTINGS_DESC_CONNECTION"></span></a>
+                        <a class="set-tile" data-grpid="divTransceiverSettings"><span class="set-tile-icon"><svg><use href="#svg-antenna"></use></svg></span><b tr="TAB_RADIO"></b><span id="setValRadio" class="set-tile-val" tr="LANG_MODAL_ACTIVE"></span></a>
+                        <a class="set-tile" data-grpid="divHomeAssistant"><span class="set-tile-icon"><svg><use href="#svg-homeAssistant0"></use></svg></span><b tr="MARKETP"></b><span class="set-tile-val" tr="SETTINGS_DESC_HA"></span></a>
+                        <a class="set-tile" data-grpid="divSystemOptions"><span class="set-tile-icon"><svg><use href="#svg-tabSystem"></use></svg></span><b tr="SUBTAB_GENERAL"></b><span class="set-tile-val" tr="SETTINGS_DESC_GENERAL"></span></a>
+                        <a class="set-tile" data-grpid="divFirmware"><span class="set-tile-icon"><svg><use href="#svg-navFirmware"></use></svg></span><b tr="SUBTAB_DEVICE"></b><span class="set-tile-val set-fw-idle" tr="SETTINGS_DESC_FIRMWARE"></span><span class="set-tile-val set-fw-new" tr="FW_UPDATE_AVAILABLE"></span></a>
+                        <a class="set-tile" onclick="openPageHelp();"><span class="set-tile-icon"><svg><use href="#svg-navHelp"></use></svg></span><b tr="FW_TILE_HELP"></b><span class="set-tile-val" tr="FW_CREDITS_DOC_DESC"></span></a>
                     </div>
                     <div class="button-container-footerHtml">
                         <button type="button" line onclick="general.rebootDevice();"><svg><use href="#svg-restart"></use></svg><span tr="BT_REBOOT">Redémarrer</span></button>

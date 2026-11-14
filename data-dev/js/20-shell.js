@@ -1019,12 +1019,12 @@ const mobileNav = {
     sync(topId, leafId, detailLabel) {
         this.state = { topId, leafId, editor: detailLabel !== null && detailLabel !== undefined };
         this.tab = this.tabOf(topId, leafId);
-        document.querySelectorAll('#mobileTabBar [data-tab-root]').forEach(b => {
+        document.querySelectorAll('#mobileNav [data-tab-root]').forEach(b => {
             const on = b.getAttribute('data-tab-root') === this.tab;
             b.classList.toggle('is-active', on);
-            b.setAttribute('aria-selected', on ? 'true' : 'false');
+            if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
         });
-        document.querySelectorAll('.gen-tabs').forEach(genTabsLabel);
+        document.querySelectorAll('.gen-tabs').forEach(genTabsSync);
         const root = this.isRoot();
         const header = get('appHeader');
         if (header) {
@@ -1034,12 +1034,15 @@ const mobileNav = {
         const title = get('mobileTitle');
         if (title) {
             const leafLabel = document.querySelector(`.subtab-container > span[data-grpid="${leafId}"]`)?.textContent.trim()
-                || document.querySelector(`.settings-row[data-grpid="${leafId}"] b`)?.textContent.trim() || '';
-            title.textContent = root ? '' : (detailLabel || leafLabel);
+                || document.querySelector(`.set-tile[data-grpid="${leafId}"] b`)?.textContent.trim() || '';
+            const ROOT_TITLES = { divHomePnl: 'DASH_HOUSE_TITLE', divSomfySchedules: 'SUBTAB_SCHEDULES', divSettingsPnl: 'SETTINGS_TITLE' };
+            title.textContent = root ? tr(ROOT_TITLES[this.tab]) : (detailLabel || leafLabel);
+            // La marque vit dans l'onglet du navigateur, plus dans l'en-tête.
+            document.title = (title.textContent ? title.textContent + ' · ' : '') + 'ESPSomfy-RTS';
         }
     },
     bind() {
-        document.querySelectorAll('#mobileTabBar [data-tab-root]').forEach(b =>
+        document.querySelectorAll('#mobileNav [data-tab-root]').forEach(b =>
             b.addEventListener('click', () => this.goTab(b.getAttribute('data-tab-root'))));
     },
     addMenu() {
@@ -1079,6 +1082,7 @@ const uiAdvanced = {
         const on = this.get();
         document.documentElement.toggleAttribute('data-ui-advanced', on);
         document.querySelectorAll('.ui-advanced-cb').forEach(cb => { cb.checked = on; });
+        document.querySelectorAll('.gen-tabs').forEach(genTabsSync);
     },
 };
 // Parent affiché dans le fil d'Ariane et entrée de la barre latérale qui porte une page.
@@ -1325,18 +1329,11 @@ function bindMobileUptimeTooltip() {
     });
 }
 
-function _placeMobileParts(mq) {
-    const status = document.querySelector('.sidebar-status');
-    const statusAnchor = mq.matches ? document.querySelector('#divSettingsPnl .settings-head') : document.querySelector('.sidebar-brand');
-    if (status && statusAnchor && status.previousElementSibling !== statusAnchor) statusAnchor.after(status);
-}
 function bindNavigation() {
-    const mq = window.matchMedia('(max-width: 767px)');
-    _placeMobileParts(mq);
-    mq.addEventListener('change', () => _placeMobileParts(mq));
     mobileNav.bind();
+    document.querySelectorAll('.gen-hero').forEach(h => h.insertAdjacentHTML('beforeend', `<button type="button" class="gen-hero-help" onclick="openPageHelp();" tr="HELP_THIS_PAGE" title=""><svg><use href="#svg-navHelp"></use></svg></button>`));
     uiAdvanced.apply();
-    document.querySelectorAll('.nav-item, .sub-nav-item, .settings-row[data-grpid]').forEach(item => {
+    document.querySelectorAll('.nav-item, .sub-nav-item, .settings-row[data-grpid], .set-tile[data-grpid]').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const grpid = item.getAttribute('data-grpid');
@@ -1587,14 +1584,43 @@ function fillGenSecMini(sections) {
 }
 
 // --- Onglets d'une page migrée (Général, Appareil, Connexion) -----------------------------
-// Sous 768 px les onglets deviennent des sections empilées (bindGenSections). L'onglet
-// précédent/suivant n'apparaît que si l'onglet affiché dépasse de l'écran.
-// Mobile : les onglets deviennent les pastilles d'un stepper ; seul le nom de l'onglet actif
-// s'écrit, en entier, sous le rail (.gen-tabs::after lit data-label).
-function genTabsLabel(strip) {
-    const sel = strip.querySelector('.gen-tab.selected');
-    strip.dataset.label = sel ? sel.textContent.trim() : '';
+// L'onglet précédent/suivant n'apparaît en pied de page que si l'onglet affiché dépasse de l'écran.
+// Mobile : seuls l'onglet courant et ses voisins s'écrivent, sur une barre segmentée qui reste
+// seule collée sous l'en-tête pendant le défilement (.is-min). Les onglets masqués, par
+// leur attribut ou par les options avancées, sortent de la barre.
+function genTabsVisible(strip) {
+    const adv = document.documentElement.hasAttribute('data-ui-advanced');
+    return [...strip.querySelectorAll('.gen-tab')].filter(t => !t.hidden && (adv || !t.classList.contains('adv-only')));
 }
+function genTabsSync(strip) {
+    if (!strip) return;
+    const tabs = genTabsVisible(strip), cur = tabs.findIndex(t => t.classList.contains('selected'));
+    strip.querySelectorAll('.gen-tab').forEach(t => t.classList.remove('gen-tab-prev', 'gen-tab-next'));
+    tabs[cur - 1]?.classList.add('gen-tab-prev');
+    tabs[cur + 1]?.classList.add('gen-tab-next');
+    let bar = strip.querySelector('.gen-tabs-bar');
+    if (!bar) {
+        bar = document.createElement('span');
+        bar.className = 'gen-tabs-bar';
+        bar.setAttribute('aria-hidden', 'true');
+        strip.appendChild(bar);
+        bar.addEventListener('click', (e) => {
+            const i = e.target.closest('i');
+            if (i) genTabsVisible(strip)[+i.dataset.i]?.click();
+        });
+    }
+    bar.innerHTML = tabs.map((t, i) => `<i data-i="${i}" class="${i === cur ? 'on' : ''}"></i>`).join('');
+}
+// Repli de la bande d'onglets dès qu'elle se colle sous l'en-tête (mobile ; ailleurs sans effet).
+// Calcul direct à chaque évènement : une ou deux bandes visibles au plus, et requestAnimationFrame
+// est suspendu dans un onglet en arrière-plan.
+window.addEventListener('scroll', () => {
+    document.querySelectorAll('.gen-tabs').forEach(st => {
+        if (!st.offsetParent) return;
+        const top = parseFloat(getComputedStyle(st).top) || 0;
+        st.classList.toggle('is-min', window.scrollY > 0 && st.getBoundingClientRect().top <= top + 0.5);
+    });
+}, { passive: true });
 function bindGenTabs(page, ids) {
     const strip = get(ids.tabs), panels = get(ids.panels), pager = get(ids.pager);
     // Un onglet masqué (page Connexion : selon le type choisi) sort de la navigation.
@@ -1632,7 +1658,7 @@ function bindGenTabs(page, ids) {
             if (on && strip.scrollWidth > strip.clientWidth) strip.scrollLeft = t.offsetLeft - strip.offsetLeft - (strip.clientWidth - t.offsetWidth) / 2;
         });
         panels.querySelectorAll(':scope > [data-tab]').forEach(p => { p.hidden = parseInt(p.dataset.tab, 10) !== i; });
-        genTabsLabel(strip);
+        genTabsSync(strip);
         update();
         return true;
     };

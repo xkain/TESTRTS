@@ -4452,8 +4452,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 /* =======================================================================
  *  MENU « + » DE LA MAISON (mobileNav.addMenu, 20-shell.js)
  *  ======================================================================= */
-.mobile-add-menu .settings-row,
-.card-sheet .settings-row {
+.mobile-add-menu .settings-row {
     width: 100%;
     margin: 0;
     text-transform: none;
@@ -4461,15 +4460,136 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     text-align: left;
     font-weight: 400;
 }
-.card-sheet-rows {
+.sheet-tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
     margin: 16px 0;
 }
-.card-sheet-row-val {
-    flex: none;
-    max-width: 40%;
+.sheet-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 0;
+    margin: 0;
+    padding: 12px;
+    border: 0;
+    border-radius: var(--r-4);
+    background: var(--surface);
+    color: var(--text);
+    text-align: left;
+    text-transform: none;
+    letter-spacing: normal;
+    cursor: pointer;
+}
+/* Nombre impair de tuiles : la dernière prend la ligne (deux colonnes, cf. tuile-largeur-max). */
+.sheet-tile:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+}
+.sheet-tile b {
+    margin-top: 6px;
+    font-size: 14px;
+}
+.sheet-tile-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--r-3);
+    background: var(--surface-2);
+    color: var(--accent);
+}
+.sheet-tile-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+.sheet-tile-val {
     overflow: hidden;
+    font-size: 12.5px;
+    color: var(--text-3);
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--color-text-secondary);
+}
+.sheet-tile.is-warn {
+    background: var(--warn-bg);
+}
+.sheet-tile.is-warn .sheet-tile-icon {
+    background: var(--surface);
+    color: var(--warn);
+}
+.sheet-tile.is-warn .sheet-tile-val {
+    color: var(--warn);
+    font-weight: 700;
+}
+
+/* =======================================================================
+ *  FICHE D'ÉTAT DE L'APPAREIL (wifi.openStatus, 50-wifi.js)
+ *  ======================================================================= */
+.dstat-sheet .message-content {
+    background: var(--panel);
+    color: var(--text);
+    text-align: left;
+}
+.dstat-sheet .message-content > :not(.modalHeader):not(.modalHeader-handle) {
+    margin-left: 16px;
+    margin-right: 16px;
+}
+.dstat-alert {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: var(--r-3);
     font-size: 13px;
+    font-weight: 700;
+}
+.dstat-alert[data-tone="warn"] {
+    background: var(--warn-bg);
+    color: var(--warn);
+}
+.dstat-alert[data-tone="info"] {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+}
+.dstat-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border-radius: var(--r-4);
+    background: var(--surface);
+}
+.dstat-block h4 {
+    margin: 0 0 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--text-3);
+}
+.dstat-kv {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+    font-size: 14px;
+}
+.dstat-kv span {
+    color: var(--text-3);
+}
+.dstat-kv b {
+    min-width: 0;
+    overflow: hidden;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.dstat-help {
+    width: auto;
+    margin-bottom: 16px;
+    background: var(--surface);
+    border: 0;
+    text-transform: none;
+    letter-spacing: normal;
 }
