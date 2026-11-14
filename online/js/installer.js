@@ -47,9 +47,12 @@
  * Les versions plus anciennes restent listées dans le sélecteur, grisées : elles s'installent par
  * le bouton de téléversement, pas en un clic.
  *
- * Volontairement AUCUNE sélection de langue de l'appareil ici (supprimée à la demande : elle
- * faisait doublon avec l'assistant de premier démarrage déjà présent sur l'appareil, cf.
- * settings.pendingLang / GitUpdater::checkPendingLang() dans src/GitOTA.cpp).
+ * LANGUE DE L'APPAREIL : les releases qui publient un descriptif de langues (bloc "langues"
+ * d'index.json, cf. mirror_releases.py) offrent un sélecteur. L'image factory est alors suivie
+ * d'une SECONDE part : l'image du système de fichiers « en + langue choisie », écrite à l'offset
+ * de la partition spiffs PAR-DESSUS celle, en anglais seul, que l'image fusionnée vient de poser
+ * -- l'ordre des parts est porteur. Sans descriptif (anciennes versions) et pour les BOX (fr
+ * embarqué), le sélecteur reste masqué et rien ne change.
  *
  * L'effacement complet avant écriture est demandé explicitement (dernier argument de flash(),
  * cf. startFlash()) plutôt que piloté par le champ "new_install_prompt_erase" du manifeste (celui-
@@ -273,6 +276,7 @@ function oublierMateriel() {
     sel.replaceChildren(invite);
     sel.disabled = true;
     $('startFlashBtn').disabled = true;
+    $('langField').hidden = true;
 }
 
 function renderHardware() {
@@ -423,6 +427,7 @@ async function buildVersionSelect() {
     sel.disabled = !installables;
     $('startFlashBtn').disabled = !installables;
     majPreReleaseNotice();
+    majLangSelect();
 }
 
 // Une pré-version se choisit sciemment. Le libellé la signale déjà, mais il disparaît dès que la
@@ -430,6 +435,48 @@ async function buildVersionSelect() {
 function majPreReleaseNotice() {
     const choix = $('fwVersion').selectedOptions[0];
     $('preReleaseNotice').hidden = !(choix && choix.dataset.pre === '1');
+}
+
+function versionCourante() {
+    const choix = $('fwVersion').selectedOptions[0];
+    if (!choix || !choix.dataset.tag || !catalogue) return null;
+    return catalogue.versions.find((v) => v.tag === choix.dataset.tag) || null;
+}
+
+function varianteFs() {
+    if (!selected || selected.kind === 'box') return null;
+    return selected.id === 'esp32c6' ? 'c6' : '4mb';
+}
+
+function majLangSelect() {
+    const champ = $('langField');
+    const sel = $('fsLang');
+    const version = versionCourante();
+    const variante = varianteFs();
+    const langues = version && version.langues;
+    const nomNatif = (code) => (langues && langues.natives && langues.natives[code]) || code;
+    const codes = langues && variante && langues.offsets && langues.offsets[variante]
+        ? Object.keys(langues.packs).filter((c) => langues.packs[c][variante])
+        : [];
+    if (!codes.length) {
+        champ.hidden = true;
+        sel.replaceChildren();
+        return;
+    }
+    codes.sort((a, b) => nomNatif(a).localeCompare(nomNatif(b)));
+    const anglais = document.createElement('option');
+    anglais.value = '';
+    anglais.textContent = tr('installer_lang_english_only');
+    const options = [anglais];
+    for (const code of codes) {
+        const o = document.createElement('option');
+        o.value = code;
+        o.textContent = nomNatif(code);
+        options.push(o);
+    }
+    sel.replaceChildren(...options);
+    if (codes.includes(SiteLayout.lang)) sel.value = SiteLayout.lang;
+    champ.hidden = false;
 }
 
 /* ------------------------------------------------------------------ Téléversement manuel */
@@ -757,13 +804,24 @@ async function startFlash() {
     openFlashDialog();
     setFlashDialog('busy', tr('installer_flash_state_preparing'), '');
 
+    const version = versionCourante();
+    const variante = varianteFs();
+    const codeLang = !$('langField').hidden ? $('fsLang').value : '';
+    const langues = codeLang && version ? version.langues : null;
+
     // Récupéré et déballé AVANT de toucher au port : inutile d'aller plus loin, et surtout de
     // lancer un effacement, si l'image n'est même pas récupérable.
     let image;
+    let imageFs = null;
     try {
         const res = await fetch(zipUrl);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         ({ blob: image } = await lireArchive(await res.blob()));
+        if (langues) {
+            const resFs = await fetch(langues.packs[codeLang][variante]);
+            if (!resFs.ok) throw new Error(`HTTP ${resFs.status}`);
+            ({ blob: imageFs } = await lireArchive(await resFs.blob()));
+        }
     } catch (err) {
         setFlashDialog('error', tr('installer_flash_error_title'), tr('installer_flash_error_image'));
         return;
@@ -780,10 +838,13 @@ async function startFlash() {
     }
 
     const url = URL.createObjectURL(image);
+    const urlFs = imageFs ? URL.createObjectURL(imageFs) : null;
+    const parts = [{ path: url, offset: 0 }];
+    if (urlFs) parts.push({ path: urlFs, offset: parseInt(langues.offsets[variante], 16) });
     const manifest = {
         name: 'ESPSomfy-RTS',
         version: choix.dataset.tag || '',
-        builds: [{ chipFamily: puce, parts: [{ path: url, offset: 0 }] }],
+        builds: [{ chipFamily: puce, parts }],
     };
     // eraseFirst=true : effacement complet systématique (cf. commentaire d'en-tête, remplace le
     // "new_install_prompt_erase" du manifeste que seule la boîte de dialogue par défaut lisait).
@@ -791,6 +852,7 @@ async function startFlash() {
         await flash(onFlashEvent, port, url, manifest, true);
     } finally {
         URL.revokeObjectURL(url);
+        if (urlFs) URL.revokeObjectURL(urlFs);
     }
 }
 
@@ -954,7 +1016,7 @@ async function init() {
     $('btnDisconnect').addEventListener('click', disconnect);
     $('btnInstall').addEventListener('click', openInstallOverlay);
     $('instClose').addEventListener('click', closeInstallOverlay);
-    $('fwVersion').addEventListener('change', majPreReleaseNotice);
+    $('fwVersion').addEventListener('change', () => { majPreReleaseNotice(); majLangSelect(); });
     $('startFlashBtn').addEventListener('click', startFlash);
     $('btnManual').addEventListener('click', openManualOverlay);
     $('manualClose').addEventListener('click', closeManualOverlay);

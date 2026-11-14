@@ -1748,7 +1748,7 @@ input:focus, select:focus {
    de trois lettres. */
 .inst-footer .field-inline {
     flex: 1;
-    min-width: 0;
+    min-width: max-content;
     margin: 0;
 }
 

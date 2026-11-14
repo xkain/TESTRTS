@@ -52,7 +52,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=9d67ffdd">
+  <link rel="stylesheet" href="css/style.css?v=7c49ced0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -320,6 +320,10 @@
             <option disabled selected data-i18n="installer_version_pick_hw">Choisissez d'abord votre matériel</option>
           </select>
         </div>
+        <div class="field field-inline" id="langField" hidden>
+          <label for="fsLang" data-i18n="installer_lang_label">Langue de l'appareil :</label>
+          <select id="fsLang"></select>
+        </div>
         <button type="button" id="startFlashBtn" class="btn btn-green" disabled>
           <svg class="btn-glyph" width="18" height="18"><use href="#svg-chip"/></svg>
           <span data-i18n="installer_btn_install">Installer</span>
@@ -496,7 +500,7 @@
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=d777e3df"></script>
+  <script type="module" src="js/installer.js?v=f710e608"></script>
 
 
   <!-- BIBLIOTHÈQUE DE SYMBOLES, en fin de document : rien n'y est rendu directement (le <svg>

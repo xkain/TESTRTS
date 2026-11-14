@@ -100,6 +100,8 @@
     "installer_version_pre": "{version} (Vorabversion)",
     "installer_version_manual": "{version} — manueller Upload",
     "installer_version_none": "Keine Version online",
+    "installer_lang_label": "Gerätesprache:",
+    "installer_lang_english_only": "Nur Englisch",
 
 "INDEX_OVERLAY_MANUAL": "OVERLAY TELEVERSEMENT",
     "installer_manual_title": "Datei installieren",

@@ -100,6 +100,8 @@
     "installer_version_pre": "{version} (pré-version)",
     "installer_version_manual": "{version} — téléversement manuel",
     "installer_version_none": "Aucune version en ligne",
+    "installer_lang_label": "Langue de l'appareil :",
+    "installer_lang_english_only": "Anglais seulement",
 
 "INDEX_OVERLAY_MANUAL": "OVERLAY TELEVERSEMENT",
     "installer_manual_title": "Installer un fichier",
