@@ -60,6 +60,8 @@ RE_V3 = re.compile(r"^ESPSomfyRTS_.+_factory_(.+)\.zip$")
 # v2 : SomfyController.onboard.<carte>.bin.zip
 RE_V2 = re.compile(r"^SomfyController\.onboard\.(.+)\.bin\.zip$")
 
+RE_FS_LANGS = re.compile(r"^ESPSomfyRTS_.+_fs_langs\.json$")
+
 
 def carte_v3(nom):
     m = RE_V3.match(nom)
@@ -122,6 +124,44 @@ def telecharger(repo, tag, asset, destination):
     )
     recu = os.path.join(os.path.dirname(destination), asset)
     os.replace(recu, destination)
+
+
+def recopier_langues(repo, release, dossier_cache, dossier_site):
+    tag = release["tag"]
+    desc_asset = next((a for a in release["assets"] if RE_FS_LANGS.match(a)), None)
+    if not desc_asset:
+        return None
+    desc_fichier = os.path.join(dossier_cache, "fs_langs.json")
+    if not (os.path.exists(desc_fichier) and os.path.getsize(desc_fichier) > 0):
+        telecharger(repo, tag, desc_asset, desc_fichier)
+    try:
+        with open(desc_fichier, encoding="utf-8") as f:
+            desc = json.load(f)
+    except ValueError:
+        print(f"::warning::{tag} : descriptif de langues illisible, langues ignorées.")
+        return None
+    assets = set(release["assets"])
+    packs = {}
+    for code, archives in sorted(desc.get("langs", {}).items()):
+        if not archives or not all(a in assets for a in archives.values()):
+            print(f"::warning::{tag} : archives de langue incomplètes pour « {code} », langue ignorée.")
+            continue
+        chemins = {}
+        for variante, asset in sorted(archives.items()):
+            fichier = os.path.join(dossier_cache, f"fs_{code}_{variante}.zip")
+            if os.path.exists(fichier) and os.path.getsize(fichier) > 0:
+                etat = "cache"
+            else:
+                telecharger(repo, tag, asset, fichier)
+                etat = f"{os.path.getsize(fichier)} o"
+            os.makedirs(os.path.join(dossier_site, "fs"), exist_ok=True)
+            shutil.copyfile(fichier, os.path.join(dossier_site, "fs", f"{code}_{variante}.zip"))
+            chemins[variante] = f"firmware/{tag}/fs/{code}_{variante}.zip"
+            print(f"  {tag}/fs/{code}_{variante:4} <- {asset}  ({etat})")
+        packs[code] = chemins
+    if not packs:
+        return None
+    return {"offsets": desc.get("offsets", {}), "natives": desc.get("natives", {}), "packs": packs}
 
 
 def main():
@@ -195,12 +235,16 @@ def main():
         # Le TAG et pas le nom de la release : celui-ci est libre et diverge parfois du numéro
         # de version qu'il désigne (« v3.01 » pour le tag v3.0.1). Le tag, lui, est celui que
         # l'appareil compare à sa propre version.
-        versions.append({
+        version = {
             "tag": tag,
             "majeur": majeur(tag),
             "prerelease": bool(r["pre"]),
             "cartes": cartes,
-        })
+        }
+        langues = recopier_langues(args.repo, r, dossier_cache, dossier_site)
+        if langues:
+            version["langues"] = langues
+        versions.append(version)
 
     # Les autres releases existent toujours sur GitHub : le sélecteur les affiche en grisé pour
     # dire qu'elles sont installables, mais par le bouton de téléversement.
