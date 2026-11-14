@@ -962,16 +962,19 @@ function _updateBreadcrumb(topId, leafId, detailLabel = null) {
         _setBreadcrumbLink(activeEl, null);
         return;
     }
-    const topLabel = document.querySelector(`.nav-section[data-section="${topId}"] .nav-section-label`)?.textContent.trim() || '';
-    const leafLabel = document.querySelector(`.subtab-container > span[data-grpid="${leafId}"]`)?.textContent.trim() || '';
+    // Le fil suit la barre latérale (Maison, Plannings, Réglages) et non plus les sections du
+    // routeur ; une page sans parent (Plannings) s'écrit seule au premier niveau.
+    const parentId = BREADCRUMB_PARENT[leafId] || null;
+    const navLabel = (id) => document.querySelector(`.sidebar-nav [data-grpid="${id}"] span`)?.textContent.trim() || '';
+    const leafLabel = navLabel(leafId) || document.querySelector(`.subtab-container > span[data-grpid="${leafId}"]`)?.textContent.trim() || '';
+    const topLabel = parentId === 'settings' ? (document.querySelector('.sidebar-nav .nav-section-label')?.textContent.trim() || '')
+        : (parentId ? navLabel(parentId) : leafLabel);
     parentEl.textContent = topLabel;
-    // Feuille identique à la section (ex: Radio > Radio) : laisser vide masque le séparateur et
-    // le second niveau via CSS (:empty), pour ne pas afficher "Radio › Radio".
-    activeEl.textContent = (leafLabel && leafLabel !== topLabel) ? leafLabel : '';
+    activeEl.textContent = parentId ? leafLabel : '';
     const inEditor = detailLabel !== null;
     if (detailEl) detailEl.textContent = inEditor ? (detailLabel || '') : '';
     bc.setAttribute('data-depth', inEditor ? '3' : (activeEl.textContent ? '2' : '1'));
-    _setBreadcrumbLink(parentEl, (inEditor || leafId !== _resolveDefaultChild(topId)) ? topId : null);
+    _setBreadcrumbLink(parentEl, parentId && parentId !== 'settings' ? parentId : (!parentId && inEditor ? leafId : null));
     _setBreadcrumbLink(activeEl, (inEditor && activeEl.textContent) ? leafId : null);
 }
 // Navigation mobile : trois onglets (Maison, Plannings, Réglages), un titre et un retour.
@@ -1075,10 +1078,17 @@ const uiAdvanced = {
     apply() {
         const on = this.get();
         document.documentElement.toggleAttribute('data-ui-advanced', on);
-        const cb = get('cbUiAdvanced');
-        if (cb) cb.checked = on;
+        document.querySelectorAll('.ui-advanced-cb').forEach(cb => { cb.checked = on; });
     },
 };
+// Parent affiché dans le fil d'Ariane et entrée de la barre latérale qui porte une page.
+const BREADCRUMB_PARENT = {
+    divSomfyMotors: 'divHomePnl', divSomfyGroups: 'divHomePnl', divSomfyRooms: 'divHomePnl',
+    divNetAdapter: 'settings', divTransceiverSettings: 'settings', divHomeAssistant: 'settings', divSystemOptions: 'settings', divFirmware: 'settings',
+    divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings',
+    divMQTT: 'divHomeAssistant', divListener: 'divHomeAssistant',
+};
+const SIDEBAR_OWNER = { divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings', divMQTT: 'divHomeAssistant', divListener: 'divHomeAssistant' };
 const DOC_PAGES = {
     divHomePnl: 'tableau-de-bord/',
     divSomfyMotors: 'somfy/equipements/',
@@ -1255,7 +1265,7 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
         if (topId === 'divNetworkSettings' && typeof wifi !== 'undefined') wifi.loadNetwork();
 
         // Sections de premier niveau : sidebar (.nav-item + son .submenu), puis leurs panneaux.
-        document.querySelectorAll('.nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === topId));
+        document.querySelectorAll('.nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === leafId));
         document.querySelectorAll('.nav-section[data-section]').forEach(s => s.classList.toggle('active', s.getAttribute('data-section') === topId));
         ['divHomePnl', ...ROUTE_TOP_LEVEL_IDS].forEach(id => {
             const panel = get(id);
@@ -1264,7 +1274,7 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
         get('divSettingsPnl').style.display = (topId === 'divSettingsPnl') ? '' : 'none';
 
         // Sous-onglet actif : sidebar (.sub-nav-item), puis les panneaux listés par .subtab-container.
-        document.querySelectorAll('.sub-nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === leafId));
+        document.querySelectorAll('.sub-nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === (SIDEBAR_OWNER[leafId] || leafId)));
         document.querySelectorAll('.subtab-container > span[data-grpid]').forEach(t => {
             const id = t.getAttribute('data-grpid');
             t.classList.toggle('selected', id === leafId);

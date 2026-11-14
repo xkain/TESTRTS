@@ -695,6 +695,11 @@ body.onboarding-active .toast[data-toast-id="langPrompt"] {
     display: flex;
     flex-direction: column;
 }
+.nav-sub {
+    display: flex;
+    flex-direction: column;
+    padding-left: 14px;
+}
 .nav-section-title {
     display: flex;
     align-items: center;
@@ -5234,15 +5239,10 @@ div.frame-pulses {
     color: var(--color-warning);
     font-weight: 600;
 }
-.settings-row-toggle {
-    cursor: default;
-}
-.settings-row-toggle .gen-seg {
-    flex: none;
-    font-size: 14px;
-}
-.mobile-related {
-    display: none;
+.page-related {
+    display: flex;
+    max-width: 720px;
+    margin: 0 clamp(20px, 3vw, 48px) 32px;
 }
 body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     content: "";
@@ -5360,8 +5360,7 @@ body.fw-update .settings-row[data-grpid="divFirmware"]::after {
     body.onboarding-active .mobile-tabbar {
         display: none;
     }
-    .mobile-related {
-        display: flex;
+    .page-related {
         margin: 8px 14px 24px;
     }
     :root:not([data-ui-advanced]) .adv-only {
@@ -6463,9 +6462,11 @@ input.gen-input.mqtt-mono {
 @media (max-width: 1000px) {
     #divHomePnl .dash-topbar { position: relative; padding: 10px 15px 8px; }
     #divHomePnl .dash-house { flex-direction: column; align-items: stretch; gap: 10px; }
-    #divHomePnl .dash-house-txt { padding-right: 130px; }
+    #divHomePnl .dash-house-txt { padding-right: 175px; }
     #divHomePnl .dash-house-bar { flex: none; min-width: 0; }
-    #divHomePnl .dash-edit-btn { position: absolute; top: 12px; right: 15px; }
+    #divHomePnl .dash-edit-btn { position: absolute; top: 12px; right: 57px; }
+    #divHomePnl .dash-add-btn { right: 15px; width: 34px; padding: 0; justify-content: center; }
+    #divHomePnl .dash-add-btn span { display: none; }
     #divHomePnl .dash-move-toast { left: 12px; right: 12px; bottom: calc(12px + var(--tabbar-h, 0px)); width: auto; max-width: none; }
 }
 #divHomePnl .column-count { font-size: 0.8em; font-weight: 600; color: var(--color-text-secondary); }
@@ -6632,6 +6633,12 @@ body.is-offline .shadectl-state { opacity: .45; }
 #divHomePnl .dash-edit-btn:hover { background: var(--color-control-bg-hover); color: var(--color-accent); }
 #divHomePnl .dash-edit-btn svg { width: 15px; height: 15px; }
 #divHomePnl.dash-editing .dash-edit-btn { display: none; }
+/* Le « + » de l'en-tête mobile le remplace sous 768 px. */
+@media (max-width: 767px) {
+    #divHomePnl .dash-add-btn { display: none; }
+    #divHomePnl .dash-edit-btn { right: 15px; }
+    #divHomePnl .dash-house-txt { padding-right: 130px; }
+}
 #divHomePnl .dash-edit-bar { display: none; align-items: center; gap: 10px 12px; flex-wrap: wrap; margin: 12px 20px 0; padding: 10px 14px; border-radius: var(--radius-lg); border: 1px solid color-mix(in srgb, var(--color-accent), transparent 65%); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg-card)); }
 #divHomePnl.dash-editing .dash-edit-bar { display: flex; }
 #divHomePnl .dash-edit-bar-icon { flex: none; width: 20px; height: 20px; color: var(--color-accent); }
