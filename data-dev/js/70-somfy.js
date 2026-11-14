@@ -1824,40 +1824,33 @@ class Somfy {
         this._vrTarget = { type: type, id: parseInt(id, 10) };
         const info = this.vrTarget();
         if (!info) { this._vrTarget = null; return; }
-        // .modal-overlay -- carte centrée sur fond assombri plein écran, feuille glissée par le bas
-        // sur mobile. Son plafond de 90vh est levé pour cette carte-ci (cf. main.css) : sans quoi
-        // la télécommande 80 bits, même compactée, redéborde de 17 px sur un écran de 667 et de
-        // 40 px sur un 640. La carte se dimensionne alors à son contenu et ne prend toute la
-        // hauteur que sur les petits écrans, là où elle en a besoin.
         // En-tête écrit ici plutôt que par modalHeader()/overlayHeader() : le premier passe en
-        // colonne centrée sur mobile (badge de 60 px, deux lignes de texte), le second pose un
-        // menu déroulant dont la télécommande n'a que faire, et aucun des deux ne permet la
-        // réduction au seul nom de la cible.
-        // Pas de bouton de fermeture en pied ni de poignée de glissement : le premier coûtait
-        // 55 px de hauteur, la seconde 30, pour deux chemins de sortie de plus alors que la croix
-        // et le fond cliquable au-dessus de la feuille suffisent.
-        // data-radio est recopié du panneau sur l'overlay : c'est le badge de l'en-tête qui porte
-        // désormais le témoin radio, et il n'existe que le temps de l'ouverture.
+        // colonne centrée sur mobile, le second pose un menu déroulant dont la télécommande n'a que faire.
+        // data-radio est recopié du panneau sur l'overlay : le badge de l'en-tête porte le témoin radio.
+        // Deux vues sur le même bloc : « Télécommande », une feuille comme celle du tableau de bord,
+        // et « Avancé », une fenêtre coque à gauche, fonctions à droite (canevas A2, VrWin).
         let div = document.createElement('div');
         div.className = 'modal-overlay vr-overlay';
         div.setAttribute('data-radio', content.getAttribute('data-radio') || 'on');
+        div.setAttribute('data-view', 'remote');
         div.innerHTML = `
-        <div class="message-content vr-overlay-content">
+        <div class="message-content vr-overlay-content" role="dialog" aria-modal="true">
         <div class="overlayHeader vr-overlay-header">
-        <div class="overlayHeader-block">
         <div class="overlayHeader-badge">
         <svg><use href="#${info.type === 'group' ? 'svg-group' : 'svg-remote'}"></use></svg>
         </div>
-        <div class="overlayHeader-texts">
-        <span class="overlayHeader-title">${tr('SUBTAB_VIRTUAL_REMOTE_L')}</span>
-        <span class="overlayHeader-subtitle"><span class="vr-target-name"></span><span class="vr-target-pos"></span></span>
+        <div class="vr-title">
+        <span class="vr-target-kicker">${tr('SUBTAB_VIRTUAL_REMOTE_L')}</span>
+        <b class="vr-target-name"></b>
+        <span class="vr-target-pos"></span>
         </div>
-        </div>
-        <div class="overlayHeader-right">
         <div close title="${tr('BT_CLOSE')}"><svg><use href="#svg-closeOverlay"></use></svg></div>
         </div>
-        </div>
         <div class="overlay-scroll-content"></div>
+        <nav class="vr-tabs">
+        <button type="button" class="vr-tab" data-view="remote" aria-pressed="true" onclick="somfy.setVRView('remote');"><svg><use href="#svg-remote"></use></svg><span>${tr('SUBTAB_VIRTUAL_REMOTE_S')}</span></button>
+        <button type="button" class="vr-tab" data-view="adv" aria-pressed="false" onclick="somfy.setVRView('adv');"><svg><use href="#svg-tabSettings"></use></svg><span>${tr('VR_VIEW_ADV')}</span></button>
+        </nav>
         </div>`;
         // Le nom de la cible est posé en textContent et non injecté dans le gabarit : c'est la
         // seule chaîne de cet en-tête qui vienne de l'utilisateur.
@@ -1882,6 +1875,15 @@ class Somfy {
         });
         obs.observe(get('divContainer'), { childList: true });
         shOverlay(div);
+    }
+    setVRView(view) {
+        const ov = document.querySelector('.vr-overlay');
+        if (!ov) return;
+        ov.setAttribute('data-view', view);
+        ov.classList.toggle('genmod-overlay', view === 'adv');
+        ov.querySelectorAll('.vr-tab').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === view ? 'true' : 'false'));
+        const body = ov.querySelector('.overlay-scroll-content');
+        if (body) body.scrollTop = 0;
     }
     sendVRCommand(el, evt) {
         if (!isPrimaryPress(evt)) return;
@@ -1927,7 +1929,7 @@ class Somfy {
             // lames où elles sont sans jamais lire myTiltPos -- l'inverse de ce qu'on attend d'un
             // favori. On vise donc explicitement la position enregistrée, par la forme `target` de
             // la route, qui passe par moveToTiltTarget() et ne touche pas à la course. C'est la
-            // seule chose que le centre de la molette ne sache pas faire, lui qui déplace les deux
+            // seule chose que la touche my de la coque ne sache pas faire, elle qui déplace les deux
             // ensemble (moveToMyPosition, cf. SomfyPositioning.cpp).
             // myTiltPos circule déjà transformé (transformPosition côté firmware, dans toJSON comme
             // dans emitState) et la route le retransforme à l'entrée : l'aller-retour est neutre,
@@ -1976,8 +1978,7 @@ class Somfy {
     }
     // Un équipement impulsionnel (garage/portail 1-bouton, contact sec 1-bouton -- cf.
     // toggleShadeTypes) n'a ni position ni mémoire My : ses flèches et son bouton My n'ont rien à
-    // commander. La molette reste néanmoins en place -- c'est sa bordure qui porte le témoin radio
-    // -- et son centre devient la bascule, seul organe utile pour ce type d'équipement.
+    // commander : il reçoit la coque à bouton unique (cf. remotePacks.pickId) et pas d'onglet Avancé.
     // Surtout pas noMyShadeTypes ici : le contact sec 2-boutons y figure alors que Haut et Bas sont
     // ses SEULS ordres utiles (My est coupé net par le répartiteur). Le ranger parmi les
     // impulsionnels lui retirait les flèches et ne lui laissait qu'un centre muet en 56 bits.
@@ -2061,8 +2062,7 @@ class Somfy {
     // processFrame(), dont les gardes drycontact ne sautent que la comptabilité interne -- mais
     // elle ne rencontre personne. On retire donc les boutons plutôt que de laisser croire.
     // Prog reste : ce n'est pas une commande de pilotage mais l'appairage, sans lequel on ne peut
-    // plus associer ni dissocier l'équipement. La molette reste aussi -- ses flèches ne commandent
-    // rien pour un 1-bouton, mais elle porte le témoin radio et tient l'espace.
+    // plus associer ni dissocier l'équipement : il est sur la coque.
     // Même convention de groupe que vrIsImpulse : tous les membres, ou aucun.
     vrIsDryContact(info) {
         if (!info) return false;
@@ -2089,14 +2089,24 @@ class Somfy {
         }
         content.setAttribute('data-bitlength', info.bitLength);
         const impulse = this.vrIsImpulse(info);
+        this.syncVRCoque(info, impulse);
         content.setAttribute('data-kind', impulse ? 'impulse' : 'standard');
         content.setAttribute('data-drycontact', this.vrIsDryContact(info) ? 'yes' : 'no');
-        this.setVRCenterButton(impulse, this.vrIsMoving(info.shade));
         this.setVRSunFlag((info.shade || info.group).flags);
         this.setVRSunSensor(!!(info.shade || info.group).sunSensor);
         content.setAttribute('data-tilt', this.vrTiltUsable(info) ? 'yes' : 'no');
         this.setVRTiltMy(info.shade);
         this.setVRTiltLabels();
+    }
+    // Remontée seulement quand la coque change : syncVRLayout repasse à chaque rafraîchissement de
+    // liste, et remonter sous le doigt couperait un appui maintenu (répétition, Prog armé).
+    syncVRCoque(info, impulse) {
+        const host = this.vrEl('divVRCoque');
+        if (!host) return;
+        const id = remotePacks.pickId((info.shade || info.group).remoteModel, impulse);
+        if (host.dataset.pack === id && host.firstChild) return;
+        host.dataset.pack = id;
+        remotePacks.mount(host, id, (el, evt) => this.sendVRCommand(el, evt));
     }
     // Soleil/Vent et Taille du pas repartent de l'état de la cible À CHAQUE OUVERTURE : sur la page
     // persistante d'autrefois, ils restaient tels quels d'un équipement à l'autre et l'on envoyait
@@ -2124,35 +2134,6 @@ class Somfy {
             const span = this.vrEl('vrspanStepSize');
             if (span) span.innerText = slider.value;
         }
-    }
-    // Le centre de la molette porte trois rôles, et c'est le SEUL organe d'arrêt : le bouton Stop
-    // qui occupait sa propre rangée a disparu avec ce changement.
-    //
-    // La COMMANDE ne dépend que du type d'équipement, jamais de l'état :
-    //   - impulsionnel (cf. noMyShadeTypes) -> `toggle`. Surtout pas `my` : pour le contact sec
-    //     2-boutons, My est un non-événement explicite côté firmware (`if(shadeType ==
-    //     drycontact2) return;`, dans le dispatch ET dans SomfyShade::sendCommand) -- le bouton
-    //     deviendrait muet ;
-    //   - positionné -> `my`. Et non `Stop` (0xF1), qui n'existe qu'en 80 bits alors que My arrête
-    //     un équipement en mouvement quelle que soit la longueur de trame.
-    //
-    // Seule l'APPARENCE suit l'état. Ce n'est pas un artifice d'interface : pour un 1-bouton, le
-    // firmware traite déjà My exactement comme Toggle (SomfyDispatch.cpp, case My sous isToggle()
-    // -- mot pour mot le corps du case Toggle), c'est-à-dire « arrêt si ça bouge, bascule sinon ».
-    // Et pour un équipement positionné, My arrête aussi. Le libellé ne fait donc que dire ce qui va
-    // réellement se passer.
-    // Un contact sec ne bouge jamais (ni direction ni position) : il reste sur son libellé de repos.
-    // L'attribut `tr` est mis à jour EN PLUS du title : le title sert tout de suite, l'attribut
-    // sert au prochain passage du traducteur (changement de langue, cf. translator.init()).
-    setVRCenterButton(impulse, moving) {
-        const btn = this.vrEl('divVRCenter');
-        const icon = this.vrEl('divVRCenterIcon');
-        if (!btn || !icon) return;
-        const cle = moving ? 'BT_STOP' : (impulse ? 'VR_TOGGLE' : 'BT_MY');
-        btn.setAttribute('data-cmd', impulse ? 'toggle' : 'my');
-        btn.setAttribute('tr', cle);
-        btn.setAttribute('title', tr(cle));
-        icon.setAttribute('href', moving ? '#svg-toggleHand' : (impulse ? '#svg-toggle' : '#svg-my'));
     }
     // Un seul bouton pour les deux commandes RTS de l'indicateur soleil, là où il y en avait deux
     // côte à côte : SunFlag (0x9) l'active, Flag (0xA) le désactive. Le bouton porte donc l'ÉTAT
@@ -2188,15 +2169,15 @@ class Somfy {
     //   - jamais pour un GROUPE : /tiltCommand est par équipement, il n'existe pas d'équivalent ;
     //   - jamais pour `none` (0), évidemment ;
     //   - jamais pour `tiltonly` (3) : le dispatch y redirige DÉJÀ Up/Down vers l'inclinaison
-    //     (SomfyDispatch.cpp, `if(tiltType == tiltonly && !internal) p_tiltTarget(...)`), la molette
-    //     incline donc ces équipements sans qu'on ait à faire quoi que ce soit.
+    //     (SomfyDispatch.cpp, `if(tiltType == tiltonly && !internal) p_tiltTarget(...)`), les flèches
+    //     de la coque inclinent donc ces équipements sans qu'on ait à faire quoi que ce soit.
     // Restent tiltmotor (1), integrated (2) et euromode (4).
     vrTiltUsable(info) {
         if (!info || info.type !== 'shade') return false;
         const t = parseInt(info.shade.tiltType, 10) || 0;
         return t === 1 || t === 2 || t === 4;
     }
-    // Les trois boutons portent le même sens que ceux de la molette : sans contexte, un lecteur
+    // Les trois boutons portent le même sens que ceux de la coque : sans contexte, un lecteur
     // d'écran annoncerait deux « Ouvrir » identiques dans le même panneau. Le nom est donc composé
     // à partir du libellé de la rangée, plutôt que d'ajouter trois clés de traduction pour un
     // texte que l'on sait déjà écrire.
@@ -2215,12 +2196,6 @@ class Somfy {
         if (!content) return;
         const my = shade ? shade.myTiltPos : -1;
         content.setAttribute('data-tiltmy', (typeof my === 'number' && my >= 0) ? 'yes' : 'no');
-    }
-    // Un équipement bouge s'il se déplace OU s'il s'incline (cf. SomfyShade::isIdle() côté
-    // firmware, qui combine les deux). Un GROUPE n'a ni l'un ni l'autre : son centre reste fixe.
-    vrIsMoving(shade) {
-        if (!shade) return false;
-        return (shade.direction || 0) !== 0 || (shade.tiltDirection || 0) !== 0;
     }
     // Les boutons sont des div porteuses de role="button" et tabindex="0" (cf. index.html) : le
     // navigateur ne leur accorde donc pas l'activation clavier native d'un <button>, il faut la
@@ -2241,9 +2216,7 @@ class Somfy {
             this.sendVRCommand(btn, evt);
         });
     }
-    // Témoin radio, porté par le badge de l'en-tête plutôt que par la bordure de la molette (qui
-    // n'existe que dans le corps de la télécommande) : le badge est visible sur mobile comme sur
-    // PC, où la colonne de gauche de l'en-tête serait sinon vide.
+    // Témoin radio, porté par le badge de l'en-tête et par le voyant de la coque (data-radio, CSS).
     // Au repos, RIEN n'est ajouté -- le badge garde son aspect ordinaire : un anneau vert
     // permanent affirmerait en continu quelque chose que l'utilisateur n'a pas demandé. Seul
     // l'état anormal se signale, en rouge. L'éclat à chaque commande joue dans les deux cas, à la
@@ -4995,8 +4968,6 @@ class Somfy {
         }
         if (this._vrTarget && this._vrTarget.type === 'shade' && this._vrTarget.id === sId) {
             this.updateVRPosition(state);
-            // Le type vient de la cible (stable), le mouvement de l'évènement (vivant).
-            this.setVRCenterButton(this.vrIsImpulse(this.vrTarget()), this.vrIsMoving(state));
             this.setVRSunFlag(state.flags);
             this.setVRSunSensor(!!state.sunSensor);
             this.setVRTiltMy(state);
@@ -5211,7 +5182,7 @@ class Somfy {
         // chose : il n'y a pas de « % d'ouverture » à inverser, seulement l'état affiché. Le libellé
         // et sa description suivent donc le type. L'attribut `tr` est mis à jour EN PLUS du texte --
         // le texte sert tout de suite, l'attribut au prochain passage du traducteur (changement de
-        // langue, cf. translator.init()), même mécanique que setVRCenterButton.
+        // langue, cf. translator.init()), même mécanique que setVRSunFlag.
         const fp = g('divFlipPosition');
         if (fp) {
             const isDry = this.dryContactShadeTypes.includes(type);

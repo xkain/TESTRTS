@@ -3143,465 +3143,133 @@ button.fw-act:hover .fw-act-chev {
     display: none;
 }
 /* -----------------------------------------------------------------------
- *  Télécommande virtuelle (page vremote)
+ *  Télécommande virtuelle
+ *  Deux vues portées par .vr-overlay[data-view] : « remote », une feuille comme la fiche du tableau
+ *  de bord (.card-sheet), et « adv », une fenêtre coque à gauche, fonctions à droite. Règles
+ *  d'overlay qualifiées par .vr-overlay : overlays.css est chargée APRÈS main.css.
  * ----------------------------------------------------------------------- */
+.vr-cmd-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+.vr-content { display: flex; flex-direction: column; gap: 16px; width: 100%; text-align: left; }
+.vr-side { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+/* Coque dessinée (76-remotes.js). Le pack n'apporte aucun CSS : tout est ici, repères du contrat v1. */
+.vr-coque { display: flex; justify-content: center; padding: 8px 0 14px; }
+.rcpack { --rc-bg: var(--color-bg-card); display: block; width: auto; max-height: 62vh; overflow: visible; filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.25)); touch-action: none; user-select: none; -webkit-user-select: none; }
+.rcpack.rc-wall { filter: drop-shadow(0 10px 13px rgba(0, 0, 0, 0.16)); }
+/* base.css coupe les pointeurs sur tout svg : seules les touches les reprennent. */
+.rcpack [data-key], .rcpack [data-key] * { pointer-events: auto; }
+.rcpack [data-key] { cursor: pointer; outline: none; }
+.rcpack [data-key]:focus-visible { filter: drop-shadow(0 0 2px var(--color-accent)); }
+.rcpack [data-press] { opacity: 0; transition: opacity 0.08s; }
+.rcpack [data-key].is-down [data-press] { opacity: 1; }
+html[data-feedback-commands="off"] .rcpack [data-press] { display: none; }
+.rcpack.rc-tx [data-led] { fill: #ffb02e; filter: drop-shadow(0 0 4px rgba(255, 176, 46, 0.9)); }
+.vr-content[data-radio="off"] .rcpack [data-led] { fill: #c96a64; }
+.vr-tilt { display: flex; align-items: center; gap: 8px; }
+#divVRContent:not([data-tilt="yes"]) .vr-tilt,
+#divVRContent:not([data-tiltmy="yes"]) .vr-tilt-my { display: none; }
+.vr-tilt-label { margin-right: 4px; font-size: 0.72em; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--color-text-secondary); }
+.vr-tilt-btn, .vr-step-btn, .vr-flag-btn { display: grid; place-items: center; height: 44px; border: 1px solid var(--color-control-border); border-radius: var(--radius-btn); background: var(--color-control-bg); color: var(--color-text-main); cursor: pointer; }
+.vr-tilt-btn, .vr-flag-btn { width: 48px; }
+.vr-tilt-btn svg, .vr-flag-btn svg { width: 22px; height: 22px; }
+.vr-hint { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: 0.8em; line-height: 1.45; color: var(--color-text-secondary); }
+.vr-hint svg { flex: none; width: 16px; height: 16px; margin-top: 1px; }
+.vr-adv { display: flex; flex-direction: column; gap: 22px; }
+.vr-sec { display: flex; flex-direction: column; gap: 10px; }
+.vr-sec h3 { margin: 0; font-size: 1em; font-weight: 600; color: var(--color-text-main); }
+.vr-desc { margin: 0; font-size: 0.85em; color: var(--color-text-secondary); }
+.vr-note { margin: 0; padding: 10px 12px; border-radius: var(--radius-btn); background: var(--color-bg-row); font-size: 0.85em; line-height: 1.45; color: var(--color-text-main); }
+.vr-note b { color: var(--color-warning); }
+/* Appuis simultanés : des touches dessinées côte à côte, pas des barres segmentées. */
+.vr-combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.vr-combo-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 10px 12px; border: 1px solid var(--color-control-border); border-radius: 16px; background: var(--color-bg-card); color: var(--color-text-main); cursor: pointer; }
+.vr-combo-btn:hover { background: var(--color-control-bg-hover); }
+.vr-keys { display: flex; align-items: center; gap: 5px; }
+.vr-kc { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--color-control-border); border-bottom-width: 3px; border-radius: 9px; background: var(--color-control-bg); font-size: 12px; font-weight: 800; }
+.vr-kc svg { width: 16px; height: 16px; }
+.vr-plus { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
+.vr-combo-label { font-size: 0.85em; font-weight: 600; text-align: center; }
+.vr-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+/* Case masquée mais focalisable : l'anneau passe sur son étiquette. */
+.vr-toggle-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.vr-toggle-btn, .vr-fav-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1px solid var(--color-control-border); border-radius: var(--radius-btn); background: var(--color-control-bg); color: var(--color-text-main); font-size: 0.9em; font-weight: 600; cursor: pointer; }
+.vr-toggle-btn svg, .vr-fav-btn svg { width: 20px; height: 20px; }
+.vr-toggle-input:checked + .vr-toggle-btn { border-color: var(--color-accent); background: var(--color-accent-transp-80); color: var(--color-accent); }
+.vr-toggle-input:focus-visible + .vr-toggle-btn { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.vr-send-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: var(--radius-btn); background: var(--color-accent); color: var(--color-text-on-accent); font-size: 0.9em; font-weight: 600; cursor: pointer; }
+#divVRContent:not([data-sunsensor="yes"]) .vr-sun-only { display: none; }
+.vr-flag-btn { color: var(--color-text-secondary); }
+.vr-flag-btn[data-on="true"] { border-color: color-mix(in srgb, var(--color-warning), transparent 50%); background: color-mix(in srgb, var(--color-warning), transparent 88%); color: var(--color-warning); }
+.vr-step-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; align-items: end; gap: 10px; max-width: 460px; }
+.vr-step-btn svg { width: 32px; height: 32px; color: var(--color-text-secondary); }
+.vr-step-size { display: flex; flex-direction: column; gap: 6px; font-size: 0.85em; color: var(--color-text-secondary); }
+.vr-step-size b { color: var(--color-text-main); }
+/* Restreint à ce bloc : .slider-wrapper est partagée avec les curseurs des cartes. */
+.vr-step-size .slider-wrapper { height: 44px; border-radius: var(--radius-md); }
+.vr-step-size .slider-progress { border-radius: var(--radius-md); }
+.vr-step-size input { width: 100%; margin: 0; cursor: pointer; }
+#divVRContent[data-bitlength="56"] .vr-80bit,
+#divVRContent[data-drycontact="yes"] :is(.vr-combos, .vr-sensor) { display: none; }
 
-/* Accessibilité clavier : les boutons sont des div (formes dédiées : molette, pastilles
-   segmentées), rendus atteignables par role/tabindex dans le HTML. Sans anneau de focus, un
-   utilisateur au clavier ne saurait pas où il se trouve. :focus-visible et non :focus, pour ne
-   pas afficher l'anneau après un clic souris. */
-.vr-cmd-btn:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 3px;
+.vr-overlay { --vr-radio-color: var(--color-accent); }
+.vr-overlay[data-radio="off"] { --vr-radio-color: var(--color-danger); }
+.vr-overlay[data-radio="off"] .overlayHeader-badge { border-color: var(--color-danger); color: var(--color-danger); }
+.vr-overlay .overlayHeader-badge.pulse { animation: vrBadgePing 0.6s ease-out; }
+.vr-overlay .vr-overlay-content { max-width: 480px; max-height: 92vh; max-height: 92dvh; text-align: left; }
+.vr-overlay .vr-overlay-header { justify-content: flex-start; gap: 12px; min-height: 0; padding: 12px 16px; }
+.vr-overlay .vr-overlay-header [close] { margin-left: auto; }
+.vr-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.vr-target-kicker { font-size: 0.72em; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--color-text-secondary); }
+.vr-target-name { overflow: hidden; font-size: 1.1em; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; color: var(--color-text-main); }
+.vr-target-pos { font-size: 0.8em; color: var(--color-text-secondary); }
+.vr-target-pos:empty { display: none; }
+.vr-overlay .overlay-scroll-content { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px; }
+.vr-tabs { flex: none; display: flex; gap: 4px; padding: 4px 8px calc(4px + env(safe-area-inset-bottom)); border-top: 1px solid var(--color-border); }
+.vr-tab { flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 7px; width: auto; min-width: 0; min-height: 44px; margin: 0; padding: 0 10px; border: 0; border-radius: 999px; background: none; color: var(--color-text-secondary); font-size: 0.85em; font-weight: 600; text-transform: none; letter-spacing: normal; cursor: pointer; }
+.vr-tab svg { width: 18px; height: 18px; fill: currentColor; }
+.vr-tab[aria-pressed="true"] { color: var(--color-accent); }
+/* Rien d'avancé pour un équipement à impulsion ni pour un contact sec : pas d'onglets du tout. */
+.vr-overlay:has(#divVRContent:is([data-kind="impulse"], [data-drycontact="yes"])) .vr-tabs { display: none; }
+.vr-overlay[data-view="remote"] .vr-adv { display: none; }
+.vr-overlay[data-view="adv"] .vr-hold-hint { order: 1; }
+/* Fenêtre « Avancé » : coque des fenêtres de la nouvelle interface (genmod-window, overlays.css),
+   cadrée sur la page, colonne d'identité à gauche portant la coque, fonctions à droite.
+   Le bloc #divVRContent et son conteneur passent en display:contents : ses parties deviennent
+   des cellules de la grille sans quitter le bloc, dont les attributs pilotent l'affichage.
+   Sous 1000 px, comme les autres fenêtres genmod, plus de deux colonnes : la coque reste dans
+   l'onglet « Télécommande ». */
+@media (min-width: 1000px) {
+    .vr-overlay[data-view="adv"] .vr-overlay-content { font-size: 16px; flex: 1; width: auto; max-width: none; max-height: none; height: auto; margin: calc(var(--topbar-height) + 16px) 16px 16px calc(var(--sidebar-width) + 16px); display: grid; grid-template-columns: minmax(280px, 32fr) minmax(0, 68fr); grid-template-rows: auto auto minmax(0, 1fr) auto; border: 0; border-radius: var(--r-5); box-shadow: var(--shadow-window); background: var(--panel); color: var(--text); }
+    .vr-overlay[data-view="adv"] :is(.overlay-scroll-content, #divVRContent) { display: contents; }
+    .vr-overlay[data-view="adv"] .vr-side { grid-column: 1; grid-row: 1 / -1; justify-content: center; min-height: 0; overflow: auto; padding: clamp(20px, 3vh, 40px) clamp(20px, 2.5vw, 40px); }
+    .vr-overlay[data-view="adv"] .rcpack { --rc-bg: var(--panel); }
+    .vr-overlay[data-view="adv"] :is(.vr-overlay-header, .vr-tabs, .vr-adv, .vr-hold-hint) { grid-column: 2; background: var(--surface); }
+    .vr-overlay[data-view="adv"] .vr-overlay-header { grid-row: 1; align-items: flex-start; padding: 18px 22px 10px 28px; border: 0; border-radius: 0 var(--r-5) 0 0; }
+    .vr-overlay[data-view="adv"] .overlayHeader-badge { display: none; }
+    .vr-overlay[data-view="adv"] .vr-target-name { font-size: 1.375em; font-weight: 800; letter-spacing: -0.01em; white-space: normal; }
+    .vr-overlay[data-view="adv"] .vr-target-pos { align-self: flex-start; margin-top: 8px; padding: 5px 11px; border-radius: 999px; background: var(--surface-2); font-size: var(--fs-1); font-weight: 700; color: var(--text-2); }
+    .vr-overlay[data-view="adv"] .vr-tabs { grid-row: 2; order: 0; justify-self: stretch; margin: 0; padding: 0 22px 14px 28px; border: 0; border-bottom: 1px solid var(--divider); border-radius: 0; }
+    .vr-overlay[data-view="adv"] .vr-tab { flex: 0 1 180px; background: var(--surface-2); }
+    .vr-overlay[data-view="adv"] .vr-tab[aria-pressed="true"] { background: var(--text); color: var(--surface); }
+    .vr-overlay[data-view="adv"] .vr-adv { grid-row: 3; min-height: 0; overflow-y: auto; padding: 18px 28px 24px; }
+    .vr-overlay[data-view="adv"] .vr-hold-hint { grid-row: 4; padding: 12px 28px; border-top: 1px solid var(--divider); border-radius: 0 0 var(--r-5) 0; }
 }
-/* Pas de fond/bordure/arrondi ici : le .message-content de l'overlay parent les porte déjà -- ne
-   restent que la largeur maximale et la colonne centrée. */
-.vr-content {
-    max-width: 380px;
-    width: 100%;
-    margin: 0 auto;
-    justify-content: center;
-    align-content: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+/* Ordinateur : la vue « Télécommande » est le panneau pleine hauteur de la fiche du tableau de bord,
+   onglets en pilule sous l'en-tête. */
+@media (min-width: 1001px) {
+    .vr-overlay[data-view="remote"] { justify-content: flex-end; align-items: stretch; }
+    .vr-overlay[data-view="remote"] .vr-overlay-content { width: 440px; max-width: 100%; height: 100%; max-height: none; border: 0; border-left: 1px solid var(--color-border); border-radius: 0; background: var(--color-bg-surface-1); box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15); }
+    .vr-overlay[data-view="remote"] .rcpack { --rc-bg: var(--color-bg-surface-1); }
+    .vr-tabs { order: 1; margin: 0 16px 6px; padding: 4px; border: 0; border-radius: 999px; background: var(--color-bg-card); }
+    .vr-overlay[data-view="adv"] .vr-tabs { max-width: 360px; background: var(--color-bg-row); }
+    .vr-overlay .overlay-scroll-content { order: 2; }
+    .vr-tab[aria-pressed="true"] { background: var(--color-text-main); color: var(--color-bg-card); }
 }
-.vr-wheel-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-/* La marge haute négative est volontaire : c'est elle qui fait chevaucher Prog et Favori avec le
-   bas de la molette. */
-.vr-progFav {
-    display: flex;
-    justify-content: space-between;
-    margin: 16px 0;
-    gap:14px;
-    width: auto;
-}
-.vr-block-boutons {
-    display: flex;
-    align-items: stretch;
-    gap: 15px;
-    min-height: 60px;
-    margin-bottom: 15px;
-    width: 100%;
-}
-.vr-block-center {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    justify-content: center;
-    padding: 6px;
-}
-.vr-my-center {
-    width: 72px;
-    height: 72px;
-    background: var(--color-accent);
-    color: var(--color-text-on-accent);
-    border-radius:var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 28px;
-    cursor: pointer;
-    z-index: 2;
-    transition: transform 0.1s;
-}
-.vr-wheel-outer {
-    position: relative;
-    width: 190px;
-    height: 190px;
-    background: var(--color-bg-page);
-    border-radius:var(--radius-full);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-}
-.vr-wheel-arrow {
-    position: absolute;
-    width: 44px;
-    height: 44px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.1s;
-    color: var(--color-text-secondary);
-}
-.vr-arrow-up    { top: 4px;  left: 50%; transform: translateX(-50%); }
-.vr-arrow-down  { bottom: 4px; left: 50%; transform: translateX(-50%); }
-/* align-items:stretch et non center : le bloc s'aligne sur la hauteur de la molette plutôt que
-   de flotter à mi-hauteur. */
-.vr-wheel-row {
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
-    gap: 18px;
-    width: 100%;
-}
-#divVRContent:not([data-tilt="yes"]) .vr-tilt {
-    display: none;
-}
-.vr-tilt {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    /* space-between avec ce remplissage exact aligne les trois organes sur ceux de la molette :
-       flèches à 11 px des bords comme .vr-arrow-up/.vr-arrow-down, donc mêmes axes à 33, 105 et
-       177 px du haut. Un space-evenly les répartissait à 49, 105 et 162 -- le « my » tombait juste,
-       les flèches non. */
-    justify-content: space-between;
-    padding: 11px 6px;
-    background: var(--color-bg-page);
-    border-radius: var(--radius-full);
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-}
-.vr-tilt-arrow {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.1s;
-    color: var(--color-text-secondary);
-}
-.vr-tilt-my {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-full);
-    background: var(--color-accent);
-    color: var(--color-text-on-accent);
-    cursor: pointer;
-    transition: transform 0.1s;
-}
-#divVRContent:not([data-tiltmy="yes"]) .vr-tilt-my {
-    display: none;
-}
-#divVRContent:not([data-sunsensor="yes"]) .vr-flag,
-#divVRContent:not([data-sunsensor="yes"]) .switch-soleil {
-    display: none;
-}
-.vr-blockLeft, .vr-blockRight {
-    display: flex;
-    flex-direction: column;
-    width: 20%;
-}
-.vr-upMy, .vr-myDown, .vr-upDown, .vr-all {
-    background: var(--color-bg-page);
-    display: flex;
-    flex-direction: column;
-    cursor: pointer;
-    transition: transform 0.1s;
-    min-height: 80px;
-    backface-visibility: hidden;
-    -webkit-font-smoothing: subpixel-antialiased;
-    transform-origin: center center;
-    color: var(--color-text-secondary);
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-}
-.vr-upMy, .vr-upDown      { border-radius: 30px 30px 0 0; margin-bottom: 6px; }
-.vr-myDown, .vr-all { border-radius: 0 0 30px 30px; }
-.vr-segment {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2em;
-}
-.btn-prog, .btn-fav, .btn-flag {
-    width: 76px;
-    height: 35px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-btn);
-    font-size: 0.75em;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.1s, filter 0.1s;
-    text-transform: uppercase;
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-}
-.btn-prog { background: var(--color-bg-page); color: var(--color-text-main); }
-.btn-fav  { background: var(--color-accent); color: var(--color-text-on-accent); border: none; }
-.btn-flag { background: var(--color-bg-page); color: var(--color-text-secondary); }
-.btn-flag[data-on="true"] { background: var(--color-accent); color: var(--color-text-on-accent); border: none; }
-.switch-group { display: flex; gap: 5px; margin-bottom: 10px; }
-.switch-soleil, .switch-windy { flex: 1; display: flex; }
-.switch-group input { display: none; }
-.vr-toggle-item {
-    flex: 1;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 0.9em;
-    font-weight: bold;
-    transition: all 0.2s;
-    background: var(--color-bg-page);
-    color: var(--color-text-secondary);
-    border-radius: var(--radius-btn);
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-}
-
-.btn-send {
-    background: var(--color-accent);
-    color: var(--color-text-on-accent);
-    border: none;
-    border-radius: var(--radius-btn);
-    padding: 13px;
-    font-weight: bold;
-    text-align: center;
-    cursor: pointer;
-}
-.vr-step80 {
-    background: var(--color-bg-page);
-    border-radius: var(--radius-btn);
-    padding: 8px 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    width: 100%;
-}
-.vr-step80-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-}
-/* Restreint à ce bloc : .slider-wrapper est partagée avec les curseurs de position et
-   d'inclinaison des cartes. Pas plus bas que 32px : en dessous, attraper la poignée au doigt
-   devient acrobatique. */
-.vr-step80 .slider-wrapper {
-    height: 32px;
-    border-radius: var(--radius-md);
-}
-.vr-step80 .slider-progress {
-    border-radius: var(--radius-md);
-}
-.vrslidStepSize {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-.vrslidStepSize input {
-    width: 100%;
-    margin: 0;
-    cursor: pointer;
-}
-.vr-step80-arrow {
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.1s;
-    flex-shrink: 0;
-}
-/* La valeur suit immédiatement le libellé dans le DOM, sans séparateur : elle se collait aux
-   deux-points ("Taille du pas :77"). L'écart se pose ici plutôt que par une espace en fin de
-   chaîne de traduction, invisible à la relecture du JSON et facile à perdre à la prochaine
-   retouche -- et il vaut pour les quatre langues d'un coup. */
-#vrspanStepSize {
-    margin-left: 0.25em;
-}
-.vr-step80Label {
-    text-align: center;
-    font-size: 0.9em;
-}
-#divVRContent[data-bitlength="56"] .vr-80bit {
-    display: none;
-}
-#divVRContent[data-kind="impulse"] .vr-wheel-arrow {
-    display: none;
-}
-#divVRContent[data-drycontact="yes"] .vr-blockLeft,
-#divVRContent[data-drycontact="yes"] .vr-blockRight,
-#divVRContent[data-drycontact="yes"] .switch-group,
-#divVRContent[data-drycontact="yes"] .btn-send {
-    display: none;
-}
-/* -----------------------------------------------------------------------
- *  Overlay de la télécommande
- *  Toutes les règles de cette section sont qualifiées par .vr-overlay -- une classe de plus qu'il
- *  n'en faudrait pour désigner l'élément : overlays.css est chargée APRÈS main.css, donc à
- *  spécificité égale ses règles génériques (.message-content, .overlayHeader) l'emportent.
- * ----------------------------------------------------------------------- */
-.vr-overlay .overlay-scroll-content {
-    align-items: center;
-}
-.vr-overlay .vr-overlay-header {
-    border-bottom: none;
-}
-/* Sur PC, nom et position se suivent sur la ligne de sous-titre, séparés par un point médian posé
-   en CSS. Le :empty le retire pour un groupe, qui n'a pas de position -- sans quoi le sous-titre
-   se terminerait par un séparateur orphelin. */
-.vr-overlay .vr-target-pos:not(:empty)::before {
-    content: " · ";
-}
-/* La couleur seule ne suffit pas à porter une information : #divVRRadioStatus, masqué
-   visuellement, en donne l'équivalent textuel (cf. .sr-only dans base.css), et le badge reçoit
-   une infobulle quand la radio est coupée. --vr-radio-color est déclarée sur l'overlay et non sur
-   le badge : les images-clés doivent la voir. */
-.vr-overlay {
-    --vr-radio-color: var(--color-accent);
-}
-.vr-overlay[data-radio="off"] {
-    --vr-radio-color: var(--color-danger);
-}
-.vr-overlay[data-radio="off"] .overlayHeader-badge {
-    border-color: var(--color-danger);
-    color: var(--color-danger);
-}
-.vr-overlay .overlayHeader-badge.pulse {
-    animation: vrBadgePing 0.6s ease-out;
-}
-@media (min-width: 768px) {
-    .vr-overlay .vr-overlay-content {
-        max-width: 370px;
-    }
+@media (max-width: 999px) {
+    .modal-overlay.vr-overlay.genmod-overlay { align-items: center; }
+    .vr-overlay[data-view="adv"] .vr-side { display: none; }
 }
 @media (max-width: 767px) {
-    .vr-overlay .overlay-scroll-content {
-        padding: 8px 15px 12px;
-    }
-    /* Le plafond de 90vh de .message-content est levé POUR CETTE CARTE, la seule dont le contenu a
-       une hauteur incompressible. Ce n'est PAS un passage en plein écran : max-height est un
-       plafond, la carte se dimensionne toujours à son contenu. */
-    .vr-overlay .vr-overlay-content {
-        max-height: 100vh;
-    }
-    /* Grille à trois colonnes et non flex centré : la croix occupe le côté droit, un simple
-       justify-content:center décalerait le nom vers la gauche de la moitié de sa largeur. */
-    .vr-overlay .vr-overlay-header {
-        display: grid;
-        grid-template-columns: 44px 1fr 44px;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 10px;
-        min-height: 0;
-    }
-    /* display:contents fait disparaître le groupe de la mise en page sans toucher au balisage :
-       ses deux enfants deviennent alors des cellules de la grille au même titre que le bloc de
-       droite. */
-    .vr-overlay .vr-overlay-header .overlayHeader-block {
-        display: contents;
-    }
-    .vr-overlay .vr-overlay-header .overlayHeader-badge {
-        grid-column: 1;
-        width: 44px;
-        height: 44px;
-    }
-    .vr-overlay .vr-overlay-header .overlayHeader-badge svg {
-        width: 22px;
-        height: 22px;
-    }
-    .vr-overlay .vr-overlay-header .overlayHeader-title {
-        display: none;
-    }
-    .vr-overlay .vr-overlay-header .overlayHeader-texts {
-        grid-column: 2;
-        align-items: center;
-        min-width: 0;
-    }
-    .vr-overlay .vr-overlay-header .overlayHeader-subtitle {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-width: 0;
-    }
-    .vr-overlay .vr-overlay-header .vr-target-name {
-        font-size: 1.1em;
-        font-weight: 600;
-        color: var(--color-text-main);
-        line-height: 1.2;
-        max-width: 100%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .vr-overlay .vr-overlay-header .vr-target-pos {
-        font-size: 0.8em;
-        color: var(--color-text-subtitle);
-        line-height: 1.2;
-    }
-    .vr-overlay .vr-overlay-header .vr-target-pos::before {
-        content: none;
-    }
-    .vr-overlay .vr-overlay-header .overlayHeader-right {
-        grid-column: 3;
-        justify-content: flex-end;
-    }
-    .vr-overlay .vr-overlay-header [close] {
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-    }
-}
-.vr-toggle-item {
-    flex-direction: column;
-    gap: 3px;
-    line-height: 1.15;
-}
-.vr-toggle-icon {
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
-}
-/* ÉTATS ACTIFS ET ÉTATS COCHÉS */
-.vr-arrow-up:active   { transform: translateX(-50%) translateY(-5px); }
-.vr-arrow-down:active { transform: translateX(-50%) translateY(5px); }
-.vr-tilt-arrow:active, .vr-tilt-my:active { transform: scale(0.92); }
-
-.switch-group input:checked + .vr-toggle-item {
-    background: var(--color-accent);
-    color: var(--color-text-on-accent);
-    border: none;
-}
-/* GESTION DES SVG */
-.vr-tilt-arrow svg,
-.vr-tilt-my svg,
-.btn-fav svg,
-.btn-flag svg,
-.vr-segment svg,
-.vr-step80-arrow svg { display: block; }
-
-.btn-fav svg, .btn-flag svg { width: 20px; height: 20px; }
-.vr-segment svg { width: 30px; height: 30px; }
-.vr-step80-arrow svg { width: 46px; height: 46px; color: var(--color-text-secondary); }
-.vr-tilt-arrow svg { width: 44px; height: 44px; }
-.vr-tilt-my svg { width: 30px; height: 30px; }
-
-.vr-my-center svg {
-    width: 84%;
-    height: 84%;
-    display: block;
-    overflow: hidden;
-}
-.vr-wheel-arrow svg {
-    width: 100%;
-    height: 100%;
-    /* --text-light n'existe pas (aucune déclaration dans le projet) -- var() invalide sans
-       fallback, donc sans effet propre : la couleur venait déjà, par héritage, du
-       color:var(--color-text-secondary) posé sur .vr-wheel-arrow ci-dessus. Rendu explicite ici
-       avec la bonne variable (cf. override :active en flash dans base.css). */
-    color: var(--color-text-secondary);
+    .modal-overlay.vr-overlay.genmod-overlay { align-items: flex-end; }
 }
 
 /* -----------------------------------------------------------------------

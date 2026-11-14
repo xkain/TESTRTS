@@ -1012,13 +1012,6 @@ html[data-feedback-commands="off"] .vr-cmd-btn:active {
     filter: none !important;
     opacity: 1 !important;
 }
-/* .vr-arrow-up/.vr-arrow-down (molette VR, cf. main.css) : leur transform translateX(-50%) les
-   CENTRE horizontalement (left:50% + translateX(-50%)) -- le transform:none ci-dessus l'efface
-   aussi, on le réapplique ici. */
-html[data-feedback-commands="off"] .vr-arrow-up:active,
-html[data-feedback-commands="off"] .vr-arrow-down:active {
-    transform: translateX(-50%) !important;
-}
 
 html[data-feedback-ui="off"] .animScale:not(.btn-somfy-svg):not(.vr-cmd-btn):active,
 html[data-feedback-ui="off"] button:not(.btn-somfy-svg):active,
@@ -1044,18 +1037,6 @@ html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-cmd-btn:active {
     transform: none !important;
     filter: brightness(1.3) !important;
-}
-/* Même cas particulier que ci-dessus : on réapplique le centrage translateX(-50%) des flèches,
-   effacé par le transform:none du flash. */
-html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-arrow-up:active,
-html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-arrow-down:active {
-    transform: translateX(-50%) !important;
-}
-/* .vr-wheel-arrow n'a pas de background, contrairement aux autres boutons VR --
-   filter:brightness() n'y produit donc aucun retour visible en flash. Bascule la couleur de
-   l'icône à la place. */
-html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-wheel-arrow:active svg {
-    color: var(--color-text-main) !important;
 }
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .animScale:not(.btn-somfy-svg):not(.vr-cmd-btn):active,
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] button:not(.btn-somfy-svg):active,

@@ -458,6 +458,7 @@ JS_CHUNKS = (
     "72-setup.js",        # class ShadeSetup (création et mise en service d'un équipement)
     "73-group-setup.js",  # class GroupSetup (création et liaison d'un groupe)
     "74-dash-scene.js",   # dashScene (scènes SVG des cartes d'équipement du tableau de bord)
+    "76-remotes.js",      # remotePacks (coques des télécommandes virtuelles)
     "90-mqtt.js",         # class MQTT
     "95-firmware.js",     # class Firmware
 )
