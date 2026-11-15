@@ -561,7 +561,7 @@ namespace WebSystem {
     // une OTA), l'ancien /controller.backup restant sur le disque partait quand même, présenté au
     // client comme une sauvegarde fraîche.
     if(!somfy.writeBackup()) {
-      request->send(503, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem busy, please retry.\"}");
+      webServer.sendError(request, 503, "Filesystem busy, please retry.");
       return;
     }
 
@@ -595,7 +595,7 @@ namespace WebSystem {
       request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully started reboot\"}");
     }
     else {
-      request->send(201, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
+      webServer.sendError(request, 201, "Invalid HTTP Method: ");
     }
   }
 
@@ -738,7 +738,7 @@ namespace WebSystem {
       // timeout du client -- bug latent, plus risqué encore sous ESPAsyncWebServer (connexion
       // potentiellement conservée en attente). Toutes les autres routes d'upload répondent déjà
       // explicitement en cas d'échec ; alignement sur ce comportement.
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Upload failed\"}");
+      webServer.sendError(request, 500, "Upload failed");
     }
   }
 
@@ -804,19 +804,19 @@ namespace WebSystem {
     // ni MQTT coupés. Il n'y a donc rien à remettre d'aplomb, et surtout aucune raison de
     // redémarrer -- d'où le return, contrairement aux deux autres branches d'échec ci-dessous.
     if(scan && scan->rejected && scan->digestMismatch) {
-      request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"FW_DIGEST_MISMATCH\",\"desc\":\"Malformed " FW_DIGEST_HEADER " header.\"}");
+      webServer.sendError(request, 400, "Malformed " FW_DIGEST_HEADER " header.", "FW_DIGEST_MISMATCH");
       return;
     }
     if(!scan || scan->rejected) {
-      request->send(503, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Firmware update could not be started, please retry.\"}");
+      webServer.sendError(request, 503, "Firmware update could not be started, please retry.");
       return;
     }
     if(!scan->found)
-      request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"FW_IMAGE_INCOMPATIBLE\",\"desc\":\"This firmware image was not built for this partition layout.\"}");
+      webServer.sendError(request, 400, "This firmware image was not built for this partition layout.", "FW_IMAGE_INCOMPATIBLE");
     else if(scan->digestMismatch)
-      request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"FW_DIGEST_MISMATCH\",\"desc\":\"The received image does not match its published checksum.\"}");
+      webServer.sendError(request, 400, "The received image does not match its published checksum.", "FW_DIGEST_MISMATCH");
     else if (Update.hasError())
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error updating firmware: \"}");
+      webServer.sendError(request, 500, "Error updating firmware: ");
     else
       request->send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Successfully updated firmware\"}");
     // Redémarrage même sur refus : handleUpdateFirmwareBody a coupé la radio et MQTT dès le
@@ -943,7 +943,7 @@ namespace WebSystem {
       // quel par la route /shades.tmp). Le supprimer depuis un upload en échec détruirait le
       // travail d'une autre opération. Le prochain upload
       // le tronque de toute façon en l'ouvrant en "w".
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Upload failed\"}");
+      webServer.sendError(request, 500, "Upload failed");
       return;
     }
     // Chargement déplacé ICI depuis le callback de corps : c'est le seul endroit d'où l'on puisse
@@ -951,7 +951,7 @@ namespace WebSystem {
     // fichier illisible passait pour un succès. L'ordre reste celui que documentait déjà le
     // callback -- verrou relâché au chunk final, PUIS relecture, le filesystem devant être libre.
     if(!somfy.loadShadesFile("/shades.tmp")) {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid shade configuration file\"}");
+      webServer.sendError(request, 500, "Invalid shade configuration file");
       return;
     }
     request->send(200, _encoding_json, "{\"status\":\"Success\",\"desc\":\"Shade configuration updated\"}");

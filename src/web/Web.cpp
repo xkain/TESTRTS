@@ -357,16 +357,23 @@ void Web::handleNotFound(AsyncWebServerRequest *request) {
   DBG_PRINTLN(request->url());
   request->send(404, _encoding_text, "404: Not Found");
 }
+void Web::sendError(AsyncWebServerRequest *request, int httpCode, const char *desc, const char *errCode) {
+  char buf[192];
+  if(errCode) snprintf(buf, sizeof(buf), "{\"status\":\"ERROR\",\"code\":\"%s\",\"desc\":\"%s\"}", errCode, desc);
+  else snprintf(buf, sizeof(buf), "{\"status\":\"ERROR\",\"desc\":\"%s\"}", desc);
+  request->send(httpCode, _encoding_json, buf);
+}
+void Web::rejectMethod(AsyncWebServerRequest *request) { this->sendError(request, 500, "Invalid Http method"); }
 void Web::handleDeserializationError(AsyncWebServerRequest *request, DeserializationError &err) {
     switch (err.code()) {
     case DeserializationError::InvalidInput:
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid JSON payload\"}");
+      webServer.sendError(request, 500, "Invalid JSON payload");
       break;
     case DeserializationError::NoMemory:
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Out of memory parsing JSON\"}");
+      webServer.sendError(request, 500, "Out of memory parsing JSON");
       break;
     default:
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"General JSON Deserialization failed\"}");
+      webServer.sendError(request, 500, "General JSON Deserialization failed");
       break;
     }
 }

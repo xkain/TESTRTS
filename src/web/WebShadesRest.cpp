@@ -184,15 +184,15 @@ namespace WebShadesRest {
         }
         else {
           schedule.unlock();
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Schedule Id not found.\"}");
+          webServer.sendError(request, 500, "Schedule Id not found.");
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid schedule id.\"}");
+        webServer.sendError(request, 500, "You must supply a valid schedule id.");
       }
     }
     else {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+      webServer.rejectMethod(request);
       return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
     }
   }
@@ -214,12 +214,12 @@ namespace WebShadesRest {
           resp.endResponse();
         }
         else {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
+          webServer.sendError(request, 500, "Room Id not found.");
           return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid room id.\"}");
+        webServer.sendError(request, 500, "You must supply a valid room id.");
       }
     }
     else if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
@@ -261,23 +261,23 @@ namespace WebShadesRest {
               }
             }
             else {
-              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
+              webServer.sendError(request, 500, "Room Id not found.");
               return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
             }
           }
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room id was supplied.\"}");
+            webServer.sendError(request, 500, "No room id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room object supplied.\"}");
+        webServer.sendError(request, 500, "No room object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
     else
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+      webServer.rejectMethod(request);
   }
 
   void handleShade(AsyncWebServerRequest *request) {
@@ -297,12 +297,12 @@ namespace WebShadesRest {
           resp.endResponse();
         }
         else {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+          webServer.sendError(request, 500, "Shade Id not found.");
           return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid shade id.\"}");
+        webServer.sendError(request, 500, "You must supply a valid shade id.");
       }
     }
     else if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
@@ -340,23 +340,23 @@ namespace WebShadesRest {
               }
             }
             else {
-              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+              webServer.sendError(request, 500, "Shade Id not found.");
               return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
             }
           }
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            webServer.sendError(request, 500, "No shade id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+        webServer.sendError(request, 500, "No shade object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
     else
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+      webServer.rejectMethod(request);
   }
 
   void handleGroup(AsyncWebServerRequest *request) {
@@ -376,12 +376,12 @@ namespace WebShadesRest {
           resp.endResponse();
         }
         else {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+          webServer.sendError(request, 500, "Group Id not found.");
           return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid shade id.\"}");
+        webServer.sendError(request, 500, "You must supply a valid shade id.");
       }
     }
     else if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
@@ -415,23 +415,23 @@ namespace WebShadesRest {
               }
             }
             else {
-              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+              webServer.sendError(request, 500, "Group Id not found.");
               return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
             }
           }
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+            webServer.sendError(request, 500, "No group id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+        webServer.sendError(request, 500, "No group object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
     else
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+      webServer.rejectMethod(request);
   }
 
   static void handleGetNextRoom(AsyncWebServerRequest *request) {
@@ -504,14 +504,14 @@ namespace WebShadesRest {
         JsonObject obj = doc.as<JsonObject>();
         DBG_PRINTLN("Counting rooms");
         if (somfy.roomCount() > SOMFY_MAX_ROOMS) {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Maximum number of rooms exceeded.\"}");
+          webServer.sendError(request, 500, "Maximum number of rooms exceeded.");
           return;
         }
         else {
           DBG_PRINTLN("Adding room");
           room = somfy.addRoom(obj);
           if (!room) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error adding room.\"}");
+            webServer.sendError(request, 500, "Error adding room.");
             return;
           }
         }
@@ -526,7 +526,7 @@ namespace WebShadesRest {
       resp.endResponse();
     }
     else {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error saving Somfy Room.\"}");
+      webServer.sendError(request, 500, "Error saving Somfy Room.");
     }
   }
 
@@ -547,7 +547,7 @@ namespace WebShadesRest {
         JsonObject obj = doc.as<JsonObject>();
         DBG_PRINTLN("Counting shades");
         if (somfy.shadeCount() > SOMFY_MAX_SHADES) {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Maximum number of shades exceeded.\"}");
+          webServer.sendError(request, 500, "Maximum number of shades exceeded.");
           return;
         }
         else {
@@ -561,7 +561,7 @@ namespace WebShadesRest {
               request->send(500, _encoding_json, g_content);
             }
             else
-              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error adding shade.\"}");
+              webServer.sendError(request, 500, "Error adding shade.");
             return;
           }
         }
@@ -576,7 +576,7 @@ namespace WebShadesRest {
       resp.endResponse();
     }
     else {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error saving Somfy Shade.\"}");
+      webServer.sendError(request, 500, "Error saving Somfy Shade.");
     }
   }
 
@@ -597,7 +597,7 @@ namespace WebShadesRest {
         JsonObject obj = doc.as<JsonObject>();
         DBG_PRINTLN("Counting shades");
         if (somfy.groupCount() > SOMFY_MAX_GROUPS) {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Maximum number of groups exceeded.\"}");
+          webServer.sendError(request, 500, "Maximum number of groups exceeded.");
           return;
         }
         else {
@@ -610,7 +610,7 @@ namespace WebShadesRest {
               request->send(500, _encoding_json, g_content);
             }
             else
-              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error adding group.\"}");
+              webServer.sendError(request, 500, "Error adding group.");
             return;
           }
         }
@@ -625,7 +625,7 @@ namespace WebShadesRest {
       resp.endResponse();
     }
     else {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error saving Somfy Group.\"}");
+      webServer.sendError(request, 500, "Error saving Somfy Group.");
     }
   }
 
@@ -645,13 +645,13 @@ namespace WebShadesRest {
       else {
         JsonObject obj = doc.as<JsonObject>();
         if (schedule.scheduleCount() >= SOMFY_MAX_SCHEDULES) {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Maximum number of schedules exceeded.\"}");
+          webServer.sendError(request, 500, "Maximum number of schedules exceeded.");
           return;
         }
         else {
           rule = schedule.addSchedule(obj);
           if (!rule) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error adding schedule. Check the target shade/group id and value ranges.\"}");
+            webServer.sendError(request, 500, "Error adding schedule. Check the target shade/group id and value ranges.");
             return;
           }
         }
@@ -666,7 +666,7 @@ namespace WebShadesRest {
       resp.endResponse();
     }
     else {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error saving Schedule.\"}");
+      webServer.sendError(request, 500, "Error saving Schedule.");
     }
   }
 
@@ -706,12 +706,12 @@ namespace WebShadesRest {
           resp.endResponse();
         }
         else {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+          webServer.sendError(request, 500, "Group Id not found.");
           return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid group id.\"}");
+        webServer.sendError(request, 500, "You must supply a valid group id.");
       }
     }
   }
@@ -744,18 +744,18 @@ namespace WebShadesRest {
               resp.endResponse();
             }
             else {
-              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
+              webServer.sendError(request, 500, "Room Id not found.");
               return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
             }
           }
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room id was supplied.\"}");
+            webServer.sendError(request, 500, "No room id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room object supplied.\"}");
+        webServer.sendError(request, 500, "No room object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
@@ -795,18 +795,18 @@ namespace WebShadesRest {
               }
             }
             else {
-              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+              webServer.sendError(request, 500, "Shade Id not found.");
               return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
             }
           }
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            webServer.sendError(request, 500, "No shade id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+        webServer.sendError(request, 500, "No shade object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
@@ -847,18 +847,18 @@ namespace WebShadesRest {
               }
             }
             else {
-              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+              webServer.sendError(request, 500, "Group Id not found.");
               return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
             }
           }
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+            webServer.sendError(request, 500, "No group id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+        webServer.sendError(request, 500, "No group object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
@@ -909,17 +909,17 @@ namespace WebShadesRest {
             }
             else {
               schedule.unlock();
-              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Schedule Id not found.\"}");
+              webServer.sendError(request, 500, "Schedule Id not found.");
             }
           }
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule id was supplied.\"}");
+            webServer.sendError(request, 500, "No schedule id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule object supplied.\"}");
+        webServer.sendError(request, 500, "No schedule object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
@@ -943,21 +943,21 @@ namespace WebShadesRest {
           uint8_t shadeId = obj.containsKey("shadeId") ? obj["shadeId"] : 0;
           uint8_t groupId = obj.containsKey("groupId") ? obj["groupId"] : 0;
           if(groupId == 0) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group id not provided.\"}");
+            webServer.sendError(request, 500, "Group id not provided.");
             return;
           }
           if(shadeId == 0) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade id not provided.\"}");
+            webServer.sendError(request, 500, "Shade id not provided.");
             return;
           }
           SomfyGroup * group = somfy.getGroupById(groupId);
           if(!group) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group id not found.\"}");
+            webServer.sendError(request, 500, "Group id not found.");
             return;
           }
           SomfyShade * shade = somfy.getShadeById(shadeId);
           if(!shade) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade id not found.\"}");
+            webServer.sendError(request, 500, "Shade id not found.");
             return;
           }
           group->linkShade(shadeId);
@@ -970,7 +970,7 @@ namespace WebShadesRest {
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No linking object supplied.\"}");
+        webServer.sendError(request, 500, "No linking object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
@@ -993,21 +993,21 @@ namespace WebShadesRest {
           uint8_t shadeId = obj.containsKey("shadeId") ? obj["shadeId"] : 0;
           uint8_t groupId = obj.containsKey("groupId") ? obj["groupId"] : 0;
           if(groupId == 0) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group id not provided.\"}");
+            webServer.sendError(request, 500, "Group id not provided.");
             return;
           }
           if(shadeId == 0) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade id not provided.\"}");
+            webServer.sendError(request, 500, "Shade id not provided.");
             return;
           }
           SomfyGroup * group = somfy.getGroupById(groupId);
           if(!group) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group id not found.\"}");
+            webServer.sendError(request, 500, "Group id not found.");
             return;
           }
           SomfyShade * shade = somfy.getShadeById(shadeId);
           if(!shade) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade id not found.\"}");
+            webServer.sendError(request, 500, "Shade id not found.");
             return;
           }
           group->unlinkShade(shadeId);
@@ -1020,7 +1020,7 @@ namespace WebShadesRest {
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No unlinking object supplied.\"}");
+        webServer.sendError(request, 500, "No unlinking object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
@@ -1047,18 +1047,18 @@ namespace WebShadesRest {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("roomId")) roomId = obj["roomId"];
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room id was supplied.\"}");
+            webServer.sendError(request, 500, "No room id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room object supplied.\"}");
+        webServer.sendError(request, 500, "No room object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
     SomfyRoom* room = somfy.getRoomById(roomId);
-    if (!room) request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room with the specified id not found.\"}");
+    if (!room) webServer.sendError(request, 500, "Room with the specified id not found.");
     else {
       somfy.deleteRoom(roomId);
       request->send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Room deleted.\"}");
@@ -1086,20 +1086,20 @@ namespace WebShadesRest {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            webServer.sendError(request, 500, "No shade id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+        webServer.sendError(request, 500, "No shade object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
     SomfyShade* shade = somfy.getShadeById(shadeId);
-    if (!shade) request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade with the specified id not found.\"}");
+    if (!shade) webServer.sendError(request, 500, "Shade with the specified id not found.");
     else if(shade->isInGroup()) {
-      request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"This shade is a member of a group and cannot be deleted.\"}");
+      webServer.sendError(request, 400, "This shade is a member of a group and cannot be deleted.");
     }
     else {
       somfy.deleteShade(shadeId);
@@ -1128,18 +1128,18 @@ namespace WebShadesRest {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("groupId")) groupId = obj["groupId"];
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+            webServer.sendError(request, 500, "No group id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+        webServer.sendError(request, 500, "No group object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
     SomfyGroup * group = somfy.getGroupById(groupId);
-    if (!group) request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group with the specified id not found.\"}");
+    if (!group) webServer.sendError(request, 500, "Group with the specified id not found.");
     else {
       somfy.deleteGroup(groupId);
       request->send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Group deleted.\"}");
@@ -1167,17 +1167,17 @@ namespace WebShadesRest {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("id")) scheduleId = obj["id"];
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule id was supplied.\"}");
+            webServer.sendError(request, 500, "No schedule id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule object supplied.\"}");
+        webServer.sendError(request, 500, "No schedule object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
-    if (!schedule.getScheduleById(scheduleId)) request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Schedule with the specified id not found.\"}");
+    if (!schedule.getScheduleById(scheduleId)) webServer.sendError(request, 500, "Schedule with the specified id not found.");
     else {
       schedule.deleteSchedule(scheduleId);
       request->send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Schedule deleted.\"}");
@@ -1218,7 +1218,7 @@ namespace WebShadesRest {
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set room order\"}");
       }
       else {
-        request->send(201, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
+        webServer.sendError(request, 201, "Invalid HTTP Method: ");
       }
     }
   }
@@ -1253,7 +1253,7 @@ namespace WebShadesRest {
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set shade order\"}");
       }
       else {
-        request->send(201, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
+        webServer.sendError(request, 201, "Invalid HTTP Method: ");
       }
     }
   }
@@ -1288,7 +1288,7 @@ namespace WebShadesRest {
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set group order\"}");
       }
       else {
-        request->send(201, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
+        webServer.sendError(request, 201, "Invalid HTTP Method: ");
       }
     }
   }

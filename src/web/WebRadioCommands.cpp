@@ -46,7 +46,7 @@ namespace WebRadioCommands {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            webServer.sendError(request, 500, "No shade id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
           if (obj.containsKey("command")) {
@@ -61,7 +61,7 @@ namespace WebRadioCommands {
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+        webServer.sendError(request, 500, "No shade object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
       SomfyShade* shade = somfy.getShadeById(shadeId);
@@ -83,11 +83,11 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
       else {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade with the specified id not found.\"}");
+          webServer.sendError(request, 500, "Shade with the specified id not found.");
       }
     }
     else
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+      webServer.rejectMethod(request);
   }
 
   void handleRepeatCommand(AsyncWebServerRequest *request) {
@@ -127,7 +127,7 @@ namespace WebRadioCommands {
       if(shadeId != 255) {
         SomfyShade *shade = somfy.getShadeById(shadeId);
         if(!shade) {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade reference could not be found.\"}");
+          webServer.sendError(request, 500, "Shade reference could not be found.");
           return;
         }
         if(shade->shadeType == shade_types::garage1 && command == somfy_commands::Prog) command = somfy_commands::Toggle;
@@ -148,7 +148,7 @@ namespace WebRadioCommands {
       else if(groupId != 255) {
         SomfyGroup * group = somfy.getGroupById(groupId);
         if(!group) {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group reference could not be found.\"}");
+          webServer.sendError(request, 500, "Group reference could not be found.");
           return;
         }
         if(!group->isLastCommand(command)) {
@@ -166,7 +166,7 @@ namespace WebRadioCommands {
       }
     }
     else {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+      webServer.rejectMethod(request);
     }
   }
 
@@ -197,7 +197,7 @@ namespace WebRadioCommands {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("groupId")) groupId = obj["groupId"];
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+            webServer.sendError(request, 500, "No group id was supplied.");
             return;
           }
           if (obj.containsKey("command")) {
@@ -209,7 +209,7 @@ namespace WebRadioCommands {
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+        webServer.sendError(request, 500, "No group object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
       SomfyGroup * group = somfy.getGroupById(groupId);
@@ -228,11 +228,11 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group with the specified id not found.\"}");
+        webServer.sendError(request, 500, "Group with the specified id not found.");
       }
     }
     else
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+      webServer.rejectMethod(request);
   }
 
   void handleTiltCommand(AsyncWebServerRequest *request) {
@@ -260,7 +260,7 @@ namespace WebRadioCommands {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            webServer.sendError(request, 500, "No shade id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
           if (obj.containsKey("command")) {
@@ -273,7 +273,7 @@ namespace WebRadioCommands {
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+        webServer.sendError(request, 500, "No shade object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
       SomfyShade* shade = somfy.getShadeById(shadeId);
@@ -295,11 +295,11 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade with the specified id not found.\"}");
+        webServer.sendError(request, 500, "Shade with the specified id not found.");
       }
     }
     else
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+      webServer.rejectMethod(request);
   }
 
   void handleSetPositions(AsyncWebServerRequest *request) {
@@ -336,10 +336,10 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
       else
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"An invalid shadeId was provided\"}");
+        webServer.sendError(request, 500, "An invalid shadeId was provided");
     }
     else {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"shadeId was not provided\"}");
+      webServer.sendError(request, 500, "shadeId was not provided");
     }
   }
 
@@ -390,7 +390,7 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
       else
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"An invalid shadeId was provided\"}");
+        webServer.sendError(request, 500, "An invalid shadeId was provided");
 
     }
     else if(groupId != 255) {
@@ -406,10 +406,10 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
       else
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"An invalid groupId was provided\"}");
+        webServer.sendError(request, 500, "An invalid groupId was provided");
     }
     else {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"shadeId was not provided\"}");
+      webServer.sendError(request, 500, "shadeId was not provided");
     }
   }
 
@@ -444,7 +444,7 @@ namespace WebRadioCommands {
             // qui gagne (AsyncWebServerRequest::send() supprime la réponse déjà posée). Le client
             // recevrait donc « Shade with the specified id not found. » au lieu du vrai motif,
             // « No shade id was supplied. ».
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            webServer.sendError(request, 500, "No shade id was supplied.");
             return;
           }
           if(obj.containsKey("pos")) pos = obj["pos"].as<int8_t>();
@@ -454,7 +454,7 @@ namespace WebRadioCommands {
       }
       else {
         // Même correctif que ci-dessus : la réponse était écrasée par celle de la recherche d'équipement.
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+        webServer.sendError(request, 500, "No shade object supplied.");
         return;
       }
       SomfyShade* shade = somfy.getShadeById(shadeId);
@@ -474,18 +474,18 @@ namespace WebRadioCommands {
         // même 200 avec l'état de l'équipement, donc comme un succès. On refuse désormais explicitement.
         // L'interface n'est pas concernée, elle envoie toujours les trois champs (cf. 70-somfy.js).
         if(pos < 0 || pos > 100) {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"A position between 0 and 100 is required.\"}");
+          webServer.sendError(request, 500, "A position between 0 and 100 is required.");
           return;
         }
         if(!shade->supportsMyPosition()) {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"This shade type does not support a my position.\"}");
+          webServer.sendError(request, 500, "This shade type does not support a my position.");
           return;
         }
         // learn : le moteur a déjà sa position My et l'équipement y est arrêté -- on l'enregistre
         // sans rien émettre (cf. SomfyShade::learnMyPosition).
         if(learn) {
           if(!shade->learnMyPosition(shade->transformPosition(pos), tilt >= 0 ? shade->transformPosition(tilt) : -1)) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"The my position can only be learned on an idle shade without simulated my.\"}");
+            webServer.sendError(request, 500, "The my position can only be learned on an idle shade without simulated my.");
             return;
           }
         }
@@ -503,11 +503,11 @@ namespace WebRadioCommands {
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade with the specified id not found.\"}");
+        webServer.sendError(request, 500, "Shade with the specified id not found.");
       }
     }
     else
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+      webServer.rejectMethod(request);
   }
 
   static void handleSetRollingCode(AsyncWebServerRequest *request) {
@@ -541,7 +541,7 @@ namespace WebRadioCommands {
       if (groupId != 255) {
         SomfyGroup* group = somfy.getGroupById(groupId);
         if (!group) {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group not found to set rolling code\"}");
+          webServer.sendError(request, 500, "Group not found to set rolling code");
           return;
         }
         group->setRollingCode(rollingCode);
@@ -556,7 +556,7 @@ namespace WebRadioCommands {
       SomfyShade* shade = nullptr;
       if (shadeId != 255) shade = somfy.getShadeById(shadeId);
       if (!shade) {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade not found to set rolling code\"}");
+        webServer.sendError(request, 500, "Shade not found to set rolling code");
       }
       else {
         shade->setRollingCode(rollingCode);
@@ -572,7 +572,7 @@ namespace WebRadioCommands {
     // entrerait ici sans satisfaire aucune condition, et la fonction retournerait SANS qu'aucune
     // réponse ne soit posée. Sous ESPAsyncWebServer la requête n'est alors jamais close : le
     // client attend son propre délai d'expiration, connexion tenue pendant tout ce temps.
-    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+    else webServer.rejectMethod(request);
   }
 
   static void handleSetPaired(AsyncWebServerRequest *request) {
@@ -600,7 +600,7 @@ namespace WebRadioCommands {
     SomfyShade* shade = nullptr;
     if (shadeId != 255) shade = somfy.getShadeById(shadeId);
     if (!shade) {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade not found to pair\"}");
+      webServer.sendError(request, 500, "Shade not found to pair");
     }
     else {
       shade->paired = paired;
@@ -638,7 +638,7 @@ namespace WebRadioCommands {
       SomfyShade* shade = nullptr;
       if (shadeId != 255) shade = somfy.getShadeById(shadeId);
       if (!shade) {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade not found to unpair\"}");
+        webServer.sendError(request, 500, "Shade not found to unpair");
       }
       else {
         if(shade->bitLength == 56)
@@ -659,7 +659,7 @@ namespace WebRadioCommands {
     // entrerait ici sans satisfaire aucune condition, et la fonction retournerait SANS qu'aucune
     // réponse ne soit posée. Sous ESPAsyncWebServer la requête n'est alors jamais close : le
     // client attend son propre délai d'expiration, connexion tenue pendant tout ce temps.
-    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+    else webServer.rejectMethod(request);
   }
 
   static bool readListenerBody(AsyncWebServerRequest *request, uint32_t &address, char *name, size_t nameLen);
@@ -699,7 +699,7 @@ namespace WebRadioCommands {
     // entrerait ici sans satisfaire aucune condition, et la fonction retournerait SANS qu'aucune
     // réponse ne soit posée. Sous ESPAsyncWebServer la requête n'est alors jamais close : le
     // client attend son propre délai d'expiration, connexion tenue pendant tout ce temps.
-    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+    else webServer.rejectMethod(request);
   }
   static void handleRenameRepeater(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -710,10 +710,10 @@ namespace WebRadioCommands {
       char name[sizeof(somfy.repeaterNames[0])];
       if(!readListenerBody(request, address, name, sizeof(name))) return;
       if(!somfy.renameRepeater(address, name))
-        request->send(404, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Remote is not repeated.\"}");
+        webServer.sendError(request, 404, "Remote is not repeated.");
       else sendRepeaters(request);
     }
-    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+    else webServer.rejectMethod(request);
   }
   static void handleUnlinkRepeater(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -726,7 +726,7 @@ namespace WebRadioCommands {
       somfy.unlinkRepeater(address);
       sendRepeaters(request);
     }
-    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+    else webServer.rejectMethod(request);
   }
 
   // --- Télécommandes écoutées ---
@@ -752,7 +752,7 @@ namespace WebRadioCommands {
       if(request->hasArg("name")) strlcpyUtf8(name, request->arg("name").c_str(), nameLen);
     }
     if(address == 0) {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No remote address was supplied.\"}");
+      webServer.sendError(request, 500, "No remote address was supplied.");
       return false;
     }
     return true;
@@ -786,7 +786,7 @@ namespace WebRadioCommands {
       somfy.publishListeners();
       sendListeners(request);
     }
-    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+    else webServer.rejectMethod(request);
   }
   static void handleRenameListener(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -797,13 +797,13 @@ namespace WebRadioCommands {
       char name[sizeof(somfy_listener_t::name)];
       if(!readListenerBody(request, address, name, sizeof(name))) return;
       if(!somfy.renameListener(address, name)) {
-        request->send(404, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Remote is not listened.\"}");
+        webServer.sendError(request, 404, "Remote is not listened.");
         return;
       }
       somfy.publishListeners();
       sendListeners(request);
     }
-    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+    else webServer.rejectMethod(request);
   }
   static void handleUnlinkListener(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -819,7 +819,7 @@ namespace WebRadioCommands {
       somfy.publishListeners();
       sendListeners(request);
     }
-    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+    else webServer.rejectMethod(request);
   }
 
   static void handleUnlinkRemote(AsyncWebServerRequest *request) {
@@ -844,7 +844,7 @@ namespace WebRadioCommands {
                 shade->unlinkRemote(obj["remoteAddress"]);
               }
               else {
-                request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Remote address not provided.\"}");
+                webServer.sendError(request, 500, "Remote address not provided.");
               }
               JsonAsyncResponse resp;
               resp.beginResponse(request);
@@ -854,18 +854,18 @@ namespace WebRadioCommands {
               resp.endResponse();
             }
             else {
-              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+              webServer.sendError(request, 500, "Shade Id not found.");
               return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
             }
           }
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            webServer.sendError(request, 500, "No shade id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No remote object supplied.\"}");
+        webServer.sendError(request, 500, "No remote object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
@@ -891,7 +891,7 @@ namespace WebRadioCommands {
             SomfyShade* shade = somfy.getShadeById(obj["shadeId"]);
             if (shade) {
               if (!obj.containsKey("remoteAddress")) {
-                request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Remote address not provided.\"}");
+                webServer.sendError(request, 500, "Remote address not provided.");
                 return;
               }
               int8_t code = obj.containsKey("rollingCode")
@@ -912,18 +912,18 @@ namespace WebRadioCommands {
               resp.endResponse();
             }
             else {
-              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+              webServer.sendError(request, 500, "Shade Id not found.");
               return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
             }
           }
           else {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            webServer.sendError(request, 500, "No shade id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No remote object supplied.\"}");
+        webServer.sendError(request, 500, "No remote object supplied.");
         return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
@@ -1081,7 +1081,7 @@ namespace WebRadioCommands {
         request->send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Command Sent\"}");
       }
       else
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No address or rolling code provided\"}");
+        webServer.sendError(request, 500, "No address or rolling code provided");
     }
     else {
       // Branche nécessaire : la route est enregistrée en AsyncHttp::ANY, donc un DELETE, PATCH ou
@@ -1089,7 +1089,7 @@ namespace WebRadioCommands {
       // ESPAsyncWebServer, une requête sans réponse n'est pas close : le client attend son propre
       // délai d'expiration, connexion tenue pendant tout ce temps. Toutes les autres routes du
       // fichier ferment déjà ce cas.
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+      webServer.rejectMethod(request);
     }
   }
 

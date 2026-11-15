@@ -182,7 +182,7 @@ namespace WebI18n {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     if(fsLocked) {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
+      webServer.sendError(request, 500, "Filesystem update in progress");
       return;
     }
     if(!request->hasArg("code")) {
@@ -334,7 +334,7 @@ namespace WebI18n {
     if(state && state->full) { sendLangLimit(request); return; }
     if(!state || !state->success) {
       LittleFS.remove(tempPath);
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Upload failed\"}");
+      webServer.sendError(request, 500, "Upload failed");
       return;
     }
     if(!request->hasArg("code")) {
@@ -350,7 +350,7 @@ namespace WebI18n {
     }
     if(fsLocked) {
       LittleFS.remove(tempPath);
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
+      webServer.sendError(request, 500, "Filesystem update in progress");
       return;
     }
 

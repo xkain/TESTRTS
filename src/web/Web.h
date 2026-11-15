@@ -45,6 +45,11 @@ public:
   void applyAssetHeaders(AsyncWebServerResponse *response, bool isRootDocument, bool immutableVersioned);
   void handleNotFound(AsyncWebServerRequest *request);
   void handleDeserializationError(AsyncWebServerRequest *request, DeserializationError &err);
+  // Réponse d'erreur JSON {"status":"ERROR","desc":…} (+ "code" si errCode) : une seule enveloppe en
+  // flash au lieu d'un littéral complet par site. Tampon local : g_content peut porter une réponse en
+  // cours d'écriture dans le même handler.
+  void sendError(AsyncWebServerRequest *request, int httpCode, const char *desc, const char *errCode = nullptr);
+  void rejectMethod(AsyncWebServerRequest *request);
   // Ne réémet pas d'en-tête de réponse "apikey" en écho au token déjà connu du client : ce dernier
   // l'a lui-même calculé de façon déterministe (même HMAC IP+réglages de sécurité), l'écho ne
   // transporterait donc aucune information nouvelle -- et une réponse concrète n'existe pas encore

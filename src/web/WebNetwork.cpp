@@ -134,7 +134,7 @@ namespace WebNetwork {
     JsonObject obj = doc.as<JsonObject>();
     int pin = obj["ledPin"] | -1;
     if(pin < 0 || pin > 48) {
-      request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_PIN_INVALID\",\"desc\":\"Invalid GPIO number for the status LED.\"}");
+      webServer.sendError(request, 400, "Invalid GPIO number for the status LED.", "LED_PIN_INVALID");
       return;
     }
     const char *owner = nullptr;
@@ -152,7 +152,7 @@ namespace WebNetwork {
     bool started = statusLed.test((int8_t)pin, obj["ledActiveLow"] | false, obj["ledAddressable"] | false, color, (uint8_t)(obj["ledColorOrder"] | 0));
     #endif
     if(!started) {
-      request->send(409, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_TEST_BUSY\",\"desc\":\"A test is already running.\"}");
+      webServer.sendError(request, 409, "A test is already running.", "LED_TEST_BUSY");
       return;
     }
     request->send(200, "application/json", "{\"status\":\"OK\"}");
@@ -182,11 +182,11 @@ namespace WebNetwork {
         if(obj.containsKey("ledPin")) {
           int ledPin = obj["ledPin"].as<int>();
           #if LED_PROFILE_FIXED
-          request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_PIN_FIXED\",\"desc\":\"The status LED is wired in hardware on this device.\"}");
+          webServer.sendError(request, 400, "The status LED is wired in hardware on this device.", "LED_PIN_FIXED");
           return;
           #else
           if(ledPin < -1 || ledPin > 48) {
-            request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_PIN_INVALID\",\"desc\":\"Invalid GPIO number for the status LED.\"}");
+            webServer.sendError(request, 400, "Invalid GPIO number for the status LED.", "LED_PIN_INVALID");
             return;
           }
           const char *owner = nullptr;
@@ -206,14 +206,14 @@ namespace WebNetwork {
         if(obj.containsKey("headerMobileDisplay")) {
           uint8_t hmd = obj["headerMobileDisplay"].as<uint8_t>();
           if(hmd > HMD_NONE) {
-            request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"HEADER_MOBILE_DISPLAY_INVALID\",\"desc\":\"Invalid mobile header display option.\"}");
+            webServer.sendError(request, 400, "Invalid mobile header display option.", "HEADER_MOBILE_DISPLAY_INVALID");
             return;
           }
         }
         if(obj.containsKey("defaultMobileTab")) {
           String tab = obj["defaultMobileTab"].as<String>();
           if(tab != "groups" && tab != "devices") {
-            request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"DEFAULT_MOBILE_TAB_INVALID\",\"desc\":\"Invalid default mobile tab.\"}");
+            webServer.sendError(request, 400, "Invalid default mobile tab.", "DEFAULT_MOBILE_TAB_INVALID");
             return;
           }
         }
@@ -222,22 +222,22 @@ namespace WebNetwork {
         // aucun effet visible.
         if(obj.containsKey("ledColorActivity")) {
           #if LED_PROFILE_FIXED
-          request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_PIN_FIXED\",\"desc\":\"The status LED is wired in hardware on this device.\"}");
+          webServer.sendError(request, 400, "The status LED is wired in hardware on this device.", "LED_PIN_FIXED");
           return;
           #else
           if(!isHexColor(obj["ledColorActivity"].as<const char *>())) {
-            request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_COLOR_INVALID\",\"desc\":\"Status LED colors must be in #rrggbb form.\"}");
+            webServer.sendError(request, 400, "Status LED colors must be in #rrggbb form.", "LED_COLOR_INVALID");
             return;
           }
           #endif
         }
         if(obj.containsKey("ledColorOrder")) {
           #if LED_PROFILE_FIXED
-          request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_PIN_FIXED\",\"desc\":\"The status LED is wired in hardware on this device.\"}");
+          webServer.sendError(request, 400, "The status LED is wired in hardware on this device.", "LED_PIN_FIXED");
           return;
           #else
           if(obj["ledColorOrder"].as<uint8_t>() > LED_PIXEL_ORDER_RGB) {
-            request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_COLOR_ORDER_INVALID\",\"desc\":\"Unknown pixel byte order.\"}");
+            webServer.sendError(request, 400, "Unknown pixel byte order.", "LED_COLOR_ORDER_INVALID");
             return;
           }
           #endif
@@ -249,14 +249,14 @@ namespace WebNetwork {
           // "Effacer" (btnGeoClear, cf. index.js) et ne doit pas être rejetée comme une latitude
           // invalide.
           if(geoLat != 99.0f && (geoLat < -90.0f || geoLat > 90.0f)) {
-            request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"GEO_LAT_INVALID\",\"desc\":\"Latitude must be between -90 and 90.\"}");
+            webServer.sendError(request, 400, "Latitude must be between -90 and 90.", "GEO_LAT_INVALID");
             return;
           }
         }
         if(obj.containsKey("geoLon")) {
           float geoLon = obj["geoLon"].as<float>();
           if(geoLon < -180.0f || geoLon > 180.0f) {
-            request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"GEO_LON_INVALID\",\"desc\":\"Longitude must be between -180 and 180.\"}");
+            webServer.sendError(request, 400, "Longitude must be between -180 and 180.", "GEO_LON_INVALID");
             return;
           }
         }
@@ -301,7 +301,7 @@ namespace WebNetwork {
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set General Settings\"}");
       }
       else {
-        request->send(201, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
+        webServer.sendError(request, 201, "Invalid HTTP Method: ");
       }
     }
   }
@@ -361,7 +361,7 @@ namespace WebNetwork {
           if(objWifi.containsKey("apPassword")) {
             size_t apLen = strlen(objWifi["apPassword"] | "");
             if(apLen > 0 && (apLen < 8 || apLen > 63)) {
-              request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"AP_PASSWORD_INVALID\",\"desc\":\"The access point password must be between 8 and 63 characters.\"}");
+              webServer.sendError(request, 400, "The access point password must be between 8 and 63 characters.", "AP_PASSWORD_INVALID");
               return;
             }
           }
@@ -392,7 +392,7 @@ namespace WebNetwork {
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set Network Settings\"}");
       }
       else {
-        request->send(201, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
+        webServer.sendError(request, 201, "Invalid HTTP Method: ");
       }
     }
   }
@@ -416,7 +416,7 @@ namespace WebNetwork {
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set Network Settings\"}");
       }
       else {
-        request->send(201, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
+        webServer.sendError(request, 201, "Invalid HTTP Method: ");
       }
     }
   }
@@ -465,7 +465,7 @@ namespace WebNetwork {
         }
       }
       else {
-        request->send(201, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
+        webServer.sendError(request, 201, "Invalid HTTP Method: ");
       }
     }
   }
@@ -530,7 +530,7 @@ namespace WebNetwork {
         // chose plus bas et fait autorité, mais le balayage des fiches de découverte qui suit ne
         // doit pas avoir lieu pour une charge utile qui sera de toute façon rejetée.
         if(obj.containsKey("rootTopic") && !MQTTSettings::isValidRootTopic(obj["rootTopic"] | "")) {
-          request->send(400, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid MQTT root topic\"}");
+          webServer.sendError(request, 400, "Invalid MQTT root topic");
           return;
         }
         // Fiches de découverte Home Assistant retirées AVANT d'appliquer les nouveaux réglages :
@@ -546,7 +546,7 @@ namespace WebNetwork {
           schedule.unpublishDisco();
         }
         if(!settings.MQTT.fromJSON(obj)) {
-          request->send(400, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid MQTT root topic\"}");
+          webServer.sendError(request, 400, "Invalid MQTT root topic");
           return;
         }
         mqtt.disconnect();
@@ -555,7 +555,7 @@ namespace WebNetwork {
         // qui rendait le défaut indiagnosticable -- l'utilisateur voyait un succès et retrouvait
         // ses anciens réglages au redémarrage suivant.
         if(!settings.MQTT.save()) {
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Settings could not be saved to NVS.\"}");
+          webServer.sendError(request, 500, "Settings could not be saved to NVS.");
           return;
         }
         JsonAsyncResponse resp;
@@ -566,7 +566,7 @@ namespace WebNetwork {
         resp.endResponse();
       }
       else {
-        request->send(201, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
+        webServer.sendError(request, 201, "Invalid HTTP Method: ");
       }
     }
   }

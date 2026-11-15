@@ -411,11 +411,11 @@ namespace WebAuth {
       const char *inPass = obj["password"] | "";
       const char *inPin = obj["pin"] | "";
       if(strlen(inUser) >= sizeof(settings.Security.username)) {
-        request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"USERNAME_TOO_LONG\",\"desc\":\"The username may not exceed 32 characters.\"}");
+        webServer.sendError(request, 400, "The username may not exceed 32 characters.", "USERNAME_TOO_LONG");
         return;
       }
       if(strlen(inPass) >= sizeof(settings.Security.password)) {
-        request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"PASSWORD_TOO_LONG\",\"desc\":\"The password may not exceed 32 characters.\"}");
+        webServer.sendError(request, 400, "The password may not exceed 32 characters.", "PASSWORD_TOO_LONG");
         return;
       }
       // Un PIN vide veut dire "inchangé" (parseSecretString ignore la chaîne vide) : seule une
@@ -425,12 +425,12 @@ namespace WebAuth {
       // au-dessus, l'interface web n'est pas le seul client de cette route.
       if(strlen(inPin) > 0) {
         if(strlen(inPin) != sizeof(settings.Security.pin) - 1) {
-          request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"PIN_INVALID\",\"desc\":\"The pin must be exactly 4 digits.\"}");
+          webServer.sendError(request, 400, "The pin must be exactly 4 digits.", "PIN_INVALID");
           return;
         }
         for(const char *c = inPin; *c; c++) {
           if(*c < '0' || *c > '9') {
-            request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"PIN_INVALID\",\"desc\":\"The pin must be exactly 4 digits.\"}");
+            webServer.sendError(request, 400, "The pin must be exactly 4 digits.", "PIN_INVALID");
             return;
           }
         }
@@ -448,11 +448,11 @@ namespace WebAuth {
       // seul garde-fou qui protège les clients hors interface, où rien ne relit un formulaire.
       security_types newType = obj.containsKey("type") ? static_cast<security_types>(obj["type"].as<uint8_t>()) : settings.Security.type;
       if(clearPassword && newType == security_types::Password) {
-        request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"CLEAR_ACTIVE_PASSWORD\",\"desc\":\"The password cannot be cleared while password security is active.\"}");
+        webServer.sendError(request, 400, "The password cannot be cleared while password security is active.", "CLEAR_ACTIVE_PASSWORD");
         return;
       }
       if(clearPin && newType == security_types::PinEntry) {
-        request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"CLEAR_ACTIVE_PIN\",\"desc\":\"The pin cannot be cleared while pin security is active.\"}");
+        webServer.sendError(request, 400, "The pin cannot be cleared while pin security is active.", "CLEAR_ACTIVE_PIN");
         return;
       }
       settings.Security.fromJSON(obj);
