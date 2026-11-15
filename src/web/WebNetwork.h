@@ -4,8 +4,6 @@
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #ifndef webnetwork_h
 #define webnetwork_h
-// WebServer.h avant ESPAsyncWebServer.h : cf. commentaire détaillé en tête de WResp.h.
-#include <WebServer.h>
 #include <ESPAsyncWebServer.h>
 
 // Réseau / WiFi / Ethernet / MQTT / réglages généraux : /scanaps, /setgeneral, /setNetwork,

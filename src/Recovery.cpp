@@ -12,6 +12,7 @@
 #include <esp_task_wdt.h>
 #include "Recovery.h"
 #include "RecoveryPage.h"
+#include "web/WebCommon.h"
 #include "somfy/Somfy.h"
 #include "ConfigSettings.h"
 #include "ConfigFile.h"
@@ -218,7 +219,7 @@ void Recovery::begin() {
   this->_dns->setErrorReplyCode(DNSReplyCode::NoError);
   this->_dns->start(RECOVERY_DNS_PORT, "*", WiFi.softAPIP());
 
-  this->_server = new WebServer(80);
+  this->_server = new AsyncWebServer(80);
   this->_registerRoutes();
   this->_server->begin();
 
@@ -230,23 +231,25 @@ void Recovery::begin() {
 }
 
 void Recovery::_registerRoutes() {
-  WebServer *srv = this->_server;
+  AsyncWebServer *srv = this->_server;
 
-  srv->on("/", HTTP_GET, [srv]() {
-    srv->sendHeader("Cache-Control", "no-store");
-    srv->send_P(200, "text/html", RECOVERY_PAGE);
+  srv->on("/", AsyncHttp::GET, [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *resp = request->beginResponse(200, "text/html", RECOVERY_PAGE_GZ, RECOVERY_PAGE_GZ_LEN);
+    resp->addHeader("Content-Encoding", "gzip");
+    resp->addHeader("Cache-Control", "no-store");
+    request->send(resp);
   });
 
-  srv->on("/recoveryCancel", HTTP_POST, [this, srv]() {
+  srv->on("/recoveryCancel", AsyncHttp::POST, [this](AsyncWebServerRequest *request) {
     Serial.println(F("[RECOVERY] Cancelled by user, rebooting untouched"));
-    srv->send(200, "application/json", "{\"status\":\"ok\"}");
-    this->_rebootSoon();
+    request->send(200, "application/json", "{\"status\":\"ok\"}");
+    this->_deferReboot();
   });
 
-  srv->on("/recoveryApply", HTTP_POST, [this, srv]() {
+  srv->on("/recoveryApply", AsyncHttp::POST, [this](AsyncWebServerRequest *request) {
     StaticJsonDocument<512> doc;
-    if(deserializeJson(doc, srv->arg("plain"))) {
-      srv->send(400, "application/json", "{\"status\":\"ERROR\"}");
+    if(!asyncHasBody(request) || deserializeJson(doc, asyncGetBody(request))) {
+      request->send(400, "application/json", "{\"status\":\"ERROR\"}");
       return;
     }
     RecoveryTargets t;
@@ -261,50 +264,50 @@ void Recovery::_registerRoutes() {
     t.factory         = doc["factory"]  | false;
     t.enableDebugLogs = doc["debug"]    | false;
     if(t.shades) t.schedules = true;
+    this->_targets = t;
 
     // On répond AVANT d'effacer : l'effacement peut couper la pile réseau, et l'utilisateur doit
-    // dans tous les cas recevoir la confirmation.
-    srv->send(200, "application/json", "{\"status\":\"ok\"}");
-    delay(100);
-    this->_apply(t);
-    this->_rebootSoon();
-  });
+    // dans tous les cas recevoir la confirmation. L'effacement lui-même part de loop().
+    request->send(200, "application/json", "{\"status\":\"ok\"}");
+    this->_pendingApply = true;
+    this->_deferReboot();
+  }, nullptr, asyncBodyHandler);
 
   // Restauration de l'interface web : le flux est écrit directement dans la partition du système
   // de fichiers via l'API Update, sans passer par LittleFS. C'est ce qui permet de réparer une
   // partition illisible -- et ce qui rend le formatage seul inutile, l'image écrasant l'intégralité
   // de la partition. En récupération, ni la radio Somfy ni MQTT ne tournent : rien à arrêter avant.
-  srv->on("/recoveryUploadFS", HTTP_POST,
-    [this, srv]() {
+  srv->on("/recoveryUploadFS", AsyncHttp::POST,
+    [this](AsyncWebServerRequest *request) {
       bool ok = this->_uploadOk && !Update.hasError();
-      srv->send(ok ? 200 : 500, "application/json",
-                ok ? "{\"status\":\"ok\"}" : "{\"status\":\"ERROR\"}");
-      if(ok) this->_rebootSoon();
+      request->send(ok ? 200 : 500, "application/json",
+                    ok ? "{\"status\":\"ok\"}" : "{\"status\":\"ERROR\"}");
+      if(ok) this->_deferReboot();
     },
-    [this]() {
-      HTTPUpload &upload = this->_server->upload();
-      if(upload.status == UPLOAD_FILE_START) {
+    [this](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
+      if(index == 0) {
         this->_uploadOk = false;
-        Serial.printf("[RECOVERY] Filesystem image upload: %s\n", upload.filename.c_str());
+        Serial.printf("[RECOVERY] Filesystem image upload: %s\n", filename.c_str());
         // La partition ne doit plus être montée pendant qu'on la réécrit.
         LittleFS.end();
         if(!Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS)) Update.printError(Serial);
+        // L'abandon n'arrive pas par ce callback mais par la déconnexion (cf. handleUpdateFirmwareBody).
+        request->onDisconnect([]() {
+          if(Update.isRunning()) {
+            Serial.println(F("[RECOVERY] Upload aborted"));
+            Update.abort();
+            LittleFS.begin();
+          }
+        });
       }
-      else if(upload.status == UPLOAD_FILE_WRITE) {
-        if(Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-          Update.printError(Serial);
-          Update.abort();
-        }
-      }
-      else if(upload.status == UPLOAD_FILE_ABORTED) {
-        Serial.println(F("[RECOVERY] Upload aborted"));
+      if(len && Update.write(data, len) != len) {
+        Update.printError(Serial);
         Update.abort();
-        LittleFS.begin();
       }
-      else if(upload.status == UPLOAD_FILE_END) {
+      if(final) {
         if(Update.end(true)) {
           this->_uploadOk = true;
-          Serial.printf("[RECOVERY] Filesystem restored (%u bytes)\n", upload.totalSize);
+          Serial.printf("[RECOVERY] Filesystem restored (%u bytes)\n", (unsigned)(index + len));
         }
         else {
           Update.printError(Serial);
@@ -314,9 +317,8 @@ void Recovery::_registerRoutes() {
     });
 
   // Sondes de portail captif (Android/iOS/Windows) et tout le reste : on renvoie vers la page.
-  srv->onNotFound([srv]() {
-    srv->sendHeader("Location", "http://192.168.4.1/", true);
-    srv->send(302, "text/plain", "");
+  srv->onNotFound([](AsyncWebServerRequest *request) {
+    request->redirect("http://192.168.4.1/");
   });
 }
 
@@ -413,10 +415,23 @@ void Recovery::_rebootSoon() {
   ESP.restart();
 }
 
+void Recovery::_deferReboot() {
+  this->_pendingAt = millis();
+  this->_pendingReboot = true;
+}
+
 void Recovery::loop() {
   if(!this->_active) return;
   if(this->_dns) this->_dns->processNextRequest();
-  if(this->_server) this->_server->handleClient();
+
+  // Suite différée des routes (async_tcp) : 300 ms laissent partir la réponse déjà envoyée.
+  if(this->_pendingReboot && (uint32_t)(millis() - this->_pendingAt) >= 300) {
+    if(this->_pendingApply) {
+      this->_pendingApply = false;
+      this->_apply(this->_targets);
+    }
+    this->_rebootSoon();
+  }
 
   if(this->_ledPin >= 0 && (uint32_t)(millis() - this->_lastBlink) >= 800) {
     this->_led(!this->_ledOn);

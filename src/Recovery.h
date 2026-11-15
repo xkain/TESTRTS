@@ -5,7 +5,7 @@
 #define RECOVERY_H
 
 #include <Arduino.h>
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <DNSServer.h>
 
 // Nombre de coupures d'alimentation successives (pendant la fenêtre BOOT_TIMEOUT) donnant accès au
@@ -217,11 +217,18 @@ class Recovery {
     uint32_t _detectStart = 0;
     uint32_t _lastClientSeen = 0;
     uint32_t _lastBlink = 0;
-    WebServer *_server = nullptr;
+    // Les routes tournent sur la tâche async_tcp : effacements et redémarrage sont différés à loop()
+    // (loopTask), après un court délai qui laisse partir la réponse HTTP.
+    volatile bool _pendingApply = false;
+    volatile bool _pendingReboot = false;
+    uint32_t _pendingAt = 0;
+    RecoveryTargets _targets;
+    AsyncWebServer *_server = nullptr;
     DNSServer *_dns = nullptr;
     void _registerRoutes();
     void _apply(const RecoveryTargets &t);
     void _rebootSoon();
+    void _deferReboot();
     void _resolveLed();
     void _led(bool on);
     // Un pas d'entretien du témoin pendant la fenêtre de détection. Partagé par les deux chemins de

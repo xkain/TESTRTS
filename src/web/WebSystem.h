@@ -4,8 +4,6 @@
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #ifndef websystem_h
 #define websystem_h
-// WebServer.h avant ESPAsyncWebServer.h : cf. commentaire détaillé en tête de WResp.h.
-#include <WebServer.h>
 #include <ESPAsyncWebServer.h>
 
 // Système / Firmware / OTA / Backup / découverte réseau. registerRoutes() enregistre sur le serveur

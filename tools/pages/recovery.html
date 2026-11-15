@@ -1,19 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
-// SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
-// Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
-#ifndef RECOVERYPAGE_H
-#define RECOVERYPAGE_H
-
-#include <Arduino.h>
-
-// Page du mode Récupération, embarquée dans le binaire et STRICTEMENT autonome : ni requête
-// externe, ni fichier LittleFS, ni /lang. C'est la condition pour qu'elle s'affiche même quand le
-// filesystem est corrompu -- c'est-à-dire précisément dans le cas qu'on cherche à réparer.
-//
-// Elle recopie donc à la main le strict nécessaire de la charte (variables de couleur, tuiles,
-// switch 50x24, boutons) plutôt que de dépendre de base.css. Les libellés FR/EN vivent
-// dans un mini-dictionnaire inline, choisi via navigator.language.
-static const char RECOVERY_PAGE[] PROGMEM = R"rawliteral(<!DOCTYPE html>
+<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -228,6 +213,4 @@ $("btnApply").onclick=function(){
  send("/recoveryApply",JSON.stringify(o),t.rebooting);
 };
 sync();
-</script></body></html>)rawliteral";
-
-#endif
+</script></body></html>

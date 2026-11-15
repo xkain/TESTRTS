@@ -4,8 +4,6 @@
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #ifndef webi18n_h
 #define webi18n_h
-// WebServer.h avant ESPAsyncWebServer.h : cf. commentaire détaillé en tête de WResp.h.
-#include <WebServer.h>
 #include <ESPAsyncWebServer.h>
 
 // Langues (i18n) : /lang, /langDefault, /setLang, /setPendingLang, /setOnboardingDone,

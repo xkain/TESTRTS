@@ -4,8 +4,6 @@
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #ifndef webradiocommands_h
 #define webradiocommands_h
-// WebServer.h avant ESPAsyncWebServer.h : cf. commentaire détaillé en tête de WResp.h.
-#include <WebServer.h>
 #include <ESPAsyncWebServer.h>
 
 // Commandes RF Somfy (protocole/transceiver) : /shadeCommand, /groupCommand, /tiltCommand,

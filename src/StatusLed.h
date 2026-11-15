@@ -43,7 +43,7 @@ class StatusLed {
     // Couleur déjà ramenée à l'échelle du témoin, posée une fois par _resolve() : le chemin
     // d'écriture ne doit pas analyser une chaîne hexadécimale à chaque éclat.
     // Initialisées à zéro et non à l'échelle du témoin : cette valeur vit dans Recovery.h, et
-    // inclure cet en-tête ICI ferait entrer WebServer.h et DNSServer.h dans chaque unité de
+    // inclure cet en-tête ICI ferait entrer ESPAsyncWebServer.h et DNSServer.h dans chaque unité de
     // compilation qui inclut StatusLed.h. _resolve() la pose dans tous les cas.
     uint8_t _colorActivity[3] = {0, 0, 0};
     uint8_t _colorOrder = 0;

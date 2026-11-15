@@ -716,6 +716,38 @@ def _write_web_assets_header(ui_dir, build_version):
             f.write(content)
     print(f"[web-assets] interface embarquée : {total} octets ({ASSETS_HEADER})")
 
+# ──────────────────────────────────────────────
+# Page du mode Récupération (src/Recovery.cpp), embarquée dans l'application comme l'interface.
+# Elle est STRICTEMENT autonome -- ni requête externe, ni fichier LittleFS, ni /lang -- pour
+# s'afficher même quand le filesystem est corrompu, précisément le cas qu'elle sert à réparer ;
+# elle recopie donc à la main le minimum de la charte (jetons de couleur, tuiles, switch, boutons)
+# et porte ses libellés FR/EN dans un mini-dictionnaire inline. Servie gzippée (Content-Encoding) :
+# 15,6 Ko en clair contre ~5,5 Ko compressés dans la flash. Pas de minify_html : la page doit rester
+# bulletproof, le gain d'une passe de compactage avant gzip ne vaut pas ce risque.
+# ──────────────────────────────────────────────
+RECOVERY_SRC = os.path.join("tools", "pages", "recovery.html")
+RECOVERY_HEADER = os.path.join("src", "RecoveryPage.h")
+
+def _write_recovery_header():
+    with open(os.path.join(_project_dir(), RECOVERY_SRC), "r", encoding="utf-8") as f:
+        raw = f.read().encode("utf-8")
+    packed = _gzip_best(raw)
+    body = ",".join(str(b) for b in packed)
+    content = ("// FICHIER GÉNÉRÉ par tools/build_data_image.py depuis tools/pages/recovery.html -- ne pas "
+               "modifier, ne pas versionner.\n"
+               "#pragma once\n#include <stddef.h>\n#include <stdint.h>\n\n"
+               f"static const uint8_t RECOVERY_PAGE_GZ[{len(packed)}] = {{{body}}};\n"
+               f"static const size_t RECOVERY_PAGE_GZ_LEN = {len(packed)};\n")
+    header = os.path.join(_project_dir(), RECOVERY_HEADER)
+    old = None
+    if os.path.isfile(header):
+        with open(header, "r", encoding="utf-8") as f:
+            old = f.read()
+    if old != content:
+        with open(header, "w", encoding="utf-8") as f:
+            f.write(content)
+    print(f"  {'recovery.html':<30} {len(raw):>7} -> {len(packed):>7} B [embarqué, gzip]")
+
 def build_data_image():
     src_dir = _src_dir()
     dst_dir = _dst_dir()
@@ -765,6 +797,7 @@ def build_data_image():
     _embed_default_language(dst_dir, build_version)
     _embed_manifest(dst_dir)
     _write_web_assets_header(ui_dir, build_version)
+    _write_recovery_header()
 
 # Lancement
 build_data_image()

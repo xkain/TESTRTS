@@ -2,8 +2,6 @@
 // SPDX-FileCopyrightText: 2023 Robert Strouse <https://github.com/rstrouse>
 // SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
-// WebServer.h avant ESPAsyncWebServer.h : cf. commentaire détaillé en tête de WResp.h.
-#include <WebServer.h>
 #include <ESPAsyncWebServer.h>
 #include "somfy/Somfy.h"
 #ifndef webserver_h

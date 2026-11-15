@@ -4,32 +4,18 @@
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #ifndef webcommon_h
 #define webcommon_h
-// WebServer.h avant ESPAsyncWebServer.h : cf. commentaire détaillé en tête de WResp.h.
-#include <WebServer.h>
 #include <ESPAsyncWebServer.h>
 
 // Constantes partagées entre les modules Web* (routes HTTP). Définies une seule fois dans
 // Web.cpp (noyau WebCore) ; chaque module qui en a besoin les déclare ici en extern plutôt que
 // de dupliquer les littéraux.
 
-// --- Constantes HTTP pour AsyncWebServerRequest::method() (bug trouvé en test matériel réel,
-// étape 5e de la migration ESPAsyncWebServer) ---
-// ESPAsyncWebServer.h ne redéfinit HTTP_GET/HTTP_POST/HTTP_PUT/HTTP_OPTIONS/... QUE si WEBSERVER_H
-// n'est pas déjà défini dans l'unité de compilation courante (garde `#ifndef WEBSERVER_H`). Tous
-// nos fichiers projet incluent <WebServer.h> AVANT <ESPAsyncWebServer.h>, donc chez NOUS ces
-// macros valent les entiers séquentiels de `enum http_method` (GET=1, POST=3, PUT=4, OPTIONS=6,
-// ...). Mais WebRequest.cpp -- compilé À L'INTÉRIEUR de la bibliothèque ESPAsyncWebServer,
-// laquelle n'inclut PAS <WebServer.h> dans sa propre unité de compilation -- utilise lui les
-// valeurs bitmask qu'ESPAsyncWebServer.h définit par défaut (GET=0b1, POST=0b10, DELETE=0b100,
-// PUT=0b1000, PATCH=0b10000, HEAD=0b100000, OPTIONS=0b1000000) pour peupler
-// AsyncWebServerRequest::_method au moment de parser chaque requête reçue. Les deux jeux de
-// valeurs ne coïncident QUE pour GET (=1 dans les deux cas, par hasard) : toute comparaison directe
-// `request->method() == HTTP_POST/HTTP_PUT/HTTP_OPTIONS/...` échoue donc silencieusement (constaté
-// en test réel : un OPTIONS sur /shadeCommand retombait dans le else "Invalid Http method"). Ces
-// constantes reproduisent la valeur RÉELLEMENT utilisée à l'exécution par
-// AsyncWebServerRequest::method() -- à utiliser exclusivement dans le code AsyncWebServerRequest*
-// (routes registerRoutes(AsyncWebServer&) ET comparaisons dans les handlers), jamais avec l'ancien
-// WebServer&, qui reste sur l'enum classique (cohérent avec lui-même, donc non affecté par ce bug).
+// Méthodes HTTP pour AsyncWebServerRequest::method() : les bitmasks que WebRequest.cpp pose en
+// analysant chaque requête. Nées d'un bug vu sur matériel : tant que <WebServer.h> précédait
+// ESPAsyncWebServer.h (mode Récupération synchrone, aujourd'hui en async), HTTP_GET/HTTP_POST
+// valaient ses entiers séquentiels et toute comparaison directe échouait (un OPTIONS sur
+// /shadeCommand tombait en « Invalid Http method »). Gardées explicites : indépendantes de
+// l'ordre d'inclusion.
 namespace AsyncHttp {
   constexpr WebRequestMethodComposite GET      = 0b00000001;
   constexpr WebRequestMethodComposite POST     = 0b00000010;
