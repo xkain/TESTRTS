@@ -27,7 +27,34 @@
 }
 
 
+// Trois étages de journalisation : TRACE* = traces de développement, absentes du binaire de
+// release (-D FW_TRACE=1 dans [env:esp32_dev] pour les réactiver) ; DBG_* (ConfigSettings.h) =
+// réglage utilisateur enableDebugLogs, toujours compilé ; Serial direct = démarrage et erreurs.
+// TRACE_ONLY(stmt) retire aussi l'appel d'une fonction qui ne sert qu'à tracer : gc-sections
+// fait alors disparaître la fonction elle-même.
+#ifndef FW_TRACE
+#define FW_TRACE 0
+#endif
+#if FW_TRACE
+#define TRACE(...)       Serial.print(__VA_ARGS__)
+#define TRACELN(...)     Serial.println(__VA_ARGS__)
+#define TRACEF(...)      Serial.printf(__VA_ARGS__)
+#define TRACE_ONLY(stmt) stmt
 #define DEBUG_SOMFY Serial
+#else
+#define TRACE(...)       do {} while(0)
+#define TRACELN(...)     do {} while(0)
+#define TRACEF(...)      do {} while(0)
+#define TRACE_ONLY(stmt) do {} while(0)
+// Flux muet pour les anciens DEBUG_SOMFY.print(...) : méthodes vides, donc aucun code émis ; et
+// comme DEBUG_SOMFY n'est plus une macro, les blocs `#ifdef DEBUG_SOMFY` tombent avec.
+struct NullTrace {
+  template<typename... A> size_t print(A&&...) { return 0; }
+  template<typename... A> size_t println(A&&...) { return 0; }
+  template<typename... A> size_t printf(A&&...) { return 0; }
+};
+static NullTrace DEBUG_SOMFY;
+#endif
 
 
 

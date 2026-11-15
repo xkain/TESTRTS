@@ -730,7 +730,7 @@ void transceiver_config_t::save() {
 void transceiver_config_t::removeNVSKey(const char *key) {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   if(pref.isKey(key)) {
-    Serial.printf("Removing NVS Key: CC1101.%s\n", key);
+    TRACEF("Removing NVS Key: CC1101.%s\n", key);
     pref.remove(key);
   }
 }
@@ -740,7 +740,7 @@ void transceiver_config_t::load() {
     esp_chip_info(&ci);
     switch(ci.model) {
       case esp_chip_model_t::CHIP_ESP32S3:
-        Serial.println("Setting S3 Transceiver Defaults...");
+        TRACELN("Setting S3 Transceiver Defaults...");
         this->TXPin = 15;
         this->RXPin = 14;
         this->MOSIPin = 11;

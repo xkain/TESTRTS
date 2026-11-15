@@ -238,7 +238,7 @@ bool ConfigSettings::begin() {
   this->Ethernet.begin();
   this->NTP.begin();
   this->MQTT.begin();
-  this->print();
+  TRACE_ONLY(this->print());
   return true;
 }
 
@@ -698,7 +698,7 @@ bool IPSettings::load() {
     pref.getString("dns2", buff, sizeof(buff));
     this->dns2.fromString(buff);
   }
-  Serial.printf("Preference IP Free Entries: %d\n", pref.freeEntries());
+  TRACEF("Preference IP Free Entries: %d\n", pref.freeEntries());
   pref.end();
   return true;
 }

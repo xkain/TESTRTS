@@ -446,13 +446,13 @@ namespace WebNetwork {
         if (ssid.compareTo(settings.WIFI.ssid) != 0) reboot = true;
         if (passphrase.compareTo(settings.WIFI.passphrase) != 0) reboot = true;
         if (!settings.WIFI.ssidExists(ssid.c_str()) && ssid.length() > 0) {
-          request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"WiFi Network Does not exist\"}");
+          webServer.sendError(request, 400, "WiFi Network Does not exist");
         }
         else {
           SETCHARPROP(settings.WIFI.ssid, ssid.c_str(), sizeof(settings.WIFI.ssid));
           SETCHARPROP(settings.WIFI.passphrase, passphrase.c_str(), sizeof(settings.WIFI.passphrase));
           settings.WIFI.save();
-          settings.WIFI.print();
+          TRACE_ONLY(settings.WIFI.print());
           // 200, pas 201 : les clients JS génériques (putJSONSync) traitent tout code != 200 comme
           // une erreur -- un 201 sur ce chemin de succès serait donc confondu avec une erreur, la
           // seule différence visible étant le corps de la réponse.

@@ -449,13 +449,11 @@ bool ShadeConfigFile::backup(SomfyShadeController *s) {
 bool ShadeConfigFile::validate() {
   this->readHeader();
   if(this->header.version < 1) {
-    Serial.print("Invalid Header Version:");
-    Serial.println(this->header.version);
+    TRACEF("Invalid Header Version:%u\n", (unsigned)this->header.version);
     return false;
   }
   if(this->header.shadeRecordSize < 100) {
-    Serial.print("Invalid Shade Record Size:");
-    Serial.println(this->header.shadeRecordSize);
+    TRACEF("Invalid Shade Record Size:%u\n", (unsigned)this->header.shadeRecordSize);
     return false;
   }
   // Ces compteurs sont lus tels quels depuis le fichier (uint8_t, donc jusqu'à 255) puis utilisés
@@ -463,34 +461,29 @@ bool ShadeConfigFile::validate() {
   // tableaux de taille fixe. Sans ce contrôle, un fichier de restauration forgé avec un nombre
   // d'enregistrements supérieur à la capacité réelle provoque une écriture hors limites.
   if(this->header.roomRecords > SOMFY_MAX_ROOMS) {
-    Serial.print("Invalid Room Record Count:");
-    Serial.println(this->header.roomRecords);
+    TRACEF("Invalid Room Record Count:%u\n", (unsigned)this->header.roomRecords);
     return false;
   }
   if(this->header.shadeRecords > SOMFY_MAX_SHADES) {
-    Serial.print("Invalid Shade Record Count:");
-    Serial.println(this->header.shadeRecords);
+    TRACEF("Invalid Shade Record Count:%u\n", (unsigned)this->header.shadeRecords);
     return false;
   }
   if(this->header.repeaterRecords > SOMFY_MAX_REPEATERS) {
-    Serial.print("Invalid Repeater Record Count:");
-    Serial.println(this->header.repeaterRecords);
+    TRACEF("Invalid Repeater Record Count:%u\n", (unsigned)this->header.repeaterRecords);
     return false;
   }
   if(this->header.version > 10) {
     if(this->header.groupRecordSize < 100) {
-      Serial.print("Invalid Group Record Size:");
-      Serial.println(this->header.groupRecordSize);
+      TRACEF("Invalid Group Record Size:%u\n", (unsigned)this->header.groupRecordSize);
       return false;
     }
     if(this->header.groupRecords > SOMFY_MAX_GROUPS) {
-      Serial.print("Invalid Group Record Count:");
-      Serial.println(this->header.groupRecords);
+      TRACEF("Invalid Group Record Count:%u\n", (unsigned)this->header.groupRecords);
       return false;
     }
   }
   if(this->file.position() != this->header.length) {
-    Serial.printf("File not positioned at %u end of header: %d\n", this->header.length, this->file.position());
+    TRACEF("File not positioned at %u end of header: %d\n", this->header.length, this->file.position());
     return false;
   }
   
@@ -507,7 +500,7 @@ bool ShadeConfigFile::validate() {
     fsize += (this->header.repeaterRecordSize * this->header.repeaterRecords);
   }
   if(this->file.size() < fsize) {
-    Serial.printf("File size is not correct should be %d and got %d\n", fsize, this->file.size());
+    TRACEF("File size is not correct should be %d and got %d\n", fsize, this->file.size());
   }
   // Next check to see if the records match the header length.
   uint8_t recs = 0;
@@ -516,11 +509,11 @@ bool ShadeConfigFile::validate() {
     while(recs < this->header.roomRecords) {
       uint32_t pos = this->file.position();
       if(!this->seekChar(CFG_REC_END)) {
-        Serial.printf("Failed to find the room record end %d\n", recs);
+        TRACEF("Failed to find the room record end %d\n", recs);
         return false;
       }
       if(this->file.position() - pos != this->header.roomRecordSize) {
-        Serial.printf("Room record length is %d and should be %d\n", this->file.position() - pos, this->header.roomRecordSize);
+        TRACEF("Room record length is %d and should be %d\n", this->file.position() - pos, this->header.roomRecordSize);
         return false;
       }
       recs++;
@@ -530,11 +523,11 @@ bool ShadeConfigFile::validate() {
   while(recs < this->header.shadeRecords) {
     uint32_t pos = this->file.position();
     if(!this->seekChar(CFG_REC_END)) {
-      Serial.printf("Failed to find the shade record end %d\n", recs);
+      TRACEF("Failed to find the shade record end %d\n", recs);
       return false;
     }
     if(this->file.position() - pos != this->header.shadeRecordSize) {
-      Serial.printf("Shade record length is %d and should be %d\n", this->file.position() - pos, this->header.shadeRecordSize);
+      TRACEF("Shade record length is %d and should be %d\n", this->file.position() - pos, this->header.shadeRecordSize);
       return false;
     }
     recs++;
@@ -544,12 +537,12 @@ bool ShadeConfigFile::validate() {
     while(recs < this->header.groupRecords) {
       uint32_t pos = this->file.position();
       if(!this->seekChar(CFG_REC_END)) {
-        Serial.printf("Failed to find the group record end %d\n", recs);
+        TRACEF("Failed to find the group record end %d\n", recs);
         return false;
       }
       recs++;
       if(this->file.position() - pos != this->header.groupRecordSize) {
-        Serial.printf("Group record length is %d and should be %d\n", this->file.position() - pos, this->header.groupRecordSize);
+        TRACEF("Group record length is %d and should be %d\n", this->file.position() - pos, this->header.groupRecordSize);
         return false;
       }
     }
@@ -559,7 +552,7 @@ bool ShadeConfigFile::validate() {
     while(recs < this->header.repeaterRecords) {
       //uint32_t pos = this->file.position();
       if(!this->seekChar(CFG_REC_END)) {
-        Serial.printf("Failed to find the repeater record end %d\n", recs);
+        TRACEF("Failed to find the repeater record end %d\n", recs);
       }
       recs++;
       

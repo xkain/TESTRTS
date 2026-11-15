@@ -65,7 +65,7 @@ void SomfyShadeController::updateGroupFlags() {
 #ifdef USE_NVS
 bool SomfyShadeController::loadLegacy() {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
-  Serial.println("Loading Legacy shades using NVS");
+  TRACELN("Loading Legacy shades using NVS");
   pref.begin("Shades", true);
   pref.getBytes("shadeIds", this->m_shadeIds, sizeof(this->m_shadeIds));
   pref.end();
@@ -101,7 +101,7 @@ bool SomfyShadeController::loadLegacy() {
     DEBUG_SOMFY.print(this->m_shadeIds[i]);
     if(i < SOMFY_MAX_SHADES - 1) DEBUG_SOMFY.print(",");
   }
-  Serial.println();
+  DEBUG_SOMFY.println();
   #endif
   #ifdef USE_NVS
   if(!this->useNVS()) {

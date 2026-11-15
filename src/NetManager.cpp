@@ -67,8 +67,7 @@ bool NetManager::setup() {
   if(settings.connType == conn_types_t::wifi || settings.connType == conn_types_t::unset) {
     WiFi.persistent(false);
     if(settings.hostname[0] != '\0') WiFi.setHostname(settings.hostname);
-    Serial.print("WiFi Mode: ");
-    Serial.println(WiFi.getMode());
+    TRACEF("WiFi Mode: %d\n", (int)WiFi.getMode());
     WiFi.mode(WIFI_STA);
   }
   sockEmit.begin();
