@@ -3899,6 +3899,8 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .onb-card b { font-size: var(--fs-6); }
 .onb-card-desc { font-size: var(--fs-3); color: var(--text-3); }
 .onb-card-tag { margin-top: auto; padding: 4px 10px; border-radius: var(--r-pill); background: var(--info-bg); color: var(--info); font-size: var(--fs-1); font-weight: 700; }
+.onb-restore { margin: 20px 0 0; font-size: var(--fs-3); color: var(--text-3); }
+.onb-restore a { color: var(--accent); font-weight: 600; }
 /* La colonne des étapes est plus large que dans les autres assistants : 320 px laissent deux tuiles côte à côte. */
 .onb-window .wiz-grid { grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); }
 .onb-tile-h { display: flex; align-items: center; gap: 10px; margin: 0; font-size: var(--fs-5); font-weight: 800; line-height: 1.25; }

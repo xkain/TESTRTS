@@ -135,12 +135,19 @@ class Onboarding {
                 return `<button type="button" class="onb-card${on ? ' on' : ''}" aria-pressed="${on}" onclick="onboarding.pickMode('${m}')">
                 <span class="onb-card-ico"><svg><use href="#${ico}"></use></svg></span><b>${title}</b>
                 <span class="onb-card-desc">${desc}</span>${tag ? `<span class="onb-card-tag">${tag}</span>` : ''}</button>`;
-            }).join('')}</div>`;
+            }).join('')}</div>${this._restoreHtml()}`;
     }
     pickMode(mode) {
         this._mode = mode;
         this._goTo('net');
     }
+    // Entrée de restauration, sur le premier écran rencontré : « mode », ou « net » quand le choix
+    // du mode est sauté (BOX-WIFI). Ouvre la fenêtre de restauration de l'onglet Appareil,
+    // préréglée migration : tout sauf le réseau, que l'assistant configure juste après.
+    _restoreHtml() {
+        return `<p class="onb-restore">${tr('WELCOME_REPLACE')} <a href="#" onclick="onboarding.openRestore(); return false;">${tr('WELCOME_RESTORE_LINK')}</a></p>`;
+    }
+    openRestore() { firmware.restore({ migrate: true }); }
     _goTo(step) {
         this._step = step;
         this._render();
@@ -174,7 +181,7 @@ class Onboarding {
             <div class="gen-input-box"><input id="onbHost" class="gen-input" type="text" maxlength="31" autocomplete="off" value="${escAttr(this._host)}" oninput="onboarding.onHost(this.value)"></div></div>
             <p class="gen-tile-desc">${tr('FIRST_CONNECT_HOSTNAME_DESC')}</p>
             <span class="onb-addr" id="onbAddr" style="--chars: ${this._hostUrl().length}">${escHtml(this._hostUrl())}</span></div>`;
-        return `${this._head(title)}<p class="wiz-lead">${lead}</p><div class="wiz-grid">${eth}${wifiTiles}${host}</div>`;
+        return `${this._head(title)}<p class="wiz-lead">${lead}</p><div class="wiz-grid">${eth}${wifiTiles}${host}</div>${this._isModeChoiceUseful() ? '' : this._restoreHtml()}`;
     }
     _mountNet() {
         const usesEth = this._mode !== 'wifi';

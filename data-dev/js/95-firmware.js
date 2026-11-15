@@ -133,7 +133,7 @@ class Firmware {
         });
     }
 
-    restore() {
+    restore(o = {}) {
         //[id, bind, texte, checked]
         const opts = [
             ['cbRestoreShades', 'shades', 'RESTORE_DEVICES_GROUPS', 1],
@@ -144,6 +144,9 @@ class Firmware {
             ['cbRestoreMQTT', 'mqtt', 'RESTORE_MQTT_SETTINGS', 0],
             ['cbRestoreTransceiver', 'transceiver', 'RESTORE_RADIO_SETTINGS', 0]
         ];
+        // Migration (assistant de mise en service) : tout précocher sauf le réseau, que
+        // l'assistant configure juste après -- le connType d'un autre matériel piégerait l'appareil.
+        if (o.migrate) opts.forEach(x => { if (x[1] !== 'network') x[3] = 1; });
         const checks = opts.map(o => `
         <label class="genmod-check"><input id="${o[0]}" type="checkbox" data-bind="${o[1]}" ${o[3] ? 'checked' : ''}><span>${tr(o[2])}</span></label>`).join('');
         const div = this.createFileUploader('/restore', {
