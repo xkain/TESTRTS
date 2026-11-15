@@ -477,8 +477,6 @@ class ConfigSettings: BaseSettings {
     bool load();
     void print();
     void emitSockets(uint8_t num);
-    uint16_t calcSettingsRecSize();
-    uint16_t calcNetRecSize();
     bool getAppVersion();
 };
 #endif

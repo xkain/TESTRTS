@@ -11,6 +11,9 @@
 #ifndef configfile_h
 #define configfile_h
 
+class JsonFormatter;   // web/WResp.h -- référencé par signature seule, pour ne pas tirer le serveur ici
+class Preferences;
+
 #define CFG_VALUE_SEP ','
 #define CFG_REC_END '\n'
 #define CFG_TOK_NONE 0x00
@@ -103,9 +106,6 @@ class ShadeConfigFile : public ConfigFile {
     bool writeRoomRecord(SomfyRoom *room);
     bool writeShadeRecord(SomfyShade *shade);
     bool writeGroupRecord(SomfyGroup *group);
-    bool writeSettingsRecord();
-    bool writeNetRecord();
-    bool writeTransRecord(transceiver_config_t &cfg);
     bool readRepeaterRecord(SomfyShadeController *s);
     bool readRoomRecord(SomfyRoom *room);
     bool readShadeRecord(SomfyShade *shade);
@@ -120,7 +120,6 @@ class ShadeConfigFile : public ConfigFile {
     bool skipRecord(const char *what, uint16_t declaredSize);
     bool readNetRecord(restore_options_t &opts);
     bool readTransRecord(transceiver_config_t &cfg);
-    bool writeScheduleBlock();
     bool readScheduleBlock();
     bool skipScheduleBlock();
     bool writeListenerBlock(SomfyShadeController *s);
@@ -128,7 +127,16 @@ class ShadeConfigFile : public ConfigFile {
     bool skipListenerBlock();
     bool writeRepeaterNameBlock(SomfyShadeController *s);
     bool readRepeaterNameBlock(SomfyShadeController *s);
+    // Sauvegarde NDJSON (ConfigFileNdjson.cpp) : backup() et restore() y basculent quand le premier
+    // octet le demande ; le positionnel reste pour shades.cfg et les sauvegardes 25/26/27.
+    bool writeNdjsonLine(JsonFormatter &fmt, char *buff, const char *what);
+    bool backupNdjson(SomfyShadeController *s);
+    bool restoreNdjson(SomfyShadeController *s, restore_options_t &opts);
   public:
+    // Émetteur unique du garde anti-recul des codes tournants (spec §7) : prend le code lu dans un
+    // fichier, rend le max avec la NVS et réécrit celle-ci si le fichier est en avance. Partagé par
+    // les lecteurs positionnels et NDJSON pour qu'il ne puisse pas diverger d'un chemin à l'autre.
+    static uint16_t reconcileRollingCode(Preferences &pref, const char *prefId, uint16_t fromFile);
     static bool exists();
     static bool load(SomfyShadeController *somfy, const char *filename = "/shades.cfg");
     static bool restore(SomfyShadeController *somfy, const char *filename, restore_options_t &opts);

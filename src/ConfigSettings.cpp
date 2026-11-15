@@ -429,59 +429,6 @@ void ConfigSettings::print() {
   if(this->connType == conn_types_t::ethernet || this->connType == conn_types_t::ethernetpref) this->Ethernet.print();
 }
 void ConfigSettings::emitSockets(uint8_t num) {}
-// Cette fonction DOIT rendre, à l'octet près, la taille de ce que ShadeConfigFile::
-// writeSettingsRecord() dépose sur le disque : sa valeur part dans l'en-tête, et restoreFile()
-// s'en sert pour SAUTER l'enregistrement quand l'utilisateur décoche « Réglages ».
-//
-// Règle de comptage, pour ne pas se tromper : writeVarString => strlen + 3 (les deux
-// guillemets et le séparateur) ; writeUInt8 => 4 ; writeInt8 => 5 ; writeUInt16 => 6 ;
-// writeBool => 6. Toute ligne ajoutée à writeSettingsRecord() doit avoir sa contrepartie ici.
-uint16_t ConfigSettings::calcSettingsRecSize() {
-  return strlen(this->fwVersion.name) + 3
-    + strlen(this->hostname) + 3
-    + strlen(this->NTP.ntpServer) + 3
-    + strlen(this->NTP.posixZone) + 3
-    + strlen(this->accentColor) + 3
-    + 6  // ssdpbroadcast
-    + 6  // updateCheck
-    + 4   // language
-    + 4   // headerMobileDisplay
-    + 6   // reverseDashboardColumns
-    + strlen(this->defaultMobileTab) + 3
-    + 6   // showRadioActivity
-    + 4   // themeMode
-    + 6   // showMovementIndicator
-    + 5   // ledPin
-    + 6   // ledActiveLow
-    + 6   // ledAddressable
-    + 4   // ledColorOrder
-    + strlen(this->ledColorActivity) + 3
-    + 6   // ledRfBlink
-    + strlen(this->iconPack) + 3
-    + 4;  // dashCompact
-}
-uint16_t ConfigSettings::calcNetRecSize() {
-  return 4 // connType
-    + 6 // dhcp
-    + this->IP.ip.toString().length() + 3
-    + this->IP.gateway.toString().length() + 3
-    + this->IP.subnet.toString().length() + 3
-    + this->IP.dns1.toString().length() + 3
-    + this->IP.dns2.toString().length() + 3
-    + strlen(this->MQTT.protocol) + 3
-    + strlen(this->MQTT.hostname) + 3
-    + 6 // MQTT Port
-    + 6 // PubDisco
-    + strlen(this->MQTT.rootTopic) + 3
-    + strlen(this->MQTT.discoTopic) + 3
-    + 4 // ETH.boardType
-    + 4 // ETH.phyType
-    + 4 // ETH.clkMode
-    + 5 // ETH.phyAddress
-    + 5 // ETH.PWRPin
-    + 5 // ETH.MDCPin
-    + 5; // ETH.MDIOPin
-}
 const char *const MQTTSettings::protocol = "mqtt://";
 bool MQTTSettings::isValidRootTopic(const char *topic) {
   if(!topic) return false;

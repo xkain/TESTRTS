@@ -16,7 +16,6 @@
 #define GROUP_REC_SIZE 239
 #define SCHEDULE_HDR_VER 1
 #define SCHEDULE_REC_SIZE 79   // dayMask..enabled (60) + retries (4) + positionMode (4) + timeRef (4) + sunOffset (7)
-#define TRANS_REC_SIZE 79
 #define ROOM_REC_SIZE 29
 #define REPEATER_REC_SIZE 77
 #define LISTENER_HDR_VER 1
@@ -396,6 +395,14 @@ bool ConfigFile::atRecordEnd() {
   this->file.seek(pos);
   return term == CFG_REC_END;
 }
+// Émetteur unique du garde anti-recul des codes tournants (cf. ConfigFile.h) : reculer un code en
+// restaurant une sauvegarde ancienne rendrait le moteur sourd jusqu'à rattrapage manuel.
+uint16_t ShadeConfigFile::reconcileRollingCode(Preferences &pref, const char *prefId, uint16_t fromFile) {
+  uint16_t rc = pref.getUShort(prefId, 0);
+  uint16_t resolved = max(rc, fromFile);
+  if(rc < resolved) pref.putUShort(prefId, resolved);
+  return resolved;
+}
 bool ShadeConfigFile::begin(bool readOnly) { return this->begin("/shades.cfg", readOnly); }
 bool ShadeConfigFile::begin(const char *filename, bool readOnly) { return ConfigFile::begin(filename, readOnly); }
 void ShadeConfigFile::end() { ConfigFile::end(); }
@@ -434,44 +441,10 @@ bool ShadeConfigFile::save(SomfyShadeController *s) {
   this->writeRepeaterNameBlock(s);
   return true;
 }
+// La sauvegarde s'écrit désormais en NDJSON (ConfigFileNdjson.cpp) ; save() -- shades.cfg -- ne
+// bouge pas, et les lecteurs positionnels restent pour restaurer les générations 25 à 27.
 bool ShadeConfigFile::backup(SomfyShadeController *s) {
-  this->header.version = SHADE_HDR_VER;
-  this->header.roomRecordSize = ROOM_REC_SIZE;
-  this->header.roomRecords = s->roomCount();
-  this->header.shadeRecordSize = SHADE_REC_SIZE;
-  this->header.length = SHADE_HDR_SIZE;
-  this->header.shadeRecords = s->shadeCount();
-  this->header.groupRecordSize = GROUP_REC_SIZE;
-  this->header.groupRecords = s->groupCount();
-  this->header.repeaterRecords = 1;
-  this->header.repeaterRecordSize = REPEATER_REC_SIZE;
-  this->header.settingsRecordSize = settings.calcSettingsRecSize();
-  this->header.netRecordSize = settings.calcNetRecSize();
-  this->header.transRecordSize = TRANS_REC_SIZE;
-  this->writeHeader();
-  for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {
-    SomfyRoom *room = &s->rooms[i];
-    if(room->roomId != 0)
-      this->writeRoomRecord(room);
-  }
-  for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
-    SomfyShade *shade = &s->shades[i];
-    if(shade->getShadeId() != 255)
-      this->writeShadeRecord(shade);
-  }
-  for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
-    SomfyGroup *group = &s->groups[i];
-    if(group->getGroupId() != 255)
-      this->writeGroupRecord(group);
-  }
-  this->writeRepeaterRecord(s);
-  this->writeSettingsRecord();
-  this->writeNetRecord();
-  this->writeTransRecord(s->transceiver.config);
-  this->writeScheduleBlock();
-  this->writeListenerBlock(s);
-  this->writeRepeaterNameBlock(s);
-  return true;
+  return this->backupNdjson(s);
 }
 bool ShadeConfigFile::validate() {
   this->readHeader();
@@ -607,7 +580,10 @@ bool ShadeConfigFile::load(SomfyShadeController *s, const char *filename) {
 bool ShadeConfigFile::restore(SomfyShadeController *s, const char *filename, restore_options_t &opts) {
   ShadeConfigFile file;
   if(file.begin(filename, true)) {
-    bool success = file.restoreFile(s, filename, opts);
+    // Le premier octet discrimine les deux contenus sans ambiguïté : `{` = NDJSON (fmt 1), un
+    // chiffre = positionnel hérité (générations 25 à 27).
+    bool success = file.file.peek() == '{' ? file.restoreNdjson(s, opts)
+                                           : file.restoreFile(s, filename, opts);
     file.end();
     return success;
   }
@@ -952,11 +928,8 @@ bool ShadeConfigFile::readGroupRecord(SomfyGroup *group) {
   // Absent d'un enregistrement plus ancien : vidé, sinon une restauration garderait le choix courant.
   if(this->header.version >= 27 && this->header.groupRecordSize >= 239) this->readString(group->remoteModel, sizeof(group->remoteModel));
   else group->remoteModel[0] = '\0';
-  if(group->getRemoteAddress() != 0) {
-    uint16_t rc = pref.getUShort(group->getRemotePrefId(), 0);
-    group->lastRollingCode = max(rc, group->lastRollingCode);
-    if(rc < group->lastRollingCode) pref.putUShort(group->getRemotePrefId(), group->lastRollingCode);
-  }
+  if(group->getRemoteAddress() != 0)
+    group->lastRollingCode = reconcileRollingCode(pref, group->getRemotePrefId(), group->lastRollingCode);
   
   pref.end();
   if(this->file.position() != startPos + this->header.groupRecordSize) {
@@ -1021,11 +994,8 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   }
   shade->lastRollingCode = this->readUInt16(0);
   if(this->header.version > 7) shade->flags = this->readUInt8(0);
-  if(shade->getRemoteAddress() != 0) {
-    uint16_t rc = pref.getUShort(shade->getRemotePrefId(), 0);
-    shade->lastRollingCode = max(rc, shade->lastRollingCode);
-    if(rc < shade->lastRollingCode) pref.putUShort(shade->getRemotePrefId(), shade->lastRollingCode);
-  }
+  if(shade->getRemoteAddress() != 0)
+    shade->lastRollingCode = reconcileRollingCode(pref, shade->getRemotePrefId(), shade->lastRollingCode);
   if(this->header.version < 4)
     shade->myPos = static_cast<float>(this->readUInt8(255));
   else {
@@ -1258,74 +1228,6 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeString(shade->remoteModel, sizeof(shade->remoteModel), CFG_REC_END);
   return true;
 }
-bool ShadeConfigFile::writeSettingsRecord() {
-  this->writeVarString(settings.fwVersion.name);
-  this->writeVarString(settings.hostname);
-  this->writeVarString(settings.NTP.ntpServer);
-  this->writeVarString(settings.NTP.posixZone);
-  this->writeVarString(settings.accentColor);
-  this->writeBool(settings.ssdpBroadcast);
-  this->writeBool(settings.checkForUpdate);
-  this->writeUInt8(langCodeToIndex(settings.language));
-  this->writeUInt8(settings.headerMobileDisplay);
-  this->writeBool(settings.reverseDashboardColumns);
-  this->writeVarString(settings.defaultMobileTab);
-  this->writeBool(settings.showRadioActivity);
-  this->writeUInt8(settings.themeMode);
-  this->writeBool(settings.showMovementIndicator);
-  // Témoin LED : rejoint le bloc 27 comme les champs d'interface ci-dessus. Écrit aussi depuis un
-  // boîtier, où il est sans effet (le câblage de Recovery.h prime à l'exécution) : garder une seule
-  // disposition d'enregistrement vaut mieux qu'un format qui dépend du profil matériel.
-  this->writeInt8(settings.ledPin);
-  this->writeBool(settings.ledActiveLow);
-  this->writeBool(settings.ledAddressable);
-  this->writeUInt8(settings.ledColorOrder);
-  this->writeVarString(settings.ledColorActivity);
-  this->writeBool(settings.ledRfBlink);
-  this->writeVarString(settings.iconPack);
-  this->writeUInt8(settings.dashCompact, CFG_REC_END);
-  return true;
-}
-bool ShadeConfigFile::writeNetRecord() {
-  this->writeUInt8(static_cast<uint8_t>(settings.connType));
-  this->writeBool(settings.IP.dhcp); 
-  this->writeVarString(settings.IP.ip.toString().c_str());
-  this->writeVarString(settings.IP.gateway.toString().c_str());
-  this->writeVarString(settings.IP.subnet.toString().c_str());
-  this->writeVarString(settings.IP.dns1.toString().c_str());
-  this->writeVarString(settings.IP.dns2.toString().c_str());
-  this->writeVarString(settings.MQTT.protocol);
-  this->writeVarString(settings.MQTT.hostname);
-  this->writeUInt16(settings.MQTT.port);
-  this->writeBool(settings.MQTT.pubDisco);
-  this->writeVarString(settings.MQTT.rootTopic);
-  this->writeVarString(settings.MQTT.discoTopic);
-  this->writeUInt8(settings.Ethernet.boardType);
-  this->writeUInt8(settings.Ethernet.phyType);
-  this->writeUInt8(settings.Ethernet.CLKMode);
-  this->writeInt8(settings.Ethernet.phyAddress);
-  this->writeInt8(settings.Ethernet.PWRPin);
-  this->writeInt8(settings.Ethernet.MDCPin);
-  this->writeInt8(settings.Ethernet.MDIOPin, CFG_REC_END);
-  return true;
-}
-bool ShadeConfigFile::writeTransRecord(transceiver_config_t &cfg) {
-  this->writeBool(cfg.enabled);
-  this->writeUInt8(static_cast<uint8_t>(cfg.proto));
-  this->writeUInt8(cfg.type);
-  this->writeUInt8(cfg.radioBoardType);
-  this->writeUInt8(cfg.SCKPin);
-  this->writeUInt8(cfg.CSNPin);
-  this->writeUInt8(cfg.MOSIPin);
-  this->writeUInt8(cfg.MISOPin);
-  this->writeUInt8(cfg.TXPin);
-  this->writeUInt8(cfg.RXPin);
-  this->writeFloat(cfg.frequency, 3);
-  this->writeFloat(cfg.rxBandwidth, 2);
-  this->writeInt8(cfg.txPower);
-  this->writeFloat(cfg.rxFrequency, 3, CFG_REC_END);
-  return true;
-}
 bool ShadeConfigFile::exists() { return CfgStore::fsFor("/shades.cfg").exists("/shades.cfg"); }
 
 
@@ -1402,18 +1304,6 @@ bool ScheduleConfigFile::load(ScheduleController *s, const char *filename) {
   return file.loadFile(s, filename);
 }
 
-bool ShadeConfigFile::writeScheduleBlock() {
-  schedule.lock();
-  this->writeUInt8(SCHEDULE_HDR_VER);
-  this->writeUInt16(SCHEDULE_REC_SIZE);
-  this->writeUInt8(schedule.scheduleCount(), CFG_REC_END);
-  for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
-    ScheduleRule *rule = &schedule.schedules[i];
-    if(rule->getId() != 255) this->writeScheduleRecord(rule);
-  }
-  schedule.unlock();
-  return true;
-}
 bool ShadeConfigFile::readScheduleBlock() {
   uint32_t pos = this->file.position();
   uint32_t size = this->file.size();
