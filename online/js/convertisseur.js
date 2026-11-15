@@ -538,6 +538,7 @@ async function onFile(file) {
   hideResult();
   if (!file) return;
   $('convFileName').textContent = file.name;
+  $('convFileName').classList.add('is-set');
   let bytes;
   try { bytes = new Uint8Array(await file.arrayBuffer()); }
   catch { setError('conv_err_read'); return; }

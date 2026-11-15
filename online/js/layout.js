@@ -272,9 +272,10 @@
                   aria-expanded="false" aria-controls="siteNav" title="" data-i18n-label="nav_menu">
             <svg class="site-nav-icon" width="22" height="22"><use href="#svg-menu"/></svg>
           </button>
-          <a class="site-nav-link is-icon-only site-home-link" id="siteHomeLink" href="${HOME_URL}"
+          <a class="site-nav-link site-home-link" id="siteHomeLink" href="${HOME_URL}"
              title="" data-i18n-label="nav_home">
-            <svg class="site-nav-icon" width="24" height="24"><use href="#svg-home"/></svg>
+            <svg class="site-nav-icon" width="20" height="20"><use href="#svg-home"/></svg>
+            <span class="site-nav-label" data-i18n="nav_home">Accueil</span>
           </a>
         </div>`;
         return header;

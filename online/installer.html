@@ -5,90 +5,92 @@
 <!--
   Assistant de flash web (GitHub Pages, HTTPS), basé sur ESP Web Tools (esp-web-tools).
   Raison d'être : flasher un ESP32 par USB depuis le navigateur exige l'API Web Serial, elle-même
-  réservée aux contextes sécurisés (HTTPS) -- impossible à héberger depuis l'interface de
+  réservée aux contextes sécurisés (HTTPS) - impossible à héberger depuis l'interface de
   l'appareil (servie en HTTP local). Cette page vit donc ici, comme geolocalisation.html.
 
-  TROIS ÉTAPES, DANS UNE SEULE CARTE (cf. js/installer.js) :
-    step-connect ─> step-hardware ─> step-ready
+  GABARIT gen-hero (design A2) : colonne d'identité à gauche, contenu à droite. Le contenu est un
+  ASSISTANT EN TUILES, une par étape, piloté par js/installer.js :
+
+    step1 Connexion -> step2 Matériel -> step3 Version -> step4 Installation -> step5 Terminé
+
+  Une seule tuile est visible à la fois (attribut hidden), le rail .pips au-dessus dit où l'on
+  est. Les étapes vivent dans le FLUX NORMAL de la colonne défilante : aucune hauteur imposée,
+  aucun défilement interne - c'est ce qui distingue cet assistant des tentatives d'écrans
+  glissants abandonnées en leur temps (cf. l'historique du fichier).
+
   La connexion vient EN PREMIER : un navigateur sans Web Serial, un pilote USB manquant ou un
-  câble sans fil de données se signalent alors immédiatement, avant qu'on ait fait répondre à
-  quoi que ce soit. Les étapes sont de simples sections affichées/masquées, sans position absolue
-  ni transformation ni hauteur imposée : la carte suit son contenu. Lui fixer une hauteur donnait
-  un défilement interne, et deux ascenseurs imbriqués se disputaient la molette.
+  câble sans fil de données se signalent immédiatement.
 
-  Les manifestes (docs/manifests/*.json) sont générés à chaque déploiement par
-  .github/workflows/pages.yml, avec le firmware de la dernière release -- rien de statique ici.
-
-  DEUX FENÊTRES MAISON, aucune des deux fournie par la bibliothèque :
-  - #flashOverlay, progression du flash. On n'utilise PAS le composant <esp-web-install-button>
-    ni sa boîte de dialogue par défaut (look non personnalisable, thème clair fixe quel que soit
-    le thème du site). On pilote directement flash.js -- le module bas niveau qu'expose
-    esp-web-tools, le même moteur que ce composant utilise en interne.
-  - #logsOverlay, console série. Elle ne doit RIEN à esp-web-tools : Web Serial seul suffit à
-    ouvrir le port à 115200 et à lire ce que l'appareil écrit.
+  DEUX FENÊTRES restent des fenêtres, car elles se superposent à n'importe quelle étape :
+  - #manualOverlay, téléversement manuel d'une image complète ;
+  - #logsOverlay, console série (Web Serial seul, rien d'esp-web-tools).
+  La progression du flash, elle, n'est plus une fenêtre : c'est l'étape 4 (#flashDialog), avec
+  les mêmes identifiants qu'avant pour que installer.js la pilote à l'identique.
 
   BANNIÈRE ET PIED DE PAGE : aucun balisage ici, ils sont injectés par js/layout.js, commun à
-  toutes les pages du site. C'est lui qui porte le sprite du logo, les icônes de navigation et le
-  moteur de traduction (les data-i18n de cette page sont résolus par lui). data-footer-key sur
-  <body> remplace le texte du pied de page par celui propre à l'installateur (provenance du
-  firmware), là où les autres pages affichent le rappel de confidentialité.
+  toutes les pages du site. data-footer-key sur <body> remplace le texte du pied de page par
+  celui propre à l'installateur (provenance du firmware).
 
-  Toutes les icônes svg-* ci-dessous ont une largeur/hauteur HTML explicite, en plus de leur
-  dimensionnement CSS : un <svg> sans ces attributs prend par défaut la taille intrinsèque du
-  navigateur (300x150px) tant que la feuille de style n'a pas fini de charger, ce qui produit un
-  flash très visible d'icônes énormes au premier rendu (FOUC). Les attributs HTML donnent une
-  taille correcte dès le tout premier paint ; la règle CSS correspondante garde la main ensuite
-  (spécificité d'une classe > attribut de présentation).
+  Toutes les icônes svg-* ont une largeur/hauteur HTML explicite en plus du CSS : un <svg> sans
+  ces attributs prend 300x150px tant que la feuille de style n'a pas chargé (FOUC).
 
-  VERSIONNAGE DES ASSETS : le ?v=... des liens css/js ci-dessous est réécrit automatiquement par
+  VERSIONNAGE DES ASSETS : le ?v=... des liens css/js est réécrit automatiquement par
   version_docs.py (empreinte du contenu de chaque asset) : ne le modifiez pas à la main.
-
-  <link rel="stylesheet"> placé tout en tête de <head> (juste après le charset, qui doit rester
-  le tout premier élément) : le navigateur démarre son téléchargement le plus tôt possible,
-  réduisant la fenêtre de FOUC avant que style.css ne s'applique (cf. aussi la règle `svg {}`
-  générique en tête de ce fichier, filet de sécurité si un <svg> venait à manquer de largeur/
-  hauteur HTML explicites).
 -->
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=7c49ced0">
+  <link rel="stylesheet" href="css/style.css?v=9fd9f239">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <!-- Dans <head> et en script bloquant : le thème clair/sombre doit être posé sur <html> avant
        le premier rendu, sinon la page s'affiche en clair puis bascule (flash blanc). -->
-  <script src="js/layout.js?v=1453a0e3"></script>
+  <script src="js/layout.js?v=b9531634"></script>
 </head>
 <body data-footer-key="installer_footer_text">
 
-  <div class="container container-wide">
-    <div>
-      <!-- Même titrage que les autres pages du site : la bannière commune ne porte que le logo et
-           le nom du projet. -->
-      <div class="header">
-        <h1 class="page-title" data-i18n="installer_title">Installateur web</h1>
-        <p class="description" data-i18n="installer_description">
-          Installez ESPSomfy-RTS sur votre appareil, changez de version et lisez ses journaux, sans rien installer sur votre ordinateur.
+  <div class="gen-hero">
+
+    <aside class="hero" aria-label="Installateur web">
+      <div class="hero-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg></div>
+      <div>
+        <h1 data-i18n="installer_title">Installateur web</h1>
+        <p class="hero-desc" data-i18n="installer_description">
+          Installez ESPSomfy-RTS en quelques clics, téléversez un fichier .bin ou consultez les journaux série directement depuis votre navigateur.
         </p>
       </div>
+      <div class="hero-chips">
+        <span class="chip" data-i18n="installer_chip_1">Chrome · Edge · Opera</span>
+        <span class="chip" data-i18n="installer_chip_2">Aucun logiciel à installer</span>
+        <span class="chip" data-i18n="installer_chip_3">HTTPS</span>
+      </div>
+      <img class="hero-vign" src="img/flasher-card.webp" alt="">
+    </aside>
 
-      <!-- LA CARTE A DEUX ÉTATS, pas trois étapes : sans port (is-disconnected) et avec port.
-           Les choix de matériel et de version vivent dans une fenêtre, ce qui dispense la carte
-           de changer de taille -- c'était la source de tous les compromis précédents.
-           is-disconnected est posé DANS LE BALISAGE et non par le script : c'est l'état initial,
-           le dire ici évite que la carte ne s'affiche un instant avec les réglages de l'autre
-           état le temps que le module se charge -- ou indéfiniment s'il échoue. -->
-      <div class="option-card installer-card is-disconnected">
+    <main class="mainc">
 
-        <div class="installer-head">
-          <h2 id="cardTitle" data-i18n="installer_connect_title">Connectez votre appareil</h2>
+      <!-- Rail d'étapes : installer.js pose .on / .done selon l'étape courante. -->
+      <nav class="pips" id="stepsRail" aria-label="Étapes">
+        <span class="pip on" data-step="1"><i>1</i><span class="pip-label" data-i18n="installer_step_1">Connexion</span></span>
+        <span class="pip" data-step="2"><i>2</i><span class="pip-label" data-i18n="installer_step_2">Matériel</span></span>
+        <span class="pip" data-step="3"><i>3</i><span class="pip-label" data-i18n="installer_step_3">Version</span></span>
+        <span class="pip" data-step="4"><i>4</i><span class="pip-label" data-i18n="installer_step_4">Installation</span></span>
+      </nav>
+
+      <!-- ÉTAPE 1 : connexion. L'état connecté/déconnecté est porté par setConnected() dans
+           installer.js : titre et texte changent de clé data-i18n, les groupes de boutons
+           permutent. -->
+      <section class="tile step" id="step1">
+        <div class="tile-head">
+          <span class="tl" data-i18n="installer_step_1">Connexion</span>
           <span class="conn-badge" id="connBadge" hidden>
             <svg width="14" height="14"><use href="#svg-success"/></svg>
             <span data-i18n="installer_badge_connected">Connecté</span>
           </span>
         </div>
-        <p class="section-subtitle" id="cardBody" data-i18n="installer_connect_body">
+        <h2 class="step-title" id="cardTitle" data-i18n="installer_connect_title">Connectez votre appareil</h2>
+        <p class="tsl" id="cardBody" data-i18n="installer_connect_body">
           Reliez votre ESP32 à un port USB de cet ordinateur, puis choisissez-le dans la fenêtre
           que votre navigateur va ouvrir. Tout se déroule ici : aucune donnée ne quitte votre
           ordinateur, et le firmware part de cette page vers l'appareil sans passer par un serveur.
@@ -98,7 +100,7 @@
              Les deux cas sont muets côté navigateur, d'où ces explications. -->
         <div id="compatWarning" class="info-block" hidden>
           <div class="info-block-header">
-            <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
+            <svg class="info-block-icon" width="18" height="18"><use href="#svg-warning"/></svg>
             <b data-i18n="installer_notice_title">Important</b>
           </div>
           <span data-i18n="installer_compat_warning">
@@ -109,7 +111,7 @@
 
         <div id="noPortHint" class="info-block" hidden>
           <div class="info-block-header">
-            <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
+            <svg class="info-block-icon" width="18" height="18"><use href="#svg-warning"/></svg>
             <b data-i18n="installer_noport_title">Aucun port dans la liste ?</b>
           </div>
           <span data-i18n="installer_noport_body">
@@ -120,94 +122,61 @@
           </span>
         </div>
 
-        <p class="fallback-hint">
-          <span data-i18n="installer_fallback_hint">Ça ne fonctionne pas ?</span>
-          <a href="https://web.esphome.io/" target="_blank" rel="noopener noreferrer" data-i18n="installer_fallback_link">Essayez l'installateur alternatif web.esphome.io</a>
-        </p>
-
-        <!-- Mention des composants tiers embarqués par js/vendor/esp-flash.js. Le lien pointe le
-             fichier de licences que .github/workflows/pages.yml assemble au déploiement : c'est
-             lui qui satisfait la section 4(a) de l'Apache-2.0, cette ligne ne fait que le rendre
-             trouvable. Elle n'existe QUE sur cette page, seule à charger le paquet. -->
-        <p class="fallback-hint">
-          <span data-i18n="installer_thirdparty">Flashage assuré par ESP Web Tools et esptool-js, sous licence Apache-2.0.</span>
-          <a href="js/vendor/esp-flash.LICENSES.txt" target="_blank" rel="noopener noreferrer" data-i18n="installer_thirdparty_link">Texte des licences</a>
-        </p>
-
-        <!-- BANDE ILLUSTRÉE. L'image n'est plus un élément posé en absolu par-dessus la carte,
-             mais le FOND de ce bloc-ci, qui appartient au flux normal et tient sa hauteur de son
-             propre rapport de forme. Les boutons sont donc de simples enfants en flex : ils se
-             placent sans rien recouvrir, et en ajouter un fait grandir la bande au lieu de venir
-             mordre sur le texte. Les marges négatives lui font toucher les bords de la carte,
-             par-dessus son rembourrage.
-             Journaux et déconnexion n'ont qu'une icône -- leur libellé n'apprendrait rien qu'un
-             dessin ne dise -- et se placent au-dessus. La ligne du bas porte les deux actions
-             d'installation, à parts égales. -->
-        <div class="card-band" style="background-image: url('img/flasher-card.webp')">
-          <div class="band-icons" id="toolsSecondary" hidden>
+        <div class="acts">
+          <button type="button" id="btnConnect" class="btn">
+            <svg class="btn-glyph" width="18" height="18"><use href="#svg-plug"/></svg>
+            <span data-i18n="installer_btn_connect">Connecter</span>
+          </button>
+          <span class="acts-group" id="mainActions" hidden>
+            <button type="button" id="btnToHardware" class="btn">
+              <span data-i18n="installer_btn_continue">Continuer</span>
+            </button>
+            <button type="button" id="btnManual" class="btn btn-secondary">
+              <svg class="btn-glyph" width="18" height="18"><use href="#svg-upload"/></svg>
+              <span data-i18n="installer_btn_manual">Téléverser</span>
+            </button>
+          </span>
+          <span class="acts-group" id="toolsSecondary" hidden>
             <button type="button" id="logsBtn" class="btn btn-secondary is-icon" data-i18n-label="installer_btn_logs" aria-label="Journaux">
               <svg width="18" height="18"><use href="#svg-terminal"/></svg>
             </button>
             <button type="button" id="btnDisconnect" class="btn btn-secondary is-icon" data-i18n-label="installer_btn_disconnect" aria-label="Déconnecter">
               <svg width="18" height="18"><use href="#svg-unplug"/></svg>
             </button>
-          </div>
-
-          <button type="button" id="btnConnect" class="btn btn-blue">
-            <svg class="btn-glyph" width="18" height="18"><use href="#svg-plug"/></svg>
-            <span data-i18n="installer_btn_connect">Connecter</span>
-          </button>
-
-          <div class="band-main" id="mainActions" hidden>
-            <button type="button" id="btnInstall" class="btn btn-green">
-              <svg class="btn-glyph" width="18" height="18"><use href="#svg-chip"/></svg>
-              <span data-i18n="installer_btn_install">Installer</span>
-            </button>
-            <button type="button" id="btnManual" class="btn btn-secondary">
-              <svg class="btn-glyph" width="18" height="18"><use href="#svg-upload"/></svg>
-              <span data-i18n="installer_btn_manual">Fichier</span>
-            </button>
-          </div>
+          </span>
         </div>
-      </div>
-    </div>
-  </div>
+      </section>
 
-  <!-- Fenêtre de choix du matériel et de la version, dans l'esprit des .inst-overlay du firmware :
-       fond assombri et flouté, carte centrée, en-tête avec fermeture. Les onglets sont collés aux
-       bords du contenu (aucun rembourrage autour) -- leur soulignement glissant suppose qu'ils
-       occupent toute la largeur, un retrait le décalerait. -->
-  <div id="installOverlay" class="inst-overlay" hidden>
-    <div class="inst-content" role="dialog" aria-modal="true" aria-labelledby="instTitle">
-      <div class="inst-header">
-        <h3 id="instTitle" class="inst-title" data-i18n="installer_hw_title">Quel matériel installez-vous ?</h3>
-        <button type="button" id="instClose" class="logs-close" data-i18n-label="installer_logs_close" aria-label="Fermer">
-          <svg width="18" height="18"><use href="#svg-close"/></svg>
-        </button>
-      </div>
+      <!-- ÉTAPE 2 : choix du matériel. Les grilles sont remplies par renderHardware() dans
+           installer.js ; .tab-scope borne la recherche des onglets/panneaux (partagée avec la
+           fenêtre de téléversement). -->
+      <section class="tile step tab-scope" id="step2" hidden>
+        <div class="tile-head">
+          <span class="tl" data-i18n="installer_step_2">Matériel</span>
+          <span class="conn-badge">
+            <svg width="14" height="14"><use href="#svg-success"/></svg>
+            <span data-i18n="installer_badge_connected">Connecté</span>
+          </span>
+        </div>
+        <h2 class="step-title" data-i18n="installer_hw_title">Quel matériel installez-vous ?</h2>
 
-      <div class="mobile-tabs">
-        <button type="button" class="tab-btn active" id="tabDiy" data-panel="diyPanel">
-          <span data-i18n="installer_tab_diy">ESP32</span>
-        </button>
-        <button type="button" class="tab-btn" id="tabBox" data-panel="boxPanel">
-          <span data-i18n="installer_tab_box">Boîtier officiel</span>
-        </button>
-      </div>
+        <div class="tabs" role="tablist" aria-label="Type de matériel">
+          <button type="button" class="tab-btn active" id="tabDiy" data-panel="diyPanel">
+            <span data-i18n="installer_tab_diy">Cartes ESP32</span>
+          </button>
+          <button type="button" class="tab-btn" id="tabBox" data-panel="boxPanel">
+            <span data-i18n="installer_tab_box">Boîtier officiel</span>
+          </button>
+        </div>
 
-      <div class="inst-body">
         <!-- Les deux panneaux sont superposés dans une même cellule de grille au-delà du mobile
-             (cf. .hw-panels dans style.css) : la fenêtre garde la hauteur du plus grand, et
-             changer d'onglet ne déplace plus le pied. -->
+             (cf. .hw-panels dans style.css) : changer d'onglet ne déplace pas le pied. -->
         <div class="hw-panels">
           <div id="diyPanel" class="hw-panel is-active">
             <div id="diyGrid" class="hw-grid"></div>
 
             <!-- Note de fiabilité réseau /5, calculée par installer.js (cores + RAM), pas
-                 déclarée à la main : cf. son commentaire pour la justification de la formule.
-                 Même patron que l'accordéon "Comprendre le signal (RSSI)" du firmware
-                 (data-dev/js/70-somfy.js) : question + libellé en résumé, zones colorées repliées
-                 dans le corps. -->
+                 déclarée à la main : cf. son commentaire pour la justification de la formule. -->
             <details class="hw-rating-info">
               <summary class="hw-rating-trigger">
                 <span class="hw-rating-trigger-label">
@@ -227,7 +196,7 @@
                   <div class="hw-rating-zone tier-good">
                     <div class="hw-rating-zone-header">
                       <span class="hw-rating-badge">
-                        <svg class="icon-inline" width="14" height="14"><use href="#svg-success"/></svg>
+                        <svg class="inline-icon" width="14" height="14"><use href="#svg-success"/></svg>
                         <span data-i18n="installer_hw_rating_tier_good">Recommandé</span>
                       </span>
                     </div>
@@ -236,7 +205,7 @@
                       cœur, avec une bonne marge. Un atout de plus (USB natif ou PSRAM) porte la
                       note à 5/5.
                     </p>
-                    <span class="hw-rating-sample tier-good" aria-hidden="true">
+                    <span class="hw-rating-sample" aria-hidden="true">
                       <svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg>
                     </span>
                   </div>
@@ -244,7 +213,7 @@
                   <div class="hw-rating-zone tier-mid">
                     <div class="hw-rating-zone-header">
                       <span class="hw-rating-badge">
-                        <svg class="icon-inline" width="14" height="14"><use href="#svg-warning"/></svg>
+                        <svg class="inline-icon" width="14" height="14"><use href="#svg-warning"/></svg>
                         <span data-i18n="installer_hw_rating_tier_mid">Fonctionnel</span>
                       </span>
                     </div>
@@ -253,7 +222,7 @@
                       un USB natif, ou double cœur avec une mémoire vive plus juste. Marge
                       correcte, sans être optimale.
                     </p>
-                    <span class="hw-rating-sample tier-mid" aria-hidden="true">
+                    <span class="hw-rating-sample" aria-hidden="true">
                       <svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg><svg class="is-empty" width="12" height="12"><use href="#svg-star"/></svg>
                     </span>
                   </div>
@@ -261,7 +230,7 @@
                   <div class="hw-rating-zone tier-low">
                     <div class="hw-rating-zone-header">
                       <span class="hw-rating-badge">
-                        <svg class="icon-inline" width="14" height="14"><use href="#svg-error"/></svg>
+                        <svg class="inline-icon" width="14" height="14"><use href="#svg-error"/></svg>
                         <span data-i18n="installer_hw_rating_tier_low">Limité</span>
                       </span>
                     </div>
@@ -269,7 +238,7 @@
                       Cœur unique avec peu ou pas de compensation : la pile réseau partage le
                       cœur applicatif de l'appareil, avec la marge la plus faible du catalogue.
                     </p>
-                    <span class="hw-rating-sample tier-low" aria-hidden="true">
+                    <span class="hw-rating-sample" aria-hidden="true">
                       <svg width="12" height="12"><use href="#svg-star"/></svg><svg class="is-empty" width="12" height="12"><use href="#svg-star"/></svg><svg class="is-empty" width="12" height="12"><use href="#svg-star"/></svg><svg class="is-empty" width="12" height="12"><use href="#svg-star"/></svg><svg class="is-empty" width="12" height="12"><use href="#svg-star"/></svg>
                     </span>
                   </div>
@@ -282,11 +251,11 @@
           </div>
         </div>
 
-        <!-- Uniquement pour le boîtier Wi-fi & Ethernet (bascule bouton-poussoir) -- masqué/
+        <!-- Uniquement pour le boîtier Wi-fi & Ethernet (bascule bouton-poussoir) : masqué/
              affiché par selectHardware() selon le modèle choisi. -->
         <div id="boxEthBootNotice" class="info-block" hidden>
           <div class="info-block-header">
-            <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
+            <svg class="info-block-icon" width="18" height="18"><use href="#svg-warning"/></svg>
             <b data-i18n="installer_notice_title">Important</b>
           </div>
           <span data-i18n="installer_box_eth_boot_notice">
@@ -296,15 +265,28 @@
             puis rebranchez le boîtier pour qu'il quitte le mode flash.
           </span>
         </div>
-      </div>
 
-      <div class="inst-footer">
-        <!-- Dans le PIED et non dans le corps défilant : le corps est occupé par la grille du
-             matériel, un avertissement placé à sa suite serait sous la ligne de flottaison au
-             moment précis où l'on change de version. -->
+        <div class="tfoot">
+          <button type="button" id="btnBackHw" class="btn btn-secondary" data-i18n="installer_btn_back">Retour</button>
+          <button type="button" id="btnToVersion" class="btn" disabled data-i18n="installer_btn_continue">Continuer</button>
+        </div>
+      </section>
+
+      <!-- ÉTAPE 3 : version et langue. Le sélecteur est rempli par buildVersionSelect() dès
+           qu'un matériel est retenu à l'étape 2 ; le sélecteur de langue n'apparaît que pour les
+           versions qui publient un descriptif de langues. -->
+      <section class="tile step" id="step3" hidden>
+        <div class="tile-head">
+          <span class="tl" data-i18n="installer_version_title">Version et langue</span>
+          <span class="conn-badge">
+            <svg width="14" height="14"><use href="#svg-success"/></svg>
+            <span data-i18n="installer_badge_connected">Connecté</span>
+          </span>
+        </div>
+
         <div id="preReleaseNotice" class="info-block" hidden>
           <div class="info-block-header">
-            <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
+            <svg class="info-block-icon" width="18" height="18"><use href="#svg-warning"/></svg>
             <b data-i18n="installer_notice_title">Important</b>
           </div>
           <span data-i18n="installer_prerelease_notice">
@@ -314,61 +296,116 @@
           </span>
         </div>
 
-        <div class="field field-inline">
-          <label for="fwVersion" data-i18n="installer_version_label">Version à installer :</label>
-          <select id="fwVersion" disabled>
-            <option disabled selected data-i18n="installer_version_pick_hw">Choisissez d'abord votre matériel</option>
-          </select>
+        <div class="frow">
+          <div class="f">
+            <label for="fwVersion" data-i18n="installer_version_label">Version à installer :</label>
+            <div class="ub">
+              <select id="fwVersion" class="ui" disabled>
+                <option disabled selected data-i18n="installer_version_pick_hw">Choisissez d'abord votre matériel</option>
+              </select>
+            </div>
+          </div>
+          <div class="f" id="langField" hidden>
+            <label for="fsLang" data-i18n="installer_lang_label">Langue de l'appareil :</label>
+            <div class="ub">
+              <select id="fsLang" class="ui"></select>
+            </div>
+          </div>
         </div>
-        <div class="field field-inline" id="langField" hidden>
-          <label for="fsLang" data-i18n="installer_lang_label">Langue de l'appareil :</label>
-          <select id="fsLang"></select>
+
+        <div class="info-block is-info">
+          <svg class="info-block-icon" width="18" height="18"><use href="#svg-info"/></svg>
+          <span data-i18n="installer_erase_notice">
+            L'installation efface complètement l'appareil, puis écrit le firmware et son
+            interface. Comptez environ deux minutes.
+          </span>
         </div>
-        <button type="button" id="startFlashBtn" class="btn btn-green" disabled>
-          <svg class="btn-glyph" width="18" height="18"><use href="#svg-chip"/></svg>
-          <span data-i18n="installer_btn_install">Installer</span>
-        </button>
-      </div>
-    </div>
+
+        <div class="tfoot">
+          <button type="button" id="btnBackVer" class="btn btn-secondary" data-i18n="installer_btn_back">Retour</button>
+          <button type="button" id="startFlashBtn" class="btn" disabled>
+            <svg class="btn-glyph" width="18" height="18"><use href="#svg-chip"/></svg>
+            <span data-i18n="installer_btn_install">Installer</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ÉTAPE 4 : progression du flash. installer.js la pilote entièrement via le module
+           flash.js d'esp-web-tools ; mêmes identifiants que l'ancienne fenêtre. -->
+      <section class="tile step" id="step4" hidden>
+        <span class="tl" data-i18n="installer_step_4">Installation</span>
+        <div id="flashDialog" class="flash-stage">
+          <div id="flashDialogIcon" class="flash-stage-icon"></div>
+          <h3 id="flashDialogTitle" class="flash-stage-title"></h3>
+          <p id="flashDialogMessage" class="ts"></p>
+          <div id="flashProgress" class="flash-progress" hidden>
+            <div id="flashProgressBar" class="flash-progress-bar"></div>
+          </div>
+          <p class="ts flash-keep" data-i18n="installer_flash_keep_open">
+            Ne débranchez pas l'appareil et laissez cet onglet ouvert.
+          </p>
+
+          <!-- Journal repliable, présentation terminal : restitue chaque évènement brut de
+               flash.js, avec téléchargement du journal complet en .txt. -->
+          <button type="button" id="flashLogToggle" class="lnk" data-i18n="installer_flash_show_logs">Voir les journaux</button>
+          <div id="flashLog" class="flash-log" hidden>
+            <div class="flash-log-header">
+              <span data-i18n="installer_flash_log_title">Journal</span>
+              <button type="button" id="flashLogDownload" class="flash-log-download" data-i18n="installer_flash_download_logs">Télécharger</button>
+            </div>
+            <pre id="flashLogContent"></pre>
+          </div>
+
+          <div id="flashDialogActions" class="tfoot" hidden>
+            <button type="button" id="flashDialogClose" class="btn" data-i18n="installer_flash_btn_close">Fermer</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ÉTAPE 5 : terminé. -->
+      <section class="tile step" id="step5" hidden>
+        <span class="tl" data-i18n="installer_done_label">Terminé</span>
+        <div class="okrow">
+          <span class="okb">
+            <svg width="14" height="14"><use href="#svg-success"/></svg>
+            <span data-i18n="installer_done_badge">Installation terminée</span>
+          </span>
+        </div>
+        <p class="tsl" data-i18n="installer_done_body">
+          L'appareil redémarre. S'il n'a jamais été configuré, il crée son propre point d'accès
+          Wi-Fi « ESPSomfy RTS » : connectez-vous-y pour le mettre en service.
+        </p>
+        <div class="acts">
+          <button type="button" id="btnDoneLogs" class="btn">
+            <svg class="btn-glyph" width="18" height="18"><use href="#svg-terminal"/></svg>
+            <span data-i18n="installer_btn_serial">Console série</span>
+          </button>
+          <button type="button" id="btnRestart" class="btn btn-secondary" data-i18n="installer_btn_restart">Recommencer</button>
+        </div>
+      </section>
+
+      <p class="links">
+        <span data-i18n="installer_fallback_hint">Ça ne fonctionne pas ?</span>
+        <a href="https://web.esphome.io/" target="_blank" rel="noopener noreferrer" data-i18n="installer_fallback_link">Essayez l'installateur alternatif web.esphome.io</a>
+      </p>
+      <!-- Mention des composants tiers embarqués par js/vendor/esp-flash.js. Le lien pointe le
+           fichier de licences que .github/workflows/pages.yml assemble au déploiement : c'est
+           lui qui satisfait la section 4(a) de l'Apache-2.0. -->
+      <p class="links">
+        <span data-i18n="installer_thirdparty">Flashage assuré par ESP Web Tools et esptool-js, sous licence Apache-2.0.</span>
+        <a href="js/vendor/esp-flash.LICENSES.txt" target="_blank" rel="noopener noreferrer" data-i18n="installer_thirdparty_link">Texte des licences</a>
+      </p>
+
+    </main>
   </div>
 
-  <!-- Fenêtre de progression du flash, maison (cf. commentaire d'en-tête) : js/installer.js la
-       pilote entièrement via le module flash.js d'esp-web-tools. -->
-  <div id="flashOverlay" class="flash-overlay" hidden>
-    <div id="flashDialog" class="flash-dialog" role="dialog" aria-modal="true" aria-labelledby="flashDialogTitle">
-      <div id="flashDialogIcon" class="flash-dialog-icon"></div>
-      <h3 id="flashDialogTitle" class="flash-dialog-title"></h3>
-      <p id="flashDialogMessage" class="section-subtitle"></p>
-      <div id="flashProgress" class="flash-progress" hidden>
-        <div id="flashProgressBar" class="flash-progress-bar"></div>
-      </div>
-
-      <!-- Journal repliable, présentation terminal : restitue chaque évènement brut de flash.js,
-           avec possibilité de télécharger le journal complet en .txt. -->
-      <button type="button" id="flashLogToggle" class="flash-log-toggle" data-i18n="installer_flash_show_logs">Voir les journaux</button>
-      <div id="flashLog" class="flash-log" hidden>
-        <div class="flash-log-header">
-          <span data-i18n="installer_flash_log_title">Journal</span>
-          <button type="button" id="flashLogDownload" class="flash-log-download" data-i18n="installer_flash_download_logs">Télécharger</button>
-        </div>
-        <pre id="flashLogContent"></pre>
-      </div>
-
-      <div id="flashDialogActions" class="flash-dialog-actions" hidden>
-        <button type="button" id="flashDialogClose" class="btn btn-blue" data-i18n="installer_flash_btn_close">Fermer</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Téléversement manuel. Volontairement limité aux images COMPLÈTES (celles qui contiennent
-       amorceur, table de partitions, application et système de fichiers) : elles s'écrivent à
-       l'adresse 0 et réécrivent la table au passage, donc elles sont justes quel que soit ce qui
-       occupe déjà la puce. Une installation partielle, elle, devrait connaître les offsets de la
-       table DÉJÀ EN PLACE -- or ils diffèrent entre v2 et v3, et même entre variantes de v2 : le
-       LittleFS est à 0x290000 chez l'une, le spiffs à 0x370000 chez l'autre. Il faudrait relire
-       la table sur la puce, ce que le module de flash embarqué ici ne permet pas. -->
+  <!-- Téléversement manuel. Volontairement limité aux images COMPLÈTES (amorceur, table de
+       partitions, application et système de fichiers) : elles s'écrivent à l'adresse 0 et
+       réécrivent la table au passage. Une installation partielle devrait connaître les offsets
+       de la table DÉJÀ EN PLACE - or ils diffèrent entre v2 et v3, et même entre variantes de
+       v2 ; les lire sur la puce demanderait ESPLoader, que le paquet embarqué n'exporte pas. -->
   <div id="manualOverlay" class="inst-overlay" hidden>
-    <div class="inst-content" role="dialog" aria-modal="true" aria-labelledby="manualTitle">
+    <div class="inst-content tab-scope" role="dialog" aria-modal="true" aria-labelledby="manualTitle">
       <div class="inst-header">
         <h3 id="manualTitle" class="inst-title" data-i18n="installer_manual_title">Installer un fichier</h3>
         <button type="button" id="manualClose" class="logs-close" data-i18n-label="installer_logs_close" aria-label="Fermer">
@@ -376,12 +413,7 @@
         </button>
       </div>
 
-      <!-- Deux conventions de nommage cohabitent dans les releases, et rien dans le fichier ne dit
-           laquelle on tient : les onglets ne servent qu'à documenter celle qui correspond au nom
-           téléchargé. Ils ne filtrent RIEN -- le sélecteur de fichier ci-dessous est commun aux
-           deux, et la famille de puce se déduit du nom quel que soit l'onglet affiché. Un
-           utilisateur resté sur le mauvais onglet ne peut donc pas se retrouver bloqué. -->
-      <div class="mobile-tabs">
+      <div class="tabs" role="tablist">
         <button type="button" class="tab-btn active" id="tabV3" data-panel="v3Panel">
           <span data-i18n="installer_tab_v3">Images v3.x</span>
         </button>
@@ -391,18 +423,16 @@
       </div>
 
       <div class="inst-body">
+        <!-- Les onglets ne filtrent RIEN : ils documentent la convention de nommage du fichier
+             téléchargé, la famille de puce se déduisant du nom quel que soit l'onglet affiché. -->
         <div class="hw-panels">
           <div id="v3Panel" class="hw-panel is-active">
-            <p class="section-subtitle" data-i18n="installer_manual_v3_intro">
+            <p class="ts" data-i18n="installer_manual_v3_intro">
               Seules les images complètes conviennent (amorceur, table de partitions, firmware et
               interface) : ces fichiers portent le terme « factory ». L'archive .zip se donne telle
               quelle, inutile de l'extraire.
             </p>
 
-            <!-- Décomposition du nom : chaque partie variable porte un numéro repris dans la
-                 légende. En HTML et non en SVG -- le nom fait 44 caractères avec un boîtier, une
-                 image ne se replierait pas sous 360px et les libellés changent de longueur d'une
-                 langue à l'autre. -->
             <div class="fname-map">
               <span class="fname-lit">ESPSomfyRTS_</span>
               <span class="fname-tok"><span class="tok-num">1</span><code data-i18n="installer_tok_version">[vX.X.X]</code></span>
@@ -426,7 +456,7 @@
           </div>
 
           <div id="v2Panel" class="hw-panel">
-            <p class="section-subtitle" data-i18n="installer_manual_v2_intro">
+            <p class="ts" data-i18n="installer_manual_v2_intro">
               Seules les images complètes conviennent (amorceur, table de partitions, firmware et
               interface) : ces fichiers portent le terme « onboard ». L'archive .zip se donne telle
               quelle, inutile de l'extraire.
@@ -452,9 +482,8 @@
           </div>
         </div>
 
-        <!-- Même présentation que le téléversement du firmware (label .custom-file-upload devant un
-             input masqué, cf. data-dev/js/95-firmware.js) : le champ natif ne se met pas au thème et
-             affiche « Aucun fichier sélectionné » dans la langue du navigateur, pas celle du site. -->
+        <!-- Label devant un input masqué : le champ natif ne se met pas au thème et affiche
+             « Aucun fichier sélectionné » dans la langue du navigateur, pas celle du site. -->
         <input type="file" id="manualFile" accept=".zip,.bin" hidden>
         <label for="manualFile" class="custom-file-upload">
           <span id="manualFileName" class="file-name-display" data-i18n="installer_manual_choose">Choisir un fichier (.zip ou .bin)</span>
@@ -466,7 +495,7 @@
 
       <div class="inst-footer">
         <span class="manual-status" id="manualStatus"></span>
-        <button type="button" id="manualFlashBtn" class="btn btn-green" disabled>
+        <button type="button" id="manualFlashBtn" class="btn" disabled>
           <svg class="btn-glyph" width="18" height="18"><use href="#svg-chip"/></svg>
           <span data-i18n="installer_btn_install">Installer</span>
         </button>
@@ -500,25 +529,24 @@
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=f710e608"></script>
+  <script type="module" src="js/installer.js?v=6c11bc70"></script>
 
 
   <!-- BIBLIOTHÈQUE DE SYMBOLES, en fin de document : rien n'y est rendu directement (le <svg>
        porteur est en display: none), chaque dessin est appelé au fil de la page par
        <svg><use href="#..."/></svg>. Le <use> hérite des propriétés CSS de son point d'appel, y
        compris les variables de couleur : les dessins suivent donc le thème comme s'ils étaient
-       écrits sur place.
-       svg-warning et svg-error sont ceux de data-dev/index.html (cf. ui.serviceError), pour
-       rester cohérent avec le reste du projet plutôt que d'improviser des emoji. svg-success
-       n'existe pas côté firmware (aucun état "terminé avec succès" n'y affiche d'icône dédiée) :
-       même style Material (viewBox 24, fill=currentColor) pour rester homogène. Le logo, les
-       icônes de navigation et le cadenas du pied de page sont fournis par js/layout.js. -->
+       écrits sur place. Le logo, les icônes de navigation et le cadenas du pied de page sont
+       fournis par js/layout.js. -->
   <svg style="display: none;" aria-hidden="true">
     <symbol id="svg-warning" viewBox="0 0 24 24">
       <path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
     </symbol>
     <symbol id="svg-error" viewBox="0 0 24 24">
       <path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+    </symbol>
+    <symbol id="svg-info" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2zm0-8h-2V7h2z"/>
     </symbol>
     <symbol id="svg-success" viewBox="0 0 24 24">
       <path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z"/>
@@ -541,8 +569,8 @@
     <symbol id="svg-close" viewBox="0 0 24 24">
       <path fill="currentColor" d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4z"/>
     </symbol>
-    <!-- svg-question et svg-arrowDown : mêmes tracés que data-dev/index.html (#icon-question,
-         #svg-arrowDown), pour l'accordéon "Comprendre la note" (cf. .hw-rating-info). -->
+    <!-- svg-question et svg-arrowDown : mêmes tracés que data-dev/index.html, pour l'accordéon
+         "Comprendre la note" (cf. .hw-rating-info). -->
     <symbol id="svg-question" viewBox="0 0 24 24">
       <path fill="currentColor" d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16m0-11.25c-.69 0-1.25.56-1.25 1.25v.1a.75.75 0 1 1-1.5 0V10A2.75 2.75 0 0 1 12 7.25h.1a2.6 2.6 0 0 1 1.7 4.6l-.8.7a.9.9 0 0 0-.3.7v.5a.75.75 0 0 1-1.5 0v-.5c0-.7.3-1.4.8-1.8l.8-.7a1.1 1.1 0 0 0-.7-2zM13 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
     </symbol>

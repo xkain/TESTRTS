@@ -2,162 +2,118 @@
  * SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
  * Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
  */
+/* Design A2 : mêmes jetons de couleurs et de rayons que l'interface de l'appareil
+ * (maquette-A2/JETONS-couleurs-rayons.md). Les boutons pleins gardent #1a5fb4 + texte blanc
+ * dans LES DEUX thèmes ; la barre du site est sombre dans les deux. */
 :root {
-    /* Mode CLAIR par défaut */
-    --bg-color: #f8fafc;
-    --card-bg: #ffffff;
-    --card-option-bg: #f1f5f9;
-    --border-color: #c9cfd6;
+    --bg: #eceae6;
+    --panel: #f7f6f3;
+    --surface: #ffffff;
+    --surface-2: #f1efeb;
+    --sunken: #dcdad5;
+    --border: #dcdfe4;
+    --divider: #eeece8;
 
-    --text-main: #0f172a;
-    --text-muted: #64748b;
-    --text-hover: #ffffff;
-    --text-suggestion-hover: #f8fafc;
+    --text: #17181c;
+    --text-2: #3b3d44;
+    --text-3: #6b6d74;
 
-    --accent-blue: #1a5fb4;
-    --accent-blue-hover: #2563eb;
-    --accent-green: #16a34a;
-    --accent-green-hover: #15803d;
+    --accent: #1a5fb4;
+    --accent-strong: #154c90;
 
-    --btn-secondary-bg: #64748b;
-    --btn-secondary-hover: #475569;
+    --info-bg: #e5eefa;
+    --info: #154c90;
+    --warn-bg: #fff1d6;
+    --warn: #8a5300;
+    --ok-bg: #e3f3e5;
+    --ok: #1f6b24;
+    --error: #c01c28;
+    --error-bg: #f9e4e6;
 
-    --shadow-color: rgba(0, 0, 0, 0.08);
-    --dropdown-shadow: rgba(0, 0, 0, 0.15);
-    --result-box-bg: rgba(22, 163, 74, 0.1);
-    --accent-red: #dc2626;
-    /* Même teinte que --color-warning côté firmware (data-dev/base.css) : garde la distinction
-       avertissement (orange) / erreur (rouge) déjà établie ailleurs dans le projet. */
-    --accent-warning: #f69300;
-    --warning-tint-bg: rgba(246, 147, 0, 0.08);
-    --warning-tint-border: rgba(246, 147, 0, 0.35);
-    /* Même paire teinte de fond/liseré que --warning-tint-*, déclinée pour --accent-green et
-       --accent-red : utilisées par les zones de l'accordéon "Comprendre la note" (.hw-rating-zone),
-       dans l'esprit de .rssi-scale-zone côté firmware (data-dev/overlays.css). */
-    --success-tint-bg: rgba(22, 163, 74, 0.08);
-    --success-tint-border: rgba(22, 163, 74, 0.35);
-    --danger-tint-bg: rgba(220, 38, 38, 0.08);
-    --danger-tint-border: rgba(220, 38, 38, 0.35);
+    --star: #e8a13c;
+    --bar-bg: #141619;
+    --bar-link: #c9ccd3;
+    --bar-hover: #1e2228;
 
     /* Bannière et pied de page sont en position: fixed ; body réserve exactement cette place en
        padding, d'où l'absence de saut quand js/layout.js les injecte. */
-    --site-header-h: 84px;
+    --site-header-h: 56px;
     /* Deux variables et non une : --site-footer-min est la hauteur PLANCHER du pied, une
        constante ; --site-footer-h est sa hauteur RÉELLE, mesurée puis publiée par layout.js et
        utilisée pour réserver la place sous le contenu. Les confondre créait une boucle -- le pied
        prenait pour plancher sa propre hauteur mesurée, donc ne pouvait plus jamais rétrécir. */
     --site-footer-min: 40px;
     --site-footer-h: 40px;
-
-    /* Bannière : bleu de marque en clair, surface sombre en mode sombre (cf. plus bas). Le
-       liseré du bas détache la barre du contenu quand celui-ci défile dessous. */
-    --site-header-bg: #1a5fb4;
-    --site-header-border: rgba(0, 0, 0, 0.22);
-
-    /* Bordure de la carte de résultat : un vert très dilué, qui signale sans crier. */
-    --result-border: rgba(34, 197, 94, 0.16);
-    --btn-send-bg: #1d6135;
-    --btn-send-hover: #1d4429;
-
-    --badge-bg: rgba(26, 95, 180, 0.12);
 }
 
 /* js/layout.js écrit toujours le thème effectif sur <html> : un seul sélecteur suffit donc, sans
    @media (prefers-color-scheme) à tenir en double. */
 :root[data-theme="dark"] {
-    --bg-color: #0c0c0c;
-    --card-bg: #0d0d0d;
-    --card-option-bg: #1c1e21;
-    --border-color: #333333;
+    --bg: #0e1013;
+    --panel: #1a1e24;
+    --surface: #222730;
+    --surface-2: #2a2f38;
+    --sunken: #16191e;
+    --border: #363c47;
+    --divider: #2a2f38;
 
-    --text-main: #f8fafc;
-    --text-muted: #9a999e;
-    --text-hover: #e1e1e1;
-    --text-suggestion-hover: #e2e8f0;
+    --text: #eceef2;
+    --text-2: #c3c8d1;
+    --text-3: #9aa0ab;
 
-    --accent-blue: #1a5fb4;
-    --accent-blue-hover: #2563eb;
-    --accent-green: #22c55e;
-    --accent-green-hover: #16a34a;
+    --accent: #6aa5ee;
+    --accent-strong: #8ab8f2;
 
-    --btn-secondary-bg: #475569;
-    --btn-secondary-hover: #334155;
-
-    --shadow-color: rgba(0, 0, 0, 0.3);
-    --dropdown-shadow: rgba(0, 0, 0, 0.5);
-    --result-box-bg: rgba(34, 197, 94, 0.1);
-    /* Rouge éclairci : le #dc2626 du mode clair manque de contraste sur fond noir. */
-    --accent-red: #f87171;
-    --accent-warning: #f69300;
-    --warning-tint-bg: rgba(246, 147, 0, 0.12);
-    --warning-tint-border: rgba(246, 147, 0, 0.4);
-    --success-tint-bg: rgba(34, 197, 94, 0.12);
-    --success-tint-border: rgba(34, 197, 94, 0.4);
-    --danger-tint-bg: rgba(248, 113, 113, 0.12);
-    --danger-tint-border: rgba(248, 113, 113, 0.4);
-
-    --site-header-bg: #11161e;
-    --site-header-border: #333333;
-
-    --badge-bg: rgba(37, 99, 235, 0.18);
+    --info-bg: #1b2c44;
+    --info: #8ab8f2;
+    --warn-bg: #3a2b0f;
+    --warn: #f2b24a;
+    --ok-bg: #16301a;
+    --ok: #7bd17f;
+    --error: #ff8089;
+    --error-bg: #3a2024;
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 /* Garde-fou générique contre le FOUC des <svg><use> : sans largeur/hauteur, un <svg> prend par
    défaut la taille intrinsèque du navigateur (300x150px) tant que cette feuille de style n'a pas
-   fini de charger, ce qui produit un flash très visible d'icônes énormes au premier rendu. Cette
-   règle s'applique à TOUT <svg> de la page dès que le CSS arrive (déplacé en tête de <head> côté
-   HTML pour arriver le plus tôt possible) ; les classes plus spécifiques (.site-brand-logo,
-   .site-nav-icon, .inline-icon...) l'emportent ensuite normalement (spécificité d'une classe > élément nu). Les
-   attributs width/height posés directement en HTML restent le filet de sécurité pour l'instant
-   précis avant même que ce fichier ne soit interprété. */
+   fini de charger. Les classes plus spécifiques l'emportent ensuite normalement. */
 svg {
     width: 1.3rem;
     height: 1.3rem;
     max-width: 100%;
 }
 
-body {
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    display: flex;
-    justify-content: center;
-    min-height: 100vh;
-    min-height: 100dvh;
-    /* Le haut et le bas réservent la place des deux barres fixes (cf. --site-header-h /
-       --site-footer-h) ; les 20px restants sont la respiration habituelle autour du contenu. */
-    padding: calc(var(--site-header-h) + 20px) 20px calc(var(--site-footer-h) + 20px);
-}
-
-/* margin: auto et non align-items: center sur body : sur une page plus haute que la fenêtre, un
-   enfant flex centré déborde des deux côtés et son haut devient inatteignable au défilement. */
-/* L'attribut hidden l'emporte, toujours. Le [hidden]{display:none} de la feuille du navigateur
-   perd contre la moindre règle d'auteur qui pose un display -- et comme presque tout ici en pose
-   un (.btn, .info-block, .conn-badge...), un élément masqué par le script restait visible. Le
-   piège s'est refermé cinq fois sur ce fichier ; cette règle y met fin une bonne fois, et les
-   :not([hidden]) écrits plus bas deviennent de simples précautions redondantes. */
+/* L'attribut hidden l'emporte, toujours : le [hidden]{display:none} de la feuille du navigateur
+   perd contre la moindre règle d'auteur qui pose un display, et presque tout ici en pose un. */
 [hidden] {
     display: none !important;
 }
 
-.container {
-    width: 100%;
-    max-width: 580px;
-    margin: auto;
-    padding: 32px 24px;
-    display: flex;
-    flex-direction: column;
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: var(--site-header-h) 0 var(--site-footer-h);
+}
+
+a {
+    color: var(--accent);
+}
+
+a:hover {
+    color: var(--accent-strong);
 }
 
 /* ──────────────────────────────────────────────
-   Bannière et pied de page communs, injectés par js/layout.js : aucune page n'en porte le
-   balisage. Pleine largeur, volontairement sans max-width.
+   Bannière commune, injectée par js/layout.js. Sombre dans les deux thèmes (design A2).
    ────────────────────────────────────────────── */
 .site-sprite {
     display: none;
@@ -170,43 +126,37 @@ body {
     right: 0;
     height: var(--site-header-h);
     z-index: 400;
-    background: var(--site-header-bg) url("../img/header.webp") center / cover no-repeat;
-    border-bottom: 1px solid var(--site-header-border);
+    background-color: var(--bar-bg);
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 0 24px;
+    padding: 0 20px;
 }
 
 .site-brand {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 11px;
     min-width: 0;
 }
 
 .site-brand-logo {
-    width: 48px;
-    height: 48px;
+    width: 26px;
+    height: 26px;
     color: #ffffff;
     flex-shrink: 0;
 }
 
-/* Sans overflow/ellipsis, le nom (nowrap) déborde de sa boîte rétrécie et passe sous la
-   navigation au lieu d'être tronqué. */
 .site-brand-name {
-    font-size: 1.35rem;
+    font-size: 15px;
     font-weight: 700;
     color: #ffffff;
-    letter-spacing: -0.3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Navigation, bascule de thème et bouton de menu : le regroupement permet à <nav> de se replier
-   en panneau sur mobile sans emporter les deux boutons avec lui. */
 .site-actions {
     display: flex;
     align-items: center;
@@ -214,8 +164,8 @@ body {
     flex-shrink: 0;
 }
 
-/* Sélecteur doublé : .site-nav-link, déclaré plus bas, pose display: flex à spécificité égale et
-   l'emporterait sur un .site-menu-btn seul. */
+/* Sélecteur doublé : .site-nav-link pose display: flex à spécificité égale et l'emporterait sur
+   un .site-menu-btn seul. */
 .site-nav-link.site-menu-btn {
     display: none;
 }
@@ -227,18 +177,17 @@ body {
     flex-shrink: 0;
 }
 
-/* Liens et bouton de la bannière : même habillage pour un <a> et un <button>, d'où la remise à
-   plat des styles de bouton natifs (fond, bordure, police). */
 .site-nav-link {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 9px 12px;
+    min-height: 36px;
+    padding: 0 12px;
     border: none;
-    border-radius: 8px;
+    border-radius: 999px;
     background-color: transparent;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.9rem;
+    color: var(--bar-link);
+    font-size: 14px;
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
@@ -246,42 +195,25 @@ body {
 }
 
 .site-nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.14);
+    background-color: var(--bar-hover);
     color: #ffffff;
 }
 
-/* Page courante : le lien reste là pour ne pas faire bouger la barre d'une page à l'autre, mais
-   n'invite plus au clic. */
 .site-nav-link[aria-current="page"] {
-    background-color: rgba(255, 255, 255, 0.16);
+    background-color: var(--bar-hover);
     color: #ffffff;
 }
 
 .site-nav-link.is-icon-only {
-    padding: 9px;
+    padding: 0 9px;
 }
 
-/* Retour à l'accueil : hors du <nav> (cf. buildHeader dans js/layout.js), donc toujours visible,
-   menu replié ou non. */
 .site-home-link {
-    padding: 11px;
-    margin-left: 6px;
-    background-color: rgba(255, 255, 255, 0.12);
+    margin-left: 2px;
 }
 
-/* Sur l'accueil il renverrait à la page déjà affichée : il ne sert à rien et occupe la place la
-   plus visible de la bannière. La page se désigne par data-nav sur <body> (cf. js/layout.js). */
 body[data-nav="home"] .site-home-link {
     display: none;
-}
-
-.site-home-link .site-nav-icon {
-    width: 24px;
-    height: 24px;
-}
-
-.site-home-link:hover {
-    background-color: rgba(255, 255, 255, 0.22);
 }
 
 .site-nav-link.is-icon-only .site-nav-label {
@@ -289,8 +221,8 @@ body[data-nav="home"] .site-home-link {
 }
 
 .site-nav-icon {
-    width: 20px;
-    height: 20px;
+    width: 19px;
+    height: 19px;
     color: currentColor;
     flex-shrink: 0;
 }
@@ -300,54 +232,53 @@ body[data-nav="home"] .site-home-link {
     align-items: center;
     gap: 6px;
     padding: 0 6px 0 10px;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--bar-link);
 }
 
 .site-lang-select {
     border: none;
-    border-radius: 8px;
+    border-radius: 999px;
     background-color: transparent;
     color: #ffffff;
-    font-size: 0.9rem;
+    font-size: 14px;
     font-weight: 600;
     padding: 6px 4px;
     cursor: pointer;
 }
 
 .site-lang-select:hover {
-    background-color: rgba(255, 255, 255, 0.14);
+    background-color: var(--bar-hover);
 }
 
-/* La liste déroulée est dessinée par le système, pas par la bannière : sans ces deux lignes, les
-   options héritent du blanc sur blanc de leur parent dans plusieurs navigateurs. */
+/* La liste déroulée est dessinée par le système : sans ces deux lignes, les options héritent du
+   blanc sur blanc de leur parent dans plusieurs navigateurs. */
 .site-lang-select option {
-    background-color: var(--card-bg);
-    color: var(--text-main);
+    background-color: var(--surface);
+    color: var(--text);
 }
 
-/* La hauteur n'est PAS figée ici : elle est mesurée puis publiée dans --site-footer-h par
-   layout.js (cf. mesurerFooter), qui s'en sert pour réserver la place sous le contenu. Elle
-   l'était, et le texte devait alors être coupé aux ellipses -- l'utilisateur voyait le début
-   d'une phrase dont il ne voyait jamais la fin. */
+/* ──────────────────────────────────────────────
+   Pied de page commun, épinglé en bas. Sa hauteur réelle est mesurée par layout.js
+   (cf. mesurerFooter) et publiée dans --site-footer-h.
+   ────────────────────────────────────────────── */
 .site-footer {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     min-height: var(--site-footer-min);
-    /* Sous les suggestions de recherche (50) : une liste ouverte ne doit jamais être masquée.
-       Au-dessus du reste du contenu, qui n'est pas positionné. */
+    /* Sous les suggestions de recherche (50) : une liste ouverte ne doit jamais être masquée. */
     z-index: 40;
-    background-color: var(--bg-color);
-    border-top: 1px solid var(--border-color);
+    background-color: var(--panel);
+    border-top: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    padding: 0 16px;
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    line-height: 1.3;
+    padding: 6px 16px;
+    color: var(--text-3);
+    font-size: 13px;
+    line-height: 1.35;
 }
 
 .site-footer-item {
@@ -360,14 +291,12 @@ body[data-nav="home"] .site-home-link {
 .site-footer-icon {
     width: 14px;
     height: 14px;
-    color: var(--text-muted);
+    color: var(--text-3);
     flex-shrink: 0;
 }
 
-/* Pas --accent-blue : ce bleu tombe à ~2,6:1 de contraste sur le fond noir du thème sombre,
-   illisible à 0,75rem. */
 .site-footer a {
-    color: var(--text-main);
+    color: var(--text);
     text-decoration: none;
     font-weight: 600;
 }
@@ -376,247 +305,497 @@ body[data-nav="home"] .site-home-link {
     text-decoration: underline;
 }
 
-/* Le crédit ne se replie jamais : « Créé par » et « xkain » sur deux lignes seraient illisibles,
-   et c'est le texte de gauche qui doit absorber la largeur manquante. */
 .site-footer-credit {
     flex: 0 0 auto;
     white-space: nowrap;
 }
 
-.header {
+/* ──────────────────────────────────────────────
+   Gabarit gen-hero : colonne d'identité à gauche (32 %), contenu défilant à droite (68 %).
+   La colonne hero est sticky et occupe exactement la hauteur libre entre les deux barres :
+   le contenu défile à côté d'elle, comme dans l'interface de l'appareil.
+   ────────────────────────────────────────────── */
+.gen-hero {
+    display: grid;
+    grid-template-columns: minmax(320px, 32fr) minmax(0, 68fr);
+    min-height: calc(100dvh - var(--site-header-h) - var(--site-footer-h));
+}
+
+.hero {
+    position: sticky;
+    top: var(--site-header-h);
+    height: calc(100dvh - var(--site-header-h) - var(--site-footer-h));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(12px, 2.2vh, 22px);
+    padding: clamp(20px, 3vh, 40px) clamp(20px, 2.5vw, 44px);
     text-align: center;
-    margin-bottom: 5%;
+    overflow: hidden;
+    color: #ffffff;
+    /* Reproduction en dégradés CSS de l'ancienne image img/header.webp : halo clair en haut à
+       droite, bleu royal décentré, coin inférieur assombri. */
+    background:
+        radial-gradient(60% 45% at 68% 0%, rgba(255, 255, 255, 0.16), transparent 65%),
+        radial-gradient(45% 35% at 78% 12%, rgba(190, 210, 255, 0.14), transparent 70%),
+        radial-gradient(130% 90% at 28% 42%, #2457b8 0%, rgba(36, 87, 184, 0) 70%),
+        radial-gradient(120% 100% at 100% 100%, rgba(4, 10, 24, 0.6), transparent 65%),
+        linear-gradient(155deg, #0d2d6b 0%, #1a5fb4 45%, #113a85 75%, #0a2156 100%);
 }
 
-/* Titre d'accroche. Distinct de .welcome-subtitle, gardé par l'accueil et l'installateur, dont
-   les sous-titres sont des phrases : à cette taille elles écraseraient la page. */
-.page-title {
-    color: var(--accent-blue);
-    font-size: 2rem;
-    font-weight: 700;
-    line-height: 1.15;
-    letter-spacing: -0.5px;
-    margin-bottom: 10px;
+:root[data-theme="dark"] .hero {
+    background:
+        radial-gradient(60% 45% at 68% 0%, rgba(255, 255, 255, 0.08), transparent 65%),
+        radial-gradient(130% 90% at 28% 42%, #17407f 0%, rgba(23, 64, 127, 0) 70%),
+        radial-gradient(120% 100% at 100% 100%, rgba(0, 0, 0, 0.6), transparent 65%),
+        linear-gradient(155deg, #0a1c40 0%, #123265 45%, #0b2148 75%, #060f26 100%);
 }
 
-.welcome-subtitle {
-    color: var(--accent-blue);
-    font-size: 1.05rem;
+.hero-icon {
+    width: clamp(64px, 6vw, 96px);
+    height: clamp(64px, 6vw, 96px);
+    color: #ffffff;
+    flex: none;
+}
+
+.hero-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.hero h1 {
+    font-size: clamp(26px, 2.6vw, 40px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.hero-desc {
+    margin: 6px 0 0;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.88);
+    max-width: 38ch;
+    line-height: 1.45;
+}
+
+.hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+
+.chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.16);
+    font-size: 13px;
     font-weight: 600;
-    margin-top: 6px;
-    margin-bottom: 12px;
+    color: #ffffff;
 }
 
-.description {
-    color: var(--text-muted);
-    font-size: 0.95rem;
+.hero-vign {
+    width: min(100%, 300px);
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.mainc {
+    min-width: 0;
+    max-width: 1100px;
+    padding: clamp(16px, 2.4vh, 26px) clamp(20px, 3vw, 48px) 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Grille de tuiles des pages-outils ; une dernière tuile seule prend toute la largeur. */
+.tgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+    align-items: stretch;
+}
+
+.tgrid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+}
+
+.links {
+    font-size: 13px;
+    color: var(--text-3);
+    text-align: center;
+}
+
+.links a {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* ──────────────────────────────────────────────
+   Tuiles et textes
+   ────────────────────────────────────────────── */
+.tile {
+    background-color: var(--surface);
+    border-radius: 22px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+.tile-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.tl {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.step-title {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.ts {
+    font-size: 14px;
+    color: var(--text-3);
+    line-height: 1.45;
+}
+
+.tsl {
+    font-size: 15px;
+    color: var(--text-2);
     line-height: 1.5;
 }
 
-/* auto-fit + minmax : passage de deux colonnes à une seule sans point de rupture à maintenir. Le
-   seuil de 280px garde les cartes de l'accueil empilées (container à 580px) et met celles de la
-   géolocalisation côte à côte (container à 880px). */
-.options-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    align-items: stretch;
-    gap: 16px;
-    margin: 20px 0;
-}
-
-/* Colonne flex, pour que le bouton d'action de chaque carte se cale en bas (margin-top: auto)
-   quelle que soit la hauteur de la carte voisine. */
-.option-card {
-    position: relative;
-    background-color: var(--card-option-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 22px 20px;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Plancher, pour que les cartes ne se tassent pas sur écran étroit ; au-delà c'est le contenu
-   qui commande. */
-.container-cards .option-card {
-    min-height: 328px;
-}
-
-/* Pastille ronde + titre + description, sur une seule ligne d'en-tête. */
-.option-card-head {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    margin-bottom: 16px;
-}
-
-.option-card-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 52px;
-    height: 52px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    background-color: var(--badge-bg);
-    color: var(--accent-blue);
-}
-
-.option-card-badge svg {
-    width: 26px;
-    height: 26px;
-}
-
-.option-card h2 {
-    font-size: 1.2rem;
-    font-weight: 700;
-    letter-spacing: -0.2px;
-}
-
-.option-card-desc {
-    color: var(--text-muted);
-    font-size: 0.88rem;
+.hint {
+    font-size: 13px;
+    color: var(--text-3);
     line-height: 1.45;
-    margin-top: 6px;
 }
 
-/* Occupe la hauteur libre et centre ce qu'il contient : les champs sont posés comme
-   l'illustration de la carte voisine, pas collés sous le titre. */
-.option-card-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+.hint a {
+    color: var(--accent);
+    font-weight: 600;
 }
 
-/* Carte portant une image de fond en bande basse. L'adresse de l'image est posée dans le
-   balisage : c'est la seule chose qui change d'une carte à l'autre.
-   Un FOND et non un élément posé par-dessus : rien à empiler, rien à sortir du flux, et le
-   contenu de la carte peut descendre jusque sur l'image sans qu'on ait à le positionner.
-   L'adresse est écrite en toutes lettres dans l'attribut style et non passée par une variable :
-   une url() dans une variable se résout contre la feuille où la variable est EMPLOYÉE, donc
-   contre css/style.css -- "img/x.webp" y devient "/css/img/x.webp".
-   background-size: 100% auto met l'image à la largeur de la carte en gardant ses proportions ;
-   ancrée en bas, elle se trouve rognée par le haut dès que la carte est plus courte qu'elle.
-   padding-bottom réserve la bande. En POURCENTAGE et non en pixels, parce qu'un rembourrage en
-   pourcentage se calcule sur la LARGEUR : la réserve suit donc l'image, qui suit la largeur. Une
-   hauteur minimale fixe se ferait recouvrir par le texte dès que la carte s'élargit.
-   La valeur vaut hauteur/largeur de l'image : 50 % pour du 2:1. Une carte dont l'image aurait
-   d'autres proportions redéfinit --bande-illus sur elle seule. */
-.option-card.has-illus {
-    --bande-illus: 50%;
-    overflow: hidden;
-    padding-bottom: var(--bande-illus);
-    background-position: center bottom;
-    background-size: 100% auto;
-    background-repeat: no-repeat;
-}
-
-/* Carte entièrement cliquable (accueil) : elle reste un <a>, d'où la remise à plat du soulignement
-   et de la couleur de lien. */
-.container-cards .tool-card {
-    text-decoration: none;
-    color: inherit;
-    transition: border-color 0.15s;
-}
-
-/* Pastille au-dessus du titre, et non à sa gauche : c'est la disposition du gabarit. */
-.tool-card .option-card-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
-}
-
-.tool-card:hover {
-    border-color: var(--accent-blue);
-}
-
-/* Hors du flux, dans l'angle inférieur droit : c'est le seul moyen de la poser SUR l'image, le
-   flux s'arrêtant au-dessus de la bande réservée. Les retraits reprennent le rembourrage de la
-   carte pour qu'elle s'aligne sur le texte. Le z-index n'est pas indispensable -- l'image porte
-   un z-index négatif -- mais l'écrire évite qu'un futur réglage ne l'enterre. */
-.tool-card-go {
-    position: absolute;
-    right: 20px;
-    bottom: 22px;
-    z-index: 1;
+.okrow {
     display: flex;
     align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.crow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* ──────────────────────────────────────────────
+   Boutons. Le bouton plein garde #1a5fb4 + blanc dans les deux thèmes (design A2) ;
+   le secondaire est une pilule sur --surface-2.
+   ────────────────────────────────────────────── */
+.btn {
+    display: inline-flex;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    background-color: var(--accent-blue);
+    align-items: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 0 22px;
+    border: none;
+    border-radius: 12px;
+    background-color: #1a5fb4;
     color: #ffffff;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-    transition: background-color 0.15s;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+    text-decoration: none;
+    transition: background-color 0.15s, transform 0.2s ease-in-out;
 }
 
-.tool-card:hover .tool-card-go {
-    background-color: var(--accent-blue-hover);
+.btn:hover {
+    background-color: #154c90;
 }
 
-.tool-card-go svg {
-    width: 22px;
-    height: 22px;
+.btn:active {
+    transform: scale(0.97);
 }
 
-.option-card-hint {
-    margin-top: auto;
-    padding-top: 16px;
-    color: var(--text-muted);
-    font-size: 0.82rem;
-    line-height: 1.45;
+.btn-secondary {
+    border-radius: 999px;
+    background-color: var(--surface-2);
+    color: var(--text);
+    padding: 0 18px;
 }
 
-/* Illustration dans le flux : la carte la mesure, donc sa hauteur s'ajuste seule à toute largeur.
-   flex-start la colle sous la description -- l'éventuel surplus tombe entre elle et le bouton,
-   où il ne se voit pas. */
-.option-card .btn {
-    margin-top: auto;
+.btn-secondary:hover {
+    background-color: var(--sunken);
 }
 
-/* Mêmes dimensions et même opacité que `button svg` côté firmware. Le centrage, lui, vient
-   désormais de .btn qui est en flex : la classe .btn-with-icon n'avait plus rien à poser. */
+.btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
+}
+
+.btn.is-icon {
+    width: 46px;
+    padding: 0;
+    flex: 0 0 auto;
+}
+
 .btn-glyph {
     width: 18px;
     height: 18px;
     color: currentColor;
-    opacity: 0.9;
     flex-shrink: 0;
 }
 
-.field {
+.lnk {
+    align-self: flex-start;
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.lnk:hover {
+    color: var(--accent-strong);
+}
+
+.acts {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.acts-group:not([hidden]) {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.acts-bottom {
+    margin-top: auto;
+}
+
+/* Pied d'une tuile-étape : actions alignées à droite, séparées du contenu par un filet. */
+.tfoot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid var(--divider);
+    padding-top: 14px;
+    margin-top: auto;
+}
+
+/* ──────────────────────────────────────────────
+   Rail d'étapes de l'installateur : pilules numérotées, l'active en bleu, les faites en vert.
+   ────────────────────────────────────────────── */
+.pips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.pip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px 5px 5px;
+    border-radius: 999px;
+    background-color: var(--surface-2);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-3);
+}
+
+.pip i {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background-color: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--text-3);
+    flex: none;
+}
+
+.pip.on {
+    background-color: #1a5fb4;
+    color: #ffffff;
+}
+
+.pip.on i {
+    background-color: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+}
+
+.pip.done {
+    background-color: var(--ok-bg);
+    color: var(--ok);
+}
+
+.pip.done i {
+    background-color: var(--surface);
+    color: var(--ok);
+}
+
+/* ──────────────────────────────────────────────
+   Onglets en pilules (choix du matériel, téléversement manuel). La classe .active sur le bouton
+   reste pilotée par installer.js.
+   ────────────────────────────────────────────── */
+.tabs {
+    display: flex;
+    gap: 4px;
+    background-color: var(--surface-2);
+    padding: 4px;
+    border-radius: 999px;
+    align-self: flex-start;
+}
+
+.tabs .tab-btn {
+    border: none;
+    background: transparent;
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-3);
+    cursor: pointer;
+    min-height: 40px;
+}
+
+.tabs .tab-btn:hover {
+    color: var(--text);
+}
+
+.tabs .tab-btn.active {
+    background-color: #17181c;
+    color: #ffffff;
+}
+
+:root[data-theme="dark"] .tabs .tab-btn.active {
+    background-color: #eceef2;
+    color: #0e1013;
+}
+
+.hw-panel {
+    display: none;
+}
+
+.hw-panel.is-active {
+    display: block;
+}
+
+/* ──────────────────────────────────────────────
+   Champs : libellé au-dessus, contrôle dans une boîte .ub (design A2).
+   ────────────────────────────────────────────── */
+label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.f {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin-bottom: 12px;
+    min-width: 0;
+    flex: 1 1 220px;
 }
 
-label {
-    font-size: 0.85rem;
-    color: var(--text-muted);
+.frow {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
-input, select {
-    width: 100%;
-    padding: 12px 14px;
-    background-color: var(--bg-color);
-    border: 1px solid var(--border-color);
+.ub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 0 12px;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    color: var(--text-main);
-    font-size: 1rem;
+}
+
+.ub:focus-within {
+    border-color: var(--accent);
+}
+
+.ub-ic {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    color: var(--text-3);
+}
+
+.ui {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    color: var(--text);
+    padding: 12px 0;
     outline: none;
 }
 
-input:focus, select:focus {
-    border-color: var(--accent-blue);
+select.ui {
+    appearance: none;
+    cursor: pointer;
+    /* Chevron maison : celui du système ne se colore pas. En data URI, donc pas de variable CSS
+       possible -- ce gris moyen reste lisible sur les deux thèmes. */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 2px center;
+    background-size: 18px 18px;
+    padding-right: 26px;
 }
 
-/* Masque le libellé à l'oeil sans le retirer de l'arbre d'accessibilité : display: none l'en
-   sortirait, ne laissant au lecteur d'écran que le texte de substitution, qui disparaît à la
-   saisie. */
+/* La liste déroulée native ne lit pas les variables du parent dans tous les navigateurs. */
+select.ui option {
+    background-color: var(--surface);
+    color: var(--text);
+}
+
+/* Masque le libellé à l'oeil sans le retirer de l'arbre d'accessibilité. */
 .sr-only {
     position: absolute;
     width: 1px;
@@ -629,44 +808,6 @@ input:focus, select:focus {
     border: 0;
 }
 
-/* Champ dont l'icône est POSÉE SUR le contrôle : le décalage de texte se fait donc au padding
-   gauche du champ lui-même, sinon la saisie passerait sous l'icône. */
-.field-icon {
-    position: relative;
-}
-
-.field-glyph {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    color: var(--text-muted);
-    /* L'icône ne doit pas voler le clic destiné au champ (ouverture de la liste déroulante). */
-    pointer-events: none;
-}
-
-/* Plus haut que les champs ordinaires du site : ce sont les deux seuls contrôles de la carte,
-   ils portent la moitié de la page à eux seuls. */
-.field-icon input,
-.field-icon select {
-    padding-top: 15px;
-    padding-bottom: 15px;
-    padding-left: 46px;
-}
-
-/* Chevron maison : celui du système ne se colore pas. En data URI, donc pas de variable CSS
-   possible -- ce gris moyen reste lisible sur les deux thèmes. */
-.field-icon select {
-    appearance: none;
-    padding-right: 40px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    background-size: 18px 18px;
-}
-
 .search-container {
     position: relative;
 }
@@ -676,24 +817,22 @@ input:focus, select:focus {
     top: 100%;
     left: 0;
     right: 0;
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-top: none;
-    /* Même rayon que les champs (12px) : la liste prolonge le champ de recherche, un rayon plus
-       serré dessinerait un décrochement à l'oeil. */
-    border-radius: 0 0 12px 12px;
+    margin-top: 4px;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
     max-height: 220px;
     overflow-y: auto;
     z-index: 50;
     display: none;
-    box-shadow: 0 10px 15px -3px var(--dropdown-shadow);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25);
 }
 
 .suggestion-item {
     padding: 10px 14px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--divider);
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 14px;
     text-align: left;
 }
 
@@ -702,142 +841,22 @@ input:focus, select:focus {
 }
 
 .suggestion-item:hover {
-    background-color: var(--accent-blue);
-    color: var(--text-hover);
+    background-color: var(--surface-2);
 }
 
 .suggestion-item small {
     display: block;
-    color: var(--text-muted);
-    font-size: 0.75rem;
+    color: var(--text-3);
+    font-size: 12px;
     margin-top: 2px;
 }
 
-.suggestion-item:hover small {
-    color: var(--text-suggestion-hover);
-}
-
-/* Repris du bouton du firmware (règle `button` dans data-dev/base.css) : même géométrie, mêmes
-   majuscules, même filet de 2px, et surtout les mêmes états -- le survol assombrit l'aplat de 20%,
-   l'appui rétrécit à 95% en s'estompant. La teinte n'est pas écrite ici mais dans --btn-bg, posée
-   par la variante : une seule paire :hover/:active suffit alors pour toutes les couleurs, au lieu
-   d'une par variante. */
-.btn {
-    --btn-bg: var(--accent-blue);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 4px;
-    width: 100%;
-    padding: 10px;
-    text-align: center;
-    text-transform: uppercase;
-    font-size: 0.8em;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 12px;
-    color: var(--text-hover);
-    background-color: var(--btn-bg);
-    border: 2px solid var(--btn-bg);
-    user-select: none;
-    transition: all 250ms ease, transform 0.2s ease-in-out;
-    /* Sans effet sur un <button>, mais la classe reste posable sur un <a>. */
-    text-decoration: none;
-    box-sizing: border-box;
-}
-
-.btn:hover {
-    background-color: color-mix(in srgb, var(--btn-bg), #060606 20%);
-}
-
-.btn:active {
-    transform: scale(0.95);
-    background-color: color-mix(in srgb, var(--btn-bg), black 3%);
-}
-
-.btn-blue {
-    --btn-bg: var(--accent-blue);
-}
-
-/* Vert sourd plutôt que le vert vif du reste du site : ce bouton vit dans une carte discrète,
-   un aplat saturé y attirerait plus l'oeil que les coordonnées elles-mêmes. */
-.btn-green {
-    --btn-bg: var(--btn-send-bg);
-}
-
-/* Équivalent du `button[line]` du firmware : FILET SEUL au repos, l'aplat n'arrive qu'au survol.
-   La version précédente remplissait le bouton de --card-option-bg en lui donnant un filet de la
-   même teinte : sur une surface qui vaut elle aussi --card-option-bg -- la carte de résultat de la
-   page de géolocalisation, exactement -- le bouton disparaissait purement et simplement. Un fond
-   transparent et un filet pris sur --border-color le dessinent quelle que soit la surface.
-   Les deux règles d'état DOIVENT rester après .btn:hover/.btn:active -- même spécificité, c'est
-   l'ordre qui tranche, exactement comme dans base.css. */
-.btn-secondary {
-    /* Passée par une variable et non écrite en dur : une surface qui ne supporte pas la
-       transparence -- une photo -- n'a qu'à redéfinir --btn-line-bg sur son conteneur. Le faire
-       par un sélecteur plus précis écraserait aussi le survol, qui n'est pas plus spécifique. */
-    background-color: var(--btn-line-bg, transparent);
-    border-color: var(--border-color);
-    color: var(--text-muted);
-}
-
-.btn-secondary:hover {
-    background-color: var(--btn-secondary-hover);
-    border-color: var(--btn-secondary-hover);
-    color: var(--text-hover);
-}
-
-.btn-secondary:active {
-    background-color: color-mix(in srgb, var(--btn-secondary-hover), black 12%);
-    border-color: transparent;
-    color: var(--text-hover);
-}
-
-/* Même fond et même géométrie que .option-card ; le vert ne subsiste qu'en signal. Hors de
-   .options-grid, donc pleine largeur, sous les deux cartes. */
-.result-box {
-    margin-top: 16px;
-    padding: 22px 20px;
-    border: 1px solid var(--result-border);
-    border-radius: 16px;
-    background-color: var(--card-option-bg);
-    display: none;
-}
-
-.result-box.active {
-    display: block;
-}
-
-/* Les deux actions de la carte de résultat se partagent la ligne, à parts égales. Passent en
-   colonne sous 600px : côte à côte sur 350px, "Transmettre à mon ESPSomfy-RTS" tiendrait sur trois
-   lignes et le bouton deviendrait plus haut que large. La bascule est écrite avec les autres
-   @media, en fin de fichier. */
-.result-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.result-actions .btn {
-    flex: 1;
-}
-
-.coords-display {
-    text-align: center;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: var(--accent-green);
-    margin-bottom: 12px;
-}
-
-/* Messages en ligne (erreurs GPS/recherche, confirmation de copie). Remplacent les alert()
-   bloquants : ils restent lisibles, ne coupent pas la navigation et sont vérifiables en test.
-   Le :not([hidden]) est nécessaire pour que l'attribut `hidden` continue de masquer l'élément
-   malgré la déclaration display ci-dessous. */
+/* Messages en ligne (erreurs GPS/recherche, confirmation de copie). Le :not([hidden]) est
+   nécessaire pour que l'attribut hidden continue de masquer malgré la déclaration display. */
 .field-error {
-    margin-top: 10px;
-    font-size: 0.85rem;
+    font-size: 13px;
     line-height: 1.4;
-    color: var(--accent-red, #dc2626);
+    color: var(--error);
 }
 
 .field-error:not([hidden]) {
@@ -845,96 +864,169 @@ input:focus, select:focus {
 }
 
 /* ──────────────────────────────────────────────
-   Installateur web (installer.html / esp-web-tools) : la page a plus de contenu que les autres
-   outils (grille matériel, étapes numérotées, bouton de flash) et déborde du .container standard
-   (580px) sur desktop -- .container-wide l'élargit sans toucher aux autres pages qui réutilisent
-   .container tel quel.
+   Blocs d'information : avertissement orange par défaut, variante bleue .is-info.
    ────────────────────────────────────────────── */
-.container-wide {
-    max-width: 720px;
-}
-
-/* Géolocalisation : deux cartes à illustration côte à côte, elles respirent mal à 720px. */
-/* Plus large que les autres conteneurs : sur un écran très allongé, deux cartes plafonnées à
-   880 px laissaient une bande vide de part et d'autre sans rien gagner en lisibilité. */
-.container-cards {
-    max-width: 1200px;
-}
-
-.section-subtitle {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    margin-bottom: 12px;
-    line-height: 1.4;
-}
-
-/* Grille de cartes matériel (étape "carte ESP32 générique" du wizard) : boutons natifs pour
-   l'accessibilité clavier, restylés pour ressembler à .option-card. */
-.hw-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 10px;
-    margin-bottom: 4px;
-}
-
-.hw-card {
-    background-color: var(--card-option-bg);
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
-    padding: 14px 12px;
-    cursor: pointer;
-    text-align: left;
+.info-block:not([hidden]) {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    color: var(--text-main);
-    transition: border-color 0.15s, background-color 0.15s;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background-color: var(--warn-bg);
+    color: var(--warn);
 }
 
-.hw-card:hover {
-    border-color: var(--accent-blue-hover);
+.info-block-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
 }
 
-.hw-card-label {
+.info-block-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: currentColor;
+}
+
+.info-block-header b {
+    color: currentColor;
+    font-size: 13px;
     font-weight: 700;
-    font-size: 0.95rem;
+}
+
+.info-block span {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: currentColor;
+}
+
+.info-block.is-info:not([hidden]) {
+    flex-direction: row;
+    gap: 10px;
+    background-color: var(--info-bg);
+    color: var(--info);
+}
+
+.info-block.is-info .info-block-icon {
+    margin-top: 1px;
+}
+
+.info-block.is-info span {
+    margin-top: 0;
+}
+
+/* Pastille d'état « ok » (connecté, position définie, sauvegarde relue...). */
+.okb,
+.conn-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background-color: var(--ok-bg);
+    color: var(--ok);
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.okb svg,
+.conn-badge svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+}
+
+/* ──────────────────────────────────────────────
+   Grilles de matériel de l'installateur (cartes générées par installer.js).
+   ────────────────────────────────────────────── */
+.hw-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+}
+
+.hw-card,
+.box-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background-color: var(--surface);
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.hw-card:hover,
+.box-card:hover {
+    border-color: var(--accent);
+}
+
+.hw-card.is-selected,
+.box-card.is-selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+.hw-card-label,
+.box-card-label {
+    font-weight: 700;
+    font-size: 14px;
 }
 
 .hw-card-desc {
-    color: var(--text-muted);
-    font-size: 0.78rem;
-    line-height: 1.3;
+    color: var(--text-3);
+    font-size: 12.5px;
+    line-height: 1.35;
 }
 
-/* Note de fiabilité réseau /5 (cf. coreReliability() dans installer.js) : rangée d'étoiles posée
-   sous la description, colorée selon le palier plutôt qu'une seule teinte -- une carte à 1/5
-   doit se distinguer d'un coup d'œil d'une carte à 5/5, pas seulement par le compte d'étoiles
-   pleines. */
 .hw-card-rating {
     display: flex;
     align-items: center;
-    gap: 1px;
-    margin-top: 2px;
+    gap: 2px;
 }
 
 .hw-card-rating svg {
-    width: 13px;
-    height: 13px;
+    width: 14px;
+    height: 14px;
+    color: var(--star);
 }
 
-.hw-card-rating.tier-good svg { color: var(--accent-green); }
-.hw-card-rating.tier-mid svg { color: var(--accent-warning); }
-.hw-card-rating.tier-low svg { color: var(--accent-red); }
-.hw-card-rating svg.is-empty { color: var(--border-color); }
+.hw-card-rating svg.is-empty {
+    color: var(--border);
+}
 
-/* Accordéon "Comprendre la note", même esprit que .scanfreq-help-accordion côté firmware
-   (data-dev/overlays.css) : résumé cliquable avec flèche qui pivote, corps replié par défaut. Un
-   <details> natif plutôt qu'un script de bascule : la sémantique d'ouverture/fermeture est déjà
-   là, aucun JS supplémentaire n'est nécessaire ici. */
+.box-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+/* aspect-ratio réserve l'espace avant même que l'image ne soit chargée : évite un saut de page. */
+.box-card-img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid var(--divider);
+    background-color: var(--surface-2);
+}
+
+/* Accordéon « Comprendre la note » : <details> natif, flèche qui pivote. */
 .hw-rating-info {
-    margin-top: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
     overflow: hidden;
 }
 
@@ -943,9 +1035,9 @@ input:focus, select:focus {
     justify-content: space-between;
     align-items: center;
     padding: 10px 14px;
-    font-size: 0.82rem;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--text-3);
     cursor: pointer;
     user-select: none;
     list-style: none;
@@ -956,7 +1048,7 @@ input:focus, select:focus {
 }
 
 .hw-rating-trigger:hover {
-    color: var(--text-main);
+    color: var(--text);
 }
 
 .hw-rating-trigger-label {
@@ -982,9 +1074,9 @@ input:focus, select:focus {
 }
 
 .hw-rating-intro {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    line-height: 1.4;
+    color: var(--text-3);
+    font-size: 13px;
+    line-height: 1.45;
     margin-bottom: 10px;
 }
 
@@ -997,525 +1089,261 @@ input:focus, select:focus {
 .hw-rating-zone {
     flex: 1 1 calc(33.333% - 10px);
     min-width: 150px;
-    box-sizing: border-box;
-    border-radius: 8px;
-    padding: 10px;
+    border-radius: 12px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
-.hw-rating-zone.tier-good { background: var(--success-tint-bg); border: 1px solid var(--success-tint-border); }
-.hw-rating-zone.tier-good .hw-rating-badge { color: var(--accent-green); }
-.hw-rating-zone.tier-mid { background: var(--warning-tint-bg); border: 1px solid var(--warning-tint-border); }
-.hw-rating-zone.tier-mid .hw-rating-badge { color: var(--accent-warning); }
-.hw-rating-zone.tier-low { background: var(--danger-tint-bg); border: 1px solid var(--danger-tint-border); }
-.hw-rating-zone.tier-low .hw-rating-badge { color: var(--accent-red); }
+.hw-rating-zone.tier-good { background-color: var(--ok-bg); color: var(--ok); }
+.hw-rating-zone.tier-mid { background-color: var(--warn-bg); color: var(--warn); }
+.hw-rating-zone.tier-low { background-color: var(--error-bg); color: var(--error); }
 
 .hw-rating-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     font-weight: 700;
-    font-size: 0.82rem;
+    font-size: 13px;
 }
 
 .hw-rating-zone-desc {
-    margin: 0;
-    color: var(--text-main);
-    font-size: 0.76rem;
+    color: var(--text-2);
+    font-size: 12.5px;
     line-height: 1.4;
 }
 
 .hw-rating-sample {
     display: flex;
-    gap: 1px;
+    gap: 2px;
     margin-top: auto;
 }
 
 .hw-rating-sample svg {
     width: 12px;
     height: 12px;
+    color: var(--star);
 }
 
-.hw-rating-sample.tier-good svg { color: var(--accent-green); }
-.hw-rating-sample.tier-mid svg { color: var(--accent-warning); }
-.hw-rating-sample.tier-low svg { color: var(--accent-red); }
-.hw-rating-sample svg.is-empty { color: var(--border-color); }
-
-.install-actions {
-    margin-top: 14px;
+.hw-rating-sample svg.is-empty {
+    color: var(--border);
 }
 
-/* Icônes SVG en ligne dans un titre/texte (ex: <h2>, notices) : remplacent les emoji (✅⚠️) par
-   les svg-* définis en tête d'installer.html, dans le même esprit que le reste du projet. */
 .inline-icon {
     width: 1.1em;
     height: 1.1em;
     vertical-align: -0.15em;
-    margin-right: 6px;
     flex-shrink: 0;
-}
-
-.inline-icon-success {
-    color: var(--accent-green);
-}
-
-.inline-icon-warning {
-    color: var(--accent-warning);
-}
-
-/* Bloc d'information, même esprit que .warning/.information/.error côté firmware
-   (data-dev/base.css, cf. ui.serviceError() et les notices "hotspot") : fond teinté, filet coloré
-   à gauche, icône + libellé en en-tête. Utilisé pour l'effacement et la note bouton-poussoir du
-   boîtier Wi-fi & Ethernet.
-   :not([hidden]) plutôt que display sur .info-block directement : une règle d'auteur `display`
-   l'emporterait sur le [hidden]{display:none} de la feuille UA, et boxEthBootNotice resterait
-   visible pour TOUS les boîtiers au lieu du seul Wi-fi & Ethernet malgré l'attribut hidden posé
-   par installer.js. Le même piège se retrouve sur .flash-overlay et sur les boutons de la barre
-   d'actions, traités de la même façon. */
-.info-block:not([hidden]) {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 14px 16px;
-    border-radius: 10px;
-    margin-top: 12px;
-    background-color: var(--warning-tint-bg);
-    border: 1px solid var(--warning-tint-border);
-    border-left: 4px solid var(--accent-warning);
-}
-
-.info-block-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-
-.info-block-icon {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    color: var(--accent-warning);
-}
-
-.info-block-header b {
-    color: var(--accent-warning);
-    font-size: 0.85rem;
-    font-weight: 700;
-}
-
-.info-block span {
-    display: block;
-    margin-top: 6px;
-    font-size: 0.82rem;
-    line-height: 1.4;
-    color: var(--text-main);
-}
-
-/* Lien de secours vers l'installateur générique d'ESPHome, si le nôtre échoue pour une raison ou
-   une autre (matériel capricieux, navigateur...). */
-.fallback-hint {
-    margin-top: 10px;
-    text-align: center;
-    font-size: 0.78rem;
-    color: var(--text-muted);
-}
-
-.fallback-hint a {
-    color: var(--accent-blue);
-}
-
-.fallback-hint a:hover {
-    color: var(--accent-blue-hover);
 }
 
 /* ──────────────────────────────────────────────
-   Installateur (installer.html / js/installer.js) : une carte à deux états -- sans port, avec
-   port -- et des fenêtres pour les choix.
+   Sélecteur de fichier (téléversement manuel, convertisseur) : boîte en pointillés qui passe en
+   trait plein accentué dès qu'un fichier est retenu.
    ────────────────────────────────────────────── */
-/* Titre et pastille sur une ligne, la pastille repoussée à droite par margin-left: auto. En
-   position absolue elle obligeait à réserver un creux dans le titre, à la louche, pour qu'un
-   libellé long ne passe pas dessous ; en flex les deux se partagent la ligne d'eux-mêmes. */
-.installer-head {
+.custom-file-upload {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    min-height: 52px;
+    padding: 6px 8px 6px 14px;
+    border-radius: 12px;
+    border: 1px dashed var(--border);
+    background-color: var(--surface);
+    cursor: pointer;
+    transition: border-color 0.2s ease;
 }
 
-.installer-card h2 {
-    font-size: 1.05rem;
+.custom-file-upload:hover {
+    border-color: var(--accent);
+}
+
+.custom-file-upload:has(.is-set) {
+    border-style: solid;
+    border-color: var(--accent);
+}
+
+.file-name-display {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+    color: var(--text-3);
+}
+
+.file-name-display.is-set {
+    color: var(--text);
     font-weight: 600;
 }
 
-.conn-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-left: auto;
-    flex-shrink: 0;
-    padding: 5px 11px;
-    border-radius: 999px;
-    background-color: var(--result-box-bg);
-    border: 1px solid var(--result-border);
-    color: var(--accent-green);
-    font-size: 0.74rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-}
-
-.installer-card .section-subtitle {
-    margin-bottom: 20px;
-}
-
-/* BANDE ILLUSTRÉE : un bloc du flux normal dont l'image est le FOND. C'est ce qui permet aux
-   boutons d'être de simples enfants en flex plutôt que des éléments posés en absolu par-dessus --
-   en ajouter un fait grandir la bande au lieu de venir mordre sur le texte.
-   Le rapport de forme lui donne sa hauteur sans qu'on ait à la fixer ; l'image, elle, garde les
-   siens (background-size: 100% auto la met à la moitié de la largeur) et se trouve donc rognée
-   par le haut, ce qui est exactement le cadrage voulu.
-   Les marges négatives annulent le rembourrage de la carte pour toucher ses bords : elles
-   reprennent le `padding: 22px 20px` de .option-card.
-   L'ADRESSE DE L'IMAGE est posée dans le balisage, comme pour .option-card.has-illus : c'est la
-   seule chose qui change d'une carte à l'autre, et l'écrire ici obligerait à un sélecteur par
-   page. */
-.card-band {
-    /* Sur une photo, le filet seul ne suffit pas : le libellé d'un bouton secondaire s'y perd. La
-       bande lui rend son aplat ; le filet, lui, reste et le détache du fond. */
-    --btn-line-bg: var(--card-option-bg);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    gap: 14px;
-    aspect-ratio: 100 / 44;
-    margin: 4px -20px -22px;
-    padding: 16px 20px;
-    background-position: center bottom;
-    background-size: 100% auto;
-    background-repeat: no-repeat;
-}
-
-/* La bande sort du rembourrage de la carte par des marges négatives : sans rognage elle
-   dépasserait les angles arrondis. */
-.option-card:has(> .card-band) {
-    overflow: hidden;
-}
-
-/* Un message d'erreur posé à même la photo ne se lit pas. Le fond opaque le détache, et la marge
-   de .field-error disparaît -- l'espacement vient du `gap` de la bande.
-   La couleur du texte NE SUIT PAS le thème : la pastille est sombre dans les deux, la photo aussi.
-   Le --accent-red du mode clair (#dc2626) y tombe à 3,3:1, sous le seuil de lisibilité ; c'est
-   donc le rouge éclairci du mode sombre qui sert dans les deux cas, à 6,9:1. */
-.card-band .field-error {
-    color: #f87171;
-    margin-top: 0;
-    padding: 8px 11px;
-    border-radius: 10px;
-    background-color: rgba(12, 12, 12, 0.82);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.73);
-}
-
-/* Les deux actions d'installation se partagent la ligne du bas, à parts égales. */
-.band-main {
-    display: flex;
-    gap: 10px;
-}
-
-.band-main .btn {
-    flex: 1;
-}
-
-/* Au-dessus de l'action principale et non à côté : celle-ci garde ainsi toute la largeur, et les
-   deux icônes montent dans l'illustration. */
-.band-icons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    /* Repoussées en haut de la bande, l'action principale restant en bas : les deux extrémités de
-       l'illustration sont tenues, et le vide se fait au milieu plutôt qu'entre deux groupes de
-       boutons collés. Écrit explicitement plutôt que laissé au margin-top: auto que .option-card
-       .btn pose sur le bouton principal -- le résultat serait le même, mais par accident. */
-    margin-bottom: auto;
-}
-
-/* Le margin-top: auto que .option-card .btn pose sur tout bouton de carte n'a rien à faire ici :
-   dans la bande, c'est justify-content: flex-end qui plaque le contenu en bas, et l'auto ferait
-   fuir vers le haut ce qui précède le bouton (le message d'erreur, par exemple).
-   L'ombre portée, elle, détache le bouton de la photo. */
-.card-band .btn {
-    margin-top: 0;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.73);
-}
-
-
-
-.card-band .btn.is-icon {
+.file-icon-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    height: 34px;
-    flex: 0 0 auto;
-    padding: 0;
-    border-radius: 8px;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background-color: var(--surface-2);
+    color: var(--text);
+    flex: none;
 }
 
-/* Un seul panneau visible, celui de l'onglet actif. */
-.hw-panel {
+.manual-status {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--text-3);
+}
+
+/* ──────────────────────────────────────────────
+   Tuile de résultat (géolocalisation, convertisseur) : toujours visible ; la classe .active,
+   posée par le script de page, révèle la pastille verte et donne son poids au contenu.
+   ────────────────────────────────────────────── */
+.result-box:not(.active) .result-badge {
     display: none;
 }
 
-.hw-panel.is-active {
-    display: block;
+.result-box:not(.active) .result-src {
+    display: none;
 }
 
-/* Onglets du matériel, repris tels quels du tableau de bord du firmware (.mobile-tabs / .tab-btn
-   dans data-dev/main.css) : même hauteur, mêmes majuscules, même soulignement qui glisse d'un
-   onglet à l'autre. Seules les variables de couleur changent de nom d'un projet à l'autre.
-   Le soulignement est piloté par :has() : la position se déduit de l'onglet portant .active,
-   aucun style en ligne à poser côté script. */
-.mobile-tabs {
-    display: flex;
-    position: relative;
-    width: 100%;
-    border-bottom: 1px solid var(--border-color);
-    padding: 0;
+.result-box.active .result-empty {
+    display: none;
 }
 
-.mobile-tabs .tab-btn {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 44px;
-    background: transparent;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    font-size: 0.82rem;
+.coords-display {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+}
+
+.result-box:not(.active) .coords-display {
+    color: var(--text-3);
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-    transition: color 0.2s ease;
 }
 
-.mobile-tabs .tab-btn:hover {
-    color: var(--text-main);
-}
-
-.mobile-tabs .tab-btn.active {
-    color: var(--accent-blue);
-    font-weight: 700;
-}
-
-.mobile-tabs::after {
-    content: "";
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 50%;
-    height: 3px;
-    background-color: var(--accent-blue);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
-}
-
-.mobile-tabs:has(.tab-btn:first-child.active)::after {
-    transform: translateX(0%);
-}
-
-.mobile-tabs:has(.tab-btn:nth-child(2).active)::after {
-    transform: translateX(100%);
-}
-
-/* Libellé et champ sur une ligne, pour le choix de version : le formulaire ne compte qu'un champ,
-   l'empiler ferait perdre une ligne de hauteur à toutes les étapes. */
-.field-inline {
+.result-actions {
     display: flex;
-    /* .field pose flex-direction: column ; sans ce retour explicite le libellé resterait au-dessus
-       du champ, l'étiquette et la liste occupant deux lignes au lieu d'une. */
-    flex-direction: row;
-    align-items: center;
     gap: 10px;
-    margin-top: 12px;
-    font-size: 0.85rem;
+    flex-wrap: wrap;
 }
 
-.field-inline select {
+.result-actions .btn {
     flex: 1;
-    max-width: 220px;
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background-color: var(--card-bg);
-    color: var(--text-main);
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 9 7 6 7-6'/%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important;
-    background-position: right 10px center !important;
-}
-
-/* Étape "choix du modèle de boîtier officiel" : cartes illustrées par la photo du produit, deux
-   colonnes explicites sur desktop (colonne unique sous 768px, cf. media query plus bas) --
-   exactement deux boîtiers existent, pas besoin d'un auto-fit qui pourrait en aligner plus. */
-.box-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 4px;
-}
-
-.box-card {
-    background-color: var(--card-option-bg);
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
-    padding: 12px;
-    cursor: pointer;
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    gap: 8px; /* Un peu plus d'espace entre titre et image */
-    color: var(--text-main);
-    transition: border-color 0.15s, background-color 0.15s;
-}
-
-.box-card:hover {
-    border-color: var(--accent-blue-hover);
-}
-
-/* Titre au-dessus de l'image */
-.box-card-label {
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--text-main);
-    order: 1; /* S'affiche en premier */
-}
-
-/* Image positionnée sous le titre. aspect-ratio réserve l'espace AVANT même que l'image ne soit
-   chargée : évite un saut de mise en page (et fausse la mesure de hauteur de updateStageHeight()
-   si retiré). */
-.box-card-img {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    border-radius: 8px;
-    background-color: var(--bg-color);
-    order: 2; /* S'affiche en second */
 }
 
 /* ──────────────────────────────────────────────
-   Fenêtre de progression du flash, maison (installer.html #flashDialog / js/installer.js) : on
-   pilote nous-mêmes le moteur bas niveau d'esp-web-tools (flash.js) plutôt que la boîte de
-   dialogue par défaut du composant <esp-web-install-button> -- non personnalisable et toujours en
-   thème clair. Celle-ci réutilise nos variables de thème existantes, donc suit automatiquement le
-   thème clair/sombre du site (cf. :root / @media (prefers-color-scheme: dark) en tête de fichier).
+   Étape Installation : progression du flash, pilotée par installer.js via le moteur
+   d'esp-web-tools (mêmes identifiants qu'avant, dans une tuile et non plus une fenêtre).
    ────────────────────────────────────────────── */
-/* :not([hidden]) et pas display sur .flash-overlay directement : même piège que .info-block /
-   .field-error plus haut -- une règle d'auteur `display` l'emporte sur le [hidden]{display:none}
-   de la feuille UA, donc le hidden posé par installer.js (état initial ET fermeture du dialogue)
-   n'aurait plus aucun effet et l'overlay resterait affiché en permanence. */
-.flash-overlay:not([hidden]) {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.55);
+.flash-stage {
     display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.flash-stage-icon {
+    display: flex;
+    min-height: 56px;
     align-items: center;
-    justify-content: center;
-    padding: 20px;
-    z-index: 1000;
-}
-
-.flash-dialog {
-    width: 100%;
-    max-width: 360px;
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 28px 24px;
-    text-align: center;
-    box-shadow: 0 10px 25px -5px var(--shadow-color);
-}
-
-/* Un peu plus large sur les écrans desktop : 360px se sentait étroit une fois le journal replié
-   déployé (texte monospace) sur un grand écran. */
-
-.flash-dialog-icon {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 10px;
-    min-height: 80px;
 }
 
 .flash-dialog-svg-icon {
-    width: 48px;
-    height: 48px;
-    align-self: center;
+    width: 44px;
+    height: 44px;
 }
 
-.flash-dialog.is-error .flash-dialog-svg-icon {
-    color: var(--accent-red);
+.flash-stage:not(.is-error) .flash-dialog-svg-icon {
+    color: var(--ok);
 }
 
-.flash-dialog:not(.is-error) .flash-dialog-svg-icon {
-    color: var(--accent-green);
+.flash-stage.is-error .flash-dialog-svg-icon {
+    color: var(--error);
 }
 
-.flash-dialog-title {
-    font-size: 0.8rem;
+.flash-stage-title {
+    font-size: 17px;
     font-weight: 700;
-    margin-bottom: 6px;
 }
 
-.flash-dialog.is-error .flash-dialog-title {
-    color: var(--accent-red);
+.flash-stage.is-error .flash-stage-title {
+    color: var(--error);
 }
 
-/* Spinner d'attente repris de l'appareil (cf. .wait-spinner dans data-dev/overlays.css et
-   ui.waitMessage() dans data-dev/js/30-ui-binder.js) : un arc unique qui tourne pendant que sa
-   longueur bat -- le tiret du tracé s'allonge, puis son décalage le fait glisser. Il remplace les
-   huit pastilles orbitales de l'ancien .lds-roller : trois nœuds DOM et une seule couche animée,
-   au lieu de neuf et huit. Seuls les noms de variables changent, les nôtres n'étant pas ceux du
-   firmware.
-   Deux cercles superposés : .wait-spinner-track, un anneau complet et discret dessiné en premier
-   donc EN DESSOUS, qui matérialise en permanence l'emplacement du loader -- sans lui, l'arc au
-   plus court (1 unité sur 125,7 de circonférence) réduit le spinner à un point isolé ; puis
-   .wait-spinner-arc, seul animé. */
+.flash-stage.is-error .flash-keep {
+    display: none;
+}
+
+.flash-progress {
+    position: relative;
+    height: 12px;
+    background-color: var(--surface-2);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.flash-progress::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+    transform: translateX(-100%);
+    animation: flash-progress-halo 2s infinite ease-in-out;
+    z-index: 1;
+}
+
+@keyframes flash-progress-halo {
+    100% { transform: translateX(100%); }
+}
+
+.flash-progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background-color: #1a5fb4;
+    border-radius: 6px;
+    /* 0,3 s ease-out : les pourcentages d'esptool-js arrivent par paliers irréguliers, une
+       transition plus courte les rend saccadés. */
+    transition: width 0.3s ease-out;
+    z-index: 2;
+}
+
+.flash-progress.indeterminate .flash-progress-bar {
+    width: 35%;
+    transition: none;
+    animation: flashIndeterminate 1.1s ease-in-out infinite;
+}
+
+@keyframes flashIndeterminate {
+    0%   { left: -35%; }
+    100% { left: 100%; }
+}
+
+/* Spinner repris de l'appareil (.wait-spinner dans data-dev/overlays.css) : un arc unique qui
+   tourne pendant que sa longueur bat. */
 .wait-spinner {
-    /* 110px sur l'appareil, où le spinner occupe l'écran entier ; ici il partage une boîte de
-       dialogue avec un titre et un message. */
-    --wait-spinner-size: 76px;
+    --wait-spinner-size: 56px;
     display: inline-block;
     width: var(--wait-spinner-size);
     height: var(--wait-spinner-size);
-    color: var(--accent-blue);
+    color: var(--accent);
     animation: wait-spinner-rotate 2s linear infinite;
 }
 
-/* Même correctif que côté appareil (--color-accent-light) : l'accent brut tombe à ~2,6:1 de
-   contraste sur le fond du thème sombre, cf. la note de .site-footer a plus haut. */
-:root[data-theme="dark"] .wait-spinner {
-    color: var(--accent-blue-hover);
-}
-
-/* L'anneau de fond ne suit PAS currentColor : il reste sur la couleur de texte pendant que l'arc
-   porte l'accent, sinon les deux se confondraient. Un cercle complet étant invariant par
-   rotation, la rotation portée par le SVG ne se voit pas sur lui. */
 .wait-spinner-track {
-    stroke: var(--text-main);
+    stroke: var(--text);
     opacity: 0.15;
 }
 
 .wait-spinner-arc {
     stroke: currentColor;
-    /* Valeurs SANS unité : ce sont des unités utilisateur SVG (viewBox de 50 de côté), pas des
-       pixels. Le cercle r=20 a une circonférence de ~125,7 : le 200 de dasharray est juste un
-       "assez grand pour ne jamais reboucler". */
     stroke-dasharray: 1 200;
     stroke-dashoffset: 0;
     stroke-linecap: round;
@@ -1532,113 +1360,19 @@ input:focus, select:focus {
     100% { stroke-dasharray: 89 200; stroke-dashoffset: -124; }
 }
 
-/* Mouvement réduit demandé au niveau système : on garde la rotation -- elle seule dit "ça
-   travaille" -- mais ralentie, et on fige la longueur de l'arc pour supprimer le battement. */
-@media (prefers-reduced-motion: reduce) {
-    .wait-spinner {
-        animation-duration: 3s;
-    }
-    .wait-spinner-arc {
-        stroke-dasharray: 89 200;
-        stroke-dashoffset: -35;
-        animation: none;
-    }
-}
-
-.flash-dialog-actions {
-    margin-top: 16px;
-}
-
-/* Même barre que l'appareil (cf. .progress-bar dans data-dev/base.css) : fond teinté par la
-   couleur de texte plutôt qu'un aplat opaque, remplissage à l'accent, et le balayage lumineux en
-   boucle qui la traverse -- purement décoratif, indépendant de la progression, mais c'est lui qui
-   fait la différence entre une barre qui avance et une barre qui travaille. */
-.flash-progress {
-    position: relative;
-    height: 8px;
-    background-color: color-mix(in srgb, var(--text-main) 8%, transparent);
-    border-radius: 999px;
-    overflow: hidden;
-    margin: 14px 0 4px;
-}
-
-.flash-progress::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent-blue) 40%, transparent), transparent);
-    transform: translateX(-100%);
-    animation: flash-progress-halo 2s infinite ease-in-out;
-    z-index: 1;
-}
-
-@keyframes flash-progress-halo {
-    100% { transform: translateX(100%); }
-}
-
-.flash-progress-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 0%;
-    background-color: var(--accent-blue);
-    border-radius: 999px;
-    /* 0,3 s ease-out comme sur l'appareil : les pourcentages d'esptool-js arrivent par paliers
-       irréguliers, une transition plus courte les rend saccadés. */
-    transition: width 0.3s ease-out;
-    z-index: 2;
-}
-
-/* Pas de pourcentage exploitable pendant l'initialisation/préparation/effacement (esptool-js n'en
-   rapporte pas à ces étapes) : une barre glissante indique une activité en cours sans prétendre
-   à une progression mesurée. */
-.flash-progress.indeterminate .flash-progress-bar {
-    width: 35%;
-    transition: none;
-    animation: flashIndeterminate 1.1s ease-in-out infinite;
-}
-
-@keyframes flashIndeterminate {
-    0%   { left: -35%; }
-    100% { left: 100%; }
-}
-
-/* Journal repliable (équivalent du bouton "Logs" de la boîte de dialogue par défaut d'ESP Web
-   Tools) : restitue chaque évènement brut de flash.js dans un bloc défilant en police mono. */
-.flash-log-toggle {
-    display: block;
-    margin: 10px auto 0;
-    background: none;
-    border: none;
-    color: var(--accent-blue);
-    font-size: 0.78rem;
-    cursor: pointer;
-    text-decoration: underline;
-}
-
-.flash-log-toggle:hover {
-    color: var(--accent-blue-hover);
-}
-
+/* Journal du flash, présentation terminal à fond sombre fixe dans les deux thèmes. */
 .flash-log {
-    margin-top: 10px;
     text-align: left;
 }
 
-/* Présentation "terminal" (fond sombre fixe, pas suivant le thème clair/sombre du site -- comme
-   une vraie console) plutôt qu'un simple bloc de texte, dans le même esprit que l'écran de
-   compilation/logs d'ESPHome Web. */
 .flash-log-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     background-color: #1c1e21;
-    border: 1px solid var(--border-color);
-    border-bottom: none;
-    border-radius: 8px 8px 0 0;
-    padding: 6px 10px;
-    font-size: 0.72rem;
+    border-radius: 12px 12px 0 0;
+    padding: 6px 12px;
+    font-size: 12px;
     font-weight: 600;
     color: #9a999e;
 }
@@ -1647,7 +1381,7 @@ input:focus, select:focus {
     background: none;
     border: none;
     color: #7dd3fc;
-    font-size: 0.72rem;
+    font-size: 12px;
     cursor: pointer;
     text-decoration: underline;
     padding: 0;
@@ -1658,15 +1392,14 @@ input:focus, select:focus {
 }
 
 .flash-log pre {
-    max-height: 160px;
+    max-height: 180px;
     overflow-y: auto;
     margin: 0;
     background-color: #0d0d0d;
-    border: 1px solid var(--border-color);
-    border-radius: 0 0 8px 8px;
-    padding: 8px 10px;
+    border-radius: 0 0 12px 12px;
+    padding: 8px 12px;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.7rem;
+    font-size: 11.5px;
     line-height: 1.4;
     color: #e2e8f0;
     white-space: pre-wrap;
@@ -1674,8 +1407,8 @@ input:focus, select:focus {
 }
 
 /* ──────────────────────────────────────────────
-   Fenêtre de choix du matériel (#installOverlay), reprise des .inst-overlay du firmware :
-   fond assombri et flouté, carte centrée de 600 px, angles très arrondis, en-tête avec fermeture.
+   Fenêtre du téléversement manuel : fond assombri et flouté, carte A2 centrée.
+   Le :not([hidden]) garde à l'attribut hidden tout son effet.
    ────────────────────────────────────────────── */
 .inst-overlay:not([hidden]) {
     position: fixed;
@@ -1689,20 +1422,16 @@ input:focus, select:focus {
     z-index: 1000;
 }
 
-/* Aucun rembourrage : les onglets sont un enfant direct et doivent toucher les deux bords. Leur
-   soulignement se place en pourcentage de leur propre largeur, un retrait le décalerait d'autant.
-   En-tête, corps et pied portent donc chacun le leur. */
 .inst-content {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 600px;
+    max-width: 620px;
     max-height: min(84vh, 720px);
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 25px;
+    background-color: var(--panel);
+    border-radius: 22px;
     overflow: hidden;
-    box-shadow: 0 10px 25px -5px var(--shadow-color);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
 }
 
 .inst-header {
@@ -1714,78 +1443,38 @@ input:focus, select:focus {
 }
 
 .inst-title {
-    font-size: 0.95rem;
+    font-size: 15px;
     font-weight: 700;
 }
 
+.inst-content > .tabs {
+    margin: 0 20px 4px;
+}
+
 /* Seule partie qui défile : une liste plus longue ne pousse ni les onglets ni le pied hors de
-   vue, ce qui garde le bouton d'installation toujours atteignable. */
+   vue. */
 .inst-body {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 18px 20px;
+    padding: 14px 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .inst-footer {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: flex-end;
     gap: 14px;
     padding: 14px 20px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--border);
 }
 
-/* L'avertissement de pré-version prend toute la largeur et repousse la rangée sous lui, sans
-   toucher à la disposition de celle-ci. */
-.inst-footer .info-block {
-    flex: 1 0 100%;
-    margin-top: 0;
-}
-
-/* Le champ occupe la place restante, le bouton garde la sienne : .btn est large par défaut
-   (width: 100%), ce qui lui faisait manger tout le pied et réduisait l'étiquette à une colonne
-   de trois lettres. */
-.inst-footer .field-inline {
-    flex: 1;
-    min-width: max-content;
-    margin: 0;
-}
-
-.inst-footer .field-inline label {
-    white-space: nowrap;
-}
-
-.inst-footer .field-inline select {
-    flex: 1;
-    min-width: 90px;
-}
-
-.inst-footer .btn {
-    flex: 0 0 auto;
-    width: auto;
-    padding: 10px 28px;
-}
-
-/* Tant qu'aucun matériel n'est retenu, le bouton d'installation ne mène nulle part : il doit le
-   montrer, un vert franc invite au clic. Le gris et l'opacité sont ceux de `button:disabled` dans
-   base.css ; pointer-events coupe le survol ET l'appui, sans quoi la teinte de :hover
-   repasserait devant celle-ci. */
-.btn:disabled {
-    background-color: #555555;
-    border-color: #555555;
-    color: #aaaaaa;
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-    pointer-events: none;
-}
-
-/* Décomposition du nom de fichier : les parties littérales et les parties variables sur une même
-   ligne, chaque variable coiffée de son numéro. align-items: flex-end aligne tout le monde sur le
-   bas des caractères -- les littéraux n'ont pas de pastille au-dessus d'eux et flotteraient sinon
-   à mi-hauteur. flex-wrap laisse le nom se replier sur les écrans étroits, ce qu'une image ne
-   ferait pas. */
+/* Décomposition du nom de fichier : littéraux et parties variables sur une même ligne, chaque
+   variable coiffée de sa pastille numérotée. */
 .fname-map {
     display: flex;
     flex-wrap: wrap;
@@ -1793,17 +1482,17 @@ input:focus, select:focus {
     justify-content: center;
     row-gap: 8px;
     padding: 12px 12px 10px;
-    border-radius: 10px;
-    background-color: var(--card-option-bg);
-    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.78rem;
+    font-size: 12.5px;
     line-height: 1.2;
 }
 
 .fname-lit {
     padding-bottom: 3px;
-    color: var(--text-muted);
+    color: var(--text-3);
 }
 
 .fname-tok {
@@ -1814,13 +1503,11 @@ input:focus, select:focus {
 
 .fname-tok code {
     padding-bottom: 1px;
-    border-bottom: 2px solid var(--accent-blue);
-    color: var(--accent-blue);
+    border-bottom: 2px solid var(--accent);
+    color: var(--accent);
     font-weight: 700;
 }
 
-/* La pastille sert deux fois : au-dessus du morceau de nom, puis en tête de sa ligne de légende.
-   Le trait la relie au morceau qu'elle désigne, en guise de flèche. */
 .tok-num {
     display: flex;
     align-items: center;
@@ -1829,10 +1516,10 @@ input:focus, select:focus {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background-color: var(--accent-blue);
+    background-color: #1a5fb4;
     color: #ffffff;
     font-family: inherit;
-    font-size: 0.62rem;
+    font-size: 10px;
     font-weight: 700;
 }
 
@@ -1849,19 +1536,19 @@ input:focus, select:focus {
     width: 1px;
     height: 6px;
     transform: translateX(-50%);
-    background-color: var(--accent-blue);
+    background-color: var(--accent);
 }
 
 .fname-legend {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin: 14px 0 0;
+    margin: 0;
     padding: 0;
     list-style: none;
-    font-size: 0.83rem;
+    font-size: 13px;
     line-height: 1.45;
-    color: var(--text-muted);
+    color: var(--text-3);
 }
 
 .fname-legend li {
@@ -1875,91 +1562,42 @@ input:focus, select:focus {
 }
 
 .fname-example {
-    margin: 14px 0 18px;
-    font-size: 0.83rem;
-    color: var(--text-muted);
+    font-size: 13px;
+    color: var(--text-3);
 }
 
 .fname-example code {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.76rem;
-    color: var(--text-main);
+    font-size: 12px;
+    color: var(--text);
     word-break: break-all;
 }
 
-.manual-status {
-    flex: 1;
-    min-width: 0;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-.custom-file-upload {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 11px 14px;
-    border-radius: 10px;
-    border: 1px solid var(--border-color);
-    background-color: var(--card-option-bg);
-    cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.custom-file-upload:hover {
-    border-color: var(--accent-blue);
-}
-
-.file-name-display {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    padding-right: 10px;
-    font-size: 0.83rem;
-    color: var(--text-main);
-    opacity: 0.6;
-}
-
-/* Un nom de fichier retenu n'est plus une invite : il passe en pleine opacité, comme le fait
-   firmware.uploadFile() côté appareil. */
-.file-name-display.is-set {
-    opacity: 1;
-}
-
-.file-icon-btn {
+/* ──────────────────────────────────────────────
+   Console série : trois bandes, le flux en présentation terminal à fond sombre fixe.
+   ────────────────────────────────────────────── */
+.flash-overlay:not([hidden]) {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-main);
-    opacity: 0.6;
+    padding: 20px;
+    z-index: 1000;
 }
 
-/* Matériel retenu : le filet bleu dit lequel, puisque le clic ne fait plus avancer d'écran. */
-.box-card.is-selected,
-.hw-card.is-selected {
-    border-color: var(--accent-blue);
-    background-color: var(--badge-bg);
-}
-
-/* ──────────────────────────────────────────────
-   Console série (#logsOverlay). Partage l'habillage de fond de .flash-overlay mais pas la boîte :
-   un journal se lit large et haut, là où la progression d'un flash tient en trois lignes.
-   Trois bandes : en-tête avec le titre et la fermeture, flux en défilement, pied d'actions.
-   ────────────────────────────────────────────── */
 .logs-dialog {
     display: flex;
     flex-direction: column;
     width: 100%;
     max-width: 860px;
     height: min(70vh, 560px);
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
+    background-color: var(--panel);
+    border-radius: 22px;
     overflow: hidden;
-    box-shadow: 0 10px 25px -5px var(--shadow-color);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
 }
 
 .logs-header {
@@ -1968,11 +1606,10 @@ input:focus, select:focus {
     justify-content: space-between;
     gap: 12px;
     padding: 14px 18px;
-    border-bottom: 1px solid var(--border-color);
 }
 
 .logs-title {
-    font-size: 0.95rem;
+    font-size: 15px;
     font-weight: 700;
 }
 
@@ -1980,23 +1617,21 @@ input:focus, select:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border: none;
-    border-radius: 8px;
+    border-radius: 999px;
     background: none;
-    color: var(--text-muted);
+    color: var(--text-3);
     cursor: pointer;
-    transition: all 250ms ease, transform 0.2s ease-in-out;
+    transition: background-color 0.15s;
 }
 
 .logs-close:hover {
-    background-color: var(--border-color);
-    color: var(--text-main);
+    background-color: var(--surface-2);
+    color: var(--text);
 }
 
-/* Présentation "terminal" à fond sombre fixe, comme .flash-log : une console garde le même
-   aspect dans les deux thèmes, c'est ce qui la rend reconnaissable. */
 .logs-body {
     flex: 1;
     margin: 0;
@@ -2005,7 +1640,7 @@ input:focus, select:focus {
     background-color: #1c1e21;
     color: #e2e8f0;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.78rem;
+    font-size: 12.5px;
     line-height: 1.45;
     white-space: pre-wrap;
     word-break: break-word;
@@ -2016,22 +1651,20 @@ input:focus, select:focus {
     align-items: center;
     gap: 12px;
     padding: 10px 18px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--border);
 }
 
-/* Témoin de lecture : gris tant que rien n'est lu, vert clignotant pendant que le flux arrive.
-   C'est la seule indication qu'un appareil muet est bien écouté -- sans elle, "aucune ligne" et
-   "port fermé" se ressemblent trop. */
+/* Témoin de lecture : gris tant que rien n'est lu, vert clignotant pendant que le flux arrive. */
 .logs-dot {
     width: 10px;
     height: 10px;
     flex-shrink: 0;
     border-radius: 50%;
-    background-color: var(--text-muted);
+    background-color: var(--text-3);
 }
 
 .logs-dot.is-live {
-    background-color: var(--accent-green);
+    background-color: var(--ok);
     animation: logs-pulse 1.2s ease-in-out infinite;
 }
 
@@ -2048,44 +1681,183 @@ input:focus, select:focus {
 }
 
 .logs-action {
-    padding: 7px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
     background-color: transparent;
-    color: var(--text-main);
-    font-size: 0.8rem;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
     user-select: none;
-    transition: all 250ms ease, transform 0.2s ease-in-out;
+    transition: background-color 0.15s, border-color 0.15s;
 }
 
 .logs-action:hover {
-    border-color: var(--accent-blue);
-    background-color: var(--badge-bg);
+    border-color: var(--accent);
+    background-color: var(--surface-2);
 }
 
-/* Même retour d'appui que les boutons pleins : c'est lui qui dit que le clic est parti. */
 .logs-action:active,
 .logs-close:active {
     transform: scale(0.95);
-    opacity: 0.7;
 }
 
 /* ──────────────────────────────────────────────
-   ADAPTATIONS CONDITIONNELLES
+   Page d'accueil : cartes-liens centrées, sans gabarit gen-hero.
+   ────────────────────────────────────────────── */
+.container {
+    width: 100%;
+    margin: 0 auto;
+    padding: 36px 24px;
+}
 
-   Tous les @media sont réunis ici, en fin de fichier : à spécificité égale, c'est la dernière
-   déclaration qui l'emporte, et un @media placé plus haut se faisait battre en silence par le
-   composant qu'il visait. Du plus large au plus étroit.
+.container-cards {
+    max-width: 1200px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.page-title {
+    color: var(--text);
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 10px;
+}
+
+.description {
+    color: var(--text-3);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    align-items: stretch;
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.option-card {
+    position: relative;
+    background-color: var(--surface);
+    border: 1px solid transparent;
+    border-radius: 22px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+}
+
+.container-cards .option-card {
+    min-height: 328px;
+}
+
+.option-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.option-card-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: var(--info-bg);
+    color: var(--accent);
+}
+
+.option-card-badge svg {
+    width: 26px;
+    height: 26px;
+}
+
+.option-card h2 {
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.option-card-desc {
+    color: var(--text-3);
+    font-size: 14px;
+    line-height: 1.45;
+    margin-top: 6px;
+}
+
+/* Carte portant une illustration en bande basse : l'image est le FOND, le rembourrage en
+   pourcentage (calculé sur la largeur) lui réserve sa place quelles que soient les proportions. */
+.option-card.has-illus {
+    --bande-illus: 50%;
+    overflow: hidden;
+    padding-bottom: var(--bande-illus);
+    background-position: center bottom;
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+}
+
+.container-cards .tool-card {
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.tool-card .option-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.tool-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+.tool-card-go {
+    position: absolute;
+    right: 20px;
+    bottom: 22px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: #1a5fb4;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    transition: background-color 0.15s;
+}
+
+.tool-card:hover .tool-card-go {
+    background-color: #154c90;
+}
+
+.tool-card-go svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* ──────────────────────────────────────────────
+   ADAPTATIONS CONDITIONNELLES, du plus large au plus étroit. Réunies en fin de fichier :
+   à spécificité égale c'est la dernière déclaration qui l'emporte.
    ────────────────────────────────────────────── */
 
-/* Les deux panneaux d'onglets sont superposés dans une même cellule de grille : le conteneur
-   prend donc la hauteur du plus grand -- celui des boîtiers, avec ses deux photos -- et passer
-   d'un onglet à l'autre ne fait plus sauter le pied de la fenêtre. L'inactif est masqué par
-   visibility et non display : c'est ce qui lui laisse occuper sa cellule tout en le retirant de
-   l'ordre de tabulation.
-   Uniquement au-dessus du mobile : sur un écran étroit, réserver la hauteur des deux panneaux
-   ferait défiler pour rien celui qui est court. */
+/* Les deux panneaux d'onglets superposés dans une même cellule : le conteneur garde la hauteur
+   du plus grand, changer d'onglet ne fait pas sauter le pied. L'inactif est masqué par
+   visibility, ce qui le retire de l'ordre de tabulation sans vider sa cellule. */
 @media (min-width: 601px) {
     .hw-panels {
         display: grid;
@@ -2102,49 +1874,141 @@ input:focus, select:focus {
     }
 }
 
-@media (min-width: 640px) {
-    .flash-dialog {
-        max-width: 440px;
+/* Tablette : le gabarit s'empile, le hero devient un bandeau (icône + textes à gauche). */
+@media (max-width: 1100px) {
+    .gen-hero {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .hero {
+        position: static;
+        height: auto;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 8px 18px;
+        align-items: center;
+        justify-items: start;
+        text-align: left;
+        padding: 26px 40px 20px;
+    }
+
+    .hero-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .hero h1 {
+        font-size: 30px;
+    }
+
+    .hero-chips {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+
+    .hero-vign {
+        display: none;
+    }
+
+    .mainc {
+        max-width: none;
+        padding: 16px 40px 26px;
     }
 }
 
 @media (max-width: 700px) {
-    /* Mesuré : nom du projet et navigation complète occupent ~635px. En dessous de ce palier,
-       "Documentation" toucherait le nom du projet ; son icône seule suffit. */
+    /* Nom du projet et navigation complète ne tiennent plus côte à côte : icônes seules. */
     .site-nav-label {
         display: none;
     }
 
     .site-nav-link {
-        padding: 9px;
+        padding: 0 9px;
+    }
+
+    .hero {
+        display: block;
+        padding: 18px 16px 16px;
+    }
+
+    .hero-icon,
+    .hero-chips {
+        display: none;
+    }
+
+    .hero h1 {
+        font-size: 22px;
+    }
+
+    .hero-desc {
+        max-width: none;
+    }
+
+    .mainc {
+        padding: 14px 14px 22px;
+        gap: 12px;
+    }
+
+    .tgrid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .tile {
+        padding: 18px;
+    }
+
+    .pip:not(.on) .pip-label {
+        display: none;
+    }
+
+    .acts .btn,
+    .acts-group:not([hidden]) .btn,
+    .tfoot .btn {
+        flex: 1;
+    }
+
+    .acts .btn.is-icon,
+    .acts-group:not([hidden]) .btn.is-icon {
+        flex: 0 0 auto;
+    }
+
+    .hw-grid,
+    .box-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .result-actions {
+        flex-direction: column;
+    }
+
+    .result-actions .btn {
+        flex: none;
+    }
+
+    .page-title {
+        font-size: 25px;
+    }
+
+    .container {
+        padding: 24px 16px;
+    }
+
+    .container-cards .option-card {
+        min-height: 252px;
+    }
+
+    /* Pastille retirée : ses 52px rognent titre et description pour une décoration qui ne dit
+       rien que le titre ne dise déjà. */
+    .container-cards .option-card-badge {
+        display: none;
     }
 }
 
 @media (max-width: 600px) {
-    /* Une seule colonne dans les deux onglets : deux photos ou deux cartes côte à côte sur 350 px
-       ne laissent lisible ni l'image ni le libellé. */
-    .box-grid,
-    .hw-grid {
-        grid-template-columns: 1fr;
-    }
-
-    /* La liste des versions prend toute la largeur : le libellé repasse au-dessus, sans quoi il
-       lui mangeait un tiers de la ligne. */
-    .field-inline {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
-    }
-
-    .field-inline select {
-        max-width: none;
-    }
-
-    /* La fenêtre prend tout l'écran, comme les .inst-overlay du firmware : pas de fond visible
-       autour, pas d'angles, pas de bordure. Le pied n'a pas besoin d'être en position fixed pour
-       autant -- le contenu est une colonne flex de hauteur 100 %, dont le corps seul s'étire :
-       le pied se retrouve donc collé au bas de l'écran de lui-même, et le clavier virtuel ou une
-       barre d'adresse escamotable ne le décalent pas comme le ferait un calage fixe. */
+    /* La fenêtre du téléversement prend tout l'écran, comme les fenêtres du firmware. */
     .inst-overlay:not([hidden]) {
         padding: 0;
     }
@@ -2154,55 +2018,19 @@ input:focus, select:focus {
         height: 100%;
         max-width: none;
         max-height: none;
-        border: none;
         border-radius: 0;
-    }
-
-    /* Le pied passe sur deux lignes : côte à côte, la liste des versions se réduisait à une
-       soixantaine de pixels et venait toucher le bouton. */
-    .inst-footer {
-        flex-wrap: wrap;
     }
 
     .inst-footer .btn {
-        width: 100%;
-    }
-
-    body {
-        padding: var(--site-header-h) 0 var(--site-footer-h);
-    }
-
-    .container {
-        max-width: 100%;
-        min-height: calc(100dvh - var(--site-header-h) - var(--site-footer-h));
-        border: none;
-        border-radius: 0;
-        padding: 24px 16px;
-        box-shadow: none;
-    }
-
-    :root {
-        --site-header-h: 64px;
-        /* Plancher seul : à cette largeur le texte se replie et c'est lui qui décide de la
-           hauteur, mesurée par layout.js. */
-        --site-footer-min: 44px;
+        flex: 1;
     }
 
     .site-header {
-        padding: 0 12px;
+        padding: 0 10px 0 14px;
     }
 
-    .site-brand-logo {
-        width: 38px;
-        height: 38px;
-    }
-
-    .site-brand-name {
-        font-size: 1.1rem;
-    }
-
-    /* Navigation repliée derrière le bouton menu : à cette largeur, le sélecteur de langue à lui
-       seul occupait 130px et poussait le nom du projet sous les icônes. */
+    /* Navigation repliée derrière le bouton menu : le sélecteur de langue à lui seul mangeait
+       130px à cette largeur. */
     .site-nav-link.site-menu-btn {
         display: flex;
     }
@@ -2210,35 +2038,35 @@ input:focus, select:focus {
     .site-nav {
         display: none;
         position: absolute;
-        top: calc(var(--site-header-h) - 8px);
+        top: calc(var(--site-header-h) - 6px);
         right: 8px;
         min-width: 210px;
         flex-direction: column;
         align-items: stretch;
         gap: 2px;
         padding: 8px;
-        background-color: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        box-shadow: 0 10px 15px -3px var(--dropdown-shadow);
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.35);
     }
 
     .site-nav.is-open {
         display: flex;
     }
 
-    /* Dans le panneau, le fond n'est plus le bleu de la bannière : les couleurs de texte de la
-       barre y seraient illisibles. */
+    /* Dans le panneau, le fond n'est plus la barre sombre : les couleurs de la barre y seraient
+       illisibles. */
     .site-nav .site-nav-link,
     .site-nav .site-lang {
-        color: var(--text-main);
+        color: var(--text);
         padding: 10px 12px;
+        border-radius: 10px;
     }
 
-    .site-nav .site-nav-link:hover,
-    .site-nav .site-nav-link[aria-current="page"] {
-        background-color: var(--card-option-bg);
-        color: var(--text-main);
+    .site-nav .site-nav-link:hover {
+        background-color: var(--surface-2);
+        color: var(--text);
     }
 
     .site-nav.is-open .site-nav-label {
@@ -2246,23 +2074,22 @@ input:focus, select:focus {
     }
 
     .site-lang-select {
-        color: var(--text-main);
+        color: var(--text);
         flex: 1;
         font-weight: 600;
     }
 
     .site-lang-select:hover {
-        background-color: var(--card-option-bg);
+        background-color: var(--surface-2);
     }
 
-    /* Une seule rangée, et le texte en entier : il se replie sur autant de lignes qu'il lui en
-       faut, le crédit reste à droite et centré verticalement en face. Empilés, les deux blocs
-       tenaient sur deux lignes coupées aux ellipses -- deux demi-phrases au lieu d'une. */
+    /* Une seule rangée : le texte se replie sur autant de lignes qu'il lui faut, le crédit
+       reste à droite. */
     .site-footer {
         justify-content: space-between;
         align-items: center;
         gap: 12px;
-        font-size: 0.68rem;
+        font-size: 11px;
         padding: 8px 12px;
         text-align: left;
     }
@@ -2271,8 +2098,6 @@ input:focus, select:focus {
         max-width: 100%;
     }
 
-    /* L'icône reste en haut du bloc : centrée verticalement en face de trois lignes de texte,
-       elle flotterait au milieu de la phrase. */
     .site-footer-item:not(.site-footer-credit) {
         flex: 1;
         align-items: flex-start;
@@ -2285,39 +2110,25 @@ input:focus, select:focus {
     .site-footer-sep {
         display: none;
     }
-
-    .page-title {
-        font-size: 1.55rem;
-    }
-
-    .container-cards .option-card {
-        min-height: 252px;
-    }
-
-    /* Pastille retirée : ses 52px + 14px de gouttière rognent titre et description pour une
-       décoration qui ne dit rien que le titre ne dise déjà. */
-    .container-cards .option-card-badge {
-        display: none;
-    }
-
-    /* Les deux actions de la carte de résultat s'empilent : à cette largeur, un libellé aussi long
-       que "Transmettre à mon ESPSomfy-RTS" ne tient pas sur une demi-ligne. */
-    .result-actions {
-        flex-direction: column;
-    }
-
 }
+
 @media (max-width: 400px) {
     .fname-map {
-        font-size: 0.7rem;
+        font-size: 11px;
     }
 }
 
-
 @media (prefers-reduced-motion: reduce) {
-    /* Le spinner a son propre repli, avec la règle qui le définit. Restent ici les deux
-       animations de la barre : le balayage décoratif disparaît, la barre indéterminée cesse de
-       glisser et se contente d'un aplat atténué. */
+    .wait-spinner {
+        animation-duration: 3s;
+    }
+
+    .wait-spinner-arc {
+        stroke-dasharray: 89 200;
+        stroke-dashoffset: -35;
+        animation: none;
+    }
+
     .flash-progress::before {
         animation: none;
         opacity: 0;

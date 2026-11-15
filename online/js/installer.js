@@ -3,22 +3,21 @@
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 /* ESPSomfy-RTS — assistant de flash web (GitHub Pages, HTTPS), basé sur ESP Web Tools.
  *
- * UNE CARTE À DEUX ÉTATS, plus un assistant :
+ * UN ASSISTANT EN TUILES (design A2), une étape visible à la fois, cf. goStep() :
  *
- *   sans port  ──[Connecter]──>  avec port  ──[Installer]──> fenêtre matériel + version
- *                                           ──[Journaux]──> console série
- *                                           ──[Déconnecter]
+ *   step1 Connexion ──> step2 Matériel ──> step3 Version ──> step4 Installation ──> step5 Terminé
+ *                   ──[Téléverser]──> fenêtre de téléversement manuel
+ *                   ──[Journaux]────> console série
  *
  * LA CONNEXION D'ABORD. Le port était autrefois demandé au tout dernier moment, au clic sur
  * « Installer » : un visiteur pouvait répondre à trois écrans avant d'apprendre que son navigateur
  * ne sait pas parler série, ou que son câble USB n'a pas de fil de données. Il est maintenant
  * retenu d'emblée et conservé dans `port` jusqu'au flash ou à la déconnexion.
  *
- * Les choix vivent dans des fenêtres, pas dans la carte. Ce n'est pas qu'une question de goût :
- * une carte qui change de contenu change de taille, et les trois tentatives précédentes (écrans
- * glissants à hauteur mesurée en JavaScript, puis zone fixe à défilement interne) ont toutes buté
- * là-dessus. Une fenêtre a le droit d'avoir sa propre taille. Les fonctions showStep/goTo/goBack
- * et updateStageHeight/updateStepHeaderHeight/updateLayout n'ont plus d'objet.
+ * Les étapes vivent dans le FLUX NORMAL de la colonne défilante du gabarit gen-hero : aucune
+ * hauteur imposée, aucun défilement interne — rien de commun avec les écrans glissants à hauteur
+ * mesurée abandonnés en leur temps. Seuls le téléversement manuel et la console série restent des
+ * fenêtres : ils se superposent à n'importe quelle étape.
  *
  * FLASH : on pilote directement flash.js, le module bas niveau qu'exporte esp-web-tools
  * (Transport/ESPLoader d'esptool-js, cf. son code source -- exporté publiquement, pas un détail
@@ -101,16 +100,16 @@ import { flash } from './vendor/esp-flash.js';
 const HARDWARE = [
     { kind: 'box', id: 'box_wifi', titleKey: 'installer_box_wifi_title', image: 'img/box-wifi.webp', alt: 'ESPSomfy-RTS BOX-Wifi' },
     { kind: 'box', id: 'box_eth', titleKey: 'installer_box_eth_title', image: 'img/box-eth.webp', alt: 'ESPSomfy-RTS BOX-Wifi & Ethernet' },
-    { kind: 'diy', id: 'esp32', label: 'ESP32', descKey: 'installer_hw_esp32_desc', cores: 2, ramKB: 520, nativeUsb: false, psram: false },
-    { kind: 'diy', id: 'esp32wrover', label: 'ESP32-Wrover', descKey: 'installer_hw_esp32wrover_desc', cores: 2, ramKB: 520, nativeUsb: false, psram: true },
-    { kind: 'diy', id: 'esp32c3', label: 'ESP32-C3', descKey: 'installer_hw_esp32c3_desc', cores: 1, ramKB: 400, nativeUsb: false, psram: false },
-    { kind: 'diy', id: 'esp32s2', label: 'ESP32-S2', descKey: 'installer_hw_esp32s2_desc', cores: 1, ramKB: 320, nativeUsb: true, psram: false },
-    { kind: 'diy', id: 'esp32s3', label: 'ESP32-S3', descKey: 'installer_hw_esp32s3_desc', cores: 2, ramKB: 512, nativeUsb: true, psram: false },
+    { kind: 'diy', id: 'esp32', label: 'ESP32', cores: 2, ramKB: 520, nativeUsb: false, psram: false },
+    { kind: 'diy', id: 'esp32wrover', label: 'ESP32-Wrover', cores: 2, ramKB: 520, nativeUsb: false, psram: true },
+    { kind: 'diy', id: 'esp32c3', label: 'ESP32-C3', cores: 1, ramKB: 400, nativeUsb: false, psram: false },
+    { kind: 'diy', id: 'esp32s2', label: 'ESP32-S2', cores: 1, ramKB: 320, nativeUsb: true, psram: false },
+    { kind: 'diy', id: 'esp32s3', label: 'ESP32-S3', cores: 2, ramKB: 512, nativeUsb: true, psram: false },
     // ESP32-C6 : soutenu en 8 Mo UNIQUEMENT. Une carte C6 de 4 Mo ne démarrerait pas sur l'image
     // proposée ici, dont l'en-tête déclare 8 Mo -- et l'écriture échouerait de toute façon avant,
     // esptool refusant d'écrire au-delà de la flash détectée. Les cartes 4 Mo (XIAO ESP32C6,
     // DevKitM-1, Feather, FireBeetle 2) sont donc hors support, délibérément.
-    { kind: 'diy', id: 'esp32c6', label: 'ESP32-C6', descKey: 'installer_hw_esp32c6_desc', cores: 1, ramKB: 512, nativeUsb: true, psram: false },
+    { kind: 'diy', id: 'esp32c6', label: 'ESP32-C6', cores: 1, ramKB: 512, nativeUsb: true, psram: false },
 ];
 
 // Note de fiabilité réseau /5, CALCULÉE plutôt que déclarée à la main pour chaque carte, à partir
@@ -177,18 +176,36 @@ function tr(key, tokens) {
     return s;
 }
 
-/* ------------------------------------------------------------------ État de la carte */
+/* ------------------------------------------------------------------ Navigation de l'assistant */
+
+const STEP_IDS = ['step1', 'step2', 'step3', 'step4', 'step5'];
+let currentStep = 1;
+// Étape à retrouver quand le flash échoue (3 depuis l'assistant, 1 depuis le téléversement
+// manuel) ; un flash réussi ramène toujours à l'étape 1.
+let stepBeforeFlash = 1;
+let flashOk = false;
+
+function goStep(n) {
+    currentStep = n;
+    STEP_IDS.forEach((id, i) => { $(id).hidden = (i + 1) !== n; });
+    document.querySelectorAll('#stepsRail .pip').forEach((pip) => {
+        const p = parseInt(pip.dataset.step, 10);
+        pip.classList.toggle('on', n <= 4 && p === n);
+        pip.classList.toggle('done', p < n || n === 5);
+    });
+    window.scrollTo({ top: 0 });
+}
+
+/* ------------------------------------------------------------------ État de la connexion */
 
 function isCompatible() {
     return 'serial' in navigator && window.isSecureContext;
 }
 
-// La carte n'a que deux états. Titre et texte changent de clé de traduction plutôt que d'être
-// dupliqués dans deux blocs : SiteLayout.apply() relit l'attribut et repose le texte, dans la
-// langue courante, sans que ce fichier n'ait à connaître un seul libellé.
+// Titre et texte de l'étape 1 changent de clé de traduction plutôt que d'être dupliqués dans
+// deux blocs : SiteLayout.apply() relit l'attribut et repose le texte, dans la langue courante,
+// sans que ce fichier n'ait à connaître un seul libellé.
 function setConnected(connecte) {
-    const carte = document.querySelector('.installer-card');
-    carte.classList.toggle('is-disconnected', !connecte);
     $('connBadge').hidden = !connecte;
     $('btnConnect').hidden = connecte;
     $('mainActions').hidden = !connecte;
@@ -212,6 +229,8 @@ async function connect() {
         return;
     }
     setConnected(true);
+    oublierMateriel();
+    goStep(2);
 }
 
 // forget() rend l'autorisation accordée au site, pas seulement le port : sans lui, le sélecteur
@@ -228,9 +247,10 @@ async function disconnect() {
     selected = null;
     catalogue = null;
     setConnected(false);
+    goStep(1);
 }
 
-/* ------------------------------------------------------------------ Fenêtre du matériel */
+/* ------------------------------------------------------------------ Étape du matériel */
 
 // Onglets du tableau de bord du firmware (cf. data-dev/js/40-general.js, switchMobileTab) : la
 // classe .active sur le bouton commande à la fois sa couleur et la position du soulignement, ce
@@ -245,7 +265,7 @@ function initTabs(idFenetre) {
 // Séparé du branchement : la reconnaissance du nom de fichier s'en sert aussi pour amener
 // l'utilisateur sur l'onglet qui décrit le fichier qu'il vient de choisir.
 function activerOnglet(btn) {
-    const fenetre = btn.closest('.inst-content');
+    const fenetre = btn.closest('.tab-scope');
     const change = !btn.classList.contains('active');
     fenetre.querySelectorAll('.tab-btn').forEach((b) => {
         b.classList.toggle('active', b === btn);
@@ -256,18 +276,19 @@ function activerOnglet(btn) {
     // Le matériel retenu vit dans l'onglet qu'on vient de quitter, et il n'y est plus visible :
     // le laisser en place afficherait une version choisie pour une carte qu'on ne voit pas, et
     // « Installer » écrirait cette image-là. On repart donc du choix du matériel.
-    if (change && fenetre.closest('#installOverlay')) oublierMateriel();
+    if (change && fenetre.closest('#step2')) oublierMateriel();
 }
 
-// État « rien de choisi » de la fenêtre du matériel : aucune carte marquée, pas de version, et
-// le bouton d'installation inerte. Sert à l'ouverture comme au changement d'onglet.
+// État « rien de choisi » de l'étape du matériel : aucune carte marquée, pas de version, et les
+// boutons de progression inertes. Sert à la connexion comme au changement d'onglet.
 function oublierMateriel() {
     selected = null;
-    document.querySelectorAll('#installOverlay .box-card, #installOverlay .hw-card').forEach((el) => {
+    document.querySelectorAll('#step2 .box-card, #step2 .hw-card').forEach((el) => {
         el.classList.remove('is-selected');
     });
     $('boxEthBootNotice').hidden = true;
     $('preReleaseNotice').hidden = true;
+    $('btnToVersion').disabled = true;
 
     const sel = $('fwVersion');
     const invite = document.createElement('option');
@@ -299,16 +320,16 @@ function renderHardware() {
         } else {
             card.className = 'hw-card';
             const { score, tier } = coreReliability(item);
-            // Étoiles pleines/vides posées ici (fixes), le libellé accessible est rempli à part
-            // par updateRatingLabels() -- lui seul sait construire "score sur 5" traduit, avec
-            // interpolation du nombre, ce que le mécanisme data-i18n-label du site ne fait pas.
+            // Étoiles pleines/vides posées ici (fixes) ; le libellé accessible et la ligne de
+            // caractéristiques sont remplis à part par updateRatingLabels() -- les deux
+            // interpolent des valeurs, ce que le mécanisme data-i18n du site ne fait pas.
             const stars = Array.from({ length: 5 }, (_, i) =>
                 `<svg width="13" height="13"${i >= score ? ' class="is-empty"' : ''}><use href="#svg-star"/></svg>`
             ).join('');
             card.innerHTML = `
             <span class="hw-card-label">${item.label}</span>
-            <span class="hw-card-desc" data-i18n="${item.descKey}"></span>
             <span class="hw-card-rating tier-${tier}" data-score="${score}">${stars}</span>
+            <span class="hw-card-desc"></span>
         `;
             diyGrid.appendChild(card);
         }
@@ -317,11 +338,28 @@ function renderHardware() {
     updateRatingLabels();
 }
 
-// title/aria-label de chaque note : reconstruits ici (et non en data-i18n-label, qui ne fait
-// aucune interpolation de token) pour porter le score dans le texte traduit. Appelée au premier
-// rendu ET à chaque changement de langue (cf. onTranslationsChanged) puisque renderHardware() ne
-// tourne qu'une fois.
+// Ligne de caractéristiques de chaque carte, dérivée des mêmes champs que la note : rien à
+// déclarer carte par carte, et rien à traduire de plus que les cinq fragments.
+function hwTraits(item) {
+    const parts = [
+        tr(item.cores >= 2 ? 'installer_trait_dual' : 'installer_trait_single'),
+        tr('installer_trait_ram', { ram: item.ramKB }),
+    ];
+    if (item.nativeUsb) parts.push(tr('installer_trait_usb'));
+    if (item.psram) parts.push(tr('installer_trait_psram'));
+    return parts.join(' · ');
+}
+
+// title/aria-label de chaque note et ligne de caractéristiques : reconstruits ici (et non en
+// data-i18n, qui ne fait aucune interpolation de token). Appelée au premier rendu ET à chaque
+// changement de langue (cf. onTranslationsChanged) puisque renderHardware() ne tourne qu'une
+// fois.
 function updateRatingLabels() {
+    document.querySelectorAll('.hw-card').forEach((card) => {
+        const item = HARDWARE.find((h) => h.id === card.dataset.id);
+        const desc = card.querySelector('.hw-card-desc');
+        if (item && desc) desc.textContent = hwTraits(item);
+    });
     document.querySelectorAll('.hw-card-rating').forEach((el) => {
         const label = tr('installer_hw_rating_aria', { score: el.dataset.score });
         el.setAttribute('title', label);
@@ -334,9 +372,10 @@ function updateRatingLabels() {
 async function selectHardware(item) {
     selected = item;
 
-    document.querySelectorAll('#installOverlay .box-card, #installOverlay .hw-card').forEach((el) => {
+    document.querySelectorAll('#step2 .box-card, #step2 .hw-card').forEach((el) => {
         el.classList.toggle('is-selected', el.dataset.id === item.id);
     });
+    $('btnToVersion').disabled = false;
 
     // Note bouton-poussoir : uniquement pertinente pour le boîtier Wi-fi & Ethernet (le Wi-fi
     // seul n'a pas ce mode d'entrée en flash manuel).
@@ -345,16 +384,6 @@ async function selectHardware(item) {
     // C'est buildVersionSelect() qui décide si le bouton s'active : une carte peut très bien
     // n'avoir aucune version en ligne.
     await buildVersionSelect();
-}
-
-function openInstallOverlay() {
-    if (!port) return;
-    oublierMateriel();
-    $('installOverlay').hidden = false;
-}
-
-function closeInstallOverlay() {
-    $('installOverlay').hidden = true;
 }
 
 /* ------------------------------------------------------------------ Version */
@@ -715,16 +744,21 @@ function setFlashDialog(kind, title, message, pct) {
 }
 
 function openFlashDialog() {
+    flashOk = false;
+    // Mémorisée une seule fois : openFlashDialog() peut être rappelée pendant l'étape 4 même.
+    if (currentStep !== 4) stepBeforeFlash = currentStep;
     flashLogLines = [];
     $('flashLogContent').textContent = '';
     $('flashLog').hidden = true;
     $('flashLogToggle').textContent = tr('installer_flash_show_logs');
-    $('flashOverlay').hidden = false;
+    goStep(4);
     setFlashDialog('busy', tr('installer_flash_state_initializing'), '');
 }
 
+// « Fermer » après un échec : retour là d'où le flash est parti (étape 3, ou étape 1 pour un
+// téléversement manuel). Après un succès on est déjà passé à l'étape 5.
 function closeFlashDialog() {
-    $('flashOverlay').hidden = true;
+    goStep(flashOk ? 1 : stepBeforeFlash);
 }
 
 function toggleFlashLog() {
@@ -771,6 +805,8 @@ function onFlashEvent(ev) {
         }
         case 'finished':
             setFlashDialog('success', tr('installer_flash_state_finished_title'), tr('installer_flash_state_finished_body'));
+            flashOk = true;
+            goStep(5);
             break;
         case 'error': {
             const code = ev.details && ev.details.error;
@@ -796,7 +832,6 @@ async function startFlash() {
     const puce = choix ? choix.dataset.puce : '';
     if (!isCompatible() || !port || !zipUrl || !puce) return;
 
-    closeInstallOverlay();
     // La console série tient le port ouvert : flash.js ne pourrait pas l'ouvrir.
     await stopLogs();
     closeLogs();
@@ -1008,14 +1043,18 @@ function checkCompat() {
 
 async function init() {
     checkCompat();
-    initTabs('installOverlay');
+    initTabs('step2');
     initTabs('manualOverlay');
     renderHardware();
 
     $('btnConnect').addEventListener('click', connect);
     $('btnDisconnect').addEventListener('click', disconnect);
-    $('btnInstall').addEventListener('click', openInstallOverlay);
-    $('instClose').addEventListener('click', closeInstallOverlay);
+    $('btnToHardware').addEventListener('click', () => goStep(2));
+    $('btnBackHw').addEventListener('click', () => goStep(1));
+    $('btnToVersion').addEventListener('click', () => goStep(3));
+    $('btnBackVer').addEventListener('click', () => goStep(2));
+    $('btnRestart').addEventListener('click', () => goStep(1));
+    $('btnDoneLogs').addEventListener('click', openLogs);
     $('fwVersion').addEventListener('change', () => { majPreReleaseNotice(); majLangSelect(); });
     $('startFlashBtn').addEventListener('click', startFlash);
     $('btnManual').addEventListener('click', openManualOverlay);

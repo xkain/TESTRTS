@@ -8,155 +8,154 @@
   L'interface de l'ESP32 étant servie en HTTP simple sur le réseau local, elle ne peut pas
   l'utiliser ; elle ouvre donc cette page, qui lui renvoie les coordonnées en paramètres d'URL.
 
-  BANNIÈRE ET PIED DE PAGE : aucun balisage ici, ils sont injectés par js/layout.js, commun à
-  toutes les pages du site (logo, navigation, sélecteur de langue, thème, mention de sécurité).
-  Ce même fichier porte aussi le moteur de traduction : les attributs data-i18n ci-dessous sont
-  résolus par lui, pas par js/geo.js.
+  GABARIT gen-hero (design A2) : colonne d'identité à gauche, trois tuiles à droite. La tuile de
+  transmission est TOUJOURS visible, à l'état vide (« Lat : -- ») tant qu'aucune position n'est
+  choisie ; la classe .active que js/geo.js pose sur #resultBox révèle la pastille verte.
 
-  VERSIONNAGE DES ASSETS : le ?v=... des liens css/js ci-dessous force le navigateur à recharger
-  les fichiers après une mise à jour (GitHub Pages sert avec un cache long).
-  Ces valeurs sont RÉÉCRITES AUTOMATIQUEMENT par version_docs.py (empreinte du contenu de
-  chaque asset), avant chaque build : ne les modifiez pas à la main.
+  BANNIÈRE ET PIED DE PAGE : aucun balisage ici, ils sont injectés par js/layout.js, commun à
+  toutes les pages du site. Ce même fichier porte aussi le moteur de traduction : les attributs
+  data-i18n ci-dessous sont résolus par lui, pas par js/geo.js.
+
+  VERSIONNAGE DES ASSETS : le ?v=... des liens css/js force le navigateur à recharger les
+  fichiers après une mise à jour (GitHub Pages sert avec un cache long). Ces valeurs sont
+  RÉÉCRITES AUTOMATIQUEMENT par version_docs.py : ne les modifiez pas à la main.
 -->
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=7c49ced0">
+  <link rel="stylesheet" href="css/style.css?v=9fd9f239">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="page_title">ESPSomfy-RTS - Géolocalisation</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <!-- Dans <head> et en script bloquant : le thème clair/sombre doit être posé sur <html> avant
        le premier rendu, sinon la page s'affiche en clair puis bascule (flash blanc). -->
-  <script src="js/layout.js?v=1453a0e3"></script>
+  <script src="js/layout.js?v=b9531634"></script>
 </head>
 <body>
 
-  <div class="container container-cards">
+  <div class="gen-hero">
 
-    <div>
-      <!-- En-tête : ni logo ni nom du projet, la bannière commune les porte déjà. -->
-      <div class="header">
-        <h1 class="page-title" data-i18n="welcome_title">Bienvenue sur la page de géolocalisation</h1>
-        <p class="description" data-i18n="geo_description">
+    <aside class="hero" aria-label="Position géographique">
+      <div class="hero-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-7.75-7-12a7 7 0 0 1 14 0c0 4.25-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
+      <div>
+        <h1 data-i18n="welcome_title">Position géographique</h1>
+        <p class="hero-desc" data-i18n="geo_description">
           Obtenez les coordonnées GPS de votre domicile pour automatiser vos équipements selon la course du soleil.
         </p>
       </div>
+      <div class="hero-chips">
+        <span class="chip" data-i18n="geo_chip_1">Calcul local</span>
+        <span class="chip" data-i18n="geo_chip_2">Arrondi ≈ 1 km</span>
+        <span class="chip" data-i18n="geo_chip_3">HTTPS</span>
+      </div>
+      <img class="hero-vign" src="img/geo-card.webp" alt="">
+    </aside>
 
-      <!-- Les deux méthodes, côte à côte tant que la largeur le permet (cf. .options-grid). -->
-      <div class="options-grid">
+    <main class="mainc">
+      <div class="tgrid">
 
         <!-- Méthode 1 : GPS du navigateur -->
-        <div class="option-card">
-          <div class="option-card-head">
-            <span class="option-card-badge">
-              <svg width="26" height="26"><use href="#svg-pin"/></svg>
-            </span>
-            <div>
-              <h2 data-i18n="option_1_title">Détection automatique</h2>
-              <p class="option-card-desc" data-i18n="option_1_desc">
-                Utilisez la géolocalisation de votre navigateur pour récupérer votre position actuelle.
-              </p>
-            </div>
-          </div>
-
-          <!-- BANDE ILLUSTRÉE, identique à celle de la carte de l'installateur : l'action vit DANS
-               l'image plutôt qu'au-dessus. L'erreur de géolocalisation y reste, juste au-dessus du
-               bouton qui l'a produite -- .card-band .field-error lui donne le fond qui la rend
-               lisible sur la photo. -->
-          <div class="card-band" style="background-image: url('img/geo-card.webp')">
-            <div class="field-error" id="gpsError" hidden></div>
-            <button class="btn btn-blue" id="btnGps">
+        <section class="tile">
+          <span class="tl" data-i18n="option_1_title">Détection automatique</span>
+          <p class="ts" data-i18n="option_1_desc">
+            Utilisez la géolocalisation de votre navigateur pour récupérer votre position actuelle.
+          </p>
+          <div class="field-error" id="gpsError" hidden></div>
+          <div class="acts acts-bottom">
+            <button class="btn" id="btnGps">
               <svg class="btn-glyph" width="18" height="18"><use href="#svg-pin"/></svg>
               <span data-i18n="btn_gps">Détecter ma position</span>
             </button>
           </div>
-        </div>
+          <span class="hint" data-i18n="geo_hint_gps">
+            Votre navigateur demandera l'autorisation ; rien n'est enregistré.
+          </span>
+        </section>
 
         <!-- Méthode 2 : recherche par ville -->
-        <div class="option-card">
-          <div class="option-card-head">
-            <span class="option-card-badge">
-              <svg width="26" height="26"><use href="#svg-edit"/></svg>
+        <section class="tile">
+          <span class="tl" data-i18n="option_2_title">Saisir manuellement</span>
+          <p class="ts" data-i18n="option_2_desc">
+            Entrez le pays et le nom de votre ville pour définir votre position.
+          </p>
+          <div class="frow">
+            <div class="f">
+              <label for="country" data-i18n="label_country">Pays (filtrage optionnel) :</label>
+              <div class="ub">
+                <svg class="ub-ic" width="18" height="18"><use href="#svg-globe"/></svg>
+                <!-- Les pays sont injectés par js/geo.js : seuls les CODES ISO sont maintenus
+                     côté code, les libellés étant produits dans la langue active via
+                     Intl.DisplayNames. -->
+                <select id="country" class="ui"></select>
+              </div>
+            </div>
+            <div class="f search-container">
+              <label for="citySearch" data-i18n="label_city">Ville ou code postal :</label>
+              <div class="ub">
+                <svg class="ub-ic" width="18" height="18"><use href="#svg-search"/></svg>
+                <input type="text" id="citySearch" class="ui" data-i18n-placeholder="placeholder_city" placeholder="Ville ou code postal" autocomplete="off">
+              </div>
+              <div id="suggestions" class="suggestions"></div>
+            </div>
+          </div>
+          <div class="field-error" id="searchError" hidden></div>
+          <span class="hint" data-i18n="option_2_hint">
+            Choisissez une suggestion dans la liste pour définir votre position.
+          </span>
+        </section>
+
+        <!-- Résultat & transmission : toujours visible, l'état vide en tient lieu d'invite. -->
+        <section class="tile result-box" id="resultBox">
+          <span class="tl" data-i18n="geo_tile_send_title">Transmission à l'appareil</span>
+          <div class="crow">
+            <span class="okb result-badge">
+              <svg width="14" height="14"><use href="#svg-success"/></svg>
+              <span data-i18n="geo_badge_set">Position définie</span>
             </span>
-            <div>
-              <h2 data-i18n="option_2_title">Saisir manuellement</h2>
-              <p class="option-card-desc" data-i18n="option_2_desc">
-                Entrez le pays et le nom de votre ville pour définir votre position.
-              </p>
+            <span class="coords-display" id="coordsText" data-i18n="coords_empty">Lat : -- | Lon : --</span>
+          </div>
+
+          <div class="f">
+            <label for="espIp" data-i18n="label_esp_ip">Adresse de votre ESPSomfy-RTS (URL / IP) :</label>
+            <div class="ub">
+              <input type="text" id="espIp" class="ui" value="espsomfyrts.local">
             </div>
           </div>
 
-          <!-- Libellés masqués visuellement mais TOUJOURS dans le DOM (.sr-only) : l'icône et le
-               texte de substitution suffisent à l'oeil, pas à un lecteur d'écran. -->
-          <div class="option-card-body">
-          <div class="field field-icon">
-            <label class="sr-only" for="country" data-i18n="label_country">Pays (filtrage optionnel) :</label>
-            <svg class="field-glyph" width="18" height="18"><use href="#svg-globe"/></svg>
-            <!-- Les pays sont injectés par js/geo.js : seuls les CODES ISO sont maintenus côté
-                 code, les libellés étant produits dans la langue active via Intl.DisplayNames.
-                 Cela évite de maintenir une liste de pays traduite à la main dans chaque
-                 fichier de langue, et garantit un tri alphabétique correct par locale. -->
-            <select id="country"></select>
+          <!-- L'action principale est écrite EN PREMIER : c'est l'ordre de lecture comme l'ordre
+               de tabulation, et la mise en colonne sur mobile le donne à voir tel quel. -->
+          <div class="result-actions">
+            <button class="btn" id="btnSend">
+              <svg class="btn-glyph" width="18" height="18"><use href="#svg-send"/></svg>
+              <span data-i18n="btn_send">Transmettre à mon ESPSomfy-RTS</span>
+            </button>
+            <button class="btn btn-secondary" id="btnCopy">
+              <svg class="btn-glyph" width="18" height="18"><use href="#svg-copy"/></svg>
+              <span data-i18n="btn_copy">Copier les coordonnées</span>
+            </button>
           </div>
-
-          <div class="field field-icon search-container">
-            <label class="sr-only" for="citySearch" data-i18n="label_city">Ville ou code postal :</label>
-            <svg class="field-glyph" width="18" height="18"><use href="#svg-search"/></svg>
-            <input type="text" id="citySearch" data-i18n-placeholder="placeholder_city" placeholder="Ville ou code postal" autocomplete="off">
-            <div id="suggestions" class="suggestions"></div>
-          </div>
-          <div class="field-error" id="searchError" hidden></div>
-          </div>
-
-          <p class="option-card-hint" data-i18n="option_2_hint">
-            Choisissez une suggestion dans la liste pour définir votre position.
-          </p>
-        </div>
+          <div class="field-error" id="sendMsg" hidden></div>
+          <span class="hint" data-i18n="geo_hint_send">
+            La position part de cette page vers votre appareil, sur votre réseau local uniquement.
+          </span>
+        </section>
 
       </div>
-
-      <!-- Zone de résultat & transmission -->
-      <div id="resultBox" class="result-box">
-        <div class="coords-display" id="coordsText" data-i18n="coords_empty">Lat : -- | Lon : --</div>
-
-        <div class="field">
-          <label for="espIp" data-i18n="label_esp_ip">Adresse de votre ESPSomfy-RTS (URL / IP) :</label>
-          <input type="text" id="espIp" value="espsomfyrts.local">
-        </div>
-
-        <!-- Côte à côte tant que la largeur le permet, empilés en dessous (cf. .result-actions).
-             L'action principale est écrite EN PREMIER : c'est l'ordre de lecture comme l'ordre de
-             tabulation, et la mise en colonne sur mobile le donne à voir tel quel. -->
-        <div class="result-actions">
-          <button class="btn btn-green" id="btnSend">
-            <svg class="btn-glyph" width="18" height="18"><use href="#svg-send"/></svg>
-            <span data-i18n="btn_send">Transmettre à mon ESPSomfy-RTS</span>
-          </button>
-          <button class="btn btn-secondary" id="btnCopy">
-            <svg class="btn-glyph" width="18" height="18"><use href="#svg-copy"/></svg>
-            <span data-i18n="btn_copy">Copier les coordonnées</span>
-          </button>
-        </div>
-        <div class="field-error" id="sendMsg" hidden></div>
-      </div>
-    </div>
-
+    </main>
   </div>
 
   <script src="js/geo.js?v=93282a6b"></script>
   <!-- BIBLIOTHÈQUE DE SYMBOLES, en fin de document : rien n'y est rendu directement (le <svg>
        porteur est en display: none), chaque dessin est appelé au fil de la page par
        <svg><use href="#..."/></svg>. Le <use> hérite des propriétés CSS de son point d'appel, y
-       compris les variables de couleur : les dessins suivent donc le thème comme s'ils étaient
-       écrits sur place.
-       Le globe du filtre pays vient, lui, du sprite commun (js/layout.js) : inutile de le
-       redéfinir ici. -->
+       compris les variables de couleur. Le globe du filtre pays vient, lui, du sprite commun
+       (js/layout.js) : inutile de le redéfinir ici. -->
   <svg style="display: none;" aria-hidden="true">
     <symbol id="svg-pin" viewBox="0 0 24 24">
       <path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7m0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5"/>
     </symbol>
-    <symbol id="svg-edit" viewBox="0 0 24 24">
-      <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83l3.75 3.75z"/>
+    <symbol id="svg-success" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z"/>
     </symbol>
     <symbol id="svg-send" viewBox="0 0 24 24">
       <path fill="currentColor" d="M2.01 21 23 12 2.01 3 2 10l15 2l-15 2z"/>
