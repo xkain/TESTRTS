@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later
+     SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+     Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS -->
+<!--
+  Convertisseur de sauvegarde : transforme un /controller.backup positionnel (générations 1 à 27)
+  en sauvegarde NDJSON (le format de la v3). Tout se passe dans le navigateur, le fichier n'est
+  jamais envoyé -- c'est la condition de cette page, pas un détail : la sauvegarde contient les
+  adresses radio et les codes tournants des équipements.
+
+  BANNIÈRE ET PIED DE PAGE : aucun balisage ici, ils sont injectés par js/layout.js, commun à
+  toutes les pages du site. Ce même fichier porte le moteur de traduction (attributs data-i18n).
+
+  VERSIONNAGE DES ASSETS : le ?v=... des liens css/js est réécrit automatiquement par
+  version_docs.py (empreinte du contenu), avant chaque build : ne pas y toucher à la main.
+-->
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="css/style.css?v=7c49ced0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title data-i18n="conv_page_title">ESPSomfy-RTS - Convertisseur de sauvegarde</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <!-- Dans <head> et en script bloquant : le thème clair/sombre doit être posé sur <html> avant
+       le premier rendu, sinon la page s'affiche en clair puis bascule (flash blanc). -->
+  <script src="js/layout.js?v=1453a0e3"></script>
+</head>
+<body>
+
+  <div class="container container-cards">
+
+    <div>
+      <div class="header">
+        <h1 class="page-title" data-i18n="conv_title">Convertisseur de sauvegarde</h1>
+        <p class="description" data-i18n="conv_description">
+          Convertissez une sauvegarde prise sous une ancienne version (v1, v2) au format de la v3.
+          Tout se passe dans votre navigateur : le fichier n'est envoyé nulle part.
+        </p>
+      </div>
+
+      <div class="options-grid">
+
+        <!-- Carte 1 : le fichier à convertir -->
+        <div class="option-card">
+          <div class="option-card-head">
+            <span class="option-card-badge">
+              <svg width="26" height="26"><use href="#svg-file"/></svg>
+            </span>
+            <div>
+              <h2 data-i18n="conv_pick_title">Choisir la sauvegarde</h2>
+              <p class="option-card-desc" data-i18n="conv_pick_desc">
+                Sélectionnez le fichier .backup téléchargé depuis la page Firmware de votre appareil.
+              </p>
+            </div>
+          </div>
+
+          <div class="option-card-body">
+            <!-- Même présentation que le téléversement de l'installateur : label .custom-file-upload
+                 devant un input masqué, le champ natif ne suivant ni le thème ni la langue du site. -->
+            <input type="file" id="convFile" accept=".backup" hidden>
+            <label for="convFile" class="custom-file-upload">
+              <span id="convFileName" class="file-name-display" data-i18n="conv_choose_file">Choisir un fichier (.backup)</span>
+              <span class="file-icon-btn"><svg width="20" height="20"><use href="#svg-upload"/></svg></span>
+            </label>
+            <div class="field-error" id="convError" hidden></div>
+          </div>
+
+          <p class="option-card-hint" data-i18n="conv_pick_hint">
+            Le fichier est lu sur place, dans cet onglet : rien n'est enregistré, rien ne part sur internet.
+          </p>
+        </div>
+
+        <!-- Carte 2 : ce que fait la conversion, et la mise en garde -->
+        <div class="option-card">
+          <div class="option-card-head">
+            <span class="option-card-badge">
+              <svg width="26" height="26"><use href="#svg-swap"/></svg>
+            </span>
+            <div>
+              <h2 data-i18n="conv_what_title">Ce que fait la conversion</h2>
+              <p class="option-card-desc" data-i18n="conv_what_desc">
+                La sauvegarde est relue exactement comme votre appareil l'aurait relue, puis réécrite
+                dans le format de la v3 : une ligne par élément, chaque valeur portant son nom.
+                Équipements, groupes, pièces, plannings, réglages, réseau et radio sont conservés.
+              </p>
+            </div>
+          </div>
+
+          <div class="info-block" id="convCodesWarning">
+            <div class="info-block-header">
+              <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
+              <b data-i18n="installer_notice_title">Important</b>
+            </div>
+            <span data-i18n="conv_warn_codes">
+              Une sauvegarde contient les adresses radio et les codes tournants de vos équipements —
+              dans le nouveau format, ils se lisent en clair. Quiconque possède ce fichier peut piloter
+              vos équipements : ne le publiez jamais (forum, capture d'écran, dépôt public).
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Résultat : récapitulatif de ce qui a été relu, puis téléchargement -->
+      <div id="resultBox" class="result-box">
+        <div class="coords-display" id="convSource"></div>
+        <p class="description" id="convCounts"></p>
+        <div class="field-error" id="convReadWarnings" hidden></div>
+        <div class="result-actions">
+          <button class="btn btn-green" id="btnDownload" disabled>
+            <svg class="btn-glyph" width="18" height="18"><use href="#svg-download"/></svg>
+            <span data-i18n="conv_btn_download">Télécharger la sauvegarde convertie</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/convertisseur.js?v=f4212549"></script>
+  <!-- BIBLIOTHÈQUE DE SYMBOLES, en fin de document : rien n'y est rendu directement (le <svg>
+       porteur est en display: none), chaque dessin est appelé au fil de la page par
+       <svg><use href="#..."/></svg>. Le <use> hérite des propriétés CSS de son point d'appel, y
+       compris les variables de couleur : les dessins suivent donc le thème comme s'ils étaient
+       écrits sur place. -->
+  <svg style="display: none;" aria-hidden="true">
+    <symbol id="svg-file" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm4 18H6V4h7v5h5zM8 12h8v2H8zm0 4h8v2H8z"/>
+    </symbol>
+    <symbol id="svg-swap" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M6.99 11 3 15l3.99 4v-3H14v-2H6.99zM21 9l-3.99-4v3H10v2h7.01v3z"/>
+    </symbol>
+    <symbol id="svg-upload" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M6 20q-.825 0-1.412-.587T4 18v-2q0-.425.288-.712T5 15t.713.288T6 16v2h12v-2q0-.425.288-.712T19 15t.713.288T20 16v2q0 .825-.587 1.413T18 20zm5-12.15L9.125 9.725q-.3.3-.712.288T7.7 9.7q-.275-.3-.288-.7t.288-.7l3.6-3.6q.15-.15.325-.212T12 4.425t.375.063t.325.212l3.6 3.6q.3.3.288.7t-.288.7q-.3.3-.712.313t-.713-.288L13 7.85V15q0 .425-.288.713T12 16t-.712-.288T11 15z"/>
+    </symbol>
+    <symbol id="svg-download" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M6 20q-.825 0-1.412-.587T4 18v-2q0-.425.288-.712T5 15t.713.288T6 16v2h12v-2q0-.425.288-.712T19 15t.713.288T20 16v2q0 .825-.587 1.413T18 20zm6-4q-.2 0-.375-.062t-.325-.213l-3.6-3.6q-.3-.3-.288-.7t.288-.7q.3-.3.713-.312t.712.287L11 12.55V5q0-.425.288-.712T12 4t.713.288T13 5v7.55l1.875-1.85q.3-.3.713-.288t.712.313q.275.3.288.7t-.288.7l-3.6 3.6q-.15.15-.325.213T12 16"/>
+    </symbol>
+    <symbol id="svg-warning" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+    </symbol>
+  </svg>
+</body>
+</html>
