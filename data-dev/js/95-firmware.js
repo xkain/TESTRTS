@@ -1,15 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
-// --- MODE TEST OTA (design des barres de progression) ---
-// A repasser a false avant tout commit/prod : quand true, le clic sur "btnUpdate" (apres
-// confirmation du prompt, cf. confirmInstallGitRelease()) ne télécharge ni n'envoie rien, ni
-// firmware.backup(). Il se contente d'afficher l'ecran de progression (installGitRelease) avec
-// les barres figees a DEBUG_FAKE_OTA_PCT%, sans verrou 'hard' -- l'overlay reste fermable en
-// cliquant hors de la modale (pas de [close]/poignee mobile sur cet ecran, cf.
-// renderGitInstallProgress()).
-const DEBUG_FAKE_OTA = false;
-const DEBUG_FAKE_OTA_PCT = 60;
 
 class Firmware {
     initialized = false;
@@ -483,7 +474,7 @@ class Firmware {
         return match ? parseInt(match[1], 10) : 0;
     }
 
-    // Écran de progression de installGitRelease, partagé entre le flux réel et DEBUG_FAKE_OTA.
+    // Écran de progression de installGitRelease.
     // Trois étapes en rail, comme le téléversement : 1 = téléchargement depuis Pages, 2 = envoi à
     // /updateFirmware, 3 = redémarrage puis renvoi des packs de langue. Une seule barre, celle de
     // l'étape en cours. Même fenêtre que la sélection de version, sauf sur mobile : genmod-task
@@ -554,13 +545,6 @@ class Firmware {
     async installGitRelease(div) {
         let obj = ui.fromElement(div);
 
-        // --- MODE TEST OTA (cf. DEBUG_FAKE_OTA en tête de fichier) ---
-        if (DEBUG_FAKE_OTA) {
-            this.renderGitInstallProgress(div, obj.version || 'X.X.X');
-            this.setInstallPhase(div, 2, tr('GIT_RELEASE_PHASE_INSTALL'));
-            this.setInstallBar('progInstall', DEBUG_FAKE_OTA_PCT);
-            return;
-        }
 
         const rel = (div._rel?.releases || []).find(r => r.version.name === obj.version);
         if (!rel || !rel.asset) return ui.errorMessage(tr('ERR_UNSPECIFIED'));

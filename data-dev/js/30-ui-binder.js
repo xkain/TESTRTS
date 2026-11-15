@@ -707,52 +707,6 @@ class UIBinder {
             el.style.removeProperty('--pulse-color');
         }
     }
-    wizSetStep(el, step) {
-        let curr = this.wizCurrentStep(el);
-        let sStep = step.toString();
-
-        el.setAttribute('data-stepid', step);
-        // Consommé par .stepper-wrapper::after (overlays.css) pour la largeur de la barre de
-        // liaison, et par .completed/.active ci-dessous pour les puces -- généralisé à N'IMPORTE
-        // QUEL nombre d'étapes (calc(), pas une liste de règles [data-stepid="N"] figée) : cf.
-        // l'assistant de calibration, qui peut dépasser les ~4-5 étapes des autres wizards.
-        el.style.setProperty('--current-step', step);
-        el.querySelectorAll('.stepper-item[data-stepid]').forEach(item => {
-            const n = parseInt(item.getAttribute('data-stepid'), 10);
-            const isCompleted = n < step;
-            item.classList.toggle('completed', isCompleted);
-            item.classList.toggle('active', n === step);
-            // Étape validée : remplace le chiffre du cercle par un check (svg-check, cf. index.html)
-            // -- restauré dès qu'elle redevient active/à venir (retour arrière via
-            // un retour arrière). Point d'entrée unique pour tous les wizards du projet (appairage,
-            // désappairage, calibration, mise à jour OTA...), tous pilotés par ce même wizSetStep().
-            const counter = item.querySelector('.step-counter');
-            if (counter) counter.innerHTML = isCompleted ? '<svg><use href="#svg-check"></use></svg>' : n;
-        });
-        el.querySelectorAll('[data-stepid], [data-ustepid], [data-mstepid]').forEach(item => {
-            if (item.classList.contains('stepper-item')) return;
-            if (item === el) return;
-
-            let show = true;
-
-            if (item.hasAttribute('data-stepid')) {
-                show = item.getAttribute('data-stepid') === sStep;
-            }
-            else if (item.hasAttribute('data-ustepid')) {
-                show = item.getAttribute('data-ustepid') !== sStep;
-            }
-            else if (item.hasAttribute('data-mstepid')) {
-                let steps = item.getAttribute('data-mstepid').split(',');
-                show = steps.includes(sStep);
-            }
-            item.style.display = show ? '' : 'none';
-        });
-        if (curr !== step) {
-            let evt = new CustomEvent('stepchanged', { detail: { oldStep: curr, newStep: step }, bubbles: true });
-            el.dispatchEvent(evt);
-        }
-    }
-    wizCurrentStep(el) { return parseInt(el.getAttribute('data-stepid') || 1, 10); }
     pinKeyPressed(evt) {
         let el = evt.target || evt.srcElement;
         let parent = el.parentElement;

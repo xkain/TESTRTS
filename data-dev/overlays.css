@@ -39,7 +39,6 @@
         transform:translateY(0);
     }
 }
-/* VERTICAL */
 @keyframes bounce-alert {
     0%   { transform: translateY(0); }
     0.5% { transform: translateY(-6px); }
@@ -51,17 +50,12 @@
 .procFwStatusshow {
     animation: bounce-alert 20s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
 }
-/* PULSE */
 @keyframes pulse-warning {
     0% { opacity: 1; }
     50% { opacity: 0.5; }
     100% { opacity: 1; }
 }
-.somfyShadeCtl[data-windy="true"] .indicator-wind {
-    animation: pulse-warning 1.5s infinite;
-}
 
-/*Slide up/down modal overlay*/
 @keyframes slideDown {
     from { transform: translateY(0); }
     to { transform: translateY(100%); }
@@ -72,7 +66,6 @@
         transform: translateY(0);
     }
 }
-/*Slide button*/
 @keyframes slideUp {
     from {
         transform: translateY(100%);
@@ -505,8 +498,7 @@ body.modal-open {
 .overlayHeader{
     margin-bottom: 0;
 }
-.modalHeader-block,
-.overlayHeader-block{
+.modalHeader-block{
     display: flex;
     align-items: center;
     gap: 16px;
@@ -530,25 +522,17 @@ body.modal-open {
     height: 28px;
     fill: currentColor;
 }
-.modalHeader-texts,
-.overlayHeader-texts {
+.modalHeader-texts {
     display: flex;
     flex-direction: column;
     gap: 4px;
     text-align: left;
 }
-.modalHeader-title,
-.overlayHeader-title {
+.modalHeader-title {
     font-size: 1.25em;
     font-weight: 600;
     color: var(--color-text-main);
     line-height: 1.2;
-}
-.overlayHeader-titleRow {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
 }
 .overlayHeader-state {
     flex-shrink: 0;
@@ -561,27 +545,19 @@ body.modal-open {
     font-weight: 600;
     white-space: nowrap;
 }
-.modalHeader-subtitle,
-.overlayHeader-subtitle{
+.modalHeader-subtitle{
     font-size: 0.9em;
     color: var(--color-text-subtitle);
     line-height: 1.3;
 }
 /* Les overlays ont toujours un bouton close dans .overlayHeader-right : une ligne pleine largeur
    vient le frôler de 1-2px. Les modales n'ont pas ce bouton dans leur en-tête, donc rien à fuir. */
-.overlayHeader-subtitle{
-    width: 96%;
-}
-.modalHeader-right,
-.overlayHeader-right{
+.modalHeader-right{
     display: flex;
     align-items: center;
 }
 .modalHeader-right{
     gap: 15px;
-}
-.overlayHeader-right{
-    gap: 2px;
 }
 
 /* =======================================================================
@@ -978,116 +954,6 @@ button.is-busy::before {
  *  ASSISTANTS À ÉTAPES (wizard/stepper partagé : appairage, liaison groupe...)
  *  ======================================================================= */
 
-.step-item {
-    display: flex;
-    align-items: flex-start;
-}
-.step-number {
-    background: var(--color-accent);
-    color: white;
-    width: 24px;
-    height: 24px;
-    border-radius:var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    margin-right: 12px;
-    flex-shrink: 0;
-    margin-top: 2px;
-}
-.step-text {
-    font-size: 14px;
-    line-height: 1.4;
-    color: var(--color-text-main);
-}
-.wizard-step p {
-    font-size:14px;
-    margin:0;
-}
-/*etape circle*/
-.stepper-wrapper {
-    --steps: 4;
-    --step-width: calc(100% / var(--steps));
-    display: flex;
-    justify-content: space-between;
-    margin: 10px 0 10px 0;
-    position: relative;
-    width: 100%;
-}
-.stepper-wrapper::before {
-    content: "";
-    position: absolute;
-    top: 20px;
-    left: calc(var(--step-width) / 2);
-    right: calc(var(--step-width) / 2);
-    height: 3px;
-    background: #444;
-    z-index: 0;
-}
-.stepper-wrapper::after {
-    content: "";
-    position: absolute;
-    top: 20px;
-    left: calc(var(--step-width) / 2);
-    height: 3px;
-    background: var(--color-accent);
-    z-index: 0;
-    transition: width 0.4s ease;
-    /* Généralisé via --current-step (posé par ui.wizSetStep() sur l'élément .wizard, hérité par ce
-       descendant) plutôt que par une liste de règles [data-stepid="N"] figée -- cassait au-delà de
-       l'étape 5, jamais atteinte par les wizards existants avant l'assistant de calibration (qui
-       peut aller jusqu'à 7 étapes). */
-    width: calc((var(--current-step, 1) - 1) * var(--step-width));
-}
-
-.stepper-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    z-index: 1;
-}
-.step-counter {
-    width: 40px;
-    height: 40px;
-    border-radius:var(--radius-full);
-    background: #444;
-    color: #ccc;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    border: 4px solid var(--color-bg-card);
-    z-index: 2;
-    position: relative;
-    margin-bottom: 3px;
-}
-/*États Actifs -- généralisé via les classes .completed/.active posées par ui.wizSetStep() sur
-  chaque .stepper-item, plutôt que par une liste de règles [data-stepid="N"] figée (même cause que
-  .stepper-wrapper::after ci-dessus : cassait au-delà de l'étape 4).*/
-.stepper-item.completed .step-counter,
-.stepper-item.active .step-counter { background: var(--color-accent); color: white; }
-/* Icône check injectée par ui.wizSetStep() (30-ui-binder.js) à la place du chiffre une fois
-   l'étape validée. */
-.step-counter svg {
-    width: 18px;
-    height: 18px;
-}
-/*titre step*/
-.step-title-container {
-    text-align: center;
-    margin-bottom: 10px;
-    min-height: 24px;
-}
-.step-title {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--color-text-main);
-    animation: fadeInBlur 0.3s ease-in-out;
-}
 .instructions-content .empty-state {
     padding:0;
 }
@@ -1118,10 +984,6 @@ button[line].fw-sidebar-button:hover {
 /* =======================================================================
  *  ASSISTANTS MISE À JOUR (upload firmware & installation GitHub/HACS)
  *  ======================================================================= */
-
-.UploadFile-content .overlay-scroll-content {
-    padding-top: 0;
-}
 
 .fw-band {
     margin: 12px -20px 16px;
@@ -1159,15 +1021,6 @@ button[line].fw-sidebar-button:hover {
     margin-left: 0;
     margin-right: 0;
 }
-#divPrereleaseWarning .information-text {
-    font-size: 12.5px;
-    line-height: 1.45;
-}
-/* Le bandeau visible tient lieu de séparateur : deux filets à 16px l'un de l'autre feraient
-   doublon. Classe posée par gitReleaseSelected() en même temps que l'affichage du bandeau. */
-#divGitInstall.has-prerelease .hrModal {
-    display: none;
-}
 /* nowrap est le coeur du dispositif : c'est lui qui rend scrollWidth représentatif de la largeur
    réelle du nom, ce sur quoi fitFileName() s'appuie pour choisir la taille. */
 .fw-id-name {
@@ -1194,62 +1047,6 @@ button[line].fw-sidebar-button:hover {
     font-weight: 700;
 }
 
-.github-content .baseFlexRow,
-.UploadFile-content .baseFlexRow {
-    display: flex;
-    flex-direction: row;
-    gap: 15px;
-    justify-content: space-between;
-}
-.github-content .uniLabel,
-.UploadFile-content .uniLabel {
-    font-size: 1em;
-}
-
-.github-content .overlay-static-content {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-}
-
-.labelgrey {
-    font-size: 14px;
-    color: #888;
-    font-family: monospace;
-}
-
-.github-content .hrModal {
-    margin: 0;
-}
-
-.github-content .uniRow,
-.UploadFile-content .uniRow {
-    background: none;
-    border: none;
-    box-shadow: none;
-}
-
-.selectCompac {
-    background: transparent;
-    border: none;
-    color: var(--color-accent);
-    font-weight: bold;
-    font-family: monospace;
-    cursor: pointer;
-    text-align: right;
-    outline: none;
-}
-.selectCompac:hover {
-    filter: brightness(1.3);
-}
-#divGitInstall .warningText{
-    margin-top: -10px;
-}
-.warningText svg {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-}
 .release-notes-preview {
     padding: 5px 0;
     max-height: 300px;
@@ -1268,84 +1065,19 @@ button[line].fw-sidebar-button:hover {
     font-size: 0.9em;
     color: var(--color-text-secondary);
 }
-#divGitInstall .hrDivFooter {
-    margin: 0 -30px 15px -30px;
-}
 /* ID plus spécifique que .modalHeader-handle seul suffit à l'emporter sur la règle mobile qui la
    rend visible (cf. @media (max-width:767px) plus bas) -- pas de !important nécessaire. */
 #divGitInstall .modalHeader-handle {
     display: none;
 }
-.v-step-item {
-    display: flex;
-    position: relative;
-    height: 80px;
-}
-.v-step-item:last-child {
-    height: 40px;
-}
-.v-step-left {
-    width: 40px;
-    display: flex;
-    justify-content: center;
-    flex-shrink: 0;
-    position: relative;
-}
-#divUploadFile .step-counter {
-    background: var(--color-accent);
-    color: white;
-    display: flex;
-    margin: 0;
-}
-.v-step-line {
-    position: absolute;
-    top: 40px;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 3px;
-    background: var(--color-border-hr-soft);
-    z-index: 1;
-}
-.v-step-right {
-    flex: 1;
-    padding-left: 20px;
-    display: flex;
-    align-items: center;
-    height: 40px;
-    min-width: 0;
-}
 
-/*footer*/
-.footer-sticky-content {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-}
-.gitBackup {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius:var(--radius-icon-badge);
-    background: var(--color-border-shade-card);
-    color: #fcfcfc;
-    transition: filter 0.2s;
-    flex-shrink: 0;
-}
-.gitBackup svg {
-    width: 20px;
-    height: 20px;
-    fill: var(--color-accent);
-}
 #btnBackupCfg {
     cursor: pointer;
 }
 #btnBackupCfg:hover {
     filter: brightness(0.9);
 }
-/*Mardown*/
+/* Markdown */
 .md-code-inline {
     background: rgba(120, 120, 120, 0.2);
     padding: 2px 4px;
@@ -1376,45 +1108,6 @@ button[line].fw-sidebar-button:hover {
  *  Led Overlay
  *  ======================================================================= */
 
-
-
-.somfyRepeater {
-    height: 38px;
-    padding: 12px 15px;
-    background: var(--color-bg-card);
-    border-radius: 25px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-    box-sizing: border-box;
-    touch-action: pan-y;
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-    transition: transform 0.2s ease-out;
-    will-change: transform;
-}
-.somfyRepeater {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: 100%;
-    height: 50px;
-    gap: 12px;
-    border-radius: var(--radius-row);
-    margin-bottom: 8px;
-    border: 1px solid var(--color-border);
-}
-.room-name,
-.group-name,
-.shade-name,
-.repeater-name-block {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-}
 .cfg-room {
     font-size:11px;
     opacity: 0.5;
@@ -1435,23 +1128,9 @@ button[line].fw-sidebar-button:hover {
     width: 20px;
     height: 20px;
 }
-.somfyRepeater .shade-icon-wrapper {
-    height: auto;
-    align-self: stretch;
-    margin: -12px 0 -12px -12px;
-    border-radius: 0;
-}
 /* -----------------------------------------------------------------------
  *  Télécommandes liées : adresse et badge de signal (fiche, fenêtre de tâche)
  * ----------------------------------------------------------------------- */
-.idRemoteAddress {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-    margin-left: auto;
-    line-height: 1;
-}
 .linkedRemote-sep {
     opacity: 0.5;
 }
@@ -1492,28 +1171,6 @@ button[line].fw-sidebar-button:hover {
 .linkedRemote-signal-value.sig-bad {
     color: var(--color-signal-bad);
 }
-.remote-search-status {
-    margin: 0 20px 15px;
-}
-.remote-search-spinner {
-    display: inline-block;
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    border: 2px solid var(--color-accent-transp-70);
-    border-top-color: var(--color-accent);
-    border-radius: var(--radius-full);
-    animation: remote-search-spin 0.8s linear infinite;
-}
-.AddrId-label {
-    opacity: 0.5;
-    font-size: 0.7em;
-    font-weight: bold;
-    text-transform: uppercase;
-    display: inline-block;
-    margin: 0;
-    padding: 0;
-}
 .name-text {
     white-space: nowrap;
     overflow: hidden;
@@ -1522,13 +1179,6 @@ button[line].fw-sidebar-button:hover {
     margin: 0;
     font-size: 0.95em;
     font-weight: bold;
-}
-.group-address,
-.shade-address {
-    font-family: monospace;
-    font-size: 0.9em;
-    display: inline-block;
-    margin: 0;
 }
 .divEditDelete-svg {
     flex-shrink: 0;
@@ -1655,20 +1305,8 @@ button[line].fw-sidebar-button:hover {
 .git-post-status .wiz-spin { margin-top: 3px; }
 #divGitInstall .genmod-foot-btns .gen-btn { white-space: nowrap; }
 
-/* Update*/
 #selVersion.inputAndSelect {
     font-size: 15px;
-}
-#btnUpdateApplication use,
-.mode-app-update .overlayHeader-badge use {
-    fill: var(--color-warning);
-}
-.mode-firm-update .overlayHeader-badge use {
-    fill: var(--color-danger);
-}
-/* Restore*/
-#jsUniRestore.uniblocCol {
-    gap:0;
 }
 #jsUniRestore .uniRow {
     padding: 8px 10px;
@@ -1874,29 +1512,6 @@ button[line].fw-sidebar-button:hover {
     #divRadioWizard .genmod-head { display: flex; }
 }
 
-.button-container-overlay {
-    display:flex;
-    flex-direction:row;
-    position:relative;
-    width:100%;
-    margin:15px auto 0;
-    padding: 0 20px 0 20px;
-    clear:both;
-    gap: 15px;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* =========================================================================
  *  TABLEAU DE BORD -- CONTENU GÉNÉRÉ
  *
@@ -1979,37 +1594,7 @@ button[line].fw-sidebar-button:hover {
     align-items: stretch;
 }
 
-.dash-card-content {
-    flex: 1;
-    padding: 14px 16px;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    box-sizing: border-box;
-}
-
 /* --- En-tête : icône --------------------------------------------------- */
-
-.dash-card-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    width: 100%;
-    height: 60px;
-}
-
-.group-icon,
-.shade-icon {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-}
-
-.group-icon {
-    height: 60px;
-}
 
 .somfyGroupCtl .group-icon-wrapper {
     width: 42px;
@@ -2029,15 +1614,6 @@ button[line].fw-sidebar-button:hover {
 }
 
 /* --- En-tête : nom et pièce -------------------------------------------- */
-.somfyGroupCtl .group-name,
-.somfyShadeCtl .shade-name {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex: 1;
-    padding-left: 0;
-    min-width: 0;
-}
 
 .groupctl-name,
 .shadectl-name {
@@ -2051,14 +1627,6 @@ button[line].fw-sidebar-button:hover {
 }
 
 /* --- En-tête : position affichée (carte équipement) -------------------- */
-.somfyShadeCtl .shadectl-mypos {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.85em;
-    margin-top: 2px;
-    font-weight: 700;
-}
 
 .val-pos {
     color: var(--color-accent-light);
@@ -2066,31 +1634,6 @@ button[line].fw-sidebar-button:hover {
 
 .val-tilt-pos {
     color: #00bcd4;
-}
-
-.somfyShadeCtl[data-shadetype="14"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="15"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="16"] .shadectl-mypos {
-    display:none;
-}
-
-/* --- En-tête : équipements associés (carte groupe) --------------------- */
-.somfyGroupCtl .groupctl-shades {
-    font-size: 0.75em;
-    color: var(--color-text-subtle, #8a99ad);
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin-top: 1px;
-}
-
-.somfyGroupCtl .groupctl-shades label {
-    color: inherit;
-    margin-right: 4px;
-}
-
-.somfyGroupCtl .groupctl-shades span {
-    font-weight: 400;
 }
 
 /* --- En-tête : badges d'action ----------------------------------------- */
@@ -2125,243 +1668,10 @@ button[line].fw-sidebar-button:hover {
     color: var(--color-sun);
 }
 
-/* --- Rangée de contrôles : flèches du carrousel ------------------------ */
-.shadectl-controls-wrapper {
-    display: flex;
-    align-items: center;
-
-    width: 100%;
-    gap: 6px;
-   height: 50px;
-}
-
-.btn-nav {
-    background-color: transparent;
-    border: none;
-    color: var(--color-text-secondary);
-    height: 40px;
-    width: 20px;
-    padding:0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: color 0.2s ease;
-}
-
-/* `button:hover`/`button:active`, plus bas dans ce fichier, peignent tout <button> à la couleur
-   d'accent -- neutralisé ici, la flèche n'a pas de fond au repos. */
-.btn-nav:hover,
-.btn-nav:active {
-    background: transparent;
-}
-
-.btn-nav:hover {
-    color: var(--color-text-main);
-}
-
-/* Bout de course : la flèche disparaît mais garde sa place, sans quoi le carrousel se décalerait de
-   20 px à chaque changement de page. */
-.btn-nav:disabled {
-    visibility: hidden;
-}
-
-/* Retour d'appui porté par le glyphe (le bouton n'a ni fond ni bordure) et joué par une animation
-   de durée fixe plutôt que par :active : un clic dure 60 à 100 ms, l'état s'éteint avant qu'un
-   aller-retour soit perceptible. La classe est posée au pointerdown par bindCarouselNavFeedback()
-   dans 70-somfy.js. Sous data-feedback-ui pour rester soumis au réglage « Navigation & cartes ». */
-html:not([data-feedback-ui="off"]) .btn-nav-left.btn-nav-press svg {
-    animation: navNudgeLeft 0.22s ease-out;
-}
-
-html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
-    animation: navNudgeRight 0.22s ease-out;
-}
-
-/* --- Rangée de contrôles : carrousel et curseurs ----------------------- */
-/* -----------------------------------------------------------------------
- *  CARROUSEL DE CONTRÔLES -- pages Boutons / Position / Inclinaison, dont
- *  le nombre dépend des capacités réelles de l'équipement (cf. setShadesList() :
- *  noMyShadeTypes -> page Boutons seule ; shade.tiltType>0 -> page Tilt en
- *  plus). Piloté EXCLUSIVEMENT par .btn-nav / .page-dots (shadeCarouselGoTo/
- *  Nav dans 70-somfy.js) : volontairement pas de glissement tactile/souris sur
- *  .carousel-viewport, qui entrait en conflit avec le drag des sliders MD3
- *  logés dans les pages Position/Inclinaison (un swipe démarré sur le
- *  slider changeait de page au lieu de régler la valeur).
- * ----------------------------------------------------------------------- */
-.controls-carousel-wrapper {
-    flex: 1;
-    min-width: 0;
-}
-
-.carousel-viewport {
-    overflow: hidden;
-    width: 100%;
-}
-
-.carousel-track {
-    display: flex;
-    width: 100%;
-    transition: transform 0.25s ease;
-}
-
-.carousel-page {
-    flex: 0 0 100%;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.carousel-page .slider-wrapper {
-    flex: 1;
-    min-width: 0;
-    width: auto; /* neutralise le width:100% par défaut, le bouton MY partage la ligne */
-    height: 40px;
-}
-
-.btn-page-my {
-    flex: 0 0 48px;
-    width: 48px;
-    height: 40px;
-    border-radius:var(--radius-btn);
-    border: 1px solid var(--color-control-border);
-    background-color: var(--color-control-bg);
-    color: var(--color-text-main);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-/* Pas de largeur ni de hauteur ici : le bouton porte aussi .btn-somfy-svg, dont la règle
-   `svg { width: 100% }` (base.css) a la même spécificité et l'emporte par l'ordre de chargement --
-   le glyphe remplit le bouton, comme sur les commandes de la page Boutons. */
-.btn-page-my svg {
-    fill: currentColor;
-}
-
 /* --- Rangée de contrôles : boutons de commande ------------------------- */
-.somfyGroupCtl .groupctl-buttons,
-.somfyShadeCtl .groupctl-buttons {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    margin-top: 0;
-}
-
-.somfyGroupCtl .groupctl-buttons {
-    margin-top:0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    height: 50px;
-}
-
-.somfyGroupCtl .groupctl-buttons .btn-somfy-svg,
-.somfyShadeCtl .shadectl-buttons .btn-somfy-svg {
-    background-color: var(--color-control-bg);
-    border: 1px solid var(--color-control-border);
-    color: var(--color-text-main, #ffffff);
-    height: 40px;
-    width: auto;
-    border-radius:var(--radius-btn);
-    font-size: 0.85em;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    padding: 0;
-    box-shadow: none;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.somfyGroupCtl .groupctl-buttons .btn-somfy-svg:hover,
-.somfyShadeCtl .shadectl-buttons .btn-somfy-svg:hover {
-    background-color: var(--color-control-bg-hover);
-    filter: none;
-}
-
-.somfyGroupCtl .groupctl-buttons .button-sunflag {
-    flex: 0 0 40px;
-    width: 40px;
-    margin-right: 0;
-}
-
-/* Le bouton porte aussi .btn-somfy-svg, dont la règle `svg { width: 100% }` l'emporterait
-   sur .button-sunflag svg et sur les attributs width/height du balisage. */
-.somfyGroupCtl .groupctl-buttons .button-sunflag svg {
-    width: 24px;
-    height: 24px;
-}
 
 .somfyGroupCtl .button-sunflag[data-on="true"] svg {
     color: var(--color-sun);
-}
-
-/* --- Barre d'état : indicateurs et badge My ---------------------------- */
-
-
-.indicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.indicator-wind { color: #f97316; }
-
-.indicator-sun { color: #eab308; }
-
-.indicator-wind svg,
-.indicator-sun svg { width: 15px; height: 15px; }
-
-.somfyShadeCtl[data-sunny="false"] .indicator-sun,
-.somfyShadeCtl:not([data-sunny]) .indicator-sun,
-.somfyShadeCtl[data-windy="false"] .indicator-wind,
-.somfyShadeCtl:not([data-windy]) .indicator-wind {
-    display: none;
-}
-
-.myShade-badge {
-    color: var(--color-text-secondary);
-    padding: 3px 10px;
-    border-radius:var(--radius-md);
-    font-size: 11px;
-    background: rgba(255, 255, 255, 0.01);
-    border: 1px solid var(--color-border);
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.myShade-badge strong {
-    color: var(--color-text-main);
-}
-
-/* --- Barre d'état : pagination et menu --------------------------------- */
-
-.page-dots {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.page-dots .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: var(--radius-full);
-    background-color: #334155;
-    cursor: pointer;
-}
-
-.page-dots .dot.active {
-    width: 14px;
-    border-radius: var(--radius-full);
-    background-color: var(--color-accent-transp-80);
 }
 
 /* --- Carte d'équipement : en-tête, scène et barre (dcard) ----------------
@@ -2575,36 +1885,6 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     animation: ui-pulse-breathe 2.4s ease-in-out infinite;
 }
 
-/* Le SENS se lit sur la commande correspondante, dont l'icône seule prend la couleur
-   d'accentuation -- le fond du bouton ne bouge pas. C'est le gabarit déjà posé pour l'état actif
-   du soleil (.button-sunflag[data-on="true"] svg, plus haut), et il ne peut pas entrer en conflit
-   avec le survol, qui n'agit lui que sur background-color.
-   Attention au signe : p_direction() vaut +1 vers la position 100 et Up vise 0 (cf.
-   SomfyPositioning.cpp), donc +1 est une DESCENTE et -1 une montée. Associer la couleur au bouton
-   data-cmd plutôt qu'à une icône dédiée met ce lien sous les yeux, là où une flèche autonome peut
-   pointer à l'envers sans que rien ne le signale. */
-html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="-1"] .shadectl-buttons .cmd-button[data-cmd="up"] svg,
-html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="1"] .shadectl-buttons .cmd-button[data-cmd="down"] svg,
-html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"][data-direction="-1"] .groupctl-buttons .cmd-button[data-cmd="up"] svg,
-html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"][data-direction="1"] .groupctl-buttons .cmd-button[data-cmd="down"] svg {
-    color: var(--color-moving);
-}
-
-/* Équipement impulsionnel : le firmware pose tout de même une cible 0 ou 100 (SomfyDispatch.cpp,
-   case My sous isToggle()), donc la direction existe et le bouton unique peut dire « ça bouge »,
-   sans prétendre dire le sens. */
-html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="-1"] .shadectl-buttons .cmd-button[data-cmd="toggle"] svg,
-html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="1"] .shadectl-buttons .cmd-button[data-cmd="toggle"] svg {
-    color: var(--color-moving);
-}
-
-/* tiltonly (3) : le dispatch redirige DÉJÀ Up/Down vers les lames, ces deux boutons portent donc
-   le sens d'inclinaison de cet équipement. */
-html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdirection="-1"] .shadectl-buttons .cmd-button[data-cmd="up"] svg,
-html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdirection="1"] .shadectl-buttons .cmd-button[data-cmd="down"] svg {
-    color: var(--color-moving);
-}
-
 /* Le halo cesse de respirer sans cesser d'exister, et la couleur du bouton ne dépendait d'aucune
    animation : le témoin reste complet pour qui a demandé moins de mouvement. */
 @media (prefers-reduced-motion: reduce) {
@@ -2626,11 +1906,7 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
         width: 76%;
         max-width: 500px !important;
     }
-    .somfyShadeCtl .shadectl-buttons {
-        gap: 2px;
-    }
 }
-
 
 /* -----------------------------------------------------------------------
  *  Popup positionnement équipement (openSetMyPosition)
@@ -2805,7 +2081,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     cursor: pointer;
 }
 
-
 .popup-actions {
     display:flex;
     justify-content: flex-end;
@@ -2816,10 +2091,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     margin-top:0px;
     margin-bottom:0px;
 }
-.popup-slide-out {
-    animation: slideToRight 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
-}
-
 
 /* =======================================================================
  *  FENÊTRES LANGUES ET PACKS D'ICÔNES (page Système › Général)
@@ -3151,7 +2422,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     }
     .genmod-foot-btns .gen-btn { flex: 1 1 0; justify-content: center; }
 }
-
 
 /* --- Fenêtres de tâche de la page Appareil (genmod-task) : GitHub, téléversement, restauration.
    Même coque que les fenêtres de Général ; seuls leurs éléments propres et le mobile changent. */
@@ -3956,7 +3226,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
  *  MEDIA QUERIES RESPONSIVE (toutes modales/overlays)
  *  ======================================================================= */
 
-
 @media (max-width: 767px) {
     .modal-overlay {
         align-items: flex-end;
@@ -4089,15 +3358,8 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
         display: none !important;
     }
 
-
-
-
     .release-notes-preview {
         max-height: 50%;
-    }
-    .hrDivFooter,
-    .hrDivFooter-Instruc {
-        display: none;
     }
     #divGitInstall .instructions-content {
         display: flex !important;
@@ -4114,21 +3376,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
         margin-top: 10px;
         -webkit-overflow-scrolling: touch;
     }
-    .button-container-overlay {
-        border-top: 1px solid #333;
-        padding: 15px;
-        box-sizing: border-box;
-        transform: translateY(100%);
-        animation: slideUpFooter 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards;
-        box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
-    }
-}
-@media screen and (max-width: 550px) {
-
-    .idRemoteAddress {
-        display: none !important;
-    }
-
 }
 
 /* Fiche de planning : trois zones empilées -- en-tête d'identité, une ligne par horaire, jours en
@@ -4443,6 +3690,9 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 :root[data-theme="dark"] .rts-btn:active {
     background: linear-gradient(#333940, #4a5057);
 }
+/* Ni course ni tassement : le tablier est déjà en butée et n'apparaît qu'en
+ * fondu. Les minuteries du script testent la même media-query et se
+ * raccourcissent d'autant, sinon la sortie resterait inerte le temps d'une
  * animation qui n'a pas lieu. */
 @media (prefers-reduced-motion: reduce) {
     .rts-shade { animation: rts-fade .3s both; }

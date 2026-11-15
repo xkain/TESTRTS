@@ -415,6 +415,21 @@ MINIFIERS = {
 # rendu de la page.
 CSS_CHUNKS = ("base.css", "main.css", "overlays.css")
 
+def _check_css_syntax(css: str):
+    """esbuild en simple analyseur. Une queue de commentaire ou une accolade orpheline passe
+    minify_css sans bruit et change d'ampleur une fois les sauts de ligne retirés : une apostrophe
+    y ouvre une chaîne qui avale toute la fin du bundle (vu le 15/11/2026). Bloque le build à la
+    première erreur de syntaxe ; sans esbuild, prévient seulement."""
+    exe = _find_esbuild()
+    if not exe:
+        print("[web-assets] esbuild introuvable : syntaxe CSS non vérifiée")
+        return
+    r = subprocess.run([exe, "--loader=css", "--log-level=warning"], input=css.encode("utf-8"),
+                       stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    err = r.stderr.decode("utf-8", "replace")
+    if r.returncode != 0 or "css-syntax-error" in err:
+        raise RuntimeError("index.css : erreur de syntaxe CSS signalée par esbuild :\n" + err)
+
 def concat_css_chunks(src_dir: str, dst_dir: str):
     parts = []
     total = 0
@@ -428,8 +443,10 @@ def concat_css_chunks(src_dir: str, dst_dir: str):
     gz_path = os.path.join(dst_dir, "index.css.gz")
     # Jointure par un retour à la ligne : un fichier sans retour à la ligne final ne doit pas
     # coller sa dernière règle à la première du fichier suivant.
+    bundle = "\n".join(parts)
+    _check_css_syntax(bundle)
     with gzip.open(gz_path, "wb", compresslevel=9) as gz:
-        gz.write("\n".join(parts).encode("utf-8"))
+        gz.write(bundle.encode("utf-8"))
     new_sz = os.path.getsize(gz_path)
     pct = ((total - new_sz) / total * 100) if total else 0
     print(f"  {'*.css -> index.css':<30} {total:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [concat+minify+gzip]")

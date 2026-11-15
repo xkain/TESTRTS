@@ -4113,10 +4113,7 @@ class Somfy {
         shadeControls.innerHTML = divCtl;
         this.checkEmptyState();
         this.bindShadeCmdButtons(shadeControls);
-        // Applique les préférences d'interface persistées par équipement (page de carrousel par
-        // défaut, visibilité du badge "My") -- cf. getShadeUIPrefs. Fait après
-        // coup plutôt que dans le template ci-dessus car shadeCarouselGoTo() a besoin du
-        // data-pages déjà posé sur le DOM pour clamper correctement.
+        // Préférences d'interface persistées par équipement (cf. getShadeUIPrefs), posées sur le DOM rendu.
         for (let i = 0; i < shades.length; i++) {
             this.applyShadeUIPrefs(shades[i].shadeId);
         }
@@ -4270,8 +4267,7 @@ class Somfy {
     openCardSheet(kind, id, tab) {
         const host = get('divHomePnl');
         if (!host) return;
-        this.closeShadePositioners();
-        let ov = host.querySelector('.card-sheet-overlay:not([data-closing])');
+                let ov = host.querySelector('.card-sheet-overlay:not([data-closing])');
         if (!ov) {
             ov = document.createElement('div');
             ov.className = 'card-sheet-overlay';
@@ -4710,30 +4706,6 @@ class Somfy {
         ${this.cardSchedulesHtml('shade', shadeId)}
         <div class="card-block"><div class="card-block-head"><span>${tr('REMOTESLIST_TITLE')}</span></div>${remotes ? `<div class="sheet-list">${remotes}</div>` : `<div class="card-empty">${tr('REMOTESLIST_EMPTY')}</div>`}</div>`;
     }
-    shadeCarouselGoTo(shadeId, pageIndex) {
-        const track = get(`carouselTrack_${shadeId}`);
-        if (!track) return;
-        const total = parseInt(track.getAttribute('data-pages'), 10) || 1;
-        const clamped = Math.max(0, Math.min(total - 1, pageIndex));
-        track.style.transform = `translateX(-${clamped * 100}%)`;
-        track.setAttribute('data-page', clamped);
-        const dots = get(`carouselDots_${shadeId}`);
-        if (dots) dots.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === clamped));
-        const wrapper = track.closest('.shadectl-controls-wrapper');
-        if (wrapper) {
-            const prev = wrapper.querySelector('.btn-nav-left');
-            const next = wrapper.querySelector('.btn-nav-right');
-            if (prev) prev.disabled = clamped === 0;
-            if (next) next.disabled = clamped === total - 1;
-        }
-    }
-    closeShadePositioners() {
-        let ctls = document.querySelectorAll('.shade-positioner');
-        for (let i = 0; i < ctls.length; i++) {
-            ctls[i].remove();
-        }
-        document.querySelectorAll('.card-panel-open').forEach(c => c.classList.remove('card-panel-open'));
-    }
     screenShade() {
         // Jamais par-dessus une installation en cours (.inst-overlay porte alors une
         // barre de progression) ni pendant l'onboarding, et jamais deux fois.
@@ -4782,8 +4754,7 @@ class Somfy {
         logger.debug(`Sending My Position for shade id ${shadeId} to ${pos} and ${tilt}`);
         let overlay = ui.waitMessage(get('divContainer'));
         putJSON('/setMyPosition', { shadeId: shadeId, pos: pos, tilt: tilt }, (err, response) => {
-            this.closeShadePositioners();
-            overlay.remove();
+                        overlay.remove();
             if (err) { logger.error('Failed to set My Position:', err); ui.serviceError(err); return; }
             logger.debug('My Position command sent:', response);
             // Recale le cache local (myPos/myTiltPos) sur la réponse du firmware, déjà à jour puisque

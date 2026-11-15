@@ -1803,33 +1803,6 @@ document.addEventListener('click', () => {
     document.querySelectorAll('.overlayHeader-dropdown-menu.show').forEach(menu => menu.classList.remove('show'));
 });
 
-function wizardStepper(stepsData, translationPrefix) {
-    let stepsHtml = '';
-    let titlesHtml = '';
-
-    const isArray = Array.isArray(stepsData);
-    const totalSteps = isArray ? stepsData.length : stepsData;
-
-    for (let i = 1; i <= totalSteps; i++) {
-        stepsHtml += `<div class="stepper-item" data-stepid="${i}"><div class="step-counter">${i}</div></div>`;
-
-        let titleKey;
-        if (isArray) {
-            titleKey = stepsData[i - 1];
-        } else {
-            titleKey = `${translationPrefix}_STEP${i}`;
-        }
-        titlesHtml += `<h3 class="step-title wizard-step" data-stepid="${i}">${tr(titleKey)}</h3>`;
-    }
-    return `
-    <div class="stepper-wrapper" style="--steps: ${totalSteps};">
-    ${stepsHtml}
-    </div>
-    <div class="step-title-container">
-    ${titlesHtml}
-    </div>`;
-}
-
 // Tooltip d'aide générique (icônes ?), unifié sur le design du tooltip uptime (.app-tooltip, cf.
 // main.css). UN SEUL élément partagé,
 // ajouté au <body> et positionné en JS en position:fixed -- les conteneurs qui hébergent ces
