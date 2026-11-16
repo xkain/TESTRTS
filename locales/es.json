@@ -1672,6 +1672,7 @@
     "LIST_DROP_HERE": "Suelte aquí",
     "LIST_SEARCH_SORT": "Buscar y ordenar",
     "LIST_SORT": "Ordenar",
+    "LIST_FILTER": "Filtrar",
     "LIST_CAP_OF": "de {MAX}",
     "LIST_CAP_FREE_ONE": "1 hueco libre",
     "LIST_CAP_FREE_MANY": "{N} huecos libres",

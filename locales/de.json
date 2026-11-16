@@ -1672,6 +1672,7 @@
     "LIST_DROP_HERE": "Hier ablegen",
     "LIST_SEARCH_SORT": "Suchen und sortieren",
     "LIST_SORT": "Sortieren",
+    "LIST_FILTER": "Filtern",
     "LIST_CAP_OF": "von {MAX}",
     "LIST_CAP_FREE_ONE": "1 Platz frei",
     "LIST_CAP_FREE_MANY": "{N} Plätze frei",

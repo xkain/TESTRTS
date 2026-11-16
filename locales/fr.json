@@ -1672,6 +1672,7 @@
     "LIST_DROP_HERE": "Déposez ici",
     "LIST_SEARCH_SORT": "Rechercher et trier",
     "LIST_SORT": "Trier",
+    "LIST_FILTER": "Filtrer",
     "LIST_CAP_OF": "sur {MAX}",
     "LIST_CAP_FREE_ONE": "1 place libre",
     "LIST_CAP_FREE_MANY": "{N} places libres",

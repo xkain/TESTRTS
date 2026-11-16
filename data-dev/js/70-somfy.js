@@ -3388,6 +3388,7 @@ class Somfy {
         // Plannings : la note n'a de sens que tant que la position géographique manque.
         if (kind === 'schedule') root.querySelector('.gen-hero-note').hidden = !!this._sunTimesToday();
         root.querySelector('.gen-hero-menu').classList.toggle('has-query', !!q);
+        root.querySelector('.tools-more-btn').classList.toggle('has-query', st.filter !== 'all');
     }
     setCfgFilter(kind, key) {
         const st = this._cfgStateOf(kind);
@@ -3405,6 +3406,21 @@ class Somfy {
         const input = get(this._cfgConf(kind).root).querySelector('.gen-search-input');
         if (input) input.value = '';
         this.renderCfgPage(kind);
+    }
+    // PC et tablette : les filtres vivent dans un menu ⋮ à droite du tri (à plat sur mobile).
+    toggleCfgFilters(kind) {
+        const box = get(this._cfgConf(kind).root).querySelector('.tools-more');
+        const btn = box.querySelector('.tools-more-btn');
+        const open = box.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', open);
+        if (!open) return;
+        const close = (e) => {
+            if (box.contains(e.target)) return;
+            box.classList.remove('is-open');
+            btn.setAttribute('aria-expanded', false);
+            document.removeEventListener('pointerdown', close, true);
+        };
+        document.addEventListener('pointerdown', close, true);
     }
     // Mobile : recherche et tri vivent dans un menu ⋮ au bout de la ligne du titre.
     toggleCfgTools(kind) {

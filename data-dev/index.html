@@ -1240,16 +1240,18 @@
 
                     <div id="divSomfyMotors" class="subtab-content" style="display:none;">
                         <div id="divShadeListContainer" class="gen-layout cfg-list" data-kind="shade">
-                            <section class="gen-hero">
-                                <svg class="gen-hero-icon"><use href="#svg-indicShutter"></use></svg>
-                                <div class="gen-hero-text">
-                                    <h2 class="gen-hero-title" tr="SUBTAB_DEVICES"></h2>
-                                    <p class="gen-hero-desc" tr="PAGE_DEVICES_DESC"></p>
+                            <section class="hero" data-obj="equipement" data-kind="list">
+                                <span class="hero-media"><svg><use href="#svg-indicShutter"></use></svg></span>
+                                <div class="hero-head">
+                                    <span class="hero-eyebrow" tr="DASH_HOUSE_TITLE"></span>
+                                    <h2 class="hero-title" tr="SUBTAB_DEVICES"></h2>
+                                    <p class="hero-desc" tr="PAGE_DEVICES_DESC"></p>
                                 </div>
                                 <button type="button" class="gen-hero-menu" onclick="somfy.toggleCfgTools('shade');" tr="LIST_SEARCH_SORT" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
-                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
-                                <nav class="gen-filters"><h3 class="gen-filters-title" tr="SUBTAB_ROOMS"></h3><div class="gen-filters-list"></div></nav>
-                                <p class="gen-hero-note"><span tr="DRAG_SORT"></span></p>
+                                <div class="hero-data">
+                                    <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                    <p class="gen-hero-note"><span tr="DRAG_SORT"></span></p>
+                                </div>
                             </section>
                             <div class="gen-body">
                                 <div class="gen-tools">
@@ -1258,6 +1260,10 @@
                                     <div class="cfg-sort" data-kind="shade" role="group">
                                         <button type="button" data-sort="az" aria-pressed="false" onclick="somfy.setCfgSort('shade', 'az');" tr="SORT_AZ"></button>
                                         <button type="button" data-sort="room" aria-pressed="false" onclick="somfy.setCfgSort('shade', 'room');" tr="SORT_BY_ROOM"></button>
+                                    </div>
+                                    <div class="tools-more">
+                                        <button type="button" class="tools-more-btn" onclick="somfy.toggleCfgFilters('shade');" tr="LIST_FILTER" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
+                                        <div class="tools-more-pop"><nav class="gen-filters"><h3 class="gen-filters-title" tr="SUBTAB_ROOMS"></h3><div class="gen-filters-list"></div></nav></div>
                                     </div>
                                 </div>
                                 <div class="cfg-empty"><h3 class="cfg-empty-title" tr="EMPTY_DEVICE_TITLE"></h3><p class="cfg-empty-desc" tr="EMPTY_DEVICE_DESC"></p></div>
@@ -1575,16 +1581,18 @@
 
                     <div id="divSomfyGroups" class="subtab-content" style="display:none;">
                         <div id="divGroupListContainer" class="gen-layout cfg-list" data-kind="group">
-                            <section class="gen-hero">
-                                <svg class="gen-hero-icon"><use href="#svg-group"></use></svg>
-                                <div class="gen-hero-text">
-                                    <h2 class="gen-hero-title" tr="SUBTAB_GROUPS"></h2>
-                                    <p class="gen-hero-desc" tr="PAGE_GROUPS_DESC"></p>
+                            <section class="hero" data-obj="groupe" data-kind="list">
+                                <span class="hero-media"><svg><use href="#svg-group"></use></svg></span>
+                                <div class="hero-head">
+                                    <span class="hero-eyebrow" tr="DASH_HOUSE_TITLE"></span>
+                                    <h2 class="hero-title" tr="SUBTAB_GROUPS"></h2>
+                                    <p class="hero-desc" tr="PAGE_GROUPS_DESC"></p>
                                 </div>
                                 <button type="button" class="gen-hero-menu" onclick="somfy.toggleCfgTools('group');" tr="LIST_SEARCH_SORT" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
-                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
-                                <nav class="gen-filters"><h3 class="gen-filters-title" tr="SUBTAB_ROOMS"></h3><div class="gen-filters-list"></div></nav>
-                                <p class="gen-hero-note"><span tr="DRAG_SORT"></span></p>
+                                <div class="hero-data">
+                                    <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                    <p class="gen-hero-note"><span tr="DRAG_SORT"></span></p>
+                                </div>
                             </section>
                             <div class="gen-body">
                                 <div class="gen-tools">
@@ -1593,6 +1601,10 @@
                                     <div class="cfg-sort" data-kind="group" role="group">
                                         <button type="button" data-sort="az" aria-pressed="false" onclick="somfy.setCfgSort('group', 'az');" tr="SORT_AZ"></button>
                                         <button type="button" data-sort="room" aria-pressed="false" onclick="somfy.setCfgSort('group', 'room');" tr="SORT_BY_ROOM"></button>
+                                    </div>
+                                    <div class="tools-more">
+                                        <button type="button" class="tools-more-btn" onclick="somfy.toggleCfgFilters('group');" tr="LIST_FILTER" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
+                                        <div class="tools-more-pop"><nav class="gen-filters"><h3 class="gen-filters-title" tr="SUBTAB_ROOMS"></h3><div class="gen-filters-list"></div></nav></div>
                                     </div>
                                 </div>
                                 <div class="cfg-empty"><h3 class="cfg-empty-title" tr="EMPTY_GROUP_TITLE"></h3><p class="cfg-empty-desc" tr="EMPTY_GROUP_DESC"></p></div>
@@ -1733,16 +1745,18 @@
 
                     <div id="divSomfyRooms" class="subtab-content">
                         <div id="divRoomListContainer" class="gen-layout cfg-list" data-kind="room">
-                            <section class="gen-hero">
-                                <svg class="gen-hero-icon"><use href="#svg-navRoom"></use></svg>
-                                <div class="gen-hero-text">
-                                    <h2 class="gen-hero-title" tr="SUBTAB_ROOMS"></h2>
-                                    <p class="gen-hero-desc" tr="PAGE_ROOMS_DESC"></p>
+                            <section class="hero" data-obj="piece" data-kind="list">
+                                <span class="hero-media"><svg><use href="#svg-navRoom"></use></svg></span>
+                                <div class="hero-head">
+                                    <span class="hero-eyebrow" tr="DASH_HOUSE_TITLE"></span>
+                                    <h2 class="hero-title" tr="SUBTAB_ROOMS"></h2>
+                                    <p class="hero-desc" tr="PAGE_ROOMS_DESC"></p>
                                 </div>
                                 <button type="button" class="gen-hero-menu" onclick="somfy.toggleCfgTools('room');" tr="LIST_SEARCH_SORT" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
-                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
-                                <nav class="gen-filters"><h3 class="gen-filters-title" tr="LIST_FILTER_CONTENT"></h3><div class="gen-filters-list"></div></nav>
-                                <p class="gen-hero-note"><span tr="LIST_ROOMS_NOTE"></span></p>
+                                <div class="hero-data">
+                                    <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                    <p class="gen-hero-note"><span tr="LIST_ROOMS_NOTE"></span></p>
+                                </div>
                             </section>
                             <div class="gen-body">
                                 <div class="gen-tools">
@@ -1751,6 +1765,10 @@
                                     <div class="cfg-sort" data-kind="room" role="group">
                                         <button type="button" data-sort="az" aria-pressed="false" onclick="somfy.setCfgSort('room', 'az');" tr="SORT_AZ"></button>
                                         <button type="button" data-sort="order" aria-pressed="false" onclick="somfy.setCfgSort('room', 'order');" tr="SORT_MANUAL"></button>
+                                    </div>
+                                    <div class="tools-more">
+                                        <button type="button" class="tools-more-btn" onclick="somfy.toggleCfgFilters('room');" tr="LIST_FILTER" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
+                                        <div class="tools-more-pop"><nav class="gen-filters"><h3 class="gen-filters-title" tr="LIST_FILTER_CONTENT"></h3><div class="gen-filters-list"></div></nav></div>
                                     </div>
                                 </div>
                                 <div class="cfg-empty"><h3 class="cfg-empty-title" tr="EMPTY_ROOM_TITLE"></h3><p class="cfg-empty-desc" tr="EMPTY_ROOM_DESC"></p></div>
@@ -1761,16 +1779,18 @@
 
                     <div id="divSomfySchedules" style="display:none;" class="subtab-content">
                         <div id="divScheduleListContainer" class="gen-layout cfg-list" data-kind="schedule">
-                            <section class="gen-hero">
-                                <svg class="gen-hero-icon"><use href="#svg-navSchedule"></use></svg>
-                                <div class="gen-hero-text">
-                                    <h2 class="gen-hero-title" tr="SUBTAB_SCHEDULES"></h2>
-                                    <p class="gen-hero-desc" tr="PAGE_SCHEDULES_DESC"></p>
+                            <section class="hero" data-obj="planning" data-kind="list">
+                                <span class="hero-media"><svg><use href="#svg-navSchedule"></use></svg></span>
+                                <div class="hero-head">
+                                    <span class="hero-eyebrow" tr="DASH_HOUSE_TITLE"></span>
+                                    <h2 class="hero-title" tr="SUBTAB_SCHEDULES"></h2>
+                                    <p class="hero-desc" tr="PAGE_SCHEDULES_DESC"></p>
                                 </div>
                                 <button type="button" class="gen-hero-menu" onclick="somfy.toggleCfgTools('schedule');" tr="LIST_SEARCH_SORT" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
-                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
-                                <nav class="gen-filters"><h3 class="gen-filters-title" tr="LIST_FILTER_TRIGGER"></h3><div class="gen-filters-list"></div></nav>
-                                <p class="gen-hero-note"><span tr="LIST_GEO_NOTE"></span><button type="button" class="gen-btn" onclick="somfy.cfgNoteAction('schedule');" tr="GENERAL_GEO_TITLE"></button></p>
+                                <div class="hero-data">
+                                    <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                    <p class="gen-hero-note"><span tr="LIST_GEO_NOTE"></span><button type="button" class="gen-btn" onclick="somfy.cfgNoteAction('schedule');" tr="GENERAL_GEO_TITLE"></button></p>
+                                </div>
                             </section>
                             <div class="gen-body">
                                 <div class="gen-tools">
@@ -1779,6 +1799,10 @@
                                     <div class="cfg-sort" data-kind="schedule" role="group">
                                         <button type="button" data-sort="az" aria-pressed="false" onclick="somfy.setCfgSort('schedule', 'az');" tr="SORT_AZ"></button>
                                         <button type="button" data-sort="time" aria-pressed="false" onclick="somfy.setCfgSort('schedule', 'time');" tr="SORT_BY_TIME"></button>
+                                    </div>
+                                    <div class="tools-more">
+                                        <button type="button" class="tools-more-btn" onclick="somfy.toggleCfgFilters('schedule');" tr="LIST_FILTER" title="" aria-expanded="false"><svg><use href="#svg-menuVertical"></use></svg><i></i></button>
+                                        <div class="tools-more-pop"><nav class="gen-filters"><h3 class="gen-filters-title" tr="LIST_FILTER_TRIGGER"></h3><div class="gen-filters-list"></div></nav></div>
                                     </div>
                                 </div>
                                 <div class="cfg-empty"><h3 class="cfg-empty-title" tr="EMPTY_SCHEDULE_TITLE"></h3><p class="cfg-empty-desc" tr="EMPTY_SCHEDULE_DESC"></p></div>

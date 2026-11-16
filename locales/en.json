@@ -1672,6 +1672,7 @@
     "LIST_DROP_HERE": "Drop here",
     "LIST_SEARCH_SORT": "Search and sort",
     "LIST_SORT": "Sort",
+    "LIST_FILTER": "Filter",
     "LIST_CAP_OF": "of {MAX}",
     "LIST_CAP_FREE_ONE": "1 slot left",
     "LIST_CAP_FREE_MANY": "{N} slots left",
