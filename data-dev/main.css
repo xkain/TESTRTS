@@ -870,7 +870,7 @@ body.is-home-welcome .container {
 }
 .home-cta-btn {
     padding: 0 28px;
-    background: #1a5fb4;
+    background: var(--color-accent);
     color: #fff;
     font-size: 17px;
     font-weight: 800;
@@ -922,7 +922,7 @@ body.is-home-welcome .container {
 .home-wave-group {
     display: none;
     fill: none;
-    stroke: #1a5fb4;
+    stroke: var(--color-accent);
     stroke-width: 5;
     stroke-linecap: round;
 }
@@ -954,8 +954,8 @@ body.is-home-welcome .container {
     box-shadow: var(--home-shadow);
 }
 .home-step-card[data-state="current"] {
-    border-color: #1a5fb4;
-    box-shadow: 0 16px 40px rgba(26, 95, 180, .18);
+    border-color: var(--color-accent);
+    box-shadow: 0 16px 40px color-mix(in srgb, var(--color-accent) 18%, transparent);
 }
 .home-step-card[data-state="waiting"] {
     background: color-mix(in srgb, var(--surface), transparent 40%);
@@ -1049,7 +1049,7 @@ body.is-home-welcome .container {
     padding: 0 18px;
     border: 0;
     border-radius: var(--r-pill);
-    background: #1a5fb4;
+    background: var(--color-accent);
     color: #fff;
     font-family: inherit;
     font-size: 15px;

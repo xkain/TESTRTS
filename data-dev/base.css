@@ -299,18 +299,20 @@
     --tile-icon: 48px;
 }
 :root[data-theme="light"] {
-    --bg: #eceae6;
-    --panel: #f7f6f3;
+    /* Fond neutre (gris froid) choisi le 16/11 : le gris chaud #eceae6 rendait mal. */
+    --bg: #eef0f3;
+    --panel: #f8f9fb;
     --surface: #ffffff;
-    --surface-2: #f1efeb;
-    --sunken: #dcdad5;
+    --surface-2: #f2f4f7;
+    --sunken: #dde1e7;
     --topbar: #f8fafd;
     --border: #dcdfe4;
-    --divider: #eeece8;
+    --divider: #e6e9ee;
     --text: #17181c;
     --text-2: #3b3d44;
     --text-3: #6b6d74;
-    --accent: #1a5fb4;
+    /* Suit la couleur d'accent choisie dans Général (posée en style sur <html>). */
+    --accent: var(--color-accent);
     --on-fill: #17181c;
     --on-fill-text: #ffffff;
     --info-bg: #e5eefa;
@@ -362,7 +364,9 @@
     --text: #eceef2;
     --text-2: #c3c8d1;
     --text-3: #9aa0ab;
-    --accent: #6aa5ee;
+    /* Accent éclairci pour le fond sombre (#1a5fb4 -> ~#6aa5ee) ; color-mix si « from » manque. */
+    --accent: color-mix(in srgb, var(--color-accent), #ffffff 40%);
+    --accent: oklch(from var(--color-accent) max(l, 0.72) c h);
     --on-fill: #eceef2;
     --on-fill-text: #0e1013;
     --info-bg: #1b2c44;
