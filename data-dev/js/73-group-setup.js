@@ -33,11 +33,10 @@ class GroupSetup {
         div.id = 'divGroupSetup';
         div.className = 'modal-overlay genmod-overlay wiz-overlay';
         div.innerHTML = `<div class="message-content wiz-window">
-            <aside class="wiz-side">
-            <div class="wiz-side-head"><h2 class="wiz-title">${tr(titleKey)}</h2>
-            <button type="button" class="wiz-close" data-wiz-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
+            <aside class="wiz-side hero-skin" data-obj="groupe">
+            <div class="wiz-side-head"><button type="button" class="wiz-close" data-wiz-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
+            <div class="wiz-sum"><span class="wiz-sum-icon"><svg><use href="#svg-group"></use></svg></span><span class="wiz-sum-text"><h2 class="wiz-title">${tr(titleKey)}</h2><b></b><span></span><small class="wiz-now"></small></span></div>
             <ol class="wiz-steps"></ol><div class="wiz-pbar" aria-hidden="true"></div>
-            <div class="wiz-sum"><span class="wiz-sum-icon"><svg><use href="#svg-group"></use></svg></span><span class="wiz-sum-text"><b></b><span></span></span></div>
             </aside>
             <section class="wiz-main"></section>
             <footer class="wiz-foot"></footer></div>`;
@@ -62,10 +61,11 @@ class GroupSetup {
         const bar = wizStepsHtml(steps.map(([k, d], i) => ({ title: tr(k), desc: d, state: i === step ? 'on' : i < step ? 'done' : '' })));
         this.$('.wiz-steps').innerHTML = bar.steps;
         this.$('.wiz-pbar').innerHTML = bar.bar;
+        this.$('.wiz-now').textContent = bar.now;
         this.$('.wiz-sum-text b').textContent = name || tr('GSETUP_W_NEW');
         this.$('.wiz-sum-text span').textContent = tr('GSETUP_W_COUNT').replace('{N}', n);
-        const kick = tr('GSETUP_W_KICK').replace('{N}', step + 1);
-        const head = (title, extra = '') => `<div class="wiz-head"><div class="wiz-kick">${kick}${extra}</div><h2 class="wiz-h">${title}</h2></div>`;
+        // Le rang de l'étape est dans la colonne : le surtitre ne porte que ce qu'elle ne dit pas.
+        const head = (title, extra = '') => `<div class="wiz-head">${extra ? `<div class="wiz-kick">${extra}</div>` : ''}<h2 class="wiz-h">${title}</h2></div>`;
         const main = keepMain ? document.createElement('section') : this.$('.wiz-main');
         let ok = true, hint = '';
         if (step === 0) {
@@ -108,7 +108,7 @@ class GroupSetup {
                 const nm = escHtml(T.name), memOk = T.sub === 'grp' || T.sub === 'grpq';
                 // Oui / Non neutres : aucun des deux ne doit paraître déjà choisi.
                 const memBody = this.memBody(T, nm, 'GSETUP_MEM_DESC'), grpBody = this.pairBody(T, nm, false, memOk);
-                main.innerHTML = `${head(this.t('GSETUP_T_LINK', { name: nm }), ' · ' + tr('GSETUP_W_LINK_POS').replace('{I}', s.cur + 1).replace('{T}', links.length))}
+                main.innerHTML = `${head(this.t('GSETUP_T_LINK', { name: nm }), tr('GSETUP_W_LINK_POS').replace('{I}', s.cur + 1).replace('{T}', links.length))}
                 <div class="wiz-grid">
                 <div class="gen-tile"><h3 class="gen-tile-title">${this.t('GSETUP_MEM_TITLE', { name: nm })}</h3>${memBody}</div>
                 <div class="gen-tile"><h3 class="gen-tile-title">${tr('GSETUP_GRP_TITLE')}</h3>${grpBody}</div>
@@ -232,8 +232,9 @@ class GroupSetup {
         const x = pairMode.expert();
         this.$('.wiz-side-head .pair-mode-menu')?.remove();
         this.$('.pair-mode-badge')?.remove();
-        this.$('.wiz-title').insertAdjacentHTML('afterend', pairMode.menu('groupSetup.setPairMode'));
+        this.$('.wiz-close').insertAdjacentHTML('beforebegin', pairMode.menu('groupSetup.setPairMode'));
         this.$('.wiz-steps').hidden = x;
+        this.$('.wiz-now').textContent = '';
         this.$('.wiz-pbar').hidden = x;
         if (x) return this.renderLinkExpert();
         const w = this.w, s = this.s, un = w.mode === 'unlink', L = this.linkKeys(), key = L[w.step], T = s.tasks[0];
@@ -246,9 +247,10 @@ class GroupSetup {
         const bar = wizStepsHtml(L.map((k, i) => ({ title: tr(steps[k][0]), desc: steps[k][1], state: i === w.step ? 'on' : i < w.step ? 'done' : '' })));
         this.$('.wiz-steps').innerHTML = bar.steps;
         this.$('.wiz-pbar').innerHTML = bar.bar;
+        this.$('.wiz-now').textContent = bar.now;
         this.$('.wiz-sum-text b').textContent = s.group.name;
         this.$('.wiz-sum-text span').textContent = tr('GSETUP_W_COUNT').replace('{N}', (s.group.linkedShades || []).length);
-        const head = (title) => `<div class="wiz-head"><div class="wiz-kick">${tr('GSETUP_L_KICK').replace('{N}', w.step + 1).replace('{T}', L.length)}</div><h2 class="wiz-h">${title}</h2></div>`;
+        const head = (title) => `<div class="wiz-head"><h2 class="wiz-h">${title}</h2></div>`;
         const main = this.$('.wiz-main');
         let ok, hint = '';
         if (key === 'pick') {

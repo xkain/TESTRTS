@@ -33,13 +33,14 @@ const pairMode = {
 // Bandeau d'étapes de la coque wiz-, partagé avec « Créer un groupe ». items : { title, desc,
 // state ('on', 'done', 'skipped' ou ''), phase (titre posé avant l'étape), pick (code onclick) }.
 // prev / next servent au mobile, qui n'affiche que la précédente, la courante et la suivante ;
-// la barre segmentée (bar) y garde la vue d'ensemble.
+// la barre segmentée (bar) y garde la vue d'ensemble, et now (« Étape 2 sur 5 · Appairage ») l'étape courante.
 function wizStepsHtml(items) {
     const cur = items.findIndex(x => x.state === 'on');
     const steps = items.map((x, i) => `${x.phase ? `<li class="wiz-phase${i ? '' : ' first'}" aria-hidden="true">${escHtml(x.phase)}</li>` : ''}<li class="wiz-step${x.state ? ' ' + x.state : ''}${i === cur - 1 ? ' prev' : i === cur + 1 ? ' next' : ''}${x.pick ? ' pick' : ''}"${x.pick ? ` onclick="${x.pick}"` : ''}${x.state === 'on' ? ' aria-current="step"' : ''}>
         <span class="wiz-step-n">${x.state === 'done' ? '<svg><use href="#svg-check"></use></svg>' : x.state === 'skipped' ? '–' : i + 1}</span>
         <span class="wiz-step-text"><b>${escHtml(x.title)}</b><small>${escHtml(x.desc || '')}</small></span></li>`).join('');
-    return { steps, bar: items.map((x, i) => `<i class="${x.state || ''}${x.phase && i ? ' cut' : ''}"></i>`).join('') };
+    const now = cur < 0 ? '' : `${tr('SETUP_W_KICK').replace('{N}', cur + 1).replace('{T}', items.length)} · ${items[cur].title}`;
+    return { steps, now, bar: items.map((x, i) => `<i class="${x.state || ''}${x.phase && i ? ' cut' : ''}"></i>`).join('') };
 }
 
 // Nouvelle étape (key change) : le contenu repart du haut. Un simple redessin de la même étape
@@ -152,11 +153,10 @@ class ShadeSetup {
         div.id = 'divShadeSetup';
         div.className = 'modal-overlay genmod-overlay wiz-overlay';
         div.innerHTML = `<div class="message-content wiz-window">
-            <aside class="wiz-side">
-            <div class="wiz-side-head"><h2 class="wiz-title"></h2>
-            <button type="button" class="wiz-close" data-wiz-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
+            <aside class="wiz-side hero-skin" data-obj="equipement">
+            <div class="wiz-side-head"><button type="button" class="wiz-close" data-wiz-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
+            <div class="wiz-sum"><span class="wiz-sum-icon"><svg><use href="#svg-shutter"></use></svg></span><span class="wiz-sum-text"><h2 class="wiz-title"></h2><b></b><span></span><small class="wiz-now"></small></span></div>
             <ol class="wiz-steps"></ol><div class="wiz-pbar" aria-hidden="true"></div>
-            <div class="wiz-sum"><span class="wiz-sum-icon"><svg><use href="#svg-shutter"></use></svg></span><span class="wiz-sum-text"><b></b><span></span></span></div>
             </aside>
             <section class="wiz-main"></section>
             <footer class="wiz-foot"></footer></div>`;
@@ -361,14 +361,14 @@ class ShadeSetup {
         ol.innerHTML = bar.steps;
         ol.classList.toggle('many', items.length > 4);
         this.$('.wiz-pbar').innerHTML = bar.bar;
+        this.$('.wiz-now').textContent = bar.now;
         this.$('.wiz-title').textContent = tr(w.resume ? 'SETUP_RESUME_TITLE' : 'WELCOME_ADD_DEVICE_TITLE');
         this.$('.wiz-sum-icon use').setAttribute('href', `#${fam ? fam.ico : 'svg-shutter'}`);
         this.$('.wiz-sum-text b').textContent = name || tr('SETUP_W_NEW');
         this.$('.wiz-sum-text span').textContent = fam ? tr(fam.label) + (room ? ' · ' + room : '') : tr('SETUP_W_TYPE_DESC');
 
         const T = created ? s.tasks[s.cur] : null;
-        const kick = this.t('SETUP_W_KICK', { N: items.findIndex(x => x.state === 'on') + 1, T: items.length }) + (T ? ' · ' + this.title(T) : '');
-        const head = (title) => `<div class="wiz-head"><div class="wiz-kick">${kick}</div><h2 class="wiz-h">${title}</h2></div>`;
+        const head = (title) => `<div class="wiz-head"><h2 class="wiz-h">${title}</h2></div>`;
         const okSvg = '<svg><use href="#svg-check"></use></svg>';
         let html = '', ok = true, hint = '', primary = 'BT_CONTINUE';
         if (!created) {

@@ -2822,7 +2822,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 /* --- Assistants (coque wiz-) : créer un groupe, ajouter un équipement. Collés aux bords de la zone de contenu, sans
    les 16 px des fenêtres genmod- ; étapes à gauche, contenu à droite, pied sur toute la largeur. */
 .message-content.wiz-window, .onb-window { font-size: 16px; flex: 1; align-self: stretch; width: auto; max-width: none; max-height: none; margin: var(--topbar-height) 0 0 var(--sidebar-width); display: grid; grid-template-columns: minmax(280px, 26fr) minmax(0, 74fr); grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "side main" "foot foot"; border: 0; border-radius: 0; background: var(--bg); color: var(--text); text-align: left; }
-.wiz-side { grid-area: side; display: flex; flex-direction: column; gap: 22px; min-height: 0; overflow: auto; padding: clamp(24px, 4vh, 44px) clamp(20px, 2.2vw, 36px); background: var(--panel); }
+.wiz-side { grid-area: side; display: flex; flex-direction: column; gap: 22px; min-height: 0; overflow: auto; padding: clamp(24px, 4vh, 44px) clamp(20px, 2.2vw, 36px); background-color: var(--panel); }
 .wiz-side-head { display: flex; align-items: center; gap: 12px; }
 .wiz-title { margin: 0; font-size: clamp(24px, 2.2vw, 34px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
 .wiz-close, .wiz-close:hover { display: none; flex: none; place-items: center; width: 40px; height: 40px; margin: 0 0 0 auto; padding: 0; border: 1px solid var(--border); border-radius: var(--r-2); background: var(--surface-2); color: var(--text-2); }
@@ -2851,12 +2851,33 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .wiz-pbar i.skipped { background: var(--text-3); }
 .wiz-pbar i.on { background: var(--on-fill); }
 .wiz-pbar i.cut { margin-left: 6px; }
-.wiz-sum { display: flex; align-items: center; gap: 12px; margin-top: auto; padding: 16px; border-radius: var(--r-4); background: var(--surface); }
-.wiz-sum-icon { display: grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: var(--r-3); background: var(--surface-2); color: var(--text-2); }
-.wiz-sum-icon svg { width: 30px; height: 30px; --shade-position: 100; --fpos: 100%; }
-.wiz-sum-text { display: flex; flex-direction: column; min-width: 0; }
-.wiz-sum-text b { overflow: hidden; font-size: var(--fs-4); text-overflow: ellipsis; white-space: nowrap; }
-.wiz-sum-text span { font-size: var(--fs-3); color: var(--text-3); }
+/* Ajouter un équipement, créer un groupe : colonne en peau du hero (.hero-skin, base.css), comme les
+   fenêtres pièce et planning. En tête, l'identité : pastille du type, titre de l'assistant en surtitre,
+   nom, type · pièce ; la croix (tablette, mobile) en coin. Sur PC le pied ne court que sous le contenu. */
+.wiz-side.hero-skin { position: relative; gap: 26px; }
+.hero-skin .wiz-side-head { position: absolute; top: 16px; right: 20px; z-index: 1; }
+.wiz-sum { display: flex; flex-direction: column; align-items: center; gap: 14px; padding-bottom: 26px; border-bottom: 1px solid var(--divider); text-align: center; }
+.wiz-sum-icon { display: grid; place-items: center; flex: none; width: clamp(96px, min(9vw, 17vh), 132px); aspect-ratio: 1; border-radius: 50%; background: color-mix(in srgb, var(--hc) 12%, #ffffff); color: var(--hc); box-shadow: 0 0 0 clamp(4px, 1vw, 12px) rgba(255, 255, 255, .18); }
+:root[data-theme="dark"] .wiz-sum-icon { background: color-mix(in srgb, var(--hc) 35%, #12161c); color: color-mix(in srgb, var(--hc) 45%, #ffffff); }
+.wiz-sum-icon svg { width: 58%; height: 58%; fill: currentColor; --shade-position: 100; --fpos: 100%; }
+.wiz-sum-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.hero-skin .wiz-title { font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.wiz-sum-text b { font-size: clamp(22px, 1.9vw, 30px); font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.wiz-sum-text span { font-size: var(--fs-3); color: var(--text-2); }
+.wiz-now { display: none; font-size: var(--fs-2); font-weight: 600; color: var(--text-2); }
+.hero-skin .wiz-step-n { border-color: rgba(255, 255, 255, .3); }
+.hero-skin .wiz-step.on { color: #ffffff; }
+.hero-skin .wiz-step.on .wiz-step-n { border-color: #ffffff; background: #ffffff; }
+.hero-skin .wiz-step.done .wiz-step-n { border-color: var(--ok); background: var(--ok); color: #0d3b22; }
+.hero-skin .wiz-step.pick:hover b { color: #ffffff; text-decoration: underline; }
+.hero-skin .wiz-pbar i { background: rgba(255, 255, 255, .22); }
+.hero-skin .wiz-pbar i.on { background: #ffffff; }
+/* Menu ⋮ du mode expert (liaison d'un groupe) : sa liste garde les couleurs de la page, pas celles du hero. */
+.hero-skin .pair-mode-item b { color: var(--color-text-main); }
+.hero-skin .pair-mode-badge { background: rgba(255, 213, 154, .18); }
+@media (min-width: 1000px) {
+    .message-content.wiz-window:has(> .hero-skin) { grid-template-areas: "side main" "side foot"; }
+}
 .wiz-main { grid-area: main; display: flex; flex-direction: column; gap: 20px; min-width: 0; min-height: 0; overflow: auto; padding: clamp(24px, 4vh, 48px) clamp(24px, 3.4vw, 64px); }
 .wiz-kick { font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
 .wiz-h { margin: 4px 0 0; font-size: clamp(24px, 2.3vw, 36px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; overflow-wrap: anywhere; }
@@ -3089,7 +3110,13 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .wiz-step { flex: 1; gap: 8px; padding: 8px 10px; border-radius: var(--r-3); background: var(--surface); }
     .wiz-step-text small { display: none; }
     .wiz-step-text b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .wiz-sum { display: none; }
+    .wiz-sum { flex-direction: row; gap: 16px; padding: 0 56px 0 0; border: 0; text-align: left; }
+    .wiz-sum-icon { width: 56px; box-shadow: 0 0 0 4px rgba(255, 255, 255, .18); }
+    .wiz-sum-text { gap: 2px; }
+    .hero-skin .wiz-title { font-size: var(--fs-1); }
+    .wiz-sum-text b { font-size: var(--fs-6); }
+    .hero-skin .wiz-step { background: rgba(255, 255, 255, .1); }
+    .hero-skin .wiz-step.on { background: rgba(255, 255, 255, .2); }
     .wiz-skip-in { display: block; }
     .wiz-foot .wiz-skip { display: none; }
     .wiz-fam { gap: 12px; }
@@ -3126,6 +3153,16 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .wiz-step.on { flex: 0 1 auto; }
     .wiz-step.next { flex: 1 1 0; overflow: hidden; -webkit-mask-image: linear-gradient(to right, #000 20%, transparent 95%); mask-image: linear-gradient(to right, #000 20%, transparent 95%); }
     .wiz-pbar { display: flex; }
+    /* Peau du hero : une ligne d'identité, l'étape courante en toutes lettres et la barre ; les
+       trois repères disparaissent, le bandeau dit déjà où l'on est. */
+    .hero-skin .wiz-side-head { top: 12px; right: 12px; }
+    .wiz-sum { gap: 14px; padding-right: 52px; }
+    .wiz-sum-icon { width: 46px; box-shadow: 0 0 0 3px rgba(255, 255, 255, .18); }
+    .wiz-sum-text span { display: none; }
+    .wiz-sum-text b { overflow: hidden; font-size: var(--fs-5); text-overflow: ellipsis; white-space: nowrap; }
+    .wiz-now { display: block; }
+    .wiz-now:empty { display: none; }
+    .hero-skin .wiz-steps { display: none; }
     .wiz-fam { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .wiz-fam-icon { height: 64px; }
     .wiz-fam-icon svg { width: 48px; height: 48px; }
