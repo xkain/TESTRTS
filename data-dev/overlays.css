@@ -2872,6 +2872,8 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .hero-skin .wiz-step.pick:hover b { color: #ffffff; text-decoration: underline; }
 .hero-skin .wiz-pbar i { background: rgba(255, 255, 255, .22); }
 .hero-skin .wiz-pbar i.on { background: #ffffff; }
+.hero-skin .wiz-pbar i.done { background: var(--ok); }
+.hero-skin .wiz-pbar i.skipped { background: var(--text-3); }
 /* Menu ⋮ du mode expert (liaison d'un groupe) : sa liste garde les couleurs de la page, pas celles du hero. */
 .hero-skin .pair-mode-item b { color: var(--color-text-main); }
 .hero-skin .pair-mode-badge { background: rgba(255, 213, 154, .18); }
