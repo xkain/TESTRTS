@@ -3119,6 +3119,8 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .wiz-sum-text b { font-size: var(--fs-6); }
     .hero-skin .wiz-step { background: rgba(255, 255, 255, .1); }
     .hero-skin .wiz-step.on { background: rgba(255, 255, 255, .2); }
+    /* Menu ⋮ et croix côte à côte dans le coin : le nom leur laisse la place. */
+    .hero-skin:has(.pair-mode-menu) .wiz-sum { padding-right: 100px; }
     .wiz-skip-in { display: block; }
     .wiz-foot .wiz-skip { display: none; }
     .wiz-fam { gap: 12px; }

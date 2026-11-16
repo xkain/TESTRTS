@@ -62,6 +62,14 @@ class GroupSetup {
         this.$('.wiz-steps').innerHTML = bar.steps;
         this.$('.wiz-pbar').innerHTML = bar.bar;
         this.$('.wiz-now').textContent = bar.now;
+        // Guidé / expert : sur la liaison seulement, menu ⋮ au coin de la colonne (à gauche de la croix).
+        const expert = pairMode.expert();
+        this.$('.wiz-side-head .pair-mode-menu')?.remove();
+        this.$('.pair-mode-badge')?.remove();
+        if (step === 2 && s.tasks[s.cur]) {
+            this.$('.wiz-close').insertAdjacentHTML('beforebegin', pairMode.menu('groupSetup.setPairMode'));
+            if (expert) this.$('.wiz-pbar').insertAdjacentHTML('afterend', pairMode.badge());
+        }
         this.$('.wiz-sum-text b').textContent = name || tr('GSETUP_W_NEW');
         this.$('.wiz-sum-text span').textContent = tr('GSETUP_W_COUNT').replace('{N}', n);
         // Le rang de l'étape est dans la colonne : le surtitre ne porte que ce qu'elle ne dit pas.
@@ -108,10 +116,16 @@ class GroupSetup {
                 const nm = escHtml(T.name), memOk = T.sub === 'grp' || T.sub === 'grpq';
                 // Oui / Non neutres : aucun des deux ne doit paraître déjà choisi.
                 const memBody = this.memBody(T, nm, 'GSETUP_MEM_DESC'), grpBody = this.pairBody(T, nm, false, memOk);
+                // Expert : les boutons de la v2 pour l'équipement courant ; le dernier le lie et passe au suivant.
+                const xBody = `<div class="gen-tile"><div class="pair-mode-col">
+                    <button type="button" class="gen-btn" onclick="groupSetup.xMem()">${tr('GSETUP_MEM_BTN')}</button>
+                    <button type="button" class="gen-btn" onmousedown="groupSetup.holdStart(event)" ontouchstart="event.preventDefault(); groupSetup.holdStart()" onmouseup="groupSetup.holdEnd(event)" ontouchend="groupSetup.holdEnd()">${tr('PAIR_X_GRP_PROG')}</button>
+                    <button type="button" class="gen-btn gen-btn-primary" onclick="groupSetup.confirmLink()">${tr('PAIR_X_JOGGED')}</button></div>
+                    <p class="gen-tile-desc">${tr('PAIR_X_NOTE_LINK')}</p><p class="pair-mode-status" id="gsetupXStatus" aria-live="polite"></p></div>`;
                 main.innerHTML = `${head(this.t('GSETUP_T_LINK', { name: nm }), tr('GSETUP_W_LINK_POS').replace('{I}', s.cur + 1).replace('{T}', links.length))}
-                <div class="wiz-grid">
+                <div class="wiz-grid">${expert ? xBody : `
                 <div class="gen-tile"><h3 class="gen-tile-title">${this.t('GSETUP_MEM_TITLE', { name: nm })}</h3>${memBody}</div>
-                <div class="gen-tile"><h3 class="gen-tile-title">${tr('GSETUP_GRP_TITLE')}</h3>${grpBody}</div>
+                <div class="gen-tile"><h3 class="gen-tile-title">${tr('GSETUP_GRP_TITLE')}</h3>${grpBody}</div>`}
                 ${progress}</div>`;
                 main.innerHTML += `<button type="button" class="wiz-link wiz-skip-in" onclick="groupSetup.skip()">${tr('SETUP_SKIP')}</button>`;
             } else main.innerHTML = `${head(tr('GSETUP_W_STEP_LINK'))}<div class="wiz-grid">${progress}</div>`;
@@ -304,7 +318,7 @@ class GroupSetup {
         this.$('.wiz-foot').innerHTML = `<span class="wiz-foot-gap"></span><button type="button" class="gen-btn wiz-quit" data-wiz-close>${tr('BT_CANCEL')}</button>`;
     }
     setPairMode(on) { pairMode.set(on); this.renderWiz(); }
-    xShade() { return this.w.mode === 'unlink' ? this.s.tasks[0] : this.avail.find(a => a.shadeId === this.w.pick); }
+    xShade() { return !this.w.mode ? this.task() : this.w.mode === 'unlink' ? this.s.tasks[0] : this.avail.find(a => a.shadeId === this.w.pick); }
     xStatus(text, busy) {
         const el = this.$('#gsetupXStatus');
         if (!el) return;
@@ -372,7 +386,7 @@ class GroupSetup {
     holdEnd(evt) {
         if (!isPrimaryPress(evt) || !this.holding) return;
         this.holding = false;
-        if (this.w && this.w.mode && pairMode.expert()) return this.xStatus(tr('PAIR_X_PROG_SENT'));
+        if (pairMode.expert() && this.$('#gsetupXStatus')) return this.xStatus(tr('PAIR_X_PROG_SENT'));
         this.sub('grpq');
     }
     groupProgOnce() {

@@ -368,6 +368,12 @@ class ShadeSetup {
         this.$('.wiz-sum-text span').textContent = fam ? tr(fam.label) + (room ? ' · ' + room : '') : tr('SETUP_W_TYPE_DESC');
 
         const T = created ? s.tasks[s.cur] : null;
+        // Guidé / expert : sur l'appairage seulement, menu ⋮ au coin de la colonne (à gauche de la croix).
+        const pm = !!T && T.id === 'pair', expert = pm && pairMode.expert();
+        this.$('.wiz-side-head .pair-mode-menu')?.remove();
+        this.$('.pair-mode-badge')?.remove();
+        if (pm) this.$('.wiz-close').insertAdjacentHTML('beforebegin', pairMode.menu('shadeSetup.setPairMode'));
+        if (expert) this.$('.wiz-pbar').insertAdjacentHTML('afterend', pairMode.badge());
         const head = (title) => `<div class="wiz-head"><h2 class="wiz-h">${title}</h2></div>`;
         const okSvg = '<svg><use href="#svg-check"></use></svg>';
         let html = '', ok = true, hint = '', primary = 'BT_CONTINUE';
@@ -426,7 +432,8 @@ class ShadeSetup {
             primary = 'SETUP_W_CREATE_BTN';
         } else {
             const skipIn = T.state === 'done' || T.id === 'opts' ? '' : `<button type="button" class="wiz-link wiz-skip-in" onclick="shadeSetup.skip()">${tr('SETUP_SKIP')}</button>`;
-            if (T.id === 'pair') html = `${head(tr('SETUP_W_PAIR_H'))}
+            if (expert) html = `${head(tr('SETUP_W_PAIR_H'))}<div class="wiz-grid"><div class="gen-tile">${this.twPair(T).body}</div></div>`;
+            else if (T.id === 'pair') html = `${head(tr('SETUP_W_PAIR_H'))}
                 ${w.justCreated ? `<p class="wiz-ok">${okSvg}<span>${this.t('SETUP_W_CREATED', { name: escHtml(name) })}</span></p>` : ''}
                 <p class="wiz-lead">${tr('SETUP_W_PAIR_LEAD')}</p><div class="wiz-grid">${this.wizPair(T)}</div>`;
             else if (T.id === 'dir') html = `${head(this.title(T))}<div class="wiz-grid"><div class="gen-tile wiz-body">${this.bodyDir(T)}</div>
