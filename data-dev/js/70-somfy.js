@@ -3929,7 +3929,7 @@ class Somfy {
         const formName = ctx === 'gsetup' ? (groupSetup.c?.name || '').trim() : ctx === 'ssetup' ? (shadeSetup.c?.name || '').trim() : ctx ? (get(ctx === 'group' ? 'fldGroupName' : 'fldShadeName')?.value || '') : '';
         const items = mode === 'inline' ? [] : [
             ...(this.shades || []).map(s => ({ kind: 'shade', id: s.shadeId, name: s.name, roomId: s.roomId, type: tr(this.shadeTypeKey(s.shadeType) || ''), icon: (this.shadeTypes.find(x => x.type === s.shadeType) || { indic: 'svg-indicRoller' }).indic })),
-            ...(this.groups || []).map(g => ({ kind: 'group', id: g.groupId, name: g.name, roomId: g.roomId, type: tr('ROOM_WIN_GROUP'), icon: 'svg-group' }))
+            ...(this.groups || []).map(g => ({ kind: 'group', id: g.groupId, name: g.name, roomId: g.roomId, type: tr('GROUP_LABEL'), icon: 'svg-group' }))
         ].map(it => Object.assign(it, { on: isEdit && it.roomId === rid })).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base', numeric: true }));
         const savedName = isEdit ? (roomData.name || '') : '';
         const maxRooms = this.maxRooms ? this.maxRooms - 2 : 30;
@@ -3945,6 +3945,7 @@ class Somfy {
         div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
             id: 'roomWin',
             icon: 'svg-navRoom',
+            skin: 'piece',
             titleKey: isEdit ? 'ROOM_TITLE_EDIT' : 'ROOM_TITLE_ADD',
             descKey: isEdit ? 'ROOM_TITLE_EDIT_DESC' : 'ROOM_TITLE_ADD_DESC',
             sectionKey: { edit: 'ROOM_WIN_SECTION_EDIT', create: 'ROOM_WIN_SECTION_ADD', inline: 'ROOM_WIN_SECTION_INLINE' }[mode],
@@ -5332,8 +5333,9 @@ class Somfy {
         const room = g('selShadeRoom').selectedOptions[0]?.text || tr('HOME');
         const type = g('selShadeType').selectedOptions[0]?.text || '';
         const proto = parseInt(g('selShadeProto').value, 10), protoTxt = g('selShadeProto').selectedOptions[0]?.text || '';
-        g('somfyHeaderTitle').textContent = name || tr(isNew ? 'DEVICE_CREATE_TITLE' : 'DEVICE_EDIT_TITLE');
-        g('somfyHeaderDesc').textContent = isNew ? tr('DEVICE_CREATE_DESC') : `${type} · ${room}`;
+        // Le type est le titre : le nom figure déjà dans l'en-tête mobile et le fil d'Ariane.
+        g('somfyHeaderTitle').textContent = isNew ? tr('DEVICE_CREATE_TITLE') : type || name || tr('DEVICE_EDIT_TITLE');
+        g('somfyHeaderDesc').textContent = isNew ? tr('DEVICE_CREATE_DESC') : room;
         g('shdChipRoom').textContent = room;
         // Les relais IO n'ont ni longueur de trame ni adresse radio utile à afficher.
         g('shdChipRadio').textContent = proto >= 8 ? protoTxt : `${protoTxt} · ${g('selShadeBitLength').value} bits · ID ${g('fldShadeAddress').value}`;
@@ -5806,10 +5808,9 @@ class Somfy {
     }
     renderGroupHero() {
         const g = get, isNew = g('spanGroupId').innerText === '*';
-        const name = g('fldGroupName').value.trim();
         const room = g('selGroupRoom').selectedOptions[0]?.text || tr('HOME');
         const n = ((this._grpData && this._grpData.linkedShades) || []).length;
-        g('somfyGroupHeaderTitle').textContent = name || tr(isNew ? 'GROUP_CREATE_TITLE' : 'GROUP_EDIT_TITLE');
+        g('somfyGroupHeaderTitle').textContent = isNew ? tr('GROUP_CREATE_TITLE') : tr('GROUP_LABEL');
         g('somfyGroupHeaderDesc').textContent = isNew ? tr('GROUP_CREATE_DESC') : `${room} · ${tr('GROUP_LINKED_COUNT').replace('{n}', n)}`;
         g('grpChipRoom').textContent = room;
         g('grpChipRadio').textContent = `${this.frameProtoLabel(parseInt(g('selGroupProto').value, 10))} · ${g('selGroupBitLength').value} bits · ID ${g('fldGroupAddress').value}`;

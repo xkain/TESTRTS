@@ -162,7 +162,7 @@
     --opacity-logo-page:0.2;
 }
 
-:root[data-theme="dark"], .hero {
+:root[data-theme="dark"], .hero, .hero-skin {
     color-scheme:dark;
     --color-bg-page:#0a0a0a;
     --color-bg-surface-0: #0f0f0f;
@@ -352,7 +352,7 @@
        que la page recule et que la fenêtre s'en détache même à couleur égale. */
     --scrim-page: rgba(0, 0, 0, .14);
 }
-:root[data-theme="dark"], .hero {
+:root[data-theme="dark"], .hero, .hero-skin {
     --bg: #0e1013;
     --panel: #1a1e24;
     --surface: #222730;
@@ -1982,7 +1982,9 @@ button:disabled:active {
  *  data-obj : couleur de la pastille ; data-tone : état (ok, warn, bad, off).
  *  data-mobile="hide" : masqué sous 1000 px. data-static : texte masqué aussi.
  *  ========================================================================= */
-.hero {
+/* Peau du hero : jetons et dégradé. .hero-skin la pose sur une colonne qui n'est pas un .hero
+   (identité des fenêtres pièce et planning). */
+.hero, .hero-skin {
     /* Accent assombri : une couleur libre claire laisserait le texte blanc illisible. */
     --g: color-mix(in srgb, var(--color-accent) 78%, #0b1220);
     --g: oklch(from var(--color-accent) min(l, 0.5) c h);
@@ -2005,6 +2007,16 @@ button:disabled:active {
     --warn: #ffd59a;
     --danger: #ffb4ab;
     --info: #ffffff;
+    color: var(--text);
+    background:
+        radial-gradient(60% 45% at 68% 0%, rgba(255, 255, 255, .16), transparent 65%),
+        radial-gradient(45% 35% at 78% 12%, rgba(190, 210, 255, .14), transparent 70%),
+        radial-gradient(130% 90% at 28% 42%, color-mix(in srgb, var(--g) 88%, #ffffff) 0%, transparent 70%),
+        radial-gradient(120% 100% at 100% 100%, rgba(4, 10, 24, .6), transparent 65%),
+        linear-gradient(155deg, color-mix(in srgb, var(--g) 52%, #000000) 0%, var(--g) 45%,
+                        color-mix(in srgb, var(--g) 70%, #000000) 75%, color-mix(in srgb, var(--g) 42%, #000000) 100%);
+}
+.hero {
     position: sticky;
     top: var(--topbar-height);
     align-self: start;
@@ -2020,17 +2032,9 @@ button:disabled:active {
     overflow-x: hidden;
     overflow-y: auto;
     scrollbar-width: thin;
-    color: var(--text);
     text-align: center;
-    background:
-        radial-gradient(60% 45% at 68% 0%, rgba(255, 255, 255, .16), transparent 65%),
-        radial-gradient(45% 35% at 78% 12%, rgba(190, 210, 255, .14), transparent 70%),
-        radial-gradient(130% 90% at 28% 42%, color-mix(in srgb, var(--g) 88%, #ffffff) 0%, transparent 70%),
-        radial-gradient(120% 100% at 100% 100%, rgba(4, 10, 24, .6), transparent 65%),
-        linear-gradient(155deg, color-mix(in srgb, var(--g) 52%, #000000) 0%, var(--g) 45%,
-                        color-mix(in srgb, var(--g) 70%, #000000) 75%, color-mix(in srgb, var(--g) 42%, #000000) 100%);
 }
-:root[data-theme="dark"] .hero {
+:root[data-theme="dark"] :is(.hero, .hero-skin) {
     background-image:
         linear-gradient(rgba(0, 0, 0, .38), rgba(0, 0, 0, .38)),
         radial-gradient(60% 45% at 68% 0%, rgba(255, 255, 255, .08), transparent 65%),
@@ -2039,12 +2043,12 @@ button:disabled:active {
         linear-gradient(155deg, color-mix(in srgb, var(--g) 52%, #000000) 0%, var(--g) 45%,
                         color-mix(in srgb, var(--g) 70%, #000000) 75%, color-mix(in srgb, var(--g) 42%, #000000) 100%);
 }
-.hero[data-obj="reseau"], .hero[data-obj="piece"] { --hc: #0f766e; }
-.hero[data-obj="radio"] { --hc: #5b21b6; }
-.hero[data-obj="integ"] { --hc: #0277bd; }
-.hero[data-obj="equipement"] { --hc: #1a5fb4; }
-.hero[data-obj="groupe"] { --hc: #6d28d9; }
-.hero[data-obj="planning"] { --hc: #a21caf; }
+:is(.hero, .hero-skin)[data-obj="reseau"], :is(.hero, .hero-skin)[data-obj="piece"] { --hc: #0f766e; }
+:is(.hero, .hero-skin)[data-obj="radio"] { --hc: #5b21b6; }
+:is(.hero, .hero-skin)[data-obj="integ"] { --hc: #0277bd; }
+:is(.hero, .hero-skin)[data-obj="equipement"] { --hc: #1a5fb4; }
+:is(.hero, .hero-skin)[data-obj="groupe"] { --hc: #6d28d9; }
+:is(.hero, .hero-skin)[data-obj="planning"] { --hc: #a21caf; }
 .hero[data-tone="warn"] { --hc: #c2410c; }
 .hero[data-tone="bad"] { --hc: #b3261e; }
 .hero[data-tone="off"] { --hc: #64748b; }
@@ -2154,6 +2158,7 @@ button:disabled:active {
     overflow-wrap: anywhere;
 }
 .hero-facts > div[hidden] { display: none; }
+.hero-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 /* État posé par le JS sur la pastille (Connexion, MQTT) : il l'emporte sur la couleur de section. */
 .hero-media.is-medium, .hero-media.is-ap { --hc: #c2410c; }
 .hero-media.is-bad { --hc: #b3261e; }
@@ -2189,6 +2194,7 @@ button:disabled:active {
     .hero-media { box-shadow: 0 0 0 4px rgba(255, 255, 255, .18); }
     .hero-head { align-items: flex-start; gap: 2px; }
     .hero-head:has(> .hero-titlerow) { justify-self: stretch; }
+    .hero-chips { justify-content: flex-start; }
     .hero-titlerow { justify-content: space-between; flex-wrap: nowrap; width: 100%; }
     .hero-title { font-size: var(--fs-7); }
     .hero-eyebrow,

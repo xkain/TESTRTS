@@ -798,7 +798,6 @@
     "ROOM_PRESET_7": "Garten",
     "ROOM_WIN_CONTENT": "In diesem Raum · {N}",
     "ROOM_WIN_CONTENT_HINT": "Zum Einordnen ankreuzen. Ein Element ist immer nur in einem Raum.",
-    "ROOM_WIN_GROUP": "Gruppe",
     "ROOM_WIN_HERE": "Hier",
     "ROOM_WIN_LEAVES": "Verlässt {ROOM}",
     "ROOM_WIN_COMES": "Kommt hierher",
@@ -1617,6 +1616,7 @@
 
 "INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
     "DETAILS": "Details",
+    "GROUP_LABEL": "Gruppe",
     "INTEGRATED": "Integriert",
     "RX_APPLY_NOW": "Änderungen gelten sofort.",
     "INSTALLED": "Installiert",

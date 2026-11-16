@@ -1272,14 +1272,14 @@
                         </div>
                             <div id="somfyShade" class="gen-layout ed-page" style="display:none;" data-bitlength="56">
                                 <span id="spanShadeId" hidden>*</span><span id="spanMaxShades" hidden>30</span>
-                                <section class="gen-hero">
-                                    <svg id="icoShade" class="gen-hero-icon somfy-shade-icon" data-shadeid="0"><use href="#svg-window-shade"></use></svg>
-                                    <div class="gen-hero-text">
-                                        <h2 id="somfyHeaderTitle" class="gen-hero-title"></h2>
-                                        <p id="somfyHeaderDesc" class="gen-hero-desc"></p>
-                                        <p id="somfyHeaderState" class="ed-hero-state"></p>
+                                <section class="hero" data-obj="equipement" data-kind="fiche">
+                                    <span class="hero-media"><svg id="icoShade" class="somfy-shade-icon" data-shadeid="0"><use href="#svg-window-shade"></use></svg></span>
+                                    <div class="hero-head">
+                                        <h2 id="somfyHeaderTitle" class="hero-title"></h2>
+                                        <span id="somfyHeaderState" class="hero-sub"></span>
+                                        <p id="somfyHeaderDesc" class="hero-desc"></p>
                                     </div>
-                                    <div id="blocShadeCmds" class="ed-cmds">
+                                    <div id="blocShadeCmds" class="hero-act ed-cmds">
                                         <div id="divshowSomfyButtons" class="ed-cmds-row">
                                             <button type="button" class="ed-cmd animScale" data-cmd="up" tr="BT_OPEN" title="" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'up');"><svg><use href="#svg-up"></use></svg></button>
                                             <button type="button" class="ed-cmd animScale" data-cmd="my" title="My" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'my');"><svg><use href="#svg-my"></use></svg></button>
@@ -1288,7 +1288,7 @@
                                             <button type="button" class="ed-cmd animScale" tr="SUBTAB_VIRTUAL_REMOTE_S" title="" onclick="somfy.openVirtualRemote('shade', parseInt(document.getElementById('spanShadeId').innerText, 10));"><svg><use href="#svg-remote"></use></svg></button>
                                         </div>
                                     </div>
-                                    <div class="gen-hero-chips"><span class="gen-chip"><svg><use href="#svg-navRoom"></use></svg><span id="shdChipRoom"></span></span><span class="gen-chip"><svg><use href="#svg-protocol"></use></svg><span id="shdChipRadio"></span></span></div>
+                                    <div class="hero-data" data-mobile="hide"><div class="hero-chips"><span class="gen-chip"><svg><use href="#svg-navRoom"></use></svg><span id="shdChipRoom"></span></span><span class="gen-chip"><svg><use href="#svg-protocol"></use></svg><span id="shdChipRadio"></span></span></div></div>
                                 </section>
                                 <div class="gen-body">
                                     <nav id="shdTabs" class="gen-tabs" role="tablist">
@@ -1614,13 +1614,13 @@
 
                         <div id="somfyGroup" class="gen-layout ed-page" style="display:none;">
                             <span id="spanGroupId" hidden>*</span><span id="spanMaxGroups" hidden>14</span>
-                            <section class="gen-hero">
-                                <svg class="gen-hero-icon"><use href="#svg-group"></use></svg>
-                                <div class="gen-hero-text">
-                                    <h2 id="somfyGroupHeaderTitle" class="gen-hero-title"></h2>
-                                    <p id="somfyGroupHeaderDesc" class="gen-hero-desc"></p>
+                            <section class="hero" data-obj="groupe" data-kind="fiche">
+                                <span class="hero-media"><svg><use href="#svg-group"></use></svg></span>
+                                <div class="hero-head">
+                                    <h2 id="somfyGroupHeaderTitle" class="hero-title"></h2>
+                                    <span id="somfyGroupHeaderDesc" class="hero-sub"></span>
                                 </div>
-                                <div id="blocPairGroup" class="ed-cmds">
+                                <div id="blocPairGroup" class="hero-act ed-cmds">
                                     <div id="divSomfyGroupButtons" class="ed-cmds-row">
                                         <button type="button" class="ed-cmd animScale" data-cmd="up" tr="BT_OPEN" title="" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'up');"><svg><use href="#svg-up"></use></svg></button>
                                         <button type="button" class="ed-cmd animScale" data-cmd="my" title="My" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'my');"><svg><use href="#svg-my"></use></svg></button>
@@ -1628,7 +1628,7 @@
                                         <button type="button" class="ed-cmd animScale" tr="SUBTAB_VIRTUAL_REMOTE_S" title="" onclick="somfy.openVirtualRemote('group', parseInt(document.getElementById('spanGroupId').innerText, 10));"><svg><use href="#svg-remote"></use></svg></button>
                                     </div>
                                 </div>
-                                <div class="gen-hero-chips"><span class="gen-chip"><svg><use href="#svg-navRoom"></use></svg><span id="grpChipRoom"></span></span><span class="gen-chip"><svg><use href="#svg-protocol"></use></svg><span id="grpChipRadio"></span></span></div>
+                                <div class="hero-data" data-mobile="hide"><div class="hero-chips"><span class="gen-chip"><svg><use href="#svg-navRoom"></use></svg><span id="grpChipRoom"></span></span><span class="gen-chip"><svg><use href="#svg-protocol"></use></svg><span id="grpChipRadio"></span></span></div></div>
                             </section>
                             <div class="gen-body">
                                 <nav id="grpTabs" class="gen-tabs" role="tablist">

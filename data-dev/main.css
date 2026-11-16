@@ -5938,13 +5938,10 @@ input.gen-input.mqtt-mono {
    d'identité, code tournant en zone rouge, membres et plannings en tuiles de pages-listes. --- */
 .ed-cmds { width: 100%; max-width: 420px; }
 /* Comme la maquette : trois commandes qui se partagent la largeur, la télécommande en carré. */
-.ed-cmds-row { display: flex; gap: 10px; }
+.ed-cmds-row { display: flex; flex: 1 1 100%; gap: 10px; }
 .ed-cmd, .ed-cmd:hover { display: grid; place-items: center; flex: 1 1 0; min-width: 0; height: 56px; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: var(--r-3); background: var(--surface); color: var(--text); }
 .ed-cmd:hover { background: var(--surface-2); }
 .ed-cmd[hidden] { display: none; }
-/* L'icône animée d'équipement garde ses propres couleurs, pas l'accent des icônes d'en-tête. */
-.ed-page .gen-hero-icon.somfy-shade-icon { fill: inherit; color: inherit; }
-.ed-hero-state { margin: 8px 0 0; font-size: var(--fs-5); font-weight: 700; color: var(--text); }
 .ed-ro-list { display: flex; flex-direction: column; }
 .ed-ro { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 0; border-top: 1px solid var(--border); font-size: var(--fs-3); }
 .ed-ro-list > .ed-ro:first-child, .ed-ro-list > :first-child > .ed-ro:first-child { border-top: 0; padding-top: 0; }
@@ -5990,10 +5987,8 @@ input.gen-input.mqtt-mono {
 .ed-tip { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 14px 16px; border-radius: var(--r-4); background: var(--surface); font-size: var(--fs-3); line-height: 1.45; color: var(--text-2); }
 .ed-tip svg { flex: none; width: 20px; height: 20px; fill: currentColor; color: var(--color-accent); }
 .grp-paired { padding: 4px 10px; border-radius: var(--r-pill); background: var(--ok-bg); color: var(--ok); font-size: var(--fs-1); font-weight: 700; }
-/* Bandeau (tablette, mobile) : les commandes passent sous l'identité, sinon elles élargissent la
-   colonne de l'icône et repoussent le titre. */
 @media (max-width: 999px) {
-    .ed-page .ed-cmds { grid-column: 1 / -1; justify-self: stretch; max-width: none; }
+    .ed-cmds { max-width: none; }
 }
 @media (max-width: 767px) {
     .ed-cmd { height: 48px; }

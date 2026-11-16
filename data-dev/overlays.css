@@ -2171,6 +2171,19 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     fill: currentColor;
     color: var(--color-accent);
 }
+/* Fenêtres pièce et planning (genModalShell, skin) : peau du hero, icône en pastille. */
+.hero-skin .genmod-side-icon {
+    box-sizing: border-box;
+    padding: clamp(14px, 1.4vw, 24px);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--hc) 12%, #ffffff);
+    color: var(--hc);
+    box-shadow: 0 0 0 clamp(4px, 1vw, 12px) rgba(255, 255, 255, .18);
+}
+:root[data-theme="dark"] .hero-skin .genmod-side-icon {
+    background: color-mix(in srgb, var(--hc) 35%, #12161c);
+    color: color-mix(in srgb, var(--hc) 45%, #ffffff);
+}
 .genmod-side-title {
     margin: 0;
     font-size: clamp(22px, 1.9vw, 30px);

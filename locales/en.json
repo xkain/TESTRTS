@@ -798,7 +798,6 @@
     "ROOM_PRESET_7": "Garden",
     "ROOM_WIN_CONTENT": "In this room · {N}",
     "ROOM_WIN_CONTENT_HINT": "Tick to put it here. An item is in one room at a time.",
-    "ROOM_WIN_GROUP": "Group",
     "ROOM_WIN_HERE": "Here",
     "ROOM_WIN_LEAVES": "Will leave {ROOM}",
     "ROOM_WIN_COMES": "Will come here",
@@ -1617,6 +1616,7 @@
 
 "INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
     "DETAILS": "Details",
+    "GROUP_LABEL": "Group",
     "INTEGRATED": "Integrated",
     "RX_APPLY_NOW": "Changes apply right away.",
     "INSTALLED": "Installed",

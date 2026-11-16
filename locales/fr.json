@@ -798,7 +798,6 @@
     "ROOM_PRESET_7": "Jardin",
     "ROOM_WIN_CONTENT": "Dans cette pièce · {N}",
     "ROOM_WIN_CONTENT_HINT": "Cochez pour ranger ici. Un élément n’est que dans une pièce à la fois.",
-    "ROOM_WIN_GROUP": "Groupe",
     "ROOM_WIN_HERE": "Ici",
     "ROOM_WIN_LEAVES": "Quittera {ROOM}",
     "ROOM_WIN_COMES": "Viendra ici",
@@ -1617,6 +1616,7 @@
 
 "INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
     "DETAILS": "Détails",
+    "GROUP_LABEL": "Groupe",
     "INTEGRATED": "Intégré",
     "RX_APPLY_NOW": "Les changements s'appliquent tout de suite.",
     "INSTALLED": "Installée",

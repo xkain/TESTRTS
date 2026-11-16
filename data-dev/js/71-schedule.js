@@ -567,7 +567,7 @@ class _SomfySchedule {
             : `<div class="gen-field"><label class="gen-field-label" for="selScheduleTarget">${tr('SCHEDULE_TARGET')}</label><div class="gen-input-box dirty-target"><select id="selScheduleTarget" class="gen-input"></select></div></div>`;
         const max = this.maxSchedules || 30, left = Math.max(0, max - (this.schedules || []).length);
         div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
-            id: 'schedWin', icon: 'svg-schedule', titleKey, descKey, sectionKey: titleKey,
+            id: 'schedWin', icon: 'svg-schedule', skin: 'planning', titleKey, descKey, sectionKey: titleKey,
             stateKey: tr('SCHEDULE_TARGET'), stateValue: escHtml(this.scheduleTargetName(model)), hintKey: 'SCHEDULE_SLOTS_REMAINING', footId: 'schedWinFoot',
             sideExtra: `<span class="overlayHeader-state sw-off" style="display:none;">${tr('DISABLED_F')}</span>`,
             bodyHtml: `<input type="hidden" id="fldScheduleStepsDirty">
