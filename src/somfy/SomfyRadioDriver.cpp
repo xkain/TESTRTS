@@ -14,6 +14,7 @@
 #include "Somfy.h"
 #include "Sockets.h"
 #include "StatusLed.h"
+#include "../JsonHelpers.h"
 
 // Pilote radio CC1101 : files d'attente TX/RX (somfy_tx_queue_t/somfy_rx_queue_t), décodage bas
 // niveau des impulsions dans l'ISR (Transceiver::handleReceive), configuration/application des
@@ -643,7 +644,7 @@ void transceiver_config_t::fromJSON(JsonObject& obj) {
     // firmware ne pilote que du RTS/RTW/RTV en 433.
     clampRadioFloat(obj, "frequency", this->frequency, 433.0f, 434.79f);
     clampRadioFloat(obj, "rxFrequency", this->rxFrequency, 433.0f, 434.79f);
-    if(obj.containsKey("enabled")) this->enabled = obj["enabled"];
+    jget(obj, "enabled", this->enabled);
     if(obj.containsKey("txPower")) {
       int p = obj["txPower"].as<int>();
       // Table de puissances admises par setPA() ; hors table, la bibliothèque retombe sur un
@@ -655,7 +656,7 @@ void transceiver_config_t::fromJSON(JsonObject& obj) {
       else Serial.printf("Radio: txPower=%d hors table, valeur ignoree\n", p);
     }
     if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
-    if(obj.containsKey("radioBoardType")) this->radioBoardType = obj["radioBoardType"];
+    jget(obj, "radioBoardType", this->radioBoardType);
     DBG_PRINTF("SCK:%u MISO:%u MOSI:%u CSN:%u RX:%u TX:%u\n", this->SCKPin, this->MISOPin, this->MOSIPin, this->CSNPin, this->RXPin, this->TXPin);
 }
 void transceiver_config_t::toJSON(JsonFormatter &json) {

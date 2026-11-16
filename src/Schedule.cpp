@@ -13,6 +13,7 @@
 #include "ConfigFile.h"
 #include "FwInfo.h"
 #include "SunCalc.h"
+#include "JsonHelpers.h"
 
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
@@ -126,31 +127,31 @@ int8_t ScheduleRule::fromJSON(JsonObject &obj) {
   int8_t rc = this->validateJSON(obj);
   if(rc != 0) return rc;
   if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
-  if(obj.containsKey("dayMask")) this->dayMask = obj["dayMask"];
-  if(obj.containsKey("hour")) this->hour = obj["hour"];
-  if(obj.containsKey("minute")) this->minute = obj["minute"];
+  jget(obj, "dayMask", this->dayMask);
+  jget(obj, "hour", this->hour);
+  jget(obj, "minute", this->minute);
   if(obj.containsKey("targetType")) {
     const char *t = obj["targetType"];
     this->targetType = (strncmp(t, "group", 5) == 0) ? schedule_target_t::GROUP : schedule_target_t::SHADE;
   }
-  if(obj.containsKey("targetId")) this->targetId = obj["targetId"];
-  if(obj.containsKey("targetPos")) this->targetPos = obj["targetPos"];
-  if(obj.containsKey("targetTilt")) this->targetTilt = obj["targetTilt"];
+  jget(obj, "targetId", this->targetId);
+  jget(obj, "targetPos", this->targetPos);
+  jget(obj, "targetTilt", this->targetTilt);
   if(obj.containsKey("positionMode")) {
     const char *m = obj["positionMode"];
     if(strncmp(m, "my", 2) == 0) this->positionMode = schedule_position_mode_t::MY;
     else if(strncmp(m, "tiltonly", 8) == 0) this->positionMode = schedule_position_mode_t::TILT_ONLY;
     else this->positionMode = schedule_position_mode_t::POSITION;
   }
-  if(obj.containsKey("enabled")) this->enabled = obj["enabled"];
-  if(obj.containsKey("retries")) this->retries = obj["retries"];
+  jget(obj, "enabled", this->enabled);
+  jget(obj, "retries", this->retries);
   if(obj.containsKey("timeRef")) {
     const char *r = obj["timeRef"];
     if(strncmp(r, "sunrise", 7) == 0) this->timeRef = schedule_time_ref_t::SUNRISE;
     else if(strncmp(r, "sunset", 6) == 0) this->timeRef = schedule_time_ref_t::SUNSET;
     else this->timeRef = schedule_time_ref_t::CLOCK;
   }
-  if(obj.containsKey("sunOffset")) this->sunOffset = obj["sunOffset"].as<int16_t>();
+  jget(obj, "sunOffset", this->sunOffset);
   // Toute modification invalide le dernier déclenchement mémorisé (au cas où l'heure/le
   // jour changerait pour tomber de nouveau sur la minute courante) ainsi qu'un éventuel
   // cycle de renvois de fiabilité en cours (les paramètres ayant pu changer entre-temps).

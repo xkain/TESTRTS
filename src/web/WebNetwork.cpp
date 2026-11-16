@@ -19,6 +19,7 @@
 #include "StatusLed.h"
 #include "WebCommon.h"
 #include "WebNetwork.h"
+#include "../JsonHelpers.h"
 
 extern ConfigSettings settings;
 extern rebootDelay_t rebootDelay;
@@ -437,8 +438,8 @@ namespace WebNetwork {
       if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
         String ssid = "";
         String passphrase = "";
-        if (obj.containsKey("ssid")) ssid = obj["ssid"].as<String>();
-        if (obj.containsKey("passphrase")) passphrase = obj["passphrase"].as<String>();
+        jget(obj, "ssid", ssid);
+        jget(obj, "passphrase", passphrase);
         // Corrigé par rapport à la version WebServer& d'origine : "bool reboot;" y était déclarée
         // sans initialisation -- si ni le ssid ni la passphrase ne changeaient, la variable restait
         // lue non initialisée (comportement indéterminé) dans le "if(reboot)" plus bas.

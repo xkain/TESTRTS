@@ -16,6 +16,7 @@
 #include "NetManager.h"   // net.lockScan()/unlockScan() -- verrou partagé du scan Wi-Fi, cf. ssidExists()
 #include "esp_chip_info.h"
 #include <esp_arduino_version.h>   // ESP_ARDUINO_VERSION_MAJOR -- cf. le cas C6 de chipModel
+#include "JsonHelpers.h"
 
 extern ConfigSettings settings;
 extern NetManager net;
@@ -35,13 +36,13 @@ uint8_t langCodeToIndex(const char *code) {
 }
 
 void restore_options_t::fromJSON(JsonObject &obj) {
-  if(obj.containsKey("shades")) this->shades = obj["shades"];
-  if(obj.containsKey("settings")) this->settings = obj["settings"];
-  if(obj.containsKey("network")) this->network = obj["network"];
-  if(obj.containsKey("transceiver")) this->transceiver = obj["transceiver"];
-  if(obj.containsKey("repeaters")) this->repeaters = obj["repeaters"];
-  if(obj.containsKey("listeners")) this->listeners = obj["listeners"];
-  if(obj.containsKey("mqtt")) this->mqtt = obj["mqtt"];
+  jget(obj, "shades", this->shades);
+  jget(obj, "settings", this->settings);
+  jget(obj, "network", this->network);
+  jget(obj, "transceiver", this->transceiver);
+  jget(obj, "repeaters", this->repeaters);
+  jget(obj, "listeners", this->listeners);
+  jget(obj, "mqtt", this->mqtt);
 }
 int8_t appver_t::compare(appver_t &ver) {
   if(this->major == ver.major && this->minor == ver.minor && this->build == ver.build) return 0;
@@ -388,32 +389,32 @@ void ConfigSettings::toJSON(JsonFormatter &json) {
 
 bool ConfigSettings::requiresAuth() { return this->Security.type != security_types::None; }
 bool ConfigSettings::fromJSON(JsonObject &obj) {
-    if(obj.containsKey("ssdpBroadcast")) this->ssdpBroadcast = obj["ssdpBroadcast"];
+    jget(obj, "ssdpBroadcast", this->ssdpBroadcast);
     if(obj.containsKey("hostname")) this->parseValueString(obj, "hostname", this->hostname, sizeof(this->hostname));
     if(obj.containsKey("connType")) this->connType = static_cast<conn_types_t>(obj["connType"].as<uint8_t>());
     if(obj.containsKey("language")) this->parseValueString(obj, "language", this->language, sizeof(this->language));
-    if(obj.containsKey("checkForUpdate")) this->checkForUpdate = obj["checkForUpdate"];
+    jget(obj, "checkForUpdate", this->checkForUpdate);
     if(obj.containsKey("accentColor")) this->parseValueString(obj, "accentColor",this->accentColor, sizeof(this->accentColor));
-    if(obj.containsKey("themeMode")) this->themeMode = obj["themeMode"].as<uint8_t>();
-    if(obj.containsKey("swShowGpio")) this->swShowGpio = obj["swShowGpio"];
-    if(obj.containsKey("enableDebugLogs")) this->enableDebugLogs = obj["enableDebugLogs"];
+    jget(obj, "themeMode", this->themeMode);
+    jget(obj, "swShowGpio", this->swShowGpio);
+    jget(obj, "enableDebugLogs", this->enableDebugLogs);
     // La validation de la broche (plage, collision avec la radio ou les relais) est faite en amont
     // par WebNetwork::handleSetGeneral() : elle doit pouvoir REFUSER la requête, ce que la signature
     // de fromJSON ne permet pas d'exprimer.
-    if(obj.containsKey("ledPin")) this->ledPin = obj["ledPin"].as<int8_t>();
-    if(obj.containsKey("ledActiveLow")) this->ledActiveLow = obj["ledActiveLow"];
-    if(obj.containsKey("ledAddressable")) this->ledAddressable = obj["ledAddressable"];
-    if(obj.containsKey("ledRfBlink")) this->ledRfBlink = obj["ledRfBlink"];
+    jget(obj, "ledPin", this->ledPin);
+    jget(obj, "ledActiveLow", this->ledActiveLow);
+    jget(obj, "ledAddressable", this->ledAddressable);
+    jget(obj, "ledRfBlink", this->ledRfBlink);
     // Format validé en amont (#rrggbb), dans /setgeneral -- mêmes raisons que ledPin ci-dessus.
     if(obj.containsKey("ledColorActivity")) this->parseValueString(obj, "ledColorActivity", this->ledColorActivity, sizeof(this->ledColorActivity));
-    if(obj.containsKey("ledColorOrder")) this->ledColorOrder = obj["ledColorOrder"].as<uint8_t>();
+    jget(obj, "ledColorOrder", this->ledColorOrder);
     // Validation de plage (0..3) et de valeur ("groups"/"devices") en amont, dans /setgeneral --
     // mêmes raisons que ledPin ci-dessus.
-    if(obj.containsKey("headerMobileDisplay")) this->headerMobileDisplay = obj["headerMobileDisplay"].as<uint8_t>();
-    if(obj.containsKey("reverseDashboardColumns")) this->reverseDashboardColumns = obj["reverseDashboardColumns"];
+    jget(obj, "headerMobileDisplay", this->headerMobileDisplay);
+    jget(obj, "reverseDashboardColumns", this->reverseDashboardColumns);
     if(obj.containsKey("defaultMobileTab")) this->parseValueString(obj, "defaultMobileTab", this->defaultMobileTab, sizeof(this->defaultMobileTab));
-    if(obj.containsKey("showRadioActivity")) this->showRadioActivity = obj["showRadioActivity"];
-    if(obj.containsKey("showMovementIndicator")) this->showMovementIndicator = obj["showMovementIndicator"];
+    jget(obj, "showRadioActivity", this->showRadioActivity);
+    jget(obj, "showMovementIndicator", this->showMovementIndicator);
     if(obj.containsKey("dashCompact")) this->dashCompact = obj["dashCompact"].as<uint8_t>() & 0x03;
     // Validation de plage (-90..90 / -180..180) en amont, dans /setgeneral. Arrondi à 2 décimales
     // ici quelle que soit la précision reçue : c'est la seule jamais persistée.
@@ -482,8 +483,8 @@ bool MQTTSettings::fromJSON(JsonObject &obj) {
   // charge utile entière plutôt que d'en appliquer la moitié. L'appelant (route /connectmqtt,
   // restauration de configuration) sait alors qu'il n'a rien à enregistrer.
   if(obj.containsKey("rootTopic") && !MQTTSettings::isValidRootTopic(obj["rootTopic"] | "")) return false;
-  if(obj.containsKey("enabled")) this->enabled = obj["enabled"];
-  if(obj.containsKey("pubDisco")) this->pubDisco = obj["pubDisco"];
+  jget(obj, "enabled", this->enabled);
+  jget(obj, "pubDisco", this->pubDisco);
   // "protocol" est délibérément ignoré s'il figure dans la charge utile : c'est une constante
   // (cf. ConfigSettings.h). L'interface l'émet encore pour garder la forme du JSON stable, et une
   // sauvegarde faite sur une version antérieure peut porter "mqtts://".
@@ -493,7 +494,7 @@ bool MQTTSettings::fromJSON(JsonObject &obj) {
   this->parseValueString(obj, "rootTopic", this->rootTopic, sizeof(this->rootTopic));
   this->parseValueString(obj, "discoTopic", this->discoTopic, sizeof(this->discoTopic));
   this->parseValueString(obj, "clientId", this->clientId, sizeof(this->clientId));
-  if(obj.containsKey("port")) this->port = obj["port"];
+  jget(obj, "port", this->port);
   return true;
 }
 bool MQTTSettings::save() {
@@ -630,7 +631,7 @@ bool IPSettings::begin() {
   return true;
 }
 bool IPSettings::fromJSON(JsonObject &obj) {
-  if(obj.containsKey("dhcp")) this->dhcp = obj["dhcp"];
+  jget(obj, "dhcp", this->dhcp);
   this->parseIPAddress(obj, "ip", &this->ip);
   this->parseIPAddress(obj, "gateway", &this->gateway);
   this->parseIPAddress(obj, "subnet", &this->subnet);
@@ -711,7 +712,7 @@ bool SecuritySettings::fromJSON(JsonObject &obj) {
   this->parseValueString(obj, "username", this->username, sizeof(this->username));
   this->parseSecretString(obj, "password", this->password, sizeof(this->password));
   this->parseSecretString(obj, "pin", this->pin, sizeof(this->pin));
-  if(obj.containsKey("permissions")) this->permissions = obj["permissions"];
+  jget(obj, "permissions", this->permissions);
   return true;
 }
 bool SecuritySettings::toJSON(JsonObject &obj) {
@@ -795,8 +796,8 @@ bool WifiSettings::fromJSON(JsonObject &obj) {
     // divergeaient d'un caractère -- /setNetwork refuse 64, ici il était accepté.
     if(len >= 8 && len <= 63) strlcpy(this->apPassword, val, sizeof(this->apPassword));
   }
-  if(obj.containsKey("roaming")) this->roaming = obj["roaming"];
-  if(obj.containsKey("hidden")) this->hidden = obj["hidden"];
+  jget(obj, "roaming", this->roaming);
+  jget(obj, "hidden", this->hidden);
   return true;
 }
 void WifiSettings::toJSON(JsonFormatter &json) {
@@ -900,13 +901,13 @@ bool EthernetSettings::begin() {
   return true;
 }
 bool EthernetSettings::fromJSON(JsonObject &obj) {
-  if(obj.containsKey("boardType")) this->boardType = obj["boardType"];
-  if(obj.containsKey("phyAddress")) this->phyAddress = obj["phyAddress"];
-  if(obj.containsKey("CLKMode")) this->CLKMode = obj["CLKMode"];
-  if(obj.containsKey("phyType")) this->phyType = obj["phyType"];
-  if(obj.containsKey("PWRPin")) this->PWRPin = obj["PWRPin"];
-  if(obj.containsKey("MDCPin")) this->MDCPin = obj["MDCPin"];
-  if(obj.containsKey("MDIOPin")) this->MDIOPin = obj["MDIOPin"];
+  jget(obj, "boardType", this->boardType);
+  jget(obj, "phyAddress", this->phyAddress);
+  jget(obj, "CLKMode", this->CLKMode);
+  jget(obj, "phyType", this->phyType);
+  jget(obj, "PWRPin", this->PWRPin);
+  jget(obj, "MDCPin", this->MDCPin);
+  jget(obj, "MDIOPin", this->MDIOPin);
   return true;
 }
 bool EthernetSettings::toJSON(JsonObject &obj) {

@@ -11,6 +11,7 @@
 #include "WebCommon.h"
 #include "WebChunkedJson.h"
 #include "WebShadesRest.h"
+#include "../JsonHelpers.h"
 
 extern ConfigSettings settings;
 extern SomfyShadeController somfy;
@@ -1045,8 +1046,8 @@ namespace WebShadesRest {
         }
         else {
           JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("roomId")) roomId = obj["roomId"];
-          else {
+          if(!jget(obj, "roomId", roomId))
+           {
             webServer.sendError(request, 500, "No room id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
@@ -1084,8 +1085,8 @@ namespace WebShadesRest {
         }
         else {
           JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
-          else {
+          if(!jget(obj, "shadeId", shadeId))
+           {
             webServer.sendError(request, 500, "No shade id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
@@ -1126,8 +1127,8 @@ namespace WebShadesRest {
         }
         else {
           JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("groupId")) groupId = obj["groupId"];
-          else {
+          if(!jget(obj, "groupId", groupId))
+           {
             webServer.sendError(request, 500, "No group id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
@@ -1165,8 +1166,8 @@ namespace WebShadesRest {
         }
         else {
           JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("id")) scheduleId = obj["id"];
-          else {
+          if(!jget(obj, "id", scheduleId))
+           {
             webServer.sendError(request, 500, "No schedule id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }

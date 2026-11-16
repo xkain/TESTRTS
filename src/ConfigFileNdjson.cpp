@@ -8,6 +8,7 @@
 #include "ConfigSettings.h"
 #include "Utils.h"
 #include "web/WResp.h"
+#include "JsonHelpers.h"
 
 // Sauvegarde au format NDJSON (fmt 1) : un objet JSON par ligne, clés de l'API HTTP, clé absente =
 // valeur en place conservée. Spécification : audit/FORMAT-SAUVEGARDE-2026-11-09.md. Le contrat de
@@ -288,7 +289,7 @@ bool ShadeConfigFile::backupNdjson(SomfyShadeController *s) {
 
 static void ndjsonApplyShade(JsonObject &obj, SomfyShade *shade) {
   shade->setShadeId(obj["shadeId"] | (uint8_t)255);
-  if(obj.containsKey("paired")) shade->paired = obj["paired"];
+  jget(obj, "paired", shade->paired);
   if(obj.containsKey("shadeType")) shade->shadeType = static_cast<shade_types>(obj["shadeType"].as<uint8_t>());
   if(obj.containsKey("remoteAddress")) shade->setRemoteAddress(obj["remoteAddress"].as<uint32_t>());
   if(obj.containsKey("name")) strlcpyUtf8(shade->name, obj["name"] | "", sizeof(shade->name));
@@ -300,12 +301,12 @@ static void ndjsonApplyShade(JsonObject &obj, SomfyShade *shade) {
     uint8_t bl = obj["bitLength"].as<uint8_t>();
     if(bl == 0 || bl == 56 || bl == 80) shade->bitLength = bl;
   }
-  if(obj.containsKey("upTime")) shade->upTime = obj["upTime"];
-  if(obj.containsKey("downTime")) shade->downTime = obj["downTime"];
-  if(obj.containsKey("tiltTimeUp")) shade->tiltTimeUp = obj["tiltTimeUp"];
-  if(obj.containsKey("tiltTimeDown")) shade->tiltTimeDown = obj["tiltTimeDown"];
-  if(obj.containsKey("stepSize")) shade->stepSize = obj["stepSize"];
-  if(obj.containsKey("flags")) shade->flags = obj["flags"];
+  jget(obj, "upTime", shade->upTime);
+  jget(obj, "downTime", shade->downTime);
+  jget(obj, "tiltTimeUp", shade->tiltTimeUp);
+  jget(obj, "tiltTimeDown", shade->tiltTimeDown);
+  jget(obj, "stepSize", shade->stepSize);
+  jget(obj, "flags", shade->flags);
   // Positions calculées en LOCALES et posées tout en bas de cette fonction : le modèle s'écrit
   // sans verrou depuis async_tcp pendant que loopTask le lit et le recale (checkMovement). Écrire
   // currentPos ici puis target bien plus bas -- avec le reconcile NVS, des millisecondes, entre
@@ -315,20 +316,20 @@ static void ndjsonApplyShade(JsonObject &obj, SomfyShade *shade) {
   float myTiltPos = obj.containsKey("myTiltPos") ? obj["myTiltPos"].as<float>() : shade->myTiltPos;
   float curPos = obj.containsKey("currentPos") ? obj["currentPos"].as<float>() : shade->currentPos;
   float curTiltPos = obj.containsKey("currentTiltPos") ? obj["currentTiltPos"].as<float>() : shade->currentTiltPos;
-  if(obj.containsKey("flipCommands")) shade->flipCommands = obj["flipCommands"];
-  if(obj.containsKey("flipPosition")) shade->flipPosition = obj["flipPosition"];
+  jget(obj, "flipCommands", shade->flipCommands);
+  jget(obj, "flipPosition", shade->flipPosition);
   if(obj.containsKey("repeats")) shade->repeats = max(obj["repeats"].as<uint8_t>(), (uint8_t)1);
   shade->sortOrder = obj["sortOrder"] | (uint8_t)(shade->getShadeId() - 1);
-  if(obj.containsKey("gpioUp")) shade->gpioUp = obj["gpioUp"];
-  if(obj.containsKey("gpioDown")) shade->gpioDown = obj["gpioDown"];
-  if(obj.containsKey("gpioMy")) shade->gpioMy = obj["gpioMy"];
-  if(obj.containsKey("gpioFlags")) shade->gpioFlags = obj["gpioFlags"];
-  if(obj.containsKey("roomId")) shade->roomId = obj["roomId"];
-  if(obj.containsKey("ledFeedback")) shade->ledFeedback = obj["ledFeedback"];
-  if(obj.containsKey("tiltFirstOnOpen")) shade->tiltFirstOnOpen = obj["tiltFirstOnOpen"];
-  if(obj.containsKey("tiltFirstOnClose")) shade->tiltFirstOnClose = obj["tiltFirstOnClose"];
-  if(obj.containsKey("slackUp")) shade->slackUp = obj["slackUp"];
-  if(obj.containsKey("slackDown")) shade->slackDown = obj["slackDown"];
+  jget(obj, "gpioUp", shade->gpioUp);
+  jget(obj, "gpioDown", shade->gpioDown);
+  jget(obj, "gpioMy", shade->gpioMy);
+  jget(obj, "gpioFlags", shade->gpioFlags);
+  jget(obj, "roomId", shade->roomId);
+  jget(obj, "ledFeedback", shade->ledFeedback);
+  jget(obj, "tiltFirstOnOpen", shade->tiltFirstOnOpen);
+  jget(obj, "tiltFirstOnClose", shade->tiltFirstOnClose);
+  jget(obj, "slackUp", shade->slackUp);
+  jget(obj, "slackDown", shade->slackDown);
   if(obj.containsKey("outputMode")) {
     uint8_t v = obj["outputMode"];
     shade->outputMode = (v == static_cast<uint8_t>(switch_output_t::pulse)) ? switch_output_t::pulse : switch_output_t::latching;
@@ -341,7 +342,7 @@ static void ndjsonApplyShade(JsonObject &obj, SomfyShade *shade) {
     uint8_t v = obj["stateVocab"];
     shade->stateVocab = (v <= static_cast<uint8_t>(switch_vocab_t::activeIdle)) ? static_cast<switch_vocab_t>(v) : switch_vocab_t::onOff;
   }
-  if(obj.containsKey("setupSteps")) shade->setupSteps = obj["setupSteps"];
+  jget(obj, "setupSteps", shade->setupSteps);
   if(obj.containsKey("remoteModel")) shade->setRemoteModel(obj["remoteModel"] | "");
   if(obj.containsKey("linkedRemotes")) {
     for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) shade->linkedRemotes[j] = SomfyLinkedRemote();
@@ -355,7 +356,7 @@ static void ndjsonApplyShade(JsonObject &obj, SomfyShade *shade) {
       if(addr != 0) shade->linkedRemotes[j++].setRemoteAddress(addr);
     }
   }
-  if(obj.containsKey("lastRollingCode")) shade->lastRollingCode = obj["lastRollingCode"];
+  jget(obj, "lastRollingCode", shade->lastRollingCode);
   if(shade->getRemoteAddress() != 0) {
     Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
     pref.begin("ShadeCodes");
@@ -398,9 +399,9 @@ static void ndjsonApplyGroup(JsonObject &obj, SomfyGroup *group) {
   }
   if(obj.containsKey("repeats")) group->repeats = max(obj["repeats"].as<uint8_t>(), (uint8_t)1);
   group->sortOrder = obj["sortOrder"] | (uint8_t)(group->getGroupId() - 1);
-  if(obj.containsKey("flipCommands")) group->flipCommands = obj["flipCommands"];
-  if(obj.containsKey("roomId")) group->roomId = obj["roomId"];
-  if(obj.containsKey("ledFeedback")) group->ledFeedback = obj["ledFeedback"];
+  jget(obj, "flipCommands", group->flipCommands);
+  jget(obj, "roomId", group->roomId);
+  jget(obj, "ledFeedback", group->ledFeedback);
   if(obj.containsKey("remoteModel")) group->setRemoteModel(obj["remoteModel"] | "");
   if(obj.containsKey("linkedShades")) {
     memset(group->linkedShades, 0x00, sizeof(group->linkedShades));
@@ -412,7 +413,7 @@ static void ndjsonApplyGroup(JsonObject &obj, SomfyGroup *group) {
       if(id > 0 && id < 255) group->linkedShades[j++] = id;
     }
   }
-  if(obj.containsKey("lastRollingCode")) group->lastRollingCode = obj["lastRollingCode"];
+  jget(obj, "lastRollingCode", group->lastRollingCode);
   if(group->getRemoteAddress() != 0) {
     Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
     pref.begin("ShadeCodes");
@@ -425,20 +426,20 @@ static void ndjsonApplyGroup(JsonObject &obj, SomfyGroup *group) {
 static void ndjsonApplySchedule(JsonObject &obj, ScheduleRule *rule) {
   rule->setId(obj["scheduleId"] | (uint8_t)255);
   if(obj.containsKey("name")) strlcpyUtf8(rule->name, obj["name"] | "", sizeof(rule->name));
-  if(obj.containsKey("dayMask")) rule->dayMask = obj["dayMask"];
-  if(obj.containsKey("hour")) rule->hour = obj["hour"];
-  if(obj.containsKey("minute")) rule->minute = obj["minute"];
+  jget(obj, "dayMask", rule->dayMask);
+  jget(obj, "hour", rule->hour);
+  jget(obj, "minute", rule->minute);
   // Valeurs NUMÉRIQUES, comme le bloc positionnel : ScheduleRule::fromJSON parle le dialecte de
   // l'API ("shade"/"group", "my"/"tiltonly"), pas celui de la sauvegarde.
   if(obj.containsKey("targetType")) rule->targetType = static_cast<schedule_target_t>(obj["targetType"].as<uint8_t>());
-  if(obj.containsKey("targetId")) rule->targetId = obj["targetId"];
-  if(obj.containsKey("targetPos")) rule->targetPos = obj["targetPos"];
-  if(obj.containsKey("targetTilt")) rule->targetTilt = obj["targetTilt"].as<int8_t>();
-  if(obj.containsKey("enabled")) rule->enabled = obj["enabled"];
-  if(obj.containsKey("retries")) rule->retries = obj["retries"];
+  jget(obj, "targetId", rule->targetId);
+  jget(obj, "targetPos", rule->targetPos);
+  jget(obj, "targetTilt", rule->targetTilt);
+  jget(obj, "enabled", rule->enabled);
+  jget(obj, "retries", rule->retries);
   if(obj.containsKey("positionMode")) rule->positionMode = static_cast<schedule_position_mode_t>(obj["positionMode"].as<uint8_t>());
   if(obj.containsKey("timeRef")) rule->timeRef = static_cast<schedule_time_ref_t>(obj["timeRef"].as<uint8_t>());
-  if(obj.containsKey("sunOffset")) rule->sunOffset = obj["sunOffset"].as<int16_t>();
+  jget(obj, "sunOffset", rule->sunOffset);
 }
 
 static void ndjsonApplySettings(JsonObject &obj) {
@@ -527,13 +528,13 @@ bool ShadeConfigFile::restoreNdjson(SomfyShadeController *s, restore_options_t &
         // Même règle que le lecteur positionnel : la configuration Ethernet ne se restaure que sur
         // l'appareil d'origine -- des broches PHY d'une autre carte rendraient le réseau muet.
         if(strncmp(settings.serverId, metaServerId, sizeof(settings.serverId)) == 0) {
-          if(obj.containsKey("ethBoardType")) settings.Ethernet.boardType = obj["ethBoardType"];
-          if(obj.containsKey("ethPhyType")) settings.Ethernet.phyType = obj["ethPhyType"];
-          if(obj.containsKey("ethCLKMode")) settings.Ethernet.CLKMode = obj["ethCLKMode"];
-          if(obj.containsKey("ethPhyAddress")) settings.Ethernet.phyAddress = obj["ethPhyAddress"].as<int8_t>();
-          if(obj.containsKey("ethPWRPin")) settings.Ethernet.PWRPin = obj["ethPWRPin"].as<int8_t>();
-          if(obj.containsKey("ethMDCPin")) settings.Ethernet.MDCPin = obj["ethMDCPin"].as<int8_t>();
-          if(obj.containsKey("ethMDIOPin")) settings.Ethernet.MDIOPin = obj["ethMDIOPin"].as<int8_t>();
+          jget(obj, "ethBoardType", settings.Ethernet.boardType);
+          jget(obj, "ethPhyType", settings.Ethernet.phyType);
+          jget(obj, "ethCLKMode", settings.Ethernet.CLKMode);
+          jget(obj, "ethPhyAddress", settings.Ethernet.phyAddress);
+          jget(obj, "ethPWRPin", settings.Ethernet.PWRPin);
+          jget(obj, "ethMDCPin", settings.Ethernet.MDCPin);
+          jget(obj, "ethMDIOPin", settings.Ethernet.MDIOPin);
         }
       }
     }

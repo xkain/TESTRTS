@@ -10,6 +10,7 @@
 #include "Web.h"
 #include "WebCommon.h"
 #include "WebRadioCommands.h"
+#include "../JsonHelpers.h"
 
 extern ConfigSettings settings;
 extern SomfyShadeController somfy;
@@ -44,8 +45,8 @@ namespace WebRadioCommands {
         }
         else {
           JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
-          else {
+          if(!jget(obj, "shadeId", shadeId))
+           {
             webServer.sendError(request, 500, "No shade id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
@@ -56,8 +57,8 @@ namespace WebRadioCommands {
           else if (obj.containsKey("target")) {
               target = obj["target"].as<uint8_t>();
           }
-          if (obj.containsKey("repeat")) repeat = obj["repeat"].as<uint8_t>();
-          if(obj.containsKey("stepSize")) stepSize = obj["stepSize"].as<uint8_t>();
+          jget(obj, "repeat", repeat);
+          jget(obj, "stepSize", stepSize);
         }
       }
       else {
@@ -114,14 +115,14 @@ namespace WebRadioCommands {
         }
         else {
           JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
-          if(obj.containsKey("groupId")) groupId = obj["groupId"];
-          if(obj.containsKey("stepSize")) stepSize = obj["stepSize"];
+          jget(obj, "shadeId", shadeId);
+          jget(obj, "groupId", groupId);
+          jget(obj, "stepSize", stepSize);
           if (obj.containsKey("command")) {
               String scmd = obj["command"];
               command = translateSomfyCommand(scmd);
           }
-          if (obj.containsKey("repeat")) repeat = obj["repeat"].as<uint8_t>();
+          jget(obj, "repeat", repeat);
         }
       }
       if(shadeId != 255) {
@@ -195,8 +196,8 @@ namespace WebRadioCommands {
         }
         else {
           JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("groupId")) groupId = obj["groupId"];
-          else {
+          if(!jget(obj, "groupId", groupId))
+           {
             webServer.sendError(request, 500, "No group id was supplied.");
             return;
           }
@@ -204,8 +205,8 @@ namespace WebRadioCommands {
             String scmd = obj["command"];
             command = translateSomfyCommand(scmd);
           }
-          if(obj.containsKey("repeat")) repeat = obj["repeat"].as<uint8_t>();
-          if(obj.containsKey("stepSize")) stepSize = obj["stepSize"].as<uint8_t>();
+          jget(obj, "repeat", repeat);
+          jget(obj, "stepSize", stepSize);
         }
       }
       else {
@@ -258,8 +259,8 @@ namespace WebRadioCommands {
         }
         else {
           JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
-          else {
+          if(!jget(obj, "shadeId", shadeId))
+           {
             webServer.sendError(request, 500, "No shade id was supplied.");
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
@@ -317,9 +318,9 @@ namespace WebRadioCommands {
       }
       else {
         JsonObject obj = doc.as<JsonObject>();
-        if(obj.containsKey("shadeId")) shadeId = obj["shadeId"];
-        if(obj.containsKey("position")) pos = obj["position"];
-        if(obj.containsKey("tiltPosition")) tiltPos = obj["tiltPosition"];
+        jget(obj, "shadeId", shadeId);
+        jget(obj, "position", pos);
+        jget(obj, "tiltPosition", tiltPos);
       }
     }
     if(shadeId != 255) {
@@ -360,8 +361,8 @@ namespace WebRadioCommands {
       }
       else {
         JsonObject obj = doc.as<JsonObject>();
-        if(obj.containsKey("shadeId")) shadeId = obj["shadeId"].as<uint8_t>();
-        if(obj.containsKey("groupId")) groupId = obj["groupId"].as<uint8_t>();
+        jget(obj, "shadeId", shadeId);
+        jget(obj, "groupId", groupId);
         if(obj.containsKey("sunny")) {
           if(obj["sunny"].is<bool>())
             sunny = obj["sunny"].as<bool>() ? 1 : 0;
@@ -374,7 +375,7 @@ namespace WebRadioCommands {
           else
             windy = obj["windy"].as<int8_t>();
         }
-        if(obj.containsKey("repeat")) repeat = obj["repeat"].as<uint8_t>();
+        jget(obj, "repeat", repeat);
       }
     }
     if(shadeId != 255) {
@@ -437,8 +438,8 @@ namespace WebRadioCommands {
         }
         else {
           JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
-          else {
+          if(!jget(obj, "shadeId", shadeId))
+           {
             // `return` indispensable ici : sans lui, l'exécution continuerait jusqu'à la recherche
             // de l'équipement plus bas, qui émettrait une SECONDE réponse -- et c'est la dernière
             // qui gagne (AsyncWebServerRequest::send() supprime la réponse déjà posée). Le client
@@ -447,8 +448,8 @@ namespace WebRadioCommands {
             webServer.sendError(request, 500, "No shade id was supplied.");
             return;
           }
-          if(obj.containsKey("pos")) pos = obj["pos"].as<int8_t>();
-          if(obj.containsKey("tilt")) tilt = obj["tilt"].as<int8_t>();
+          jget(obj, "pos", pos);
+          jget(obj, "tilt", tilt);
           learn = obj["learn"] | false;
         }
       }
@@ -528,9 +529,9 @@ namespace WebRadioCommands {
         }
         else {
           JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
-          if (obj.containsKey("groupId")) groupId = obj["groupId"];
-          if(obj.containsKey("rollingCode")) rollingCode = obj["rollingCode"];
+          jget(obj, "shadeId", shadeId);
+          jget(obj, "groupId", groupId);
+          jget(obj, "rollingCode", rollingCode);
         }
       }
       else if (request->hasArg("shadeId")) {
@@ -589,8 +590,8 @@ namespace WebRadioCommands {
       }
       else {
         JsonObject obj = doc.as<JsonObject>();
-        if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
-        if(obj.containsKey("paired")) paired = obj["paired"];
+        jget(obj, "shadeId", shadeId);
+        jget(obj, "paired", paired);
       }
     }
     else if (request->hasArg("shadeId"))
@@ -630,7 +631,7 @@ namespace WebRadioCommands {
         }
         else {
           JsonObject obj = doc.as<JsonObject>();
-          if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
+          jget(obj, "shadeId", shadeId);
         }
       }
       else if (request->hasArg("shadeId"))
@@ -743,8 +744,8 @@ namespace WebRadioCommands {
         return false;
       }
       JsonObject obj = doc.as<JsonObject>();
-      if (obj.containsKey("address")) address = obj["address"];
-      else if(obj.containsKey("remoteAddress")) address = obj["remoteAddress"];
+      if(!jget(obj, "address", address))
+       jget(obj, "remoteAddress", address);
       if (obj.containsKey("name")) strlcpyUtf8(name, obj["name"] | "", nameLen);
     }
     else {
@@ -1068,11 +1069,11 @@ namespace WebRadioCommands {
         else {
           JsonObject obj = doc.as<JsonObject>();
           String scmd;
-          if (obj.containsKey("address")) frame.remoteAddress = obj["address"];
-          if (obj.containsKey("command")) scmd = obj["command"].as<String>();
-          if (obj.containsKey("repeats")) repeats = obj["repeats"];
-          if (obj.containsKey("rcode")) frame.rollingCode = obj["rcode"];
-          if (obj.containsKey("encKey")) frame.encKey = obj["encKey"];
+          jget(obj, "address", frame.remoteAddress);
+          jget(obj, "command", scmd);
+          jget(obj, "repeats", repeats);
+          jget(obj, "rcode", frame.rollingCode);
+          jget(obj, "encKey", frame.encKey);
           frame.cmd = translateSomfyCommand(scmd.c_str());
         }
       }

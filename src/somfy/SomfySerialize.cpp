@@ -7,6 +7,7 @@
 #include "ConfigSettings.h"
 #include "Utils.h"   // isUsableOutputPin()
 #include "Somfy.h"
+#include "../JsonHelpers.h"
 
 // Sérialisation JSON du modèle de domaine (SomfyShade/SomfyRoom/SomfyGroup/SomfyRemote/
 // SomfyLinkedRemote/SomfyShadeController) pour l'API REST et les sockets -- validateJSON/
@@ -122,16 +123,16 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
   int8_t err = this->validateJSON(obj);
   if(err == 0) {
     if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
-    if(obj.containsKey("roomId")) this->roomId = obj["roomId"];
-    if(obj.containsKey("upTime")) this->upTime = obj["upTime"];
-    if(obj.containsKey("downTime")) this->downTime = obj["downTime"];
+    jget(obj, "roomId", this->roomId);
+    jget(obj, "upTime", this->upTime);
+    jget(obj, "downTime", this->downTime);
     if(obj.containsKey("remoteAddress")) this->setRemoteAddress(obj["remoteAddress"]);
-    if(obj.containsKey("tiltTimeUp")) this->tiltTimeUp = obj["tiltTimeUp"];
-    if(obj.containsKey("tiltTimeDown")) this->tiltTimeDown = obj["tiltTimeDown"];
+    jget(obj, "tiltTimeUp", this->tiltTimeUp);
+    jget(obj, "tiltTimeDown", this->tiltTimeDown);
     // Zone morte de translation (issue #40). Absents d'une requête = inchangés, comme tout le
     // reste ici : un client qui n'en a pas connaissance ne les remet pas à 0 par omission.
-    if(obj.containsKey("slackUp")) this->slackUp = obj["slackUp"];
-    if(obj.containsKey("slackDown")) this->slackDown = obj["slackDown"];
+    jget(obj, "slackUp", this->slackUp);
+    jget(obj, "slackDown", this->slackDown);
     // Interrupteurs. Bornés à l'écriture plutôt que fait confiance à l'appelant : ces deux champs
     // sont exposés en REST et en MQTT, donc atteignables par autre chose que notre interface.
     if(obj.containsKey("outputMode")) {
@@ -146,10 +147,10 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
       uint8_t v = obj["stateVocab"];
       this->stateVocab = (v <= static_cast<uint8_t>(switch_vocab_t::activeIdle)) ? static_cast<switch_vocab_t>(v) : switch_vocab_t::onOff;
     }
-    if(obj.containsKey("setupSteps")) this->setupSteps = obj["setupSteps"].as<uint8_t>();
-    if(obj.containsKey("tiltFirstOnOpen")) this->tiltFirstOnOpen = obj["tiltFirstOnOpen"];
-    if(obj.containsKey("tiltFirstOnClose")) this->tiltFirstOnClose = obj["tiltFirstOnClose"];
-    if(obj.containsKey("stepSize")) this->stepSize = obj["stepSize"];
+    jget(obj, "setupSteps", this->setupSteps);
+    jget(obj, "tiltFirstOnOpen", this->tiltFirstOnOpen);
+    jget(obj, "tiltFirstOnClose", this->tiltFirstOnClose);
+    jget(obj, "stepSize", this->stepSize);
     // Correspondance INVERSÉE jusqu'ici : `hasTilt: true` produisait tilt_types::none. Le sens
     // attendu est celui qu'écrit SomfyShade::save() (`putBool("hasTilt", tiltType != none)`),
     // donc true = l'équipement A une inclinaison. Un client REST obtenait exactement le contraire de
@@ -166,7 +167,7 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
     if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
     if(obj.containsKey("sunSensor")) this->setSunSensor(obj["sunSensor"]);
     if(obj.containsKey("simMy")) this->setSimMy(obj["simMy"]);
-    if(obj.containsKey("gpioFlags")) this->gpioFlags = obj["gpioFlags"];
+    jget(obj, "gpioFlags", this->gpioFlags);
     if(obj.containsKey("gpioLLTrigger")) {
       if(obj["gpioLLTrigger"].as<bool>())
         this->gpioFlags |= (uint8_t)gpio_flags_t::LowLevelTrigger;
@@ -229,10 +230,10 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
       this->slackUp = 0;
       this->slackDown = 0;
     }
-    if(obj.containsKey("flipCommands")) this->flipCommands = obj["flipCommands"].as<bool>();
-    if(obj.containsKey("ledFeedback")) this->ledFeedback = obj["ledFeedback"].as<bool>();
+    jget(obj, "flipCommands", this->flipCommands);
+    jget(obj, "ledFeedback", this->ledFeedback);
     if(obj.containsKey("remoteModel")) this->setRemoteModel(obj["remoteModel"] | "");
-    if(obj.containsKey("flipPosition")) this->flipPosition = obj["flipPosition"].as<bool>();
+    jget(obj, "flipPosition", this->flipPosition);
     if(obj.containsKey("repeats")) this->repeats = max(obj["repeats"].as<uint8_t>(), (uint8_t)1);
     if(obj.containsKey("tiltType")) {
       if(obj["tiltType"].is<const char *>()) {
@@ -266,15 +267,15 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
         this->linkedRemotes[j].setRemoteAddress(linkedAddresses[j]);
       }
     }
-    if(obj.containsKey("flags")) this->flags = obj["flags"];
+    jget(obj, "flags", this->flags);
     if(this->proto == radio_proto::GP_Remote || this->proto == radio_proto::GP_Relay) {
-      if(obj.containsKey("gpioUp")) this->gpioUp = obj["gpioUp"];
-      if(obj.containsKey("gpioDown")) this->gpioDown = obj["gpioDown"];
+      jget(obj, "gpioUp", this->gpioUp);
+      jget(obj, "gpioDown", this->gpioDown);
       pinMode(this->gpioUp, OUTPUT);
       pinMode(this->gpioDown, OUTPUT);
     }
     if(this->proto == radio_proto::GP_Remote) {
-      if(obj.containsKey("gpioMy")) this->gpioMy = obj["gpioMy"];
+      jget(obj, "gpioMy", this->gpioMy);
       pinMode(this->gpioMy, OUTPUT);
     }
   }
@@ -374,7 +375,7 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
 
 bool SomfyRoom::fromJSON(JsonObject &obj) {
   if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
-  if(obj.containsKey("sortOrder")) this->sortOrder = obj["sortOrder"];
+  jget(obj, "sortOrder", this->sortOrder);
   return true;
 }
 void SomfyRoom::toJSON(JsonFormatter &json) {
@@ -396,7 +397,7 @@ int8_t SomfyGroup::fromJSON(JsonObject &obj) {
   int8_t err = this->validateJSON(obj);
   if(err != 0) return err;
   if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
-  if(obj.containsKey("roomId")) this->roomId = obj["roomId"];
+  jget(obj, "roomId", this->roomId);
   if(obj.containsKey("remoteAddress")) this->setRemoteAddress(obj["remoteAddress"]);
   // Même validation que SomfyShade::fromJSON plus haut, nécessaire ici aussi : `bitLength` finit en
   // argument de Transceiver::sendFrame(), dont la boucle d'émission indexe `frame[i/8]` jusqu'à
@@ -409,8 +410,8 @@ int8_t SomfyGroup::fromJSON(JsonObject &obj) {
     if(bl == 0 || bl == 56 || bl == 80) this->bitLength = bl;
   }
   if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
-  if(obj.containsKey("flipCommands")) this->flipCommands = obj["flipCommands"].as<bool>();
-  if(obj.containsKey("ledFeedback")) this->ledFeedback = obj["ledFeedback"].as<bool>();
+  jget(obj, "flipCommands", this->flipCommands);
+  jget(obj, "ledFeedback", this->ledFeedback);
   if(obj.containsKey("remoteModel")) this->setRemoteModel(obj["remoteModel"] | "");
 
   //if(obj.containsKey("sunSensor")) this->hasSunSensor() = obj["sunSensor"];  This is calculated
