@@ -1735,71 +1735,6 @@ body.is-home-welcome .container {
     grid-template-columns: minmax(300px, 32fr) minmax(0, 68fr);
     min-height: calc(100vh - var(--topbar-height));
 }
-.gen-hero {
-    position: sticky;
-    top: var(--topbar-height);
-    align-self: start;
-    height: calc(100vh - var(--topbar-height));
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(12px, 2.2vh, 24px);
-    padding: clamp(20px, 3vh, 40px) clamp(20px, 2.5vw, 44px);
-    overflow: hidden;
-    background: var(--panel);
-    text-align: center;
-}
-.gen-hero-icon {
-    width: clamp(80px, min(8vw, 15vh), 140px);
-    height: clamp(80px, min(8vw, 15vh), 140px);
-    flex: none;
-    fill: currentColor;
-    color: var(--color-accent);
-}
-.gen-hero-text {
-    min-width: 0;
-}
-.gen-hero-title {
-    margin: 0;
-    font-size: clamp(1.625em, 2.2vw, 2.25em);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1.05;
-    overflow-wrap: anywhere;
-    color: var(--text);
-}
-.gen-hero-host {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin-top: 12px;
-}
-.gen-hero-name {
-    font-size: var(--fs-5);
-    font-weight: 700;
-    overflow-wrap: anywhere;
-    color: var(--text);
-}
-.gen-hero-url {
-    font-size: var(--fs-3);
-    font-weight: 600;
-    color: var(--text-2);
-}
-.gen-hero-desc {
-    margin: 10px auto 0;
-    max-width: 36ch;
-    font-size: var(--fs-3);
-    line-height: 1.5;
-    color: var(--text-3);
-}
-.gen-hero-chips {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
-}
 .gen-chip {
     display: inline-flex;
     align-items: center;
@@ -1816,59 +1751,6 @@ body.is-home-welcome .container {
     height: 14px;
     flex: none;
     fill: currentColor;
-}
-/* Tête d'état (Connexion, MQTT) : halo teinté par l'état, libellé au-dessus du titre, constats. */
-.gen-hero-state {
-    display: block;
-    margin-bottom: 8px;
-    font-size: var(--fs-1);
-    font-weight: 700;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--text-3);
-}
-.gen-hero-halo {
-    display: flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    width: clamp(96px, min(9vw, 17vh), 160px);
-    height: clamp(96px, min(9vw, 17vh), 160px);
-    border-radius: 50%;
-    background: var(--ok-bg);
-    color: var(--ok);
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--ok) 14%, transparent);
-}
-.gen-hero-halo.is-medium,
-.gen-hero-halo.is-ap {
-    background: var(--warn-bg);
-    color: var(--warn);
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--warn) 16%, transparent);
-}
-.gen-hero-halo.is-bad {
-    background: var(--danger-bg);
-    color: var(--danger);
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--danger) 14%, transparent);
-}
-.gen-hero-halo.is-ha {
-    background: var(--ha-bg);
-    color: var(--ha);
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--ha) 14%, transparent);
-}
-.gen-hero-halo.is-off {
-    background: var(--surface-2);
-    color: var(--text-3);
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--text-3) 12%, transparent);
-}
-.gen-hero-halo > svg {
-    width: 54%;
-    height: 54%;
-    fill: currentColor;
-}
-.gen-hero-facts {
-    width: 100%;
-    max-width: 340px;
-    text-align: left;
 }
 .gen-body {
     display: flex;
@@ -2336,89 +2218,11 @@ label.gen-row {
         grid-template-columns: minmax(0, 1fr);
         min-height: 0;
     }
-    .gen-hero {
-        position: static;
-        height: auto;
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
-        justify-items: start;
-        gap: 10px 16px;
-        padding: 28px 48px 12px;
-        background: transparent;
-        text-align: left;
-    }
-    .gen-hero-icon {
-        width: 84px;
-        height: 84px;
-    }
-    .gen-hero-title {
-        font-size: 1.875em;
-    }
-    .gen-hero-desc {
-        margin-left: 0;
-    }
-    .gen-hero-chips {
-        grid-column: 1 / -1;
-        justify-content: flex-start;
-    }
     .gen-body {
         padding: 8px 48px 110px;
     }
-    .gen-hero-halo {
-        width: 84px;
-        height: 84px;
-        box-shadow: 0 0 0 8px color-mix(in srgb, currentColor 14%, transparent);
-    }
-    .gen-hero-facts {
-        grid-column: 1 / -1;
-        max-width: none;
-    }
 }
 @media (max-width: 767px) {
-    .gen-hero {
-        align-items: center;
-        gap: 12px 10px;
-        padding: 18px 16px 6px;
-    }
-    .gen-hero:not(.fw-hero) .gen-hero-text {
-        display: contents;
-    }
-    .gen-hero:has(> .gen-hero-halo) .gen-hero-text {
-        display: block;
-    }
-    .gen-hero-halo {
-        width: 52px;
-        height: 52px;
-        box-shadow: 0 0 0 5px color-mix(in srgb, currentColor 14%, transparent);
-    }
-    .gen-hero-state {
-        margin-bottom: 2px;
-    }
-    .gen-hero-facts {
-        display: none;
-    }
-    .gen-hero-icon {
-        width: 30px;
-        height: 30px;
-    }
-    .gen-hero-host,
-    .gen-hero-chips {
-        display: none;
-    }
-    .gen-hero-title {
-        font-size: var(--fs-7);
-    }
-    .gen-hero-desc {
-        grid-column: 1 / -1;
-        max-width: none;
-        margin: -4px 0 0;
-        line-height: 1.45;
-    }
-    /* L'introduction fixe d'une page se lit une fois ; l'aide de l'en-tête la remplace. Les
-       descriptions sans [tr] portent un état (type, pièce, radio) et restent. */
-    .gen-hero-desc[tr] {
-        display: none;
-    }
     .gen-body {
         gap: 0;
         padding: 0 16px 140px;
@@ -4814,11 +4618,6 @@ body.fw-update .set-fw-new {
         display: none;
     }
     /* Aide de la page : en haut à droite de son en-tête (l'en-tête mobile n'a plus de « ? »). */
-    /* top: auto -- la règle PC (collante) donne un top que relative appliquerait en décalage. */
-    .gen-hero {
-        position: relative;
-        top: auto;
-    }
     .gen-hero-help {
         position: absolute;
         top: 12px;
@@ -5926,8 +5725,8 @@ input.gen-input.mqtt-mono {
 #divHomePnl.dash-editing :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: flex; opacity: 0.55; border-style: dashed; }
 /* =======================================================================
  *  PAGES SOMFY - LISTES (Équipements, Groupes, Pièces, Plannings, maquette A2)
- *  Gabarit de Général (.gen-layout, .gen-hero, .gen-body) ; s'y ajoutent la capacité, les
- *  filtres (ordinateur seulement), les outils (menu ⋮ sur mobile) et les tuiles.
+ *  Gabarit de Général (.gen-layout, .hero, .gen-body) ; s'y ajoutent la capacité, les
+ *  filtres (menu ⋮ à droite du tri), les outils (menu ⋮ sur mobile) et les tuiles.
  *  ======================================================================= */
 /* La fiche d'un équipement ou d'un groupe partage le sous-onglet : seule la liste prend le gabarit. */
 :is(#divSomfyMotors, #divSomfyGroups, #divSomfyRooms, #divSomfySchedules).subtab-content:has(> :is(.cfg-list, .ed-page):not([style*="none"])) { max-width: none; margin: 0; padding: 0; gap: 0; background: var(--bg); color: var(--text); font-size: 16px; }
