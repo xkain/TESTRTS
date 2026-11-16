@@ -1203,19 +1203,21 @@
                     </div>
                     <div id="divListener" style="display:none;" class="subtab-content">
                         <div id="divListenerPage" class="gen-layout rx-page">
-                            <section class="gen-hero">
-                                <span class="gen-hero-halo rx-halo"><svg><use href="#svg-remote"></use></svg></span>
-                                <div class="gen-hero-text">
-                                    <span class="gen-hero-state" tr="SUBTAB_LISTENERS"></span>
-                                    <h2 id="spanListenerHero" class="gen-hero-title"></h2>
-                                    <p class="gen-hero-desc" tr="LISTENER_PAGE_DESC"></p>
+                            <section class="hero" data-obj="radio">
+                                <span class="hero-media"><svg><use href="#svg-remote"></use></svg></span>
+                                <div class="hero-head">
+                                    <span class="hero-eyebrow" tr="SUBTAB_LISTENERS"></span>
+                                    <h2 id="spanListenerHero" class="hero-title"></h2>
+                                    <p class="hero-desc" tr="LISTENER_PAGE_DESC"></p>
                                 </div>
-                                <div class="rx-stats">
-                                    <div class="rx-stat"><b id="spanListenerLast">—</b><span tr="LISTENER_LAST_PRESS"></span></div>
-                                    <div class="rx-stat"><b id="spanListenerPresses">0</b><span tr="LISTENER_PRESSES"></span></div>
+                                <div class="hero-data">
+                                    <div class="rx-stats">
+                                        <div class="rx-stat"><b id="spanListenerLast">—</b><span tr="LISTENER_LAST_PRESS"></span></div>
+                                        <div class="rx-stat"><b id="spanListenerPresses">0</b><span tr="LISTENER_PRESSES"></span></div>
+                                    </div>
+                                    <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                    <p class="gen-tile-desc is-info rx-tip" data-mobile="hide" tr="LISTENER_TIP"></p>
                                 </div>
-                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
-                                <p class="gen-tile-desc is-info rx-tip" tr="LISTENER_TIP"></p>
                             </section>
                             <div class="gen-body">
                                 <header class="rx-head rx-head-list">
@@ -1793,64 +1795,69 @@
                     </div>
                     <div id="divTransceiverSettings" class="subtab-content">
                         <div class="gen-layout rdc-page">
-                            <section class="gen-hero rdc-hero">
-                                <span id="rdcHalo" class="gen-hero-halo"><svg><use href="#svg-tabRadio"></use></svg></span>
-                                <div class="gen-hero-text">
-                                    <span class="gen-hero-state" tr="RADIO_MODULE"></span>
-                                    <h2 id="rdcTitle" class="gen-hero-title"></h2>
-                                    <p id="divRadioEnableStatus" class="gen-hero-desc"></p>
+                            <section class="hero" data-obj="radio">
+                                <span id="rdcHalo" class="hero-media"><svg><use href="#svg-tabRadio"></use></svg></span>
+                                <div class="hero-head">
+                                    <div class="hero-titlerow">
+                                        <h2 id="rdcTitle" class="hero-title" tr="RADIO_MODULE"></h2>
+                                        <span id="divRadioEnableColor" class="gen-seg gen-seg-bool dirty-target">
+                                            <input id="cbEnableRadio" type="checkbox" name="enableRadio" data-bind="transceiver.config.enabled" onclick="somfy.setRadioEnabled(this.checked)">
+                                            <span class="gen-seg-yes" tr="BT_YES"></span>
+                                            <span class="gen-seg-no" tr="BT_NO"></span>
+                                        </span>
+                                    </div>
+                                    <span id="divRadioEnableStatus" class="hero-sub"></span>
                                 </div>
-                                <div id="divRadioEnableColor" class="rdc-switch dirty-target">
-                                    <b tr="TAB_RADIO"></b>
-                                    <span class="gen-seg gen-seg-bool">
-                                        <input id="cbEnableRadio" type="checkbox" name="enableRadio" data-bind="transceiver.config.enabled" onclick="somfy.setRadioEnabled(this.checked)">
-                                        <span class="gen-seg-yes" tr="BT_YES"></span>
-                                        <span class="gen-seg-no" tr="BT_NO"></span>
-                                    </span>
-                                </div>
-                                <p id="rdcSafetyNote" class="gen-tile-desc is-warning rdc-note" tr="RADIO_CHECK_WIRING" hidden></p>
-                                <div class="rdc-band">
-                                    <span class="gen-tile-title" tr="RADIO_FREQ_CURRENT"></span>
-                                    <div class="radio-graph-container">
-                                        <div class="radio-graph-labels">
-                                            <div class="radio-graph-label-group">
-                                                <span class="radio-graph-label-title" tr="FREQ_MIN">FRÉQUENCE MIN</span>
-                                                <span id="graphFreqMin" class="radio-graph-label-value">--- MHz</span>
+                                <div class="hero-data">
+                                    <p id="rdcSafetyNote" class="gen-tile-desc is-warning" tr="RADIO_CHECK_WIRING" hidden></p>
+                                    <div class="rdc-band" data-mobile="hide">
+                                        <span class="gen-tile-title" tr="RADIO_FREQ_CURRENT"></span>
+                                        <div class="radio-graph-container">
+                                            <div class="radio-graph-labels">
+                                                <div class="radio-graph-label-group">
+                                                    <span class="radio-graph-label-title" tr="FREQ_MIN">FRÉQUENCE MIN</span>
+                                                    <span id="graphFreqMin" class="radio-graph-label-value">--- MHz</span>
+                                                </div>
+                                                <div class="radio-graph-label-group central">
+                                                    <span class="radio-graph-label-title" tr="FREQ_LISTEN">FRÉQ. ÉCOUTE</span>
+                                                    <span id="graphFreqCentral" class="radio-graph-label-value radio-graph-central-val">--- MHz</span>
+                                                </div>
+                                                <div class="radio-graph-label-group">
+                                                    <span class="radio-graph-label-title" tr="FREQ_MAX">FRÉQUENCE MAX</span>
+                                                    <span id="graphFreqMax" class="radio-graph-label-value">--- MHz</span>
+                                                </div>
                                             </div>
-                                            <div class="radio-graph-label-group central">
-                                                <span class="radio-graph-label-title" tr="FREQ_LISTEN">FRÉQ. ÉCOUTE</span>
-                                                <span id="graphFreqCentral" class="radio-graph-label-value radio-graph-central-val">--- MHz</span>
-                                            </div>
-                                            <div class="radio-graph-label-group">
-                                                <span class="radio-graph-label-title" tr="FREQ_MAX">FRÉQUENCE MAX</span>
-                                                <span id="graphFreqMax" class="radio-graph-label-value">--- MHz</span>
-                                            </div>
-                                        </div>
-                                        <div class="radio-graph-viewport">
-                                            <div class="radio-graph-tuner">
-                                                <svg id="radioGraphSvg" viewBox="0 0 800 76" preserveAspectRatio="none" role="img" aria-labelledby="radioGraphTitle">
-                                                    <title id="radioGraphTitle"></title>
-                                                    <rect class="radio-graph-tuner-track" x="20" y="22" width="760" height="34" rx="6" vector-effect="non-scaling-stroke" />
-                                                    <rect id="tunerZone" class="radio-graph-tuner-zone" x="380" y="22" width="40" height="34" rx="4" vector-effect="non-scaling-stroke" />
-                                                    <line id="tunerCenter" class="radio-graph-tuner-center" x1="400" y1="14" x2="400" y2="64" vector-effect="non-scaling-stroke" />
-                                                    <line id="tunerTx" class="radio-graph-tuner-tx" x1="400" y1="8" x2="400" y2="70" vector-effect="non-scaling-stroke" />
-                                                </svg>
-                                                <!-- Bornes de l'echelle et largeur de la fenetre. En HTML et non dans le
-                                                SVG : celui-ci est en preserveAspectRatio="none" pour que la reglette
-                                                occupe toute la largeur, ce qui etirerait n'importe quel <text>. -->
-                                                <div class="radio-graph-tuner-scale">
-                                                    <span>433.000</span>
-                                                    <span id="tunerScaleMid">--- kHz</span>
-                                                    <span>434.399</span>
+                                            <div class="radio-graph-viewport">
+                                                <div class="radio-graph-tuner">
+                                                    <svg id="radioGraphSvg" viewBox="0 0 800 76" preserveAspectRatio="none" role="img" aria-labelledby="radioGraphTitle">
+                                                        <title id="radioGraphTitle"></title>
+                                                        <rect class="radio-graph-tuner-track" x="20" y="22" width="760" height="34" rx="6" vector-effect="non-scaling-stroke" />
+                                                        <rect id="tunerZone" class="radio-graph-tuner-zone" x="380" y="22" width="40" height="34" rx="4" vector-effect="non-scaling-stroke" />
+                                                        <line id="tunerCenter" class="radio-graph-tuner-center" x1="400" y1="14" x2="400" y2="64" vector-effect="non-scaling-stroke" />
+                                                        <line id="tunerTx" class="radio-graph-tuner-tx" x1="400" y1="8" x2="400" y2="70" vector-effect="non-scaling-stroke" />
+                                                    </svg>
+                                                    <!-- Bornes de l'echelle et largeur de la fenetre. En HTML et non dans le
+                                                    SVG : celui-ci est en preserveAspectRatio="none" pour que la reglette
+                                                    occupe toute la largeur, ce qui etirerait n'importe quel <text>. -->
+                                                    <div class="radio-graph-tuner-scale">
+                                                        <span>433.000</span>
+                                                        <span id="tunerScaleMid">--- kHz</span>
+                                                        <span>434.399</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="ed-ro-list gen-hero-facts">
-                                    <div class="ed-ro"><span tr="RADIO_RX_FRAMES"></span><b id="spanFrameCount">0</b></div>
-                                    <div class="ed-ro"><span tr="RADIO_RX_LAST_RSSI"></span><b><span id="spanRssi">--</span>&nbsp;<span tr="UNIT_DBM"></span></b></div>
-                                    <div class="ed-ro"><span tr="RADIO_RX_LAST"></span><b id="spanRadioLastFrame">--</b></div>
+                                    <div class="hero-fold">
+                                        <button type="button" class="hero-fold-btn" onclick="this.parentNode.classList.toggle('is-open');"><b tr="DETAILS"></b><span id="rdcHeroSum"></span><svg><use href="#svg-arrowRight"></use></svg></button>
+                                        <div class="hero-fold-body">
+                                            <dl class="hero-facts">
+                                                <div><dt tr="RADIO_RX_FRAMES"></dt><dd id="spanFrameCount">0</dd></div>
+                                                <div><dt tr="RADIO_RX_LAST_RSSI"></dt><dd><span id="spanRssi">--</span>&nbsp;<span tr="UNIT_DBM"></span></dd></div>
+                                                <div><dt tr="RADIO_RX_LAST"></dt><dd id="spanRadioLastFrame">--</dd></div>
+                                            </dl>
+                                        </div>
+                                    </div>
                                 </div>
                             </section>
 
@@ -2226,19 +2233,21 @@
                     </div>
                     <div id="divRepeater" style="display:none;" class="subtab-content">
                         <div id="divRepeaterPage" class="gen-layout rx-page">
-                            <section class="gen-hero">
-                                <span class="gen-hero-halo rx-halo rx-halo-repeat"><svg><use href="#svg-repeater"></use></svg></span>
-                                <div class="gen-hero-text">
-                                    <span class="gen-hero-state" tr="SUBTAB_REPEATER"></span>
-                                    <h2 id="spanRepeaterHero" class="gen-hero-title"></h2>
-                                    <p class="gen-hero-desc" tr="REPEATER_PAGE_DESC"></p>
+                            <section class="hero" data-obj="radio">
+                                <span class="hero-media"><svg><use href="#svg-repeater"></use></svg></span>
+                                <div class="hero-head">
+                                    <span class="hero-eyebrow" tr="SUBTAB_REPEATER"></span>
+                                    <h2 id="spanRepeaterHero" class="hero-title"></h2>
+                                    <p class="hero-desc" tr="REPEATER_PAGE_DESC"></p>
                                 </div>
-                                <div class="rx-stats">
-                                    <div class="rx-stat"><b id="spanRepeaterLast">—</b><span tr="RADIO_RX_LAST"></span></div>
-                                    <div class="rx-stat"><b id="spanRepeaterFrames">0</b><span tr="REPEATER_FRAMES"></span></div>
+                                <div class="hero-data">
+                                    <div class="rx-stats">
+                                        <div class="rx-stat"><b id="spanRepeaterLast">—</b><span tr="RADIO_RX_LAST"></span></div>
+                                        <div class="rx-stat"><b id="spanRepeaterFrames">0</b><span tr="REPEATER_FRAMES"></span></div>
+                                    </div>
+                                    <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
+                                    <p class="gen-tile-desc is-info rx-tip" data-mobile="hide" tr="REPEAT_REMOTE_DESC_2"></p>
                                 </div>
-                                <div class="gen-cap"><div class="gen-cap-line"><span class="gen-cap-n"></span><span class="gen-cap-left"></span></div><div class="gen-meter"><i></i></div></div>
-                                <p class="gen-tile-desc is-info rx-tip" tr="REPEAT_REMOTE_DESC_2"></p>
                             </section>
                             <div class="gen-body">
                                 <header class="rx-head rx-head-list">
@@ -2255,24 +2264,26 @@
                     </div>
                     <div id="divFrameLog" class="subtab-content" style="display:none;">
                         <div class="gen-layout lg-page">
-                            <section class="gen-hero">
-                                <span id="divLogLiveState" class="gen-hero-halo lg-halo" data-state="live"><svg><use href="#svg-wave"></use></svg></span>
-                                <div class="gen-hero-text">
-                                    <span class="gen-hero-state" tr="SUBTAB_LOGS"></span>
-                                    <h2 id="spanLogLiveText" class="gen-hero-title" tr="LOG_LIVE"></h2>
-                                    <p class="gen-hero-desc" tr="LOG_DESC"></p>
+                            <section class="hero" data-obj="radio">
+                                <span id="divLogLiveState" class="hero-media" data-state="live"><svg><use href="#svg-wave"></use></svg></span>
+                                <div class="hero-head">
+                                    <span class="hero-eyebrow" tr="SUBTAB_LOGS"></span>
+                                    <h2 id="spanLogLiveText" class="hero-title" tr="LOG_LIVE"></h2>
+                                    <p class="hero-desc" tr="LOG_DESC"></p>
                                 </div>
-                                <div class="rx-stats lg-stats">
-                                    <div class="rx-stat"><b id="spanLogCount">0</b><span tr="LOG_FRAMES"></span></div>
-                                    <div class="rx-stat"><b id="spanLogRate">0</b><span tr="LOG_RATE"></span></div>
-                                    <div class="rx-stat"><b id="spanLogRssi">--</b><span tr="SCANFREQ_RSSI"></span></div>
+                                <div class="hero-data">
+                                    <div class="rx-stats lg-stats">
+                                        <div class="rx-stat"><b id="spanLogCount">0</b><span tr="LOG_FRAMES"></span></div>
+                                        <div class="rx-stat"><b id="spanLogRate">0</b><span tr="LOG_RATE"></span></div>
+                                        <div class="rx-stat"><b id="spanLogRssi">--</b><span tr="SCANFREQ_RSSI"></span></div>
+                                    </div>
+                                    <div class="lg-src">
+                                        <h3 class="gen-tile-title" tr="LOG_SRC_TITLE"></h3>
+                                        <p class="gen-tile-desc" tr="LOG_SRC_DESC"></p>
+                                        <div id="divLogSources" class="lg-src-list"></div>
+                                    </div>
+                                    <p class="gen-tile-desc lg-tip" data-mobile="hide" tr="LOG_TIP"></p>
                                 </div>
-                                <div class="lg-src">
-                                    <h3 class="gen-tile-title" tr="LOG_SRC_TITLE"></h3>
-                                    <p class="gen-tile-desc" tr="LOG_SRC_DESC"></p>
-                                    <div id="divLogSources" class="lg-src-list"></div>
-                                </div>
-                                <p class="gen-tile-desc lg-tip" tr="LOG_TIP"></p>
                             </section>
                             <div class="gen-body">
                                 <div class="lg-tools">

@@ -305,8 +305,7 @@ class Somfy {
                 txtStatus.textContent = tr('RADIO_SAVE_REQUIRED');
             }
         }
-        // Le titre suit le choix affiché, le halo ce que le boîtier exécute réellement.
-        get('rdcTitle').textContent = tr(isEnabled ? 'ENABLED' : 'IS_DISABLED');
+        // Le statut suit le choix affiché, la pastille ce que le boîtier exécute réellement.
         get('rdcHalo').classList.toggle('is-off', !isActuallyEnabled);
         this.updateRadioDirty();
     }
@@ -1389,6 +1388,8 @@ class Somfy {
         if (spanRssi) spanRssi.innerHTML = frame.rssi;
         const spanCount = get('spanFrameCount');
         if (spanCount) spanCount.innerHTML = parseInt(spanCount.innerHTML || 0, 10) + 1;
+        const sum = get('rdcHeroSum');
+        if (sum && spanCount) sum.textContent = `${spanCount.innerHTML} · ${frame.rssi} ${tr('UNIT_DBM')}`;
         const spanLast = get('spanRadioLastFrame');
         if (spanLast) {
             const known = this.frameAddressName(frame.address);

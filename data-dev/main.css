@@ -3495,34 +3495,10 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
  *  Curseurs (.blocradio), champs de broches et réglette viennent de la page précédente : seule
  *  leur enveloppe change ici.
  *  ======================================================================= */
-.rdc-hero {
-    justify-content: safe center;
-    overflow-y: auto;
-}
-.rdc-switch {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    width: 100%;
-    max-width: 340px;
-    box-sizing: border-box;
-    padding: 10px 10px 10px 18px;
-    border-radius: var(--r-4);
-    background: var(--surface);
-}
-.rdc-note {
-    width: 100%;
-    max-width: 340px;
-    box-sizing: border-box;
-    text-align: left;
-}
 .rdc-band {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    width: 100%;
-    max-width: 340px;
     box-sizing: border-box;
     padding: 16px;
     border-radius: var(--r-4);
@@ -3575,12 +3551,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
 .rdc-band .radio-graph-tuner-scale {
     padding-left: 0;
     padding-right: 0;
-}
-.rdc-hero .gen-hero-facts {
-    max-width: 340px;
-}
-.rdc-hero .gen-hero-facts b {
-    font-variant-numeric: tabular-nums;
 }
 /* Les curseurs gardent leur composant ; la tuile leur tient lieu de cadre. */
 .rdc-sliders .blocradio {
@@ -3879,39 +3849,20 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     justify-content: flex-end;
     margin-top: auto;
 }
-@media (max-width: 999px) {
-    .rdc-hero > :is(.rdc-switch, .rdc-note, .rdc-band) {
-        grid-column: 1 / -1;
-        max-width: none;
-    }
-}
-@media (max-width: 767px) {
-    .rdc-band {
-        display: none;
-    }
-}
 
 /* =======================================================================
  *  PAGES RADIO - DÉCLENCHEURS, RÉPÉTEUR, JOURNAUX (maquette A2, gabarit de Général)
  *  ======================================================================= */
 
 /* --- Déclencheurs et Répéteur (.rx-) : chiffres et jauge dans la colonne, une tuile par télécommande --- */
-.rx-halo {
-    background: var(--info-bg);
-    color: var(--info);
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--info) 12%, transparent);
-}
-.rx-halo-repeat {
-    background: var(--violet-bg);
-    color: var(--violet);
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--violet) 12%, transparent);
-}
 .rx-stats {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
-    width: 100%;
-    max-width: 340px;
+}
+/* Répéteur, sur PC : la jauge des places juste sous la description. */
+@media (min-width: 1000px) {
+    #divRepeaterPage .hero-data > .gen-cap { order: -1; }
 }
 .lg-stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3937,12 +3888,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     font-size: var(--fs-2);
     line-height: 1.35;
     color: var(--text-3);
-}
-.rx-tip {
-    width: 100%;
-    max-width: 340px;
-    box-sizing: border-box;
-    text-align: left;
 }
 .rx-head {
     display: flex;
@@ -4029,16 +3974,8 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
 }
 
 /* --- Journaux (.lg-) : état d'écoute et émetteurs dans la colonne, tableau des trames --- */
-.lg-halo[data-state="paused"] {
-    background: var(--warn-bg);
-    color: var(--warn);
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--warn) 16%, transparent);
-}
-.lg-halo[data-state="offline"] {
-    background: var(--surface-2);
-    color: var(--text-3);
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--text-3) 12%, transparent);
-}
+#divLogLiveState[data-state="paused"] { --hc: #c2410c; }
+#divLogLiveState[data-state="offline"] { --hc: #64748b; }
 .lg-stats .sig-good { color: var(--color-signal-good); }
 .lg-stats .sig-medium { color: var(--color-signal-medium); }
 .lg-stats .sig-bad { color: var(--color-signal-bad); }
@@ -4046,10 +3983,7 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    width: 100%;
-    max-width: 340px;
     min-height: 0;
-    text-align: left;
 }
 .lg-src-list {
     display: flex;
@@ -4148,11 +4082,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     font-size: var(--fs-2);
     font-style: italic;
     color: var(--text-3);
-}
-.lg-tip {
-    width: 100%;
-    max-width: 340px;
-    text-align: left;
 }
 .lg-tools {
     display: flex;
@@ -4428,16 +4357,6 @@ div.frame-pulses {
     }
 }
 @media (max-width: 999px) {
-    .rx-halo,
-    .rx-halo-repeat,
-    .lg-halo[data-state] {
-        box-shadow: 0 0 0 8px color-mix(in srgb, currentColor 14%, transparent);
-    }
-    .rx-page .gen-hero > :is(.rx-stats, .gen-cap, .rx-tip),
-    .lg-page .gen-hero > :is(.rx-stats, .lg-src, .lg-tip) {
-        grid-column: 1 / -1;
-        max-width: none;
-    }
     .lg-src-list {
         flex-direction: row;
         overflow-x: auto;
@@ -4461,11 +4380,6 @@ div.frame-pulses {
     }
 }
 @media (max-width: 767px) {
-    .rx-halo,
-    .rx-halo-repeat,
-    .lg-halo[data-state] {
-        box-shadow: 0 0 0 5px color-mix(in srgb, currentColor 14%, transparent);
-    }
     .rx-stat {
         padding: 10px 12px;
     }
