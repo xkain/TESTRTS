@@ -2569,41 +2569,17 @@ label.gen-row {
 }
 
 /* --- Page Appareil (#divFirmware, maquette A2) : même gabarit que Général, rien à enregistrer --- */
-.fw-hero {
-    --fw-led: var(--ok);
-}
-.fw-hero[data-state="new"] {
-    --fw-led: var(--color-accent);
-}
 .fw-hero[data-state="off"] {
-    --fw-led: var(--text-3);
+    --hc: #64748b;
 }
 .fw-hero[data-state="error"] {
-    --fw-led: var(--warn);
-}
-.fw-hero-vis {
-    width: clamp(140px, min(14vw, 26vh), 260px);
-    height: auto;
-    flex: none;
-}
-.fw-hero-eyebrow {
-    display: block;
-    margin-bottom: 6px;
-    font-size: var(--fs-1);
-    font-weight: 700;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--text-3);
-}
-.fw-hero .fw-version {
-    font-size: clamp(2.125em, 3.4vw, 3.5em);
-    line-height: 1;
+    --hc: #c2410c;
 }
 .fw-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-top: 12px;
+    margin-top: 6px;
     padding: 6px 12px;
     border-radius: var(--r-pill);
     background: var(--ok-bg);
@@ -2634,9 +2610,6 @@ label.gen-row {
     margin: 0;
     text-align: left;
 }
-.fw-hero .fw-facts {
-    max-width: 340px;
-}
 .fw-fact {
     display: flex;
     justify-content: space-between;
@@ -2656,9 +2629,6 @@ label.gen-row {
     font-weight: 700;
     text-align: right;
     color: var(--text);
-}
-.fw-hero .fw-check-btn {
-    align-self: center;
 }
 #divFirmware .link {
     font-size: inherit;
@@ -2829,31 +2799,9 @@ button.fw-act:hover .fw-act-chev {
     justify-content: flex-end;
     gap: 4px 10px;
 }
-@media (max-width: 999px) {
-    .fw-hero-vis {
-        width: 84px;
-    }
-    .fw-hero .fw-facts {
-        grid-column: 1 / -1;
-        max-width: none;
-    }
-    .fw-hero .fw-check-btn {
-        grid-column: 1 / -1;
-        align-self: start;
-    }
-}
 @media (max-width: 767px) {
-    .fw-hero-vis {
-        width: 30px;
-        height: 30px;
-    }
-    .fw-hero .fw-facts,
-    .fw-hero .fw-check-btn,
     #fwPager {
         display: none;
-    }
-    .fw-hero .fw-version {
-        font-size: 2em;
     }
 }
 
@@ -5322,10 +5270,6 @@ body:has(.inst-overlay, .modal-overlay) :is(#divSettingsPnl) > .button-container
     opacity: 1;
 }
 .net-hero-quality {
-    display: block;
-    margin-top: 8px;
-    font-size: var(--fs-3);
-    font-weight: 700;
     color: var(--ok);
 }
 .net-hero-quality.is-medium {
@@ -5340,7 +5284,7 @@ body:has(.inst-overlay, .modal-overlay) :is(#divSettingsPnl) > .button-container
 .net-hero-btn,
 .net-hero-btn:hover,
 .net-hero-btn:active {
-    align-self: center;
+    margin-top: 6px;
     background: var(--on-fill);
     color: var(--on-fill-text);
 }
@@ -5497,16 +5441,7 @@ body:has(.inst-overlay, .modal-overlay) :is(#divSettingsPnl) > .button-container
     flex-direction: column;
     gap: 14px;
 }
-@media (max-width: 999px) {
-    .net-hero-btn {
-        grid-column: 1 / -1;
-        justify-self: start;
-    }
-}
 @media (max-width: 767px) {
-    .net-hero-quality {
-        margin-top: 2px;
-    }
     .net-sum-row {
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 2px 12px;
@@ -5757,7 +5692,6 @@ body:has(.inst-overlay, .modal-overlay) :is(#divSettingsPnl) > .button-container
 }
 @media (max-width: 999px) {
     .ha-cta {
-        grid-column: 1 / -1;
         align-items: flex-start;
     }
 }
@@ -5779,22 +5713,11 @@ body:has(.inst-overlay, .modal-overlay) :is(#divSettingsPnl) > .button-container
     }
 }
 /* --- Page MQTT (#divMQTT) sur le gabarit Général : sans onglets, sections sur mobile seulement --- */
-.mqtt-hero-switch {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 6px 6px 6px 18px;
-    border: 1px solid transparent;
-    border-radius: var(--r-pill);
-    background: var(--surface);
-    box-shadow: var(--shadow-card);
-    font-size: var(--fs-3);
-}
 .mqtt-mono,
 input.gen-input.mqtt-mono {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
-.gen-hero-facts .mqtt-mono {
+.hero-facts .mqtt-mono {
     font-weight: 500;
     overflow-wrap: anywhere;
 }
@@ -5850,12 +5773,6 @@ input.gen-input.mqtt-mono {
     #divHomeAssistant:not([data-ha-tab="1"]) .gen-grid[data-ha="1"],
     #divHomeAssistant[data-ha-tab="1"] .gen-grid[data-ha="0"] {
         display: none;
-    }
-}
-@media (max-width: 999px) {
-    .mqtt-hero-switch {
-        grid-column: 1 / -1;
-        justify-self: start;
     }
 }
 @media (max-width: 480px) {

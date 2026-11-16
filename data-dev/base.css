@@ -2153,6 +2153,20 @@ button:disabled:active {
     text-align: right;
     overflow-wrap: anywhere;
 }
+.hero-facts > div[hidden] { display: none; }
+/* État posé par le JS sur la pastille (Connexion, MQTT) : il l'emporte sur la couleur de section. */
+.hero-media.is-medium, .hero-media.is-ap { --hc: #c2410c; }
+.hero-media.is-bad { --hc: #b3261e; }
+.hero-media.is-off { --hc: #64748b; }
+/* Titre-question : le Oui/Non répond sur la ligne du titre (MQTT, Radio). */
+.hero-titlerow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 14px;
+}
+.hero-titlerow > .gen-seg { flex: none; }
 /* Repliable : ouvert sur PC (le bouton n'existe pas), une ligne « Détails » sous 1000 px. */
 .hero-fold, .hero-fold-body { display: contents; }
 .hero-fold-btn { display: none; }
@@ -2174,6 +2188,8 @@ button:disabled:active {
     }
     .hero-media { box-shadow: 0 0 0 4px rgba(255, 255, 255, .18); }
     .hero-head { align-items: flex-start; gap: 2px; }
+    .hero-head:has(> .hero-titlerow) { justify-self: stretch; }
+    .hero-titlerow { justify-content: space-between; flex-wrap: nowrap; width: 100%; }
     .hero-title { font-size: var(--fs-7); }
     .hero-eyebrow,
     .hero-desc,
@@ -2241,6 +2257,10 @@ button:disabled:active {
         background: #141619;
         color: #ffffff;
     }
+}
+@media (max-width: 767px) {
+    /* Place du « ? » d'aide, posé en haut à droite (main.css, .gen-hero-help). */
+    .hero { padding-right: 52px; }
 }
 @media (min-width: 768px) and (max-width: 999px) {
     .hero {

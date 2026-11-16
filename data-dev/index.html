@@ -465,20 +465,29 @@
                     </div>
                     <div id="divFirmware" class="subtab-content" style="display:none;">
                         <div class="gen-layout">
-                            <section id="fwHero" class="gen-hero fw-hero" data-state="idle">
-                                <svg class="fw-hero-vis" viewBox="0 0 120 120" aria-hidden="true"><use href="#svg-fwDevice"></use></svg>
-                                <div class="gen-hero-text">
-                                    <span class="fw-hero-eyebrow">ESPSomfy-RTS</span>
-                                    <h2 class="gen-hero-title fw-version">v-.--</h2>
+                            <section id="fwHero" class="hero fw-hero" data-state="idle">
+                                <span class="hero-media"><svg><use href="#svg-navFirmware"></use></svg></span>
+                                <div class="hero-head">
+                                    <span class="hero-eyebrow">ESPSomfy-RTS</span>
+                                    <h2 class="hero-title fw-version">v-.--</h2>
                                     <span class="fw-badge"><svg><use href="#svg-check"></use></svg><span id="fwHeroBadge"></span></span>
                                 </div>
-                                <dl class="fw-facts">
-                                    <div class="fw-fact"><dt tr="CHANNEL"></dt><dd class="fw-channel-short"></dd></div>
-                                    <div class="fw-fact"><dt tr="FW_UPTIME_SINCE"></dt><dd class="uptime-display">--</dd></div>
-                                    <div class="fw-fact"><dt tr="FW_DIAG_RESET"></dt><dd class="info-reset">---</dd></div>
-                                    <div class="fw-fact"><dt tr="FW_FREE_MEM"></dt><dd><span class="fw-free-mem">--</span> <span tr="UNIT_KO"></span></dd></div>
-                                </dl>
-                                <button type="button" class="gen-btn gen-btn-primary fw-check-btn" onclick="firmware.checkNow();"><svg><use href="#svg-refresh"></use></svg><span tr="FW_CHECK_NOW"></span></button>
+                                <div class="hero-act" data-mobile="hide">
+                                    <button type="button" class="gen-btn gen-btn-primary fw-check-btn" onclick="firmware.checkNow();"><svg><use href="#svg-refresh"></use></svg><span tr="FW_CHECK_NOW"></span></button>
+                                </div>
+                                <div class="hero-data">
+                                    <div class="hero-fold">
+                                        <button type="button" class="hero-fold-btn" onclick="this.parentNode.classList.toggle('is-open');"><b tr="DETAILS"></b><span><span class="fw-channel-short"></span> · <span class="uptime-display">--</span> · <span class="fw-free-mem">--</span> <span tr="UNIT_KO"></span></span><svg><use href="#svg-arrowRight"></use></svg></button>
+                                        <div class="hero-fold-body">
+                                            <dl class="hero-facts">
+                                                <div><dt tr="CHANNEL"></dt><dd class="fw-channel-short"></dd></div>
+                                                <div><dt tr="FW_UPTIME_SINCE"></dt><dd class="uptime-display">--</dd></div>
+                                                <div><dt tr="FW_DIAG_RESET"></dt><dd class="info-reset">---</dd></div>
+                                                <div><dt tr="FW_FREE_MEM"></dt><dd><span class="fw-free-mem">--</span> <span tr="UNIT_KO"></span></dd></div>
+                                            </dl>
+                                        </div>
+                                    </div>
+                                </div>
                             </section>
 
                             <div class="gen-body">
@@ -676,24 +685,31 @@
                     <div id="subtabContainer-divNetworkSettings" class="subtab-container"><span class="selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION"></span></div>
                     <div id="divNetAdapter" class="subtab-content">
                         <div class="gen-layout">
-                            <section id="netHero" class="gen-hero net-hero">
-                                <span id="netHeroHalo" class="gen-hero-halo">
+                            <section id="netHero" class="hero net-hero" data-obj="reseau">
+                                <span id="netHeroHalo" class="hero-media">
                                     <svg id="netHeroWave" class="net-hero-wave"><use href="#svg-wifi-0"></use><use href="#svg-wifi-1"></use><use href="#svg-wifi-2"></use><use href="#svg-wifi-3"></use></svg>
                                     <svg id="netHeroIconSvg"><use id="netHeroIcon" href="#svg-ethernet"></use></svg>
                                 </span>
-                                <div class="gen-hero-text">
-                                    <span id="netHeroState" class="gen-hero-state"></span>
-                                    <h2 id="netHeroName" class="gen-hero-title"></h2>
-                                    <span id="netHeroQuality" class="net-hero-quality"></span>
+                                <div class="hero-head">
+                                    <span id="netHeroState" class="hero-eyebrow"></span>
+                                    <h2 id="netHeroName" class="hero-title"></h2>
+                                    <span id="netHeroQuality" class="hero-sub net-hero-quality"></span>
                                 </div>
-                                <div class="ed-ro-list gen-hero-facts">
-                                    <div class="ed-ro"><span tr="CONNEXION_CURRENT_IP"></span><b id="spanCurrentIP"></b></div>
-                                    <div class="ed-ro"><span tr="CONNEXION_ADDRESSING"></span><b id="netHeroAddr"></b></div>
-                                    <div id="netHeroSignalRow" class="ed-ro"><span tr="CHANNEL"></span><b id="netHeroSignal"></b></div>
-                                    <div id="netHeroSpeedRow" class="ed-ro"><span tr="CONNEXION_ETH_SPEED"></span><b id="netHeroSpeed"></b></div>
-                                    <div class="ed-ro"><span tr="CONNEXION_MAC_ADDRESS"></span><b class="spanMacAddress">--:--:--:--:--:--</b></div>
+                                <div class="hero-data">
+                                    <div class="hero-fold">
+                                        <button type="button" class="hero-fold-btn" onclick="this.parentNode.classList.toggle('is-open');"><b tr="DETAILS"></b><span id="netHeroSum"></span><svg><use href="#svg-arrowRight"></use></svg></button>
+                                        <div class="hero-fold-body">
+                                            <dl class="hero-facts">
+                                                <div><dt tr="CONNEXION_CURRENT_IP"></dt><dd id="spanCurrentIP"></dd></div>
+                                                <div><dt tr="CONNEXION_ADDRESSING"></dt><dd id="netHeroAddr"></dd></div>
+                                                <div id="netHeroSignalRow"><dt tr="CHANNEL"></dt><dd id="netHeroSignal"></dd></div>
+                                                <div id="netHeroSpeedRow"><dt tr="CONNEXION_ETH_SPEED"></dt><dd id="netHeroSpeed"></dd></div>
+                                                <div><dt tr="CONNEXION_MAC_ADDRESS"></dt><dd class="spanMacAddress">--:--:--:--:--:--</dd></div>
+                                            </dl>
+                                            <button type="button" class="gen-btn net-hero-btn" onclick="onboarding.relaunch();"><svg><use href="#svg-firstConnect"></use></svg><span tr="CONNEXION_RELAUNCH_DESC"></span></button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <button type="button" class="gen-btn net-hero-btn" onclick="onboarding.relaunch();"><svg><use href="#svg-firstConnect"></use></svg><span tr="CONNEXION_RELAUNCH_DESC"></span></button>
                             </section>
 
                             <div class="gen-body">
@@ -980,14 +996,14 @@
                     <div id="subtabContainer-divIntegrationSettings" class="subtab-container"><span class="selected" data-grpid="divHomeAssistant" tr="MARKETP"></span><span data-grpid="divMQTT" tr="SUBTAB_MQTT"></span><span data-grpid="divListener" tr="SUBTAB_LISTENERS"></span></div>
                     <div id="divHomeAssistant" class="subtab-content" style="display:none;">
                         <div class="gen-layout">
-                            <section class="gen-hero">
-                                <span class="gen-hero-halo is-ha"><svg><use href="#svg-homeAssistant0"></use></svg></span>
-                                <div class="gen-hero-text">
-                                    <span class="gen-hero-state" tr="MARKETP"></span>
-                                    <h2 class="gen-hero-title" tr="MARKETP_DESC"></h2>
-                                    <p class="gen-hero-desc" tr="HA_HERO_DESC"></p>
+                            <section class="hero" data-obj="integ">
+                                <span class="hero-media"><svg><use href="#svg-homeAssistant0"></use></svg></span>
+                                <div class="hero-head">
+                                    <span class="hero-eyebrow" tr="MARKETP"></span>
+                                    <h2 class="hero-title" tr="MARKETP_DESC"></h2>
+                                    <p class="hero-desc" tr="HA_HERO_DESC"></p>
                                 </div>
-                                <div class="ha-cta hotspot-hidden">
+                                <div class="hero-act ha-cta hotspot-hidden">
                                     <span class="ha-reco-chip"><svg><use href="#svg-check"></use></svg><span tr="HA_RECOMMENDED"></span></span>
                                     <a class="ha-market-btn" href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&amp;repository=ESPSomfy-RTS-enhanced&amp;category=integration" target="_blank" rel="noopener"><span class="ha-market-text">Open in Marketplace on</span><span class="ha-market-pill">MY<svg><use href="#svg-homeAssistant0"></use></svg></span></a>
                                     <p class="ha-cta-desc"><span tr="HA_REQ"></span> <a href="https://hacs.xyz" target="_blank" rel="noopener">HACS</a><span tr="HA_REQ_END"></span></p>
@@ -1076,25 +1092,31 @@
                     </div>
                     <div id="divMQTT" class="subtab-content" style="display:none;">
                         <div class="gen-layout">
-                            <section class="gen-hero">
-                                <span id="mqttHeroHalo" class="gen-hero-halo"><svg><use href="#svg-mqtt"></use></svg></span>
-                                <div class="gen-hero-text">
-                                    <span class="gen-hero-state" tr="MQTT_TITLE_CLIENT"></span>
-                                    <h2 id="mqttHeroTitle" class="gen-hero-title"></h2>
+                            <section class="hero" data-obj="integ">
+                                <span id="mqttHeroHalo" class="hero-media"><svg><use href="#svg-mqtt"></use></svg></span>
+                                <div class="hero-head">
+                                    <div class="hero-titlerow">
+                                        <h2 class="hero-title" tr="MQTT_TITLE_CLIENT"></h2>
+                                        <span class="gen-seg gen-seg-bool dirty-target">
+                                            <input id="cbMqttEnabled" type="checkbox" name="mqtt-enabled" data-bind="mqtt.enabled">
+                                            <span class="gen-seg-yes" tr="BT_YES"></span>
+                                            <span class="gen-seg-no" tr="BT_NO"></span>
+                                        </span>
+                                    </div>
+                                    <span id="mqttHeroTitle" class="hero-sub"></span>
                                 </div>
-                                <div class="mqtt-hero-switch dirty-target">
-                                    <b tr="MQTT_HERO_ENABLE"></b>
-                                    <span class="gen-seg gen-seg-bool">
-                                        <input id="cbMqttEnabled" type="checkbox" name="mqtt-enabled" data-bind="mqtt.enabled">
-                                        <span class="gen-seg-yes" tr="BT_YES"></span>
-                                        <span class="gen-seg-no" tr="BT_NO"></span>
-                                    </span>
-                                </div>
-                                <div class="ed-ro-list gen-hero-facts">
-                                    <div class="ed-ro"><span tr="MQTT_TITLE_BROKER"></span><b id="mqttHeroBroker" class="mqtt-mono"></b></div>
-                                    <div class="ed-ro"><span tr="MQTT_ROOT_TOPIC"></span><b id="mqttHeroRoot" class="mqtt-mono"></b></div>
-                                    <div class="ed-ro"><span tr="MQTT_DISCOVERY"></span><b id="mqttHeroDisco"></b></div>
-                                    <div class="ed-ro"><span tr="MQTT_CREDENTIALS"></span><b id="mqttHeroCred"></b></div>
+                                <div class="hero-data">
+                                    <div class="hero-fold">
+                                        <button type="button" class="hero-fold-btn" onclick="this.parentNode.classList.toggle('is-open');"><b tr="DETAILS"></b><span id="mqttHeroSum"></span><svg><use href="#svg-arrowRight"></use></svg></button>
+                                        <div class="hero-fold-body">
+                                            <dl class="hero-facts">
+                                                <div><dt tr="MQTT_TITLE_BROKER"></dt><dd id="mqttHeroBroker" class="mqtt-mono"></dd></div>
+                                                <div><dt tr="MQTT_ROOT_TOPIC"></dt><dd id="mqttHeroRoot" class="mqtt-mono"></dd></div>
+                                                <div><dt tr="MQTT_DISCOVERY"></dt><dd id="mqttHeroDisco"></dd></div>
+                                                <div><dt tr="MQTT_CREDENTIALS"></dt><dd id="mqttHeroCred"></dd></div>
+                                            </dl>
+                                        </div>
+                                    </div>
                                 </div>
                             </section>
 

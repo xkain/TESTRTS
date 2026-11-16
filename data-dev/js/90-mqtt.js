@@ -73,6 +73,7 @@ class MQTT {
         get('mqttHeroRoot').textContent = root;
         get('mqttHeroDisco').textContent = disco ? tr('MQTT_HERO_DISCO_ON').replace('{TOPIC}', dTopic) : tr('MQTT_HERO_DISCO_OFF');
         get('mqttHeroCred').textContent = user ? tr('MQTT_HERO_CRED_USER').replace('{USER}', user) : tr('NONE');
+        get('mqttHeroSum').textContent = `${get('mqttHeroBroker').textContent.replace('mqtt://', '')} · ${root}`;
         get('mqttOffNote').hidden = on;
         get('divMQTT').classList.toggle('mqtt-off', !on);
         get('divHomeAssistant').classList.toggle('mqtt-off', !on);

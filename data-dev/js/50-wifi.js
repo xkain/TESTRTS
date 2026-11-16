@@ -704,10 +704,10 @@ class Wifi {
         // Le halo prend la couleur du signal et n'allume que les arcs atteints.
         const lvl = this._wifiLinkUp ? this.calcWaveStrength(this._wifiRssi) : -1;
         get('netHeroWave').querySelectorAll('use').forEach((u, i) => u.classList.toggle('on', i <= lvl));
-        get('netHeroHalo').className = 'gen-hero-halo ' + (ap ? 'is-ap' : qCls);
+        get('netHeroHalo').className = 'hero-media ' + (ap ? 'is-ap' : qCls);
         const q = get('netHeroQuality');
         q.hidden = !qKey;
-        q.className = 'net-hero-quality ' + qCls;
+        q.className = 'hero-sub net-hero-quality ' + qCls;
         q.textContent = qKey ? tr(qKey) : '';
         // En DHCP, NetManager recopie l'adresse obtenue dans les réglages : ip.ip est l'adresse réelle.
         const host = window.location.hostname;
@@ -719,6 +719,7 @@ class Wifi {
         get('netHeroSignal').textContent = `${this._wifiChannel} · ${this._wifiRssi} ${tr('UNIT_DBM')}`;
         get('netHeroSpeedRow').hidden = !eth;
         get('netHeroSpeed').textContent = isNaN(this._ethSpeed) ? '--' : `${this._ethSpeed} Mbit/s${this._ethDuplex ? ' · full duplex' : ''}`;
+        get('netHeroSum').textContent = [get('spanCurrentIP').textContent, get('netHeroAddr').textContent, eth ? '' : `${tr('CHANNEL')} ${this._wifiChannel}`].filter(Boolean).join(' · ');
     }
     // Un réseau par nom, au signal le plus fort, du plus fort au plus faible.
     groupAPs(aps) {
