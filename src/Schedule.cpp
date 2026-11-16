@@ -670,7 +670,7 @@ void ScheduleController::_recomputeSolarTimes(const struct tm &dt) {
   this->_sunriseLocalMin = -1;
   this->_sunsetLocalMin = -1;
   if(!settings.hasGeoPosition()) return;
-  double sunriseUtcMin, sunsetUtcMin;
+  float sunriseUtcMin, sunsetUtcMin;
   int year = dt.tm_year + 1900, month = dt.tm_mon + 1, day = dt.tm_mday;
   if(!SunCalc::calculate(year, month, day, settings.geoLat, settings.geoLon, sunriseUtcMin, sunsetUtcMin)) {
     DBG_PRINTLN("Schedules: polar day or night today -- sunrise/sunset rules ignored.");

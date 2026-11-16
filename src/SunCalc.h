@@ -18,12 +18,16 @@ class SunCalc {
     // changement de jour) : c'est à l'appelant de les convertir en heure locale via toEpoch() +
     // localtime_r(), seule façon fiable de tenir compte du fuseau ET de l'heure d'été/hiver sans
     // réimplémenter les règles déjà connues de la libc (cf. NTPSettings::apply()).
-    static bool calculate(int year, int month, int day, double latitude, double longitude,
-                          double &sunriseUtcMinutes, double &sunsetUtcMinutes);
+    // Tout en simple précision : le calcul n'a besoin que du millième de degré, et le double tirait
+    // à lui seul les 10 Ko de libm en double précision (sin, cos, tan, asin, acos, fmod et leur
+    // réduction d'argument). Le seul nombre qui ne tient pas en float, le jour julien (~2 451 545),
+    // est manipulé en entier jusqu'à la soustraction de l'origine J2000.
+    static bool calculate(int year, int month, int day, float latitude, float longitude,
+                          float &sunriseUtcMinutes, float &sunsetUtcMinutes);
     // Convertit une date civile UTC + des minutes depuis minuit UTC en epoch Unix. Repose sur un
     // calcul arithmétique direct (Howard Hinnant, domaine public) plutôt que sur mktime/timegm :
     // timegm est une extension GNU absente de certaines libc de framework, et mktime interprèterait
     // la date dans le fuseau local courant au lieu de UTC.
-    static time_t toEpoch(int year, int month, int day, double utcMinutes);
+    static time_t toEpoch(int year, int month, int day, float utcMinutes);
 };
 #endif

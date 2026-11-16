@@ -17,54 +17,62 @@ static long daysFromCivil(int y, int m, int d) {
   return era * 146097L + (long)doe - 719468L;
 }
 
-time_t SunCalc::toEpoch(int year, int month, int day, double utcMinutes) {
+time_t SunCalc::toEpoch(int year, int month, int day, float utcMinutes) {
   long days = daysFromCivil(year, month, day);
-  return (time_t)(days * 86400L + (long)round(utcMinutes * 60.0));
+  return (time_t)(days * 86400L + lroundf(utcMinutes * 60.0f));
 }
 
-bool SunCalc::calculate(int year, int month, int day, double lat, double lon,
-                        double &sunriseUtcMinutes, double &sunsetUtcMinutes) {
+// Les macros radians()/degrees() d'Arduino portent des constantes double et feraient repasser
+// toute l'expression en double précision : on garde les nôtres en float.
+static inline float radf(float deg) { return deg * 0.017453292f; }
+static inline float degf(float rad) { return rad * 57.29578f; }
+
+bool SunCalc::calculate(int year, int month, int day, float lat, float lon,
+                        float &sunriseUtcMinutes, float &sunsetUtcMinutes) {
   int y = year, m = month;
   if(m <= 2) { y -= 1; m += 12; }
   int a = y / 100;
   int b = 2 - a + a / 4;
-  // Jour julien à 0h UTC de la date demandée.
-  double jd = (double)(long)(365.25 * (y + 4716)) + (long)(30.6001 * (m + 1)) + day + b - 1524.5;
-  double jc = (jd - 2451545.0) / 36525.0; // siècles juliens depuis J2000.0
+  // Jour julien à 12h UTC de la date, en entier : floor(365.25 (y+4716)) = 1461 (y+4716) / 4 et
+  // floor(30.6001 (m+1)) = 306001 (m+1) / 10000 exactement pour m+1 dans [4, 15].
+  long jdn = (1461L * (y + 4716)) / 4 + (306001L * (m + 1)) / 10000 + day + b - 1524;
+  // Siècles juliens depuis J2000.0, pour 0h UTC (jdn - 0,5).
+  float jc = ((float)(jdn - 2451545L) - 0.5f) / 36525.0f;
 
   // Géométrie solaire moyenne + équation du centre -> longitude écliptique vraie.
-  double gml = fmod(280.46646 + jc * (36000.76983 + jc * 0.0003032), 360.0);
-  if(gml < 0) gml += 360.0;
-  double gma = 357.52911 + jc * (35999.05029 - 0.0001537 * jc);
-  double ecc = 0.016708634 - jc * (0.000042037 + 0.0000001267 * jc);
-  double gmaRad = radians(gma);
-  double ctr = sin(gmaRad) * (1.914602 - jc * (0.004817 + 0.000014 * jc))
-             + sin(2 * gmaRad) * (0.019993 - 0.000101 * jc)
-             + sin(3 * gmaRad) * 0.000289;
+  float gml = fmodf(280.46646f + jc * (36000.76983f + jc * 0.0003032f), 360.0f);
+  if(gml < 0) gml += 360.0f;
+  float gma = 357.52911f + jc * (35999.05029f - 0.0001537f * jc);
+  float ecc = 0.016708634f - jc * (0.000042037f + 0.0000001267f * jc);
+  float gmaRad = radf(gma);
+  float ctr = sinf(gmaRad) * (1.914602f - jc * (0.004817f + 0.000014f * jc))
+            + sinf(2 * gmaRad) * (0.019993f - 0.000101f * jc)
+            + sinf(3 * gmaRad) * 0.000289f;
   // Longitude écliptique apparente (nutation + aberration) et obliquité corrigée.
-  double al = gml + ctr - 0.00569 - 0.00478 * sin(radians(125.04 - 1934.136 * jc));
-  double oe = 23.0 + (26.0 + (21.448 - jc * (46.815 + jc * (0.00059 - jc * 0.001813))) / 60.0) / 60.0;
-  double oc = oe + 0.00256 * cos(radians(125.04 - 1934.136 * jc));
-  double decl = degrees(asin(sin(radians(oc)) * sin(radians(al))));
+  float al = gml + ctr - 0.00569f - 0.00478f * sinf(radf(125.04f - 1934.136f * jc));
+  float oe = 23.0f + (26.0f + (21.448f - jc * (46.815f + jc * (0.00059f - jc * 0.001813f))) / 60.0f) / 60.0f;
+  float oc = oe + 0.00256f * cosf(radf(125.04f - 1934.136f * jc));
+  float decl = degf(asinf(sinf(radf(oc)) * sinf(radf(al))));
 
   // Équation du temps (écart entre midi solaire vrai et midi solaire moyen).
-  double vy = pow(tan(radians(oc / 2.0)), 2);
-  double eot = 4.0 * degrees(
-      vy * sin(2 * radians(gml))
-      - 2 * ecc * sin(gmaRad)
-      + 4 * ecc * vy * sin(gmaRad) * cos(2 * radians(gml))
-      - 0.5 * vy * vy * sin(4 * radians(gml))
-      - 1.25 * ecc * ecc * sin(2 * gmaRad));
+  float t = tanf(radf(oc / 2.0f));
+  float vy = t * t;
+  float eot = 4.0f * degf(
+      vy * sinf(2 * radf(gml))
+      - 2 * ecc * sinf(gmaRad)
+      + 4 * ecc * vy * sinf(gmaRad) * cosf(2 * radf(gml))
+      - 0.5f * vy * vy * sinf(4 * radf(gml))
+      - 1.25f * ecc * ecc * sinf(2 * gmaRad));
 
   // 90,833° = rayon apparent du disque solaire + réfraction atmosphérique standard : convention du
   // lever/coucher "civil" (bord supérieur du disque à l'horizon), la même que les almanachs publics.
-  double cosH = cos(radians(90.833)) / (cos(radians(lat)) * cos(radians(decl)))
-              - tan(radians(lat)) * tan(radians(decl));
-  if(cosH > 1.0 || cosH < -1.0) return false; // nuit polaire ou jour polaire ce jour-là.
-  double ha = degrees(acos(cosH)); // demi-durée du jour, en degrés de rotation terrestre
+  float cosH = cosf(radf(90.833f)) / (cosf(radf(lat)) * cosf(radf(decl)))
+             - tanf(radf(lat)) * tanf(radf(decl));
+  if(cosH > 1.0f || cosH < -1.0f) return false; // nuit polaire ou jour polaire ce jour-là.
+  float ha = degf(acosf(cosH)); // demi-durée du jour, en degrés de rotation terrestre
 
-  double solarNoon = 720.0 - 4.0 * lon - eot; // minutes UTC
-  sunriseUtcMinutes = solarNoon - 4.0 * ha;
-  sunsetUtcMinutes  = solarNoon + 4.0 * ha;
+  float solarNoon = 720.0f - 4.0f * lon - eot; // minutes UTC
+  sunriseUtcMinutes = solarNoon - 4.0f * ha;
+  sunsetUtcMinutes  = solarNoon + 4.0f * ha;
   return true;
 }
