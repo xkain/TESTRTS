@@ -353,7 +353,6 @@
     "SETUP_W_HINT_STEP": "Complete este paso",
     "SETUP_W_OPTS_H": "Últimas preguntas",
     "SETUP_W_HINT_OPTS": "Responda a las preguntas obligatorias",
-    "SETUP_FULL_FORM": "Formulario completo (experto)",
     "SETUP_COPY_FROM": "Copiar la configuración de:",
     "SETUP_COPY_PICK": "elegir…",
     "SETUP_COPY_CONFIRM": "¿Crear una copia de «{name}»?",

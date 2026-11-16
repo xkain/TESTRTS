@@ -186,17 +186,11 @@ class ShadeSetup {
             if (err) return ui.serviceError(err);
             this.s = null;
             this.c = { fam: null, axes: [], name: '', nameTouched: false, roomId: 0, proto: next.proto || 0, bits: next.bitLength === 80 ? 80 : 56,
-                       addr: next.remoteAddress, pulse: 200, remote: 'idle', frame: null, keep: true, detected: false, advOpen: false, timer: null };
+                       addr: next.remoteAddress, pulse: 200, remote: 'idle', frame: null, keep: true, detected: false, advOpen: pairMode.expert(), timer: null };
             this.w = { step: 0, resume: false, justCreated: false, remote: 'idle' };
             this.mountWiz();
             this.renderWiz();
         });
-    }
-    fullForm() {
-        this.stopListen();
-        closeOverlay(this.div);
-        this.c = this.div = this.w = null;
-        somfy.openEditShade();
     }
     // ---------- Copie d'un équipement existant ----------
     // Mêmes réglages que le modèle, créé d'un coup puis ouvert dans sa fiche. Pas de My (position
@@ -305,7 +299,7 @@ class ShadeSetup {
     }
     create() {
         const c = this.c, body = this.box();
-        const obj = Object.assign({ name: c.name.trim(), shadeType: c.fam.type(c.axes), roomId: c.roomId, proto: c.proto, bitLength: c.bits, remoteAddress: c.addr, setupSteps: 0 },
+        const obj = Object.assign({ name: c.name.trim(), shadeType: c.fam.type(c.axes), roomId: c.roomId, proto: c.proto, bitLength: c.bits, remoteAddress: c.addr, setupSteps: pairMode.expert() ? SETUP_BIT.dir | SETUP_BIT.opts : 0 },
             c.fam.settings ? c.fam.settings(c.axes, c) : {});
         if (!obj.name || obj.name.length > 20) return ui.errorMessage(body, tr('ERR_DEVICE_NAME_INVALID'));
         if (isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215) return ui.errorMessage(body, tr('ERR_REMOTE_ADDRESS_INVALID'));
@@ -317,6 +311,13 @@ class ShadeSetup {
             const link = c.frame && c.keep ? c.frame : null;
             // L'équipement existe désormais : la suite de l'assistant est sa mise en service.
             const go = () => {
+                // Expert : la fiche porte déjà les réglages en saisie directe ; l'appairage s'ouvre par-dessus.
+                if (pairMode.expert()) {
+                    closeOverlay(this.div);
+                    somfy.updateShadeList();
+                    somfy.openCardEditor('shade', shade.shadeId, 2);
+                    return this.runTask(shade.shadeId, 'pair', () => somfy._openEditShade(shade.shadeId));
+                }
                 somfy.updateShadeList();
                 if (this.w) Object.assign(this.w, { justCreated: true, remote: c.remote });
                 this.startSetup(shade, !!link);
@@ -358,18 +359,20 @@ class ShadeSetup {
                 state: on ? 'on' : T.state === 'done' ? 'done' : T.state || '', pick: created && !on && (T.state || k < s.cur) ? `shadeSetup.reopen(${k})` : '' });
         });
         const bar = wizStepsHtml(items), ol = this.$('.wiz-steps');
+        // Expert : pas de mise en service par étapes à annoncer, la fiche s'ouvre après la création.
+        ol.hidden = this.$('.wiz-pbar').hidden = !created && pairMode.expert();
         ol.innerHTML = bar.steps;
         ol.classList.toggle('many', items.length > 4);
         this.$('.wiz-pbar').innerHTML = bar.bar;
-        this.$('.wiz-now').textContent = bar.now;
+        this.$('.wiz-now').textContent = ol.hidden ? '' : bar.now;
         this.$('.wiz-title').textContent = tr(w.resume ? 'SETUP_RESUME_TITLE' : 'WELCOME_ADD_DEVICE_TITLE');
         this.$('.wiz-sum-icon use').setAttribute('href', `#${fam ? fam.ico : 'svg-shutter'}`);
         this.$('.wiz-sum-text b').textContent = name || tr('SETUP_W_NEW');
         this.$('.wiz-sum-text span').textContent = fam ? tr(fam.label) + (room ? ' · ' + room : '') : tr('SETUP_W_TYPE_DESC');
 
         const T = created ? s.tasks[s.cur] : null;
-        // Guidé / expert : sur l'appairage seulement, menu ⋮ au coin de la colonne (à gauche de la croix).
-        const pm = !!T && T.id === 'pair', expert = pm && pairMode.expert();
+        // Guidé / expert : à la création et à l'appairage, menu ⋮ au coin de la colonne (à gauche de la croix).
+        const pm = !created || T.id === 'pair', expert = pm && pairMode.expert();
         this.$('.wiz-side-head .pair-mode-menu')?.remove();
         this.$('.pair-mode-badge')?.remove();
         if (pm) this.$('.wiz-close').insertAdjacentHTML('beforebegin', pairMode.menu('shadeSetup.setPairMode'));
@@ -389,8 +392,7 @@ class ShadeSetup {
             }).join('') : '';
             const typeSec = `<div class="wiz-fam">${this.families.map(f => `<button type="button" class="wiz-fam-card${sel === f ? ' on' : ''}" aria-pressed="${sel === f}" onclick="shadeSetup.pickFamily('${f.id}')">
                 <span class="wiz-fam-icon"><svg><use href="#${f.ico}"></use></svg></span>${tr(f.label)}</button>`).join('')}</div>
-                ${axes ? `<div class="wiz-grid">${axes}</div>` : ''}${this.copyHtml()}
-                <button type="button" class="wiz-link" onclick="shadeSetup.fullForm()">${tr('SETUP_FULL_FORM')}</button>`;
+                ${axes ? `<div class="wiz-grid">${axes}</div>` : ''}${this.copyHtml()}`;
             const f = c.frame, own = c.remote === 'known', owner = own ? somfy.frameAddressName(f.address) : null;
             const badge = c.detected ? `<span class="wiz-badge">${tr('SETUP_DETECTED')}</span>` : '';
             const remBody = {
@@ -449,6 +451,8 @@ class ShadeSetup {
                 hint = ok ? '' : tr({ pair: 'SETUP_W_HINT_PAIR', dir: 'SETUP_W_HINT_DIR', cal: 'SETUP_W_HINT_CAL' }[T.id] || 'SETUP_W_HINT_STEP');
             }
         }
+        // Expert : la page de création sans ses textes d'aide (cf. .wiz-x, overlays.css).
+        this.$('.wiz-main').classList.toggle('wiz-x', !created && pairMode.expert());
         if (!keepMain) {
             this.$('.wiz-main').innerHTML = html;
             wizScrollTop(w, this.$('.wiz-main'), created ? `t${s.cur}` : 'create');

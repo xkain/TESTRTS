@@ -2906,6 +2906,8 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .wiz-ok svg { flex: none; width: 18px; height: 18px; fill: currentColor; }
 .wiz-warn { background: var(--warn-bg); color: var(--warn); }
 .wiz-info { background: var(--info-bg); color: var(--info); }
+/* Création en mode expert (72-setup.js) : les mêmes sections, sans leurs textes d'aide. */
+.wiz-x .wiz-lead, .wiz-x .wiz-info, .wiz-x .gen-tile-desc { display: none; }
 .wiz-link, .wiz-link:hover { align-self: flex-start; width: auto; min-height: 40px; margin: 0; padding: 0; border: 0; background: none; color: var(--color-accent); font-size: var(--fs-3); font-weight: 700; text-align: left; text-transform: none; }
 /* « Passer cette étape » : au pied sur ordinateur, dans le contenu en dessous de 1000 px. */
 .wiz-skip-in { display: none; }
