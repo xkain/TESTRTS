@@ -734,7 +734,7 @@ void SomfyShadeController::processListenerFrame(somfy_frame_t &frame) {
   json->beginObject();
   json->addElem("address", (uint32_t)l->address);
   json->addElem("name", l->name);
-  json->addElem("command", translateSomfyCommand(frame.cmd).c_str());
+  json->addElem("command", translateSomfyCommand(frame.cmd));
   json->addElem("rssi", (int32_t)frame.rssi);
   json->endObject();
   sockEmit.endEmit();

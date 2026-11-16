@@ -495,9 +495,9 @@ namespace WebAuth {
   }
 
   void registerRoutes(AsyncWebServer &server) {
-    server.on("/login", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLogin(request); }, nullptr, asyncBodyHandler);
-    server.on("/loginContext", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLoginContext(request); });
-    server.on("/saveSecurity", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveSecurity(request); }, nullptr, asyncBodyHandler);
-    server.on("/getSecurity", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetSecurity(request); });
+    server.on("/login", AsyncHttp::ANY, handleLogin, nullptr, asyncBodyHandler);
+    server.on("/loginContext", AsyncHttp::ANY, handleLoginContext);
+    server.on("/saveSecurity", AsyncHttp::ANY, handleSaveSecurity, nullptr, asyncBodyHandler);
+    server.on("/getSecurity", AsyncHttp::ANY, handleGetSecurity);
   }
 }

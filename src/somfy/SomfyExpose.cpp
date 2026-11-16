@@ -313,33 +313,13 @@ void SomfyShade::publishDisco() {
   JsonObject obj = doc.to<JsonObject>();
   snprintf(topic, sizeof(topic), "%s/shades/%d", settings.MQTT.rootTopic, this->shadeId);
   obj["~"] = topic;
-  JsonObject dobj = obj.createNestedObject("device");
-  dobj["hw_version"] = settings.fwVersion.name;
-  dobj["name"] = settings.hostname;
-  dobj["mf"] = "xkain";
-  JsonArray arrids = dobj.createNestedArray("identifiers");
-  //snprintf(topic, sizeof(topic), "mqtt_espsomfyrts_%s_shade%d", settings.serverId, this->shadeId);
-  snprintf(topic, sizeof(topic), "mqtt_espsomfyrts_%s", settings.serverId);
-  arrids.add(topic);
-  //snprintf(topic, sizeof(topic), "ESPSomfy-RTS_%s", settings.serverId);
-  dobj["model"] = "ESPSomfy-RTS MQTT";
-  snprintf(topic, sizeof(topic), "%s/status", settings.MQTT.rootTopic);
-  obj["availability_topic"] = topic;
-  obj["payload_available"] = "online";
-  obj["payload_not_available"] = "offline";
+  mqtt.discoDevice(obj);
   obj["name"] = this->name;
   snprintf(topic, sizeof(topic), "mqtt_%s_shade%d", settings.serverId, this->shadeId);
   obj["unique_id"] = topic;
+  const char *devClass = nullptr;
   switch(this->shadeType) {
-    case shade_types::blind:
-      obj["device_class"] = "blind";
-      obj["payload_close"] = this->flipPosition ? "-1" : "1";
-      obj["payload_open"] = this->flipPosition ? "1" : "-1";
-      obj["position_open"] = this->flipPosition ? 100 : 0;
-      obj["position_closed"] = this->flipPosition ? 0 : 100;
-      obj["state_closing"] = this->flipPosition ? "-1" : "1";
-      obj["state_opening"] = this->flipPosition ? "1" : "-1";
-      break;
+    case shade_types::blind: devClass = "blind"; break;
     case shade_types::lgate:
     case shade_types::cgate:
     case shade_types::rgate:
@@ -348,55 +328,25 @@ void SomfyShade::publishDisco() {
     case shade_types::rgate1:
     case shade_types::ldrapery:
     case shade_types::rdrapery:
-    case shade_types::cdrapery:
-      obj["device_class"] = "curtain";
-      obj["payload_close"] = this->flipPosition ? "-1" : "1";
-      obj["payload_open"] = this->flipPosition ? "1" : "-1";
-      obj["position_open"] = this->flipPosition ? 100 : 0;
-      obj["position_closed"] = this->flipPosition ? 0 : 100;
-      obj["state_closing"] = this->flipPosition ? "-1" : "1";
-      obj["state_opening"] = this->flipPosition ? "1" : "-1";
-      break;
+    case shade_types::cdrapery: devClass = "curtain"; break;
     case shade_types::garage1:
-    case shade_types::garage3:
-      obj["device_class"] = "garage";
-      obj["payload_close"] = this->flipPosition ? "-1" : "1";
-      obj["payload_open"] = this->flipPosition ? "1" : "-1";
-      obj["position_open"] = this->flipPosition ? 100 : 0;
-      obj["position_closed"] = this->flipPosition ? 0 : 100;
-      obj["state_closing"] = this->flipPosition ? "-1" : "1";
-      obj["state_opening"] = this->flipPosition ? "1" : "-1";
-      break;
-    case shade_types::awning:
-      obj["device_class"] = "awning";
-      obj["payload_close"] = this->flipPosition ? "1" : "-1";
-      obj["payload_open"] = this->flipPosition ? "-1" : "1";
-      obj["position_open"] = this->flipPosition ? 0 : 100;
-      obj["position_closed"] = this->flipPosition ? 100 : 0;
-      obj["state_closing"] = this->flipPosition ? "1" : "-1";
-      obj["state_opening"] = this->flipPosition ? "-1" : "1";
-      break;
-    case shade_types::shutter:
-      obj["device_class"] = "shutter";
-      obj["payload_close"] = this->flipPosition ? "-1" : "1";
-      obj["payload_open"] = this->flipPosition ? "1" : "-1";
-      obj["position_open"] = this->flipPosition ? 100 : 0;
-      obj["position_closed"] = this->flipPosition ? 0 : 100;
-      obj["state_closing"] = this->flipPosition ? "-1" : "1";
-      obj["state_opening"] = this->flipPosition ? "1" : "-1";
-      break;
+    case shade_types::garage3: devClass = "garage"; break;
+    case shade_types::awning: devClass = "awning"; break;
+    case shade_types::shutter: devClass = "shutter"; break;
     case shade_types::drycontact2:
-    case shade_types::drycontact:
-      break;
-    default:
-      obj["device_class"] = "shade";
-      obj["payload_close"] = this->flipPosition ? "-1" : "1";
-      obj["payload_open"] = this->flipPosition ? "1" : "-1";
-      obj["position_open"] = this->flipPosition ? 100 : 0;
-      obj["position_closed"] = this->flipPosition ? 0 : 100;
-      obj["state_closing"] = this->flipPosition ? "-1" : "1";
-      obj["state_opening"] = this->flipPosition ? "1" : "-1";
-      break;
+    case shade_types::drycontact: break;
+    default: devClass = "shade"; break;
+  }
+  if(devClass) {
+    obj["device_class"] = devClass;
+    // Un store banne se déploie vers 100 : son sens « ouvert » est l'inverse des autres types.
+    bool inv = this->flipPosition != (this->shadeType == shade_types::awning);
+    obj["payload_close"] = inv ? "-1" : "1";
+    obj["payload_open"] = inv ? "1" : "-1";
+    obj["position_open"] = inv ? 100 : 0;
+    obj["position_closed"] = inv ? 0 : 100;
+    obj["state_closing"] = inv ? "-1" : "1";
+    obj["state_opening"] = inv ? "1" : "-1";
   }
   if(this->shadeType != shade_types::drycontact && this->shadeType != shade_types::drycontact2) {
     if(this->tiltType != tilt_types::tiltonly) {
@@ -613,115 +563,86 @@ void SomfyShade::unpublish(uint8_t id, const char *topic) {
     mqtt.unpublish(mqttTopicBuffer);
   }
 }
+// Topic "<kind>/<id>/<topic>" quand MQTT est connecté ; sinon false. Les douze surcharges publish()
+// ci-dessous n'en diffèrent que par le type de la valeur.
+static bool mqttTopic(char *buf, size_t n, const char *kind, uint8_t id, const char *topic) {
+  if(!mqtt.connected()) return false;
+  snprintf(buf, n, "%s/%u/%s", kind, id, topic);
+  return true;
+}
 bool SomfyShade::publish(const char *topic, int8_t val, bool retain) {
-  if(mqtt.connected()) {
-    char mqttTopicBuffer[MQTT_TOPIC_BUF];
-    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", this->shadeId, topic);
-    mqtt.publish(mqttTopicBuffer, val, retain);
-    return true;
-  }
-  return false;
+  char buf[MQTT_TOPIC_BUF];
+  if(!mqttTopic(buf, sizeof(buf), "shades", this->shadeId, topic)) return false;
+  mqtt.publish(buf, val, retain);
+  return true;
 }
 
-bool SomfyShade::publish(const char *topic, const char *val, bool retain) {
-  if(mqtt.connected()) {
-    char mqttTopicBuffer[MQTT_TOPIC_BUF];
-    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", this->shadeId, topic);
-    mqtt.publish(mqttTopicBuffer, val, retain);
-    return true;
-  }
-  return false;
+bool SomfyShade::publish(const char *topic, const char * val, bool retain) {
+  char buf[MQTT_TOPIC_BUF];
+  if(!mqttTopic(buf, sizeof(buf), "shades", this->shadeId, topic)) return false;
+  mqtt.publish(buf, val, retain);
+  return true;
 }
 bool SomfyShade::publish(const char *topic, uint8_t val, bool retain) {
-  if(mqtt.connected()) {
-    char mqttTopicBuffer[MQTT_TOPIC_BUF];
-    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", this->shadeId, topic);
-    mqtt.publish(mqttTopicBuffer, val, retain);
-    return true;
-  }
-  return false;
+  char buf[MQTT_TOPIC_BUF];
+  if(!mqttTopic(buf, sizeof(buf), "shades", this->shadeId, topic)) return false;
+  mqtt.publish(buf, val, retain);
+  return true;
 }
 bool SomfyShade::publish(const char *topic, uint32_t val, bool retain) {
-  if(mqtt.connected()) {
-    char mqttTopicBuffer[MQTT_TOPIC_BUF];
-    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", this->shadeId, topic);
-    mqtt.publish(mqttTopicBuffer, val, retain);
-    return true;
-  }
-  return false;
+  char buf[MQTT_TOPIC_BUF];
+  if(!mqttTopic(buf, sizeof(buf), "shades", this->shadeId, topic)) return false;
+  mqtt.publish(buf, val, retain);
+  return true;
 }
 bool SomfyShade::publish(const char *topic, uint16_t val, bool retain) {
-  if(mqtt.connected()) {
-    char mqttTopicBuffer[MQTT_TOPIC_BUF];
-    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", this->shadeId, topic);
-    mqtt.publish(mqttTopicBuffer, val, retain);
-    return true;
-  }
-  return false;
+  char buf[MQTT_TOPIC_BUF];
+  if(!mqttTopic(buf, sizeof(buf), "shades", this->shadeId, topic)) return false;
+  mqtt.publish(buf, val, retain);
+  return true;
 }
 bool SomfyShade::publish(const char *topic, bool val, bool retain) {
-  if(mqtt.connected()) {
-    char mqttTopicBuffer[MQTT_TOPIC_BUF];
-    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", this->shadeId, topic);
-    mqtt.publish(mqttTopicBuffer, val, retain);
-    return true;
-  }
-  return false;
+  char buf[MQTT_TOPIC_BUF];
+  if(!mqttTopic(buf, sizeof(buf), "shades", this->shadeId, topic)) return false;
+  mqtt.publish(buf, val, retain);
+  return true;
 }
 
 bool SomfyGroup::publish(const char *topic, int8_t val, bool retain) {
-  if(mqtt.connected()) {
-    char mqttTopicBuffer[MQTT_TOPIC_BUF];
-    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
-    mqtt.publish(mqttTopicBuffer, val, retain);
-    return true;
-  }
-  return false;
+  char buf[MQTT_TOPIC_BUF];
+  if(!mqttTopic(buf, sizeof(buf), "groups", this->groupId, topic)) return false;
+  mqtt.publish(buf, val, retain);
+  return true;
 }
-bool SomfyGroup::publish(const char *topic, const char *val, bool retain) {
-  if(mqtt.connected()) {
-    char mqttTopicBuffer[MQTT_TOPIC_BUF];
-    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
-    mqtt.publish(mqttTopicBuffer, val, retain);
-    return true;
-  }
-  return false;
+bool SomfyGroup::publish(const char *topic, const char * val, bool retain) {
+  char buf[MQTT_TOPIC_BUF];
+  if(!mqttTopic(buf, sizeof(buf), "groups", this->groupId, topic)) return false;
+  mqtt.publish(buf, val, retain);
+  return true;
 }
 bool SomfyGroup::publish(const char *topic, uint8_t val, bool retain) {
-  if(mqtt.connected()) {
-    char mqttTopicBuffer[MQTT_TOPIC_BUF];
-    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
-    mqtt.publish(mqttTopicBuffer, val, retain);
-    return true;
-  }
-  return false;
+  char buf[MQTT_TOPIC_BUF];
+  if(!mqttTopic(buf, sizeof(buf), "groups", this->groupId, topic)) return false;
+  mqtt.publish(buf, val, retain);
+  return true;
 }
 bool SomfyGroup::publish(const char *topic, uint32_t val, bool retain) {
-  if(mqtt.connected()) {
-    char mqttTopicBuffer[MQTT_TOPIC_BUF];
-    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
-    mqtt.publish(mqttTopicBuffer, val, retain);
-    return true;
-  }
-  return false;
+  char buf[MQTT_TOPIC_BUF];
+  if(!mqttTopic(buf, sizeof(buf), "groups", this->groupId, topic)) return false;
+  mqtt.publish(buf, val, retain);
+  return true;
 }
 bool SomfyGroup::publish(const char *topic, uint16_t val, bool retain) {
-  if(mqtt.connected()) {
-    char mqttTopicBuffer[MQTT_TOPIC_BUF];
-    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
-    mqtt.publish(mqttTopicBuffer, val, retain);
-    return true;
-  }
-  return false;
+  char buf[MQTT_TOPIC_BUF];
+  if(!mqttTopic(buf, sizeof(buf), "groups", this->groupId, topic)) return false;
+  mqtt.publish(buf, val, retain);
+  return true;
 }
 bool SomfyGroup::publish(const char *topic, bool val, bool retain) {
-  if(mqtt.connected()) {
-    char mqttTopicBuffer[MQTT_TOPIC_BUF];
-    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
-    mqtt.publish(mqttTopicBuffer, val, retain);
-    return true;
-  }
-  return false;
+  char buf[MQTT_TOPIC_BUF];
+  if(!mqttTopic(buf, sizeof(buf), "groups", this->groupId, topic)) return false;
+  mqtt.publish(buf, val, retain);
+  return true;
 }
 // Cf. le commentaire de déclaration dans Somfy.h : ces deux fonctions ont été EXTRAITES de
 // SomfyShadeController::publish() ci-dessous pour pouvoir rafraîchir l'index sans republier tout

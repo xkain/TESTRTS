@@ -211,7 +211,7 @@ namespace WebNetwork {
           }
         }
         if(obj.containsKey("defaultMobileTab")) {
-          String tab = obj["defaultMobileTab"].as<String>();
+          String tab = obj["defaultMobileTab"].as<const char*>();
           if(tab != "groups" && tab != "devices") {
             webServer.sendError(request, 400, "Invalid default mobile tab.", "DEFAULT_MOBILE_TAB_INVALID");
             return;
@@ -366,10 +366,10 @@ namespace WebNetwork {
             }
           }
           if(settings.connType == conn_types_t::wifi) {
-            if(objWifi.containsKey("ssid") && objWifi["ssid"].as<String>().compareTo(settings.WIFI.ssid) != 0) {
+            if(objWifi.containsKey("ssid") && strcmp(objWifi["ssid"] | "", settings.WIFI.ssid) != 0) {
               if(WiFi.softAPgetStationNum() == 0) reboot = true;
             }
-            if(objWifi.containsKey("passphrase") && objWifi["passphrase"].as<String>().compareTo(settings.WIFI.passphrase) != 0) {
+            if(objWifi.containsKey("passphrase") && strcmp(objWifi["passphrase"] | "", settings.WIFI.passphrase) != 0) {
               if(WiFi.softAPgetStationNum() == 0) reboot = true;
             }
           }
@@ -583,15 +583,15 @@ namespace WebNetwork {
   }
 
   void registerRoutes(AsyncWebServer &server) {
-    server.on("/scanaps", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleScanAps(request); });
-    server.on("/setgeneral", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetGeneral(request); }, nullptr, asyncBodyHandler);
-    server.on("/testLed", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleTestLed(request); }, nullptr, asyncBodyHandler);
-    server.on("/setNetwork", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetNetwork(request); }, nullptr, asyncBodyHandler);
-    server.on("/setIP", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetIP(request); }, nullptr, asyncBodyHandler);
-    server.on("/connectwifi", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleConnectWifi(request); }, nullptr, asyncBodyHandler);
-    server.on("/modulesettings", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleModuleSettings(request); });
-    server.on("/networksettings", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleNetworkSettings(request); });
-    server.on("/connectmqtt", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleConnectMqtt(request); }, nullptr, asyncBodyHandler);
-    server.on("/mqttsettings", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleMqttSettings(request); });
+    server.on("/scanaps", AsyncHttp::ANY, handleScanAps);
+    server.on("/setgeneral", AsyncHttp::ANY, handleSetGeneral, nullptr, asyncBodyHandler);
+    server.on("/testLed", AsyncHttp::ANY, handleTestLed, nullptr, asyncBodyHandler);
+    server.on("/setNetwork", AsyncHttp::ANY, handleSetNetwork, nullptr, asyncBodyHandler);
+    server.on("/setIP", AsyncHttp::ANY, handleSetIP, nullptr, asyncBodyHandler);
+    server.on("/connectwifi", AsyncHttp::ANY, handleConnectWifi, nullptr, asyncBodyHandler);
+    server.on("/modulesettings", AsyncHttp::ANY, handleModuleSettings);
+    server.on("/networksettings", AsyncHttp::ANY, handleNetworkSettings);
+    server.on("/connectmqtt", AsyncHttp::ANY, handleConnectMqtt, nullptr, asyncBodyHandler);
+    server.on("/mqttsettings", AsyncHttp::ANY, handleMqttSettings);
   }
 }

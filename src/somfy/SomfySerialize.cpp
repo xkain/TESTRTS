@@ -352,7 +352,7 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
   json.addElem("gpioLLTrigger", ((this->gpioFlags & (uint8_t)gpio_flags_t::LowLevelTrigger) == 0) ? false : true);
   json.addElem("simMy", this->simMy());
   json.addElem("lastSentAgo", this->lastSent.ago());
-  json.addElem("lastSentCmd", translateSomfyCommand(this->lastSent.cmd).c_str());
+  json.addElem("lastSentCmd", translateSomfyCommand(this->lastSent.cmd));
   // Chaque télécommande liée porte elle aussi une adresse ET un code tournant (cf.
   // SomfyRemote::toJSON) : masqué, le tableau reste PRÉSENT mais vide. On ne retire jamais une clé
   // ni ne change la forme du JSON -- un client tiers qui lit `remoteAddress` ou itère
@@ -550,7 +550,7 @@ void SomfyShadeController::toJSONRepeaterNames(JsonFormatter &json) {
 void SomfyShadeController::toJSONListener(JsonFormatter &json, somfy_listener_t *l, bool secrets) {
   json.addElem("address", secrets ? (uint32_t)l->address : (uint32_t)0);
   json.addElem("name", l->name);
-  json.addElem("lastCommand", l->lastRx ? translateSomfyCommand(l->lastCmd).c_str() : "");
+  json.addElem("lastCommand", l->lastRx ? translateSomfyCommand(l->lastCmd) : "");
   json.addElem("lastRxAgo", l->lastRx ? (int32_t)((millis() - l->lastRx) / 1000) : (int32_t)-1);
   json.addElem("lastRssi", l->lastRssi);
   SomfyShade *shade = this->findShadeByLinkedRemote(l->address);

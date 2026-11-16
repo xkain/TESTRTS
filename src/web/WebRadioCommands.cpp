@@ -1121,28 +1121,28 @@ namespace WebRadioCommands {
   }
 
   void registerRoutes(AsyncWebServer &server) {
-    server.on("/tiltCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleTiltCommand(request); }, nullptr, asyncBodyHandler);
-    server.on("/repeatCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRepeatCommand(request); }, nullptr, asyncBodyHandler);
-    server.on("/shadeCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleShadeCommand(request); }, nullptr, asyncBodyHandler);
-    server.on("/groupCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGroupCommand(request); }, nullptr, asyncBodyHandler);
-    server.on("/setPositions", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetPositions(request); }, nullptr, asyncBodyHandler);
-    server.on("/setSensor", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetSensor(request); }, nullptr, asyncBodyHandler);
-    server.on("/setMyPosition", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetMyPosition(request); }, nullptr, asyncBodyHandler);
-    server.on("/setRollingCode", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetRollingCode(request); }, nullptr, asyncBodyHandler);
-    server.on("/setPaired", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetPaired(request); }, nullptr, asyncBodyHandler);
-    server.on("/unpairShade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnpairShade(request); }, nullptr, asyncBodyHandler);
-    server.on("/linkRepeater", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLinkRepeater(request); }, nullptr, asyncBodyHandler);
-    server.on("/unlinkRepeater", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnlinkRepeater(request); }, nullptr, asyncBodyHandler);
-    server.on("/renameRepeater", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRenameRepeater(request); }, nullptr, asyncBodyHandler);
-    server.on("/linkListener", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLinkListener(request); }, nullptr, asyncBodyHandler);
-    server.on("/renameListener", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRenameListener(request); }, nullptr, asyncBodyHandler);
-    server.on("/unlinkListener", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnlinkListener(request); }, nullptr, asyncBodyHandler);
-    server.on("/unlinkRemote", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnlinkRemote(request); }, nullptr, asyncBodyHandler);
-    server.on("/linkRemote", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLinkRemote(request); }, nullptr, asyncBodyHandler);
-    server.on("/saveRadio", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveRadio(request); }, nullptr, asyncBodyHandler);
-    server.on("/getRadio", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetRadio(request); });
-    server.on("/sendRemoteCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSendRemoteCommand(request); }, nullptr, asyncBodyHandler);
-    server.on("/beginFrequencyScan", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleBeginFrequencyScan(request); });
-    server.on("/endFrequencyScan", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleEndFrequencyScan(request); });
+    server.on("/tiltCommand", AsyncHttp::ANY, handleTiltCommand, nullptr, asyncBodyHandler);
+    server.on("/repeatCommand", AsyncHttp::ANY, handleRepeatCommand, nullptr, asyncBodyHandler);
+    server.on("/shadeCommand", AsyncHttp::ANY, handleShadeCommand, nullptr, asyncBodyHandler);
+    server.on("/groupCommand", AsyncHttp::ANY, handleGroupCommand, nullptr, asyncBodyHandler);
+    server.on("/setPositions", AsyncHttp::ANY, handleSetPositions, nullptr, asyncBodyHandler);
+    server.on("/setSensor", AsyncHttp::ANY, handleSetSensor, nullptr, asyncBodyHandler);
+    server.on("/setMyPosition", AsyncHttp::ANY, handleSetMyPosition, nullptr, asyncBodyHandler);
+    server.on("/setRollingCode", AsyncHttp::ANY, handleSetRollingCode, nullptr, asyncBodyHandler);
+    server.on("/setPaired", AsyncHttp::ANY, handleSetPaired, nullptr, asyncBodyHandler);
+    server.on("/unpairShade", AsyncHttp::ANY, handleUnpairShade, nullptr, asyncBodyHandler);
+    server.on("/linkRepeater", AsyncHttp::ANY, handleLinkRepeater, nullptr, asyncBodyHandler);
+    server.on("/unlinkRepeater", AsyncHttp::ANY, handleUnlinkRepeater, nullptr, asyncBodyHandler);
+    server.on("/renameRepeater", AsyncHttp::ANY, handleRenameRepeater, nullptr, asyncBodyHandler);
+    server.on("/linkListener", AsyncHttp::ANY, handleLinkListener, nullptr, asyncBodyHandler);
+    server.on("/renameListener", AsyncHttp::ANY, handleRenameListener, nullptr, asyncBodyHandler);
+    server.on("/unlinkListener", AsyncHttp::ANY, handleUnlinkListener, nullptr, asyncBodyHandler);
+    server.on("/unlinkRemote", AsyncHttp::ANY, handleUnlinkRemote, nullptr, asyncBodyHandler);
+    server.on("/linkRemote", AsyncHttp::ANY, handleLinkRemote, nullptr, asyncBodyHandler);
+    server.on("/saveRadio", AsyncHttp::ANY, handleSaveRadio, nullptr, asyncBodyHandler);
+    server.on("/getRadio", AsyncHttp::ANY, handleGetRadio);
+    server.on("/sendRemoteCommand", AsyncHttp::ANY, handleSendRemoteCommand, nullptr, asyncBodyHandler);
+    server.on("/beginFrequencyScan", AsyncHttp::ANY, handleBeginFrequencyScan);
+    server.on("/endFrequencyScan", AsyncHttp::ANY, handleEndFrequencyScan);
   }
 }

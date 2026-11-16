@@ -37,77 +37,57 @@ int sort_asc(const void *cmp1, const void *cmp2) {
 // quand this->bitLength vaut 0. Pas de static : transceiver_config_t::apply() (SomfyRadioDriver.cpp)
 // la met à jour à chaque changement de protocole -- état partagé entre les deux fichiers.
 uint8_t bit_length = 56;
+// Noms complets puis préfixes, dans l'ordre des anciens tests : « mud » avant « mu » avant « m ».
+struct cmd_name_t { const char *name; somfy_commands cmd; };
+static const cmd_name_t CMD_NAMES[] = {
+  {"My", somfy_commands::My}, {"Up", somfy_commands::Up}, {"MyUp", somfy_commands::MyUp}, {"Down", somfy_commands::Down},
+  {"MyDown", somfy_commands::MyDown}, {"UpDown", somfy_commands::UpDown}, {"MyUpDown", somfy_commands::MyUpDown},
+  {"Prog", somfy_commands::Prog}, {"SunFlag", somfy_commands::SunFlag}, {"StepUp", somfy_commands::StepUp},
+  {"StepDown", somfy_commands::StepDown}, {"Flag", somfy_commands::Flag}, {"Sensor", somfy_commands::Sensor},
+  {"Toggle", somfy_commands::Toggle}, {"Favorite", somfy_commands::Favorite}, {"Stop", somfy_commands::Stop}};
+static const cmd_name_t CMD_PREFIXES[] = {
+  {"fav", somfy_commands::Favorite}, {"mud", somfy_commands::MyUpDown}, {"md", somfy_commands::MyDown},
+  {"ud", somfy_commands::UpDown}, {"mu", somfy_commands::MyUp}, {"su", somfy_commands::StepUp},
+  {"sd", somfy_commands::StepDown}, {"sen", somfy_commands::Sensor}, {"p", somfy_commands::Prog},
+  {"u", somfy_commands::Up}, {"d", somfy_commands::Down}, {"m", somfy_commands::My}, {"f", somfy_commands::Flag},
+  {"s", somfy_commands::SunFlag}, {"t", somfy_commands::Toggle}};
 somfy_commands translateSomfyCommand(const String& string) {
-    if (string.equalsIgnoreCase("My")) return somfy_commands::My;
-    else if (string.equalsIgnoreCase("Up")) return somfy_commands::Up;
-    else if (string.equalsIgnoreCase("MyUp")) return somfy_commands::MyUp;
-    else if (string.equalsIgnoreCase("Down")) return somfy_commands::Down;
-    else if (string.equalsIgnoreCase("MyDown")) return somfy_commands::MyDown;
-    else if (string.equalsIgnoreCase("UpDown")) return somfy_commands::UpDown;
-    else if (string.equalsIgnoreCase("MyUpDown")) return somfy_commands::MyUpDown;
-    else if (string.equalsIgnoreCase("Prog")) return somfy_commands::Prog;
-    else if (string.equalsIgnoreCase("SunFlag")) return somfy_commands::SunFlag;
-    else if (string.equalsIgnoreCase("StepUp")) return somfy_commands::StepUp;
-    else if (string.equalsIgnoreCase("StepDown")) return somfy_commands::StepDown;
-    else if (string.equalsIgnoreCase("Flag")) return somfy_commands::Flag;
-    else if (string.equalsIgnoreCase("Sensor")) return somfy_commands::Sensor;
-    else if (string.equalsIgnoreCase("Toggle")) return somfy_commands::Toggle;
-    else if (string.equalsIgnoreCase("Favorite")) return somfy_commands::Favorite;
-    else if (string.equalsIgnoreCase("Stop")) return somfy_commands::Stop;
-    else if (string.startsWith("fav") || string.startsWith("FAV")) return somfy_commands::Favorite;
-    else if (string.startsWith("mud") || string.startsWith("MUD")) return somfy_commands::MyUpDown;
-    else if (string.startsWith("md") || string.startsWith("MD")) return somfy_commands::MyDown;
-    else if (string.startsWith("ud") || string.startsWith("UD")) return somfy_commands::UpDown;
-    else if (string.startsWith("mu") || string.startsWith("MU")) return somfy_commands::MyUp;
-    else if (string.startsWith("su") || string.startsWith("SU")) return somfy_commands::StepUp;
-    else if (string.startsWith("sd") || string.startsWith("SD")) return somfy_commands::StepDown;
-    else if (string.startsWith("sen") || string.startsWith("SEN")) return somfy_commands::Sensor;
-    else if (string.startsWith("p") || string.startsWith("P")) return somfy_commands::Prog;
-    else if (string.startsWith("u") || string.startsWith("U")) return somfy_commands::Up;
-    else if (string.startsWith("d") || string.startsWith("D")) return somfy_commands::Down;
-    else if (string.startsWith("m") || string.startsWith("M")) return somfy_commands::My;
-    else if (string.startsWith("f") || string.startsWith("F")) return somfy_commands::Flag;
-    else if (string.startsWith("s") || string.startsWith("S")) return somfy_commands::SunFlag;
-    else if (string.startsWith("t") || string.startsWith("T")) return somfy_commands::Toggle;
-    else if (string.length() == 1) return static_cast<somfy_commands>(strtol(string.c_str(), nullptr, 16));
-    else return somfy_commands::My;
+    const char *s = string.c_str();
+    for(const cmd_name_t &c : CMD_NAMES) if(strcasecmp(s, c.name) == 0) return c.cmd;
+    // Les anciens tests acceptaient le préfixe tout en minuscules ou tout en majuscules, pas mêlé.
+    for(const cmd_name_t &c : CMD_PREFIXES) {
+        size_t n = strlen(c.name);
+        if(strncmp(s, c.name, n) == 0) return c.cmd;
+        bool upper = true;
+        for(size_t k = 0; k < n; k++) if(s[k] != toupper((unsigned char)c.name[k])) { upper = false; break; }
+        if(upper) return c.cmd;
+    }
+    if(string.length() == 1) return static_cast<somfy_commands>(strtol(s, nullptr, 16));
+    return somfy_commands::My;
 }
-String translateSomfyCommand(const somfy_commands cmd) {
+const char *translateSomfyCommand(const somfy_commands cmd) {
     switch (cmd) {
-    case somfy_commands::Up:
-        return "Up";
-    case somfy_commands::Down:
-        return "Down";
-    case somfy_commands::My:
-        return "My";
-    case somfy_commands::MyUp:
-        return "My+Up";
-    case somfy_commands::UpDown:
-        return "Up+Down";
-    case somfy_commands::MyDown:
-        return "My+Down";
-    case somfy_commands::MyUpDown:
-        return "My+Up+Down";
-    case somfy_commands::Prog:
-        return "Prog";
-    case somfy_commands::SunFlag:
-        return "Sun Flag";
-    case somfy_commands::Flag:
-        return "Flag";
-    case somfy_commands::StepUp:
-        return "Step Up";
-    case somfy_commands::StepDown:
-        return "Step Down";
-    case somfy_commands::Sensor:
-        return "Sensor";
-    case somfy_commands::Toggle:
-        return "Toggle";
-    case somfy_commands::Favorite:
-        return "Favorite";
-    case somfy_commands::Stop:
-        return "Stop";
-    default:
-        return "Unknown(" + String((uint8_t)cmd) + ")";
+    case somfy_commands::Up: return "Up";
+    case somfy_commands::Down: return "Down";
+    case somfy_commands::My: return "My";
+    case somfy_commands::MyUp: return "My+Up";
+    case somfy_commands::UpDown: return "Up+Down";
+    case somfy_commands::MyDown: return "My+Down";
+    case somfy_commands::MyUpDown: return "My+Up+Down";
+    case somfy_commands::Prog: return "Prog";
+    case somfy_commands::SunFlag: return "Sun Flag";
+    case somfy_commands::Flag: return "Flag";
+    case somfy_commands::StepUp: return "Step Up";
+    case somfy_commands::StepDown: return "Step Down";
+    case somfy_commands::Sensor: return "Sensor";
+    case somfy_commands::Toggle: return "Toggle";
+    case somfy_commands::Favorite: return "Favorite";
+    case somfy_commands::Stop: return "Stop";
+    default: {
+        static char unknown[16];
+        snprintf(unknown, sizeof(unknown), "Unknown(%u)", (uint8_t)cmd);
+        return unknown;
+    }
     }
 }
 void SomfyShadeController::end() { this->transceiver.disableReceive(); }
@@ -652,7 +632,7 @@ void SomfyShade::emitCommand(uint8_t num, somfy_commands cmd, const char *source
   json->beginObject();
   json->addElem("shadeId", this->shadeId);
   json->addElem("remoteAddress", (uint32_t)this->getRemoteAddress());
-  json->addElem("cmd", translateSomfyCommand(cmd).c_str());
+  json->addElem("cmd", translateSomfyCommand(cmd));
   json->addElem("source", source);
   json->addElem("rcode", (uint32_t)this->lastRollingCode);
   json->addElem("sourceAddress", (uint32_t)sourceAddress);
@@ -673,7 +653,7 @@ void SomfyShade::emitCommand(uint8_t num, somfy_commands cmd, const char *source
   e.appendMessage(buf);
   snprintf(buf, sizeof(buf), ",\"remoteAddress\":%d", this->getRemoteAddress());
   e.appendMessage(buf);
-  snprintf(buf, sizeof(buf), ",\"cmd\":\"%s\"", translateSomfyCommand(cmd).c_str());
+  snprintf(buf, sizeof(buf), ",\"cmd\":\"%s\"", translateSomfyCommand(cmd));
   e.appendMessage(buf);
   snprintf(buf, sizeof(buf), ",\"source\":\"%s\"", source);
   e.appendMessage(buf);
@@ -687,7 +667,7 @@ void SomfyShade::emitCommand(uint8_t num, somfy_commands cmd, const char *source
   if(mqtt.connected()) {
     this->publish("cmdSource", source);
     this->publish("cmdAddress", sourceAddress);
-    this->publish("cmd", translateSomfyCommand(cmd).c_str());
+    this->publish("cmd", translateSomfyCommand(cmd));
   }
 }
 void SomfyRoom::emitState(const char *evt) { this->emitState(255, evt); }

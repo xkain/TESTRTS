@@ -67,23 +67,7 @@ static NullTrace DEBUG_SOMFY;
 // (xhr.responseType), il recoit alors null, et le message se mue en "500: Service Error" alors que
 // le boitier avait parfaitement diagnostique le probleme. Improbable, pas impossible -- il suffit
 // d'un equipement nomme Porte "sud".
-[[maybe_unused]] static String jsonEscape(const char *s) {
-  String out;
-  if(!s) return out;
-  for(const char *p = s; *p; p++) {
-    switch(*p) {
-      case '"':  out += "\\\""; break;
-      case '\\': out += "\\\\"; break;
-      case '\n': out += "\\n"; break;
-      case '\r': out += "\\r"; break;
-      case '\t': out += "\\t"; break;
-      default:
-        if((uint8_t)*p < 0x20) { char b[8]; snprintf(b, sizeof(b), "\\u%04x", *p); out += b; }
-        else out += *p;
-    }
-  }
-  return out;
-}
+String jsonEscape(const char *s);
 
 // Une broche peut-elle servir de SORTIE sans casser l'appareil ?
 //
@@ -99,29 +83,13 @@ static NullTrace DEBUG_SOMFY;
 // Utilisé partout où un numéro de broche vient du réseau : configuration radio (radioPinFault) et
 // relais d'équipement (SomfyShade::validateJSON). Ne dit RIEN de la disponibilité de la broche --
 // l'anti-collision entre radio, Ethernet et équipements est du ressort de somfyPinInUse().
-[[maybe_unused]] static bool isUsableOutputPin(int pin) {
-  if(pin < 0 || pin > 48) return false;
-  if(!GPIO_IS_VALID_OUTPUT_GPIO(pin)) return false;
-#if CONFIG_IDF_TARGET_ESP32
-  if(pin >= 6 && pin <= 11) return false;
-  if(psramFound() && (pin == 16 || pin == 17)) return false;
-#endif
-  return true;
-}
+bool isUsableOutputPin(int pin);
 // Pendant du precedent pour une broche qu'on ne fait que LIRE. Sur ESP32 classique, 34 a 39 sont
 // input-only : GPIO_IS_VALID_OUTPUT_GPIO les refuse alors qu'elles sont parfaitement valides en
 // entree, et c'est exactement ce qui rendait inconfigurables les RX de cinq cartes predefinies
 // (WT32-ETH01, Olimex, LilyGO, wESP, ESP-PoE-32). Les memes exclusions destructrices restent :
 // flash SPI interne et PSRAM ne sont pas un choix d'utilisateur, y toucher plante l'appareil.
-[[maybe_unused]] static bool isUsableInputPin(int pin) {
-  if(pin < 0 || pin > 48) return false;
-  if(!GPIO_IS_VALID_GPIO(pin)) return false;
-#if CONFIG_IDF_TARGET_ESP32
-  if(pin >= 6 && pin <= 11) return false;
-  if(psramFound() && (pin == 16 || pin == 17)) return false;
-#endif
-  return true;
-}
+bool isUsableInputPin(int pin);
 /*
 namespace util { 
   // Createa a custom to_string function.  C++ can be annoying

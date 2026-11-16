@@ -133,3 +133,42 @@ int Timestamp::tzOffset() {
   time(&now);
   return Timestamp::calcTZOffset(&now);
 }
+
+// Définies ici et non en static dans Utils.h : chaque unité de compilation en recevait sa copie.
+String jsonEscape(const char *s) {
+  String out;
+  if(!s) return out;
+  for(const char *p = s; *p; p++) {
+    switch(*p) {
+      case '"':  out += "\\\""; break;
+      case '\\': out += "\\\\"; break;
+      case '\n': out += "\\n"; break;
+      case '\r': out += "\\r"; break;
+      case '\t': out += "\\t"; break;
+      default:
+        if((uint8_t)*p < 0x20) { char b[8]; snprintf(b, sizeof(b), "\\u%04x", *p); out += b; }
+        else out += *p;
+    }
+  }
+  return out;
+}
+
+bool isUsableOutputPin(int pin) {
+  if(pin < 0 || pin > 48) return false;
+  if(!GPIO_IS_VALID_OUTPUT_GPIO(pin)) return false;
+#if CONFIG_IDF_TARGET_ESP32
+  if(pin >= 6 && pin <= 11) return false;
+  if(psramFound() && (pin == 16 || pin == 17)) return false;
+#endif
+  return true;
+}
+
+bool isUsableInputPin(int pin) {
+  if(pin < 0 || pin > 48) return false;
+  if(!GPIO_IS_VALID_GPIO(pin)) return false;
+#if CONFIG_IDF_TARGET_ESP32
+  if(pin >= 6 && pin <= 11) return false;
+  if(psramFound() && (pin == 16 || pin == 17)) return false;
+#endif
+  return true;
+}

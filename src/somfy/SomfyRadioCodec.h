@@ -41,7 +41,7 @@ enum class somfy_commands : byte {
     Favorite = 0xC1,
     Stop = 0xF1
 };
-String translateSomfyCommand(const somfy_commands cmd);
+const char *translateSomfyCommand(const somfy_commands cmd);
 somfy_commands translateSomfyCommand(const String& string);
 
 #define MAX_TIMINGS 300

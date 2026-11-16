@@ -150,9 +150,9 @@ namespace WebIcons {
   }
 
   void registerRoutes(AsyncWebServer &server) {
-    server.on("/icons", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleIcons(request); });
-    server.on("/deleteIcons", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleDeleteIcons(request); });
-    server.on("/uploadIcons", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleUploadIcons(request); },
+    server.on("/icons", AsyncHttp::GET, handleIcons);
+    server.on("/deleteIcons", AsyncHttp::POST, handleDeleteIcons);
+    server.on("/uploadIcons", AsyncHttp::POST, handleUploadIcons,
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUploadIconsBody(request, filename, index, data, len, final); });
   }
 }

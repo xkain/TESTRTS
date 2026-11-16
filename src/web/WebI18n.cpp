@@ -466,17 +466,17 @@ namespace WebI18n {
   }
 
   void registerRoutes(AsyncWebServer &server) {
-    server.on("/lang", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleLang(request); });
-    server.on("/langDefault", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleLangDefault(request); });
-    server.on("/setLang", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleSetLang(request); });
-    server.on("/setPendingLang", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleSetPendingLang(request); });
-    server.on("/setOnboardingDone", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleSetOnboardingDone(request); });
-    server.on("/getInstalledLangs", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleGetInstalledLangs(request); });
-    server.on("/getAvailableLangs", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleGetAvailableLangs(request); });
-    server.on("/deleteLang", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleDeleteLang(request); });
+    server.on("/lang", AsyncHttp::GET, handleLang);
+    server.on("/langDefault", AsyncHttp::GET, handleLangDefault);
+    server.on("/setLang", AsyncHttp::GET, handleSetLang);
+    server.on("/setPendingLang", AsyncHttp::POST, handleSetPendingLang);
+    server.on("/setOnboardingDone", AsyncHttp::POST, handleSetOnboardingDone);
+    server.on("/getInstalledLangs", AsyncHttp::GET, handleGetInstalledLangs);
+    server.on("/getAvailableLangs", AsyncHttp::GET, handleGetAvailableLangs);
+    server.on("/deleteLang", AsyncHttp::POST, handleDeleteLang);
     // Callback d'upload enveloppé dans une lambda : sa signature ne correspond pas exactement au
     // std::function attendu par on() sans cette conversion explicite (idem WebSystem.cpp).
-    server.on("/uploadLang", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleUploadLang(request); },
+    server.on("/uploadLang", AsyncHttp::POST, handleUploadLang,
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUploadLangBody(request, filename, index, data, len, final); });
   }
 }

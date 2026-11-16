@@ -446,7 +446,7 @@ void Transceiver::emitFrame(somfy_frame_t *frame, somfy_rx_t *rx) {
     json->addElem("encKey", frame->encKey);
     json->addElem("address", (uint32_t)frame->remoteAddress);
     json->addElem("rcode", (uint32_t)frame->rollingCode);
-    json->addElem("command", translateSomfyCommand(frame->cmd).c_str());
+    json->addElem("command", translateSomfyCommand(frame->cmd));
     json->addElem("rssi", (int32_t)frame->rssi);
     json->addElem("bits", rx->bit_length);
     json->addElem("proto", static_cast<uint8_t>(frame->proto));
@@ -472,7 +472,7 @@ void Transceiver::emitFrame(somfy_frame_t *frame, somfy_rx_t *rx) {
     evt.appendMessage(buf);
     snprintf(buf, sizeof(buf), "\"rcode\":%d,", frame->rollingCode);
     evt.appendMessage(buf);
-    snprintf(buf, sizeof(buf), "\"command\":\"%s\",", translateSomfyCommand(frame->cmd).c_str());
+    snprintf(buf, sizeof(buf), "\"command\":\"%s\",", translateSomfyCommand(frame->cmd));
     evt.appendMessage(buf);
     snprintf(buf, sizeof(buf), "\"rssi\":%d,", frame->rssi);
     evt.appendMessage(buf);

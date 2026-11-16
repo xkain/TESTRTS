@@ -1013,17 +1013,17 @@ namespace WebSystem {
       SSDP.schema(*stream);
       request->send(stream);
     });
-    server.on("/controller", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleController(request); });
+    server.on("/controller", AsyncHttp::ANY, handleController);
     server.on("/backup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleBackup(request, true); });
     // Les callbacks d'upload sont enveloppés dans une lambda plutôt que passés tels quels : leur
     // signature (AsyncWebServerRequest*, const String&, size_t, uint8_t*, size_t, bool) ne
     // correspond pas exactement au std::function attendu par on() sans cette conversion explicite.
-    server.on("/restore", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleRestore(request); },
+    server.on("/restore", AsyncHttp::POST, handleRestore,
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleRestoreBody(request, filename, index, data, len, final); });
-    server.on("/updateFirmware", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleUpdateFirmware(request); },
+    server.on("/updateFirmware", AsyncHttp::POST, handleUpdateFirmware,
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateFirmwareBody(request, filename, index, data, len, final); });
-    server.on("/updateShadeConfig", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleUpdateShadeConfig(request); },
+    server.on("/updateShadeConfig", AsyncHttp::POST, handleUpdateShadeConfig,
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateShadeConfigBody(request, filename, index, data, len, final); });
-    server.on("/reboot", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleReboot(request); });
+    server.on("/reboot", AsyncHttp::ANY, handleReboot);
   }
 }

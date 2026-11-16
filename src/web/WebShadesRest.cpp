@@ -1294,35 +1294,35 @@ namespace WebShadesRest {
   }
 
   void registerRoutes(AsyncWebServer &server) {
-    server.on("/rooms", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetRooms(request); });
-    server.on("/shades", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetShades(request); });
-    server.on("/groups", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetGroups(request); });
-    server.on("/schedules", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetSchedules(request); });
-    server.on("/room", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRoom(request); }, nullptr, asyncBodyHandler);
-    server.on("/shade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleShade(request); }, nullptr, asyncBodyHandler);
-    server.on("/group", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGroup(request); }, nullptr, asyncBodyHandler);
-    server.on("/schedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSchedule(request); });
-    server.on("/getNextRoom", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetNextRoom(request); });
-    server.on("/getNextShade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetNextShade(request); });
-    server.on("/getNextGroup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetNextGroup(request); });
-    server.on("/getNextSchedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetNextSchedule(request); });
-    server.on("/addRoom", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleAddRoom(request); }, nullptr, asyncBodyHandler);
-    server.on("/addShade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleAddShade(request); }, nullptr, asyncBodyHandler);
-    server.on("/addGroup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleAddGroup(request); }, nullptr, asyncBodyHandler);
-    server.on("/addSchedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleAddSchedule(request); }, nullptr, asyncBodyHandler);
-    server.on("/groupOptions", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGroupOptions(request); });
-    server.on("/saveRoom", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveRoom(request); }, nullptr, asyncBodyHandler);
-    server.on("/saveShade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveShade(request); }, nullptr, asyncBodyHandler);
-    server.on("/saveGroup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveGroup(request); }, nullptr, asyncBodyHandler);
-    server.on("/saveSchedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveSchedule(request); }, nullptr, asyncBodyHandler);
-    server.on("/linkToGroup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLinkToGroup(request); }, nullptr, asyncBodyHandler);
-    server.on("/unlinkFromGroup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnlinkFromGroup(request); }, nullptr, asyncBodyHandler);
-    server.on("/deleteRoom", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleDeleteRoom(request); }, nullptr, asyncBodyHandler);
-    server.on("/deleteShade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleDeleteShade(request); }, nullptr, asyncBodyHandler);
-    server.on("/deleteGroup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleDeleteGroup(request); }, nullptr, asyncBodyHandler);
-    server.on("/deleteSchedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleDeleteSchedule(request); }, nullptr, asyncBodyHandler);
-    server.on("/roomSortOrder", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRoomSortOrder(request); }, nullptr, asyncBodyHandler);
-    server.on("/shadeSortOrder", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleShadeSortOrder(request); }, nullptr, asyncBodyHandler);
-    server.on("/groupSortOrder", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGroupSortOrder(request); }, nullptr, asyncBodyHandler);
+    server.on("/rooms", AsyncHttp::ANY, handleGetRooms);
+    server.on("/shades", AsyncHttp::ANY, handleGetShades);
+    server.on("/groups", AsyncHttp::ANY, handleGetGroups);
+    server.on("/schedules", AsyncHttp::ANY, handleGetSchedules);
+    server.on("/room", AsyncHttp::ANY, handleRoom, nullptr, asyncBodyHandler);
+    server.on("/shade", AsyncHttp::ANY, handleShade, nullptr, asyncBodyHandler);
+    server.on("/group", AsyncHttp::ANY, handleGroup, nullptr, asyncBodyHandler);
+    server.on("/schedule", AsyncHttp::ANY, handleSchedule);
+    server.on("/getNextRoom", AsyncHttp::ANY, handleGetNextRoom);
+    server.on("/getNextShade", AsyncHttp::ANY, handleGetNextShade);
+    server.on("/getNextGroup", AsyncHttp::ANY, handleGetNextGroup);
+    server.on("/getNextSchedule", AsyncHttp::ANY, handleGetNextSchedule);
+    server.on("/addRoom", AsyncHttp::ANY, handleAddRoom, nullptr, asyncBodyHandler);
+    server.on("/addShade", AsyncHttp::ANY, handleAddShade, nullptr, asyncBodyHandler);
+    server.on("/addGroup", AsyncHttp::ANY, handleAddGroup, nullptr, asyncBodyHandler);
+    server.on("/addSchedule", AsyncHttp::ANY, handleAddSchedule, nullptr, asyncBodyHandler);
+    server.on("/groupOptions", AsyncHttp::ANY, handleGroupOptions);
+    server.on("/saveRoom", AsyncHttp::ANY, handleSaveRoom, nullptr, asyncBodyHandler);
+    server.on("/saveShade", AsyncHttp::ANY, handleSaveShade, nullptr, asyncBodyHandler);
+    server.on("/saveGroup", AsyncHttp::ANY, handleSaveGroup, nullptr, asyncBodyHandler);
+    server.on("/saveSchedule", AsyncHttp::ANY, handleSaveSchedule, nullptr, asyncBodyHandler);
+    server.on("/linkToGroup", AsyncHttp::ANY, handleLinkToGroup, nullptr, asyncBodyHandler);
+    server.on("/unlinkFromGroup", AsyncHttp::ANY, handleUnlinkFromGroup, nullptr, asyncBodyHandler);
+    server.on("/deleteRoom", AsyncHttp::ANY, handleDeleteRoom, nullptr, asyncBodyHandler);
+    server.on("/deleteShade", AsyncHttp::ANY, handleDeleteShade, nullptr, asyncBodyHandler);
+    server.on("/deleteGroup", AsyncHttp::ANY, handleDeleteGroup, nullptr, asyncBodyHandler);
+    server.on("/deleteSchedule", AsyncHttp::ANY, handleDeleteSchedule, nullptr, asyncBodyHandler);
+    server.on("/roomSortOrder", AsyncHttp::ANY, handleRoomSortOrder, nullptr, asyncBodyHandler);
+    server.on("/shadeSortOrder", AsyncHttp::ANY, handleShadeSortOrder, nullptr, asyncBodyHandler);
+    server.on("/groupSortOrder", AsyncHttp::ANY, handleGroupSortOrder, nullptr, asyncBodyHandler);
   }
 }
