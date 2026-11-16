@@ -1314,6 +1314,7 @@
 "INDEX_PAGE_GENERAL": "PAGE GENERAL",
     "GENERAL_TITLE": "Configuration générale",
     "GENERAL_DESC": "Langue, apparence et sécurité de votre appareil",
+    "GENERAL_THEME": "Thème",
     "GENERAL_TITLE_REGION": "Langue & région",
     "GENERAL_TITLE_LOOK": "Apparence",
     "GENERAL_TITLE_SECURITY": "Sécurité",
@@ -1615,6 +1616,7 @@
     "RESTORE_CONFIRM_SUB": "Une fois commencée, la restauration ne pourra plus être interrompue avant son terme.",
 
 "INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
+    "DETAILS": "Détails",
     "INTEGRATED": "Intégré",
     "RX_APPLY_NOW": "Les changements s'appliquent tout de suite.",
     "INSTALLED": "Installée",

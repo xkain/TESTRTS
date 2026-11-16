@@ -1314,6 +1314,7 @@
 "INDEX_PAGE_GENERAL": "PAGE GENERAL",
     "GENERAL_TITLE": "Allgemeine Einstellungen",
     "GENERAL_DESC": "Sprache, Erscheinungsbild und Sicherheit Ihres Geräts",
+    "GENERAL_THEME": "Design",
     "GENERAL_TITLE_REGION": "Sprache & Region",
     "GENERAL_TITLE_LOOK": "Darstellung",
     "GENERAL_TITLE_SECURITY": "Sicherheit",
@@ -1615,6 +1616,7 @@
     "RESTORE_CONFIRM_SUB": "Einmal gestartet, kann die Wiederherstellung nicht mehr unterbrochen werden, bevor sie abgeschlossen ist.",
 
 "INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
+    "DETAILS": "Details",
     "INTEGRATED": "Integriert",
     "RX_APPLY_NOW": "Änderungen gelten sofort.",
     "INSTALLED": "Installiert",

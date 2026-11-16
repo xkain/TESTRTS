@@ -1330,7 +1330,7 @@ function bindMobileUptimeTooltip() {
 
 function bindNavigation() {
     mobileNav.bind();
-    document.querySelectorAll('.gen-hero').forEach(h => h.insertAdjacentHTML('beforeend', `<button type="button" class="gen-hero-help" onclick="openPageHelp();" tr="HELP_THIS_PAGE" title=""><svg><use href="#svg-navHelp"></use></svg></button>`));
+    document.querySelectorAll('.gen-hero, .hero').forEach(h => h.insertAdjacentHTML('beforeend', `<button type="button" class="gen-hero-help" onclick="openPageHelp();" tr="HELP_THIS_PAGE" title=""><svg><use href="#svg-navHelp"></use></svg></button>`));
     uiAdvanced.apply();
     document.querySelectorAll('.nav-item, .sub-nav-item, .settings-row[data-grpid], .set-tile[data-grpid]').forEach(item => {
         item.addEventListener('click', (e) => {

@@ -10,6 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="ESPSomfy-RTS App">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#141619">
     <script>
     (function(){
       const s=localStorage, t=s.getItem('themeMode'), l=s.getItem('selectedLang');
@@ -278,21 +279,26 @@
                     <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL"></span><span data-grpid="divFirmware" tr="SUBTAB_DEVICE"></span></div>
                     <div id="divSystemOptions" class="subtab-content">
                         <div class="gen-layout">
-                            <section class="gen-hero">
-                                <svg class="gen-hero-icon"><use href="#svg-tabSystem"></use></svg>
-                                <div class="gen-hero-text">
-                                    <h2 class="gen-hero-title" tr="GENERAL_TITLE"></h2>
-                                    <div class="gen-hero-host">
-                                        <span id="genHeroHost" class="gen-hero-name"></span>
-                                        <span id="genHeroUrl" class="gen-hero-url"></span>
-                                    </div>
-                                    <p class="gen-hero-desc" tr="GENERAL_DESC"></p>
+                            <section class="hero">
+                                <span class="hero-media"><svg><use href="#svg-tabSystem"></use></svg></span>
+                                <div class="hero-head">
+                                    <span class="hero-eyebrow" tr="GENERAL_TITLE"></span>
+                                    <h2 id="genHeroHost" class="hero-title"></h2>
+                                    <span id="genHeroUrl" class="hero-sub"></span>
+                                    <p class="hero-desc" tr="GENERAL_DESC"></p>
                                 </div>
-                                <div class="gen-hero-chips">
-                                    <span class="gen-chip"><svg><use href="#svg-language"></use></svg><span id="genChipLang"></span></span>
-                                    <span class="gen-chip"><svg><use href="#svg-timezone"></use></svg><span id="genChipTz"></span></span>
-                                    <span class="gen-chip"><svg><use href="#svg-colorMode"></use></svg><span id="genChipTheme"></span></span>
-                                    <span class="gen-chip"><svg><use href="#svg-lock"></use></svg><span id="genChipSec"></span></span>
+                                <div class="hero-data">
+                                    <div class="hero-fold">
+                                        <button type="button" class="hero-fold-btn" onclick="this.parentNode.classList.toggle('is-open');"><b tr="DETAILS"></b><span id="genHeroSum"></span><svg><use href="#svg-arrowRight"></use></svg></button>
+                                        <div class="hero-fold-body">
+                                            <dl class="hero-facts">
+                                                <div><dt tr="GENERAL_TILE_LANG"></dt><dd id="genChipLang"></dd></div>
+                                                <div><dt tr="GENERAL_TIMEZONE"></dt><dd id="genChipTz"></dd></div>
+                                                <div><dt tr="GENERAL_THEME"></dt><dd id="genChipTheme"></dd></div>
+                                                <div><dt tr="GENERAL_TITLE_SECURITY"></dt><dd id="genChipSec"></dd></div>
+                                            </dl>
+                                        </div>
+                                    </div>
                                 </div>
                             </section>
 

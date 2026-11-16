@@ -151,6 +151,7 @@ class General {
         const theme = document.querySelector('input[name="genTheme"]:checked');
         set('genChipTheme', theme ? theme.nextElementSibling.textContent : '');
         set('genChipSec', this._securityLabel(this._currentSecurityType || 0));
+        set('genHeroSum', ['genChipLang', 'genChipTz', 'genChipTheme', 'genChipSec'].map(id => get(id)?.textContent).filter(Boolean).join(' · '));
     }
     readAccent() {
         const v = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim();
