@@ -1124,7 +1124,7 @@ class ShadeSetup {
         }
         if (T.sub === 'mup' || T.sub === 'mdown') return this.bodyMid(T, cells);
         const sub = T.sub, up = this.dirOf(sub) === 'up', dz = sub.startsWith('dz'), run = !!s.timer, k = M[sub];
-        const interLbl = up ? tr('CAL_MARK_MOVING') : this.t('SETUP_MARK_IS', { state: W.closed });
+        const interLbl = tr(up ? 'CAL_MARK_MOVING' : 'CAL_MARK_TOUCHES');
         const finalLbl = (dz && !up) ? tr('CAL_MARK_MOTOR_STOPPED') : this.t('SETUP_MARK_IS', { state: up ? W.open : W.closed });
         const startPos = up ? W.closed : W.open;
         const instr = !dz ? this.t('SETUP_CAL_SIMPLE', { pos: startPos, btn: finalLbl })

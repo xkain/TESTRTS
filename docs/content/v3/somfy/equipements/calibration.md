@@ -28,22 +28,25 @@ bouton **Je connais déjà les temps** permet de les saisir directement : de **0
 Une fois fait, la ligne affiche les temps mesurés ; **Mesurer à nouveau** ou **Modifier les
 temps** les reprennent.
 
-### Le temps mort
+### Le tassement des lames
 
-Après la mesure, l'assistant demande : **« Avez-vous remarqué un temps mort ? »**
+Après la mesure, l'assistant demande : **« Les lames se tassent-elles en fin de fermeture ? »**
 
-Un temps mort est un moment où le **moteur tourne déjà** (on l'entend) alors que l'équipement
-**ne bouge pas encore**, au début de la montée, ou **ne bouge plus**, à la fin de la descente.
-**Beaucoup de moteurs n'en ont pas.** Le compenser rend la position affichée plus juste au début
-de chaque mouvement.
+Sur beaucoup d'équipements, à la fin de la descente, le moteur continue quelques secondes une
+fois le bas posé : **les lames se tassent** et les jours entre elles se ferment. Au début de la
+montée, c'est l'inverse : **les lames se détassent** d'abord, puis le bas décolle. Pendant ce
+temps, la position affichée ne bouge pas. Le mesurer permet d'arrêter l'équipement à la bonne
+hauteur quand vous lui demandez une position. Si les lames restent espacées une fois en bas, il
+n'y a rien à mesurer.
 
-- **Non, terminer** : aucun temps mort n'est enregistré.
-- **Oui, le mesurer** : on refait chaque sens, **cette fois en deux temps**.
-    - Pour la **montée** : écoutez le moteur et regardez l'équipement ; cliquez une première fois
-      **quand il commence réellement à bouger**, puis une seconde fois quand il arrive en butée.
-    - Pour la **descente** : cliquez une première fois **quand l'équipement arrive en butée**,
-      puis une seconde fois **quand le moteur s'arrête** à son tour.
-    - **Pas de temps mort dans ce sens** si vous n'en avez pas remarqué.
+- **Non, terminer** : aucun tassement n'est enregistré.
+- **Oui, le mesurer** : on refait chaque sens, **en deux temps**.
+    - Pour la **montée** : cliquez une première fois **quand les lames ont fini de se détasser et
+      que le bas décolle**, puis une seconde fois quand il arrive en butée.
+    - Pour la **descente** : cliquez une première fois **quand le bas se pose et que les lames
+      commencent à se tasser**, puis une seconde fois **quand le moteur s'arrête**.
+    - **Pas de tassement dans ce sens** si le moteur s'arrête en même temps que l'équipement se
+      pose.
 
 ## Orientation des lames { #orientation-des-lames }
 

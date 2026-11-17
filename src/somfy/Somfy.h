@@ -286,9 +286,9 @@ class SomfyShade : public SomfyRemote {
     uint32_t tiltTimeUp = 7000;
     uint32_t tiltTimeDown = 7000;
     // Zone morte de translation (issue #40) : sur beaucoup d'installations, une fin de course basse
-    // "physique" fait que le moteur tourne encore quelques secondes APRÈS que l'équipement a cessé de
-    // bouger (plaquage des lames en compression), et doit réenrouler ce même jeu AVANT de le
-    // déplacer à la remontée. C'est une seule zone morte mécanique, au bas de la course, mais elle
+    // "physique" fait que le moteur tourne encore quelques secondes APRÈS que le bas du tablier s'est
+    // posé : les lames se tassent, la position ne change plus. À la remontée, elles se détassent
+    // AVANT que le bas ne décolle. C'est une seule zone morte mécanique, au bas de la course, mais elle
     // est traversée dans les deux sens.
     //   slackDown : fin de la descente, position déjà à 100 % pendant que le moteur finit.
     //   slackUp   : début de la montée, position figée à 100 % tant que le jeu n'est pas repris --
