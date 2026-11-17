@@ -2652,7 +2652,7 @@ button.fw-act:hover .fw-act-chev {
 .fw-contributors {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 4px 10px;
 }
 @media (max-width: 767px) {

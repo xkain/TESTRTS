@@ -1496,8 +1496,9 @@
     "FW_TITLE_CREDITS": "Project Credits",
     "FW_CREDITS_ORIGIN": "Original Project Author",
     "FW_CREDITS_FORK": "Author of This Version",
-    "FW_CREDITS_CONTRIBUTORS": "Project Contributors",
     "FW_CREDITS_LICENSE_DESC": "Provided without any warranty. You may redistribute and modify it under the terms of the AGPL-3.0.",
+    "FW_CREDITS_CONTRIBUTORS": "Project Contributors",
+    "FW_THANKS_DESC": "Thanks to everyone who contributed code, translations, testing or bug reports.",
 
 "INDEX_OVERLAY_FIRMWARE_MULTI": "OVERLAY FIRMWARE MULTI",
     "FIRMWARE_MT_INSTALLED": "Installed version",
