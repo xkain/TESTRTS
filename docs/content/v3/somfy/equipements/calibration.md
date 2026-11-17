@@ -30,7 +30,8 @@ temps** les reprennent.
 
 ### Le tassement des lames
 
-Après la mesure, l'assistant demande : **« Les lames se tassent-elles en fin de fermeture ? »**
+Pour un **volet roulant**, après la mesure, l'assistant demande : **« Les lames se tassent-elles en
+fin de fermeture ? »**
 
 Sur beaucoup d'équipements, à la fin de la descente, le moteur continue quelques secondes une
 fois le bas posé : **les lames se tassent** et les jours entre elles se ferment. Au début de la

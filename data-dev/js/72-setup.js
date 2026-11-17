@@ -13,6 +13,8 @@ const SETUP_INIT = { pair: 'pret', unpair: 'pret', remote: 'listen', dir: 'test'
 const SETUP_MIN_MS = 500, SETUP_MAX_MS = 180000, SETUP_LISTEN_MS = 30000;
 // Tabliers enroulés (store, store banne, volet roulant) : seuls à proposer la mi-course.
 const SETUP_CURVE_TYPES = [0, 3, 4];
+// Tassement des lames en fin de course basse : volet roulant seulement.
+const SETUP_SLACK_TYPES = [4];
 // Temps de réaction retiré du clic « Il s'est arrêté » de l'apprentissage My.
 const SETUP_REACT_MS = 300;
 
@@ -1101,8 +1103,8 @@ class ShadeSetup {
                 <span class="gen-seg gen-seg-bool"><input type="checkbox" aria-label="${escAttr(tr(lbl))}"${s[key] ? ' checked' : ''} onchange="shadeSetup.manToggle('${key}', this.checked)"><span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span></div>`;
             return `
             <div class="setup-fields">${field('setupUpT', this.t('SETUP_TIME_OF', { what: W.upN }), v('up', 'final'))}${field('setupDownT', this.t('SETUP_TIME_OF', { what: W.downN }), v('down', 'final'))}</div>
-            ${opt('dzManual', 'SETUP_DEADTIME', 'DEVICE_DEADZONE_DESC')}
-            ${s.dzManual ? `<div class="setup-fields">${field('setupDzUp', tr('DEVICE_DEADZONE_UP'), v('up', 'slack'))}${field('setupDzDown', tr('DEVICE_DEADZONE_DOWN'), v('down', 'slack'))}</div>` : ''}
+            ${this.slackOk() ? `${opt('dzManual', 'SETUP_DEADTIME', 'DEVICE_DEADZONE_DESC')}
+            ${s.dzManual ? `<div class="setup-fields">${field('setupDzUp', tr('DEVICE_DEADZONE_UP'), v('up', 'slack'))}${field('setupDzDown', tr('DEVICE_DEADZONE_DOWN'), v('down', 'slack'))}</div>` : ''}` : ''}
             ${this.curveOk() ? `${opt('midManual', 'DEVICE_MIDCOURSE', 'DEVICE_MIDCOURSE_DESC')}
             ${s.midManual ? `<div class="setup-fields">${field('setupMidUp', tr('DEVICE_MIDCOURSE_UP'), v('up', 'mid'))}${field('setupMidDown', tr('DEVICE_MIDCOURSE_DOWN'), v('down', 'mid'))}</div>` : ''}` : ''}
             <div class="setup-err" id="setupManErr"></div>
@@ -1192,6 +1194,7 @@ class ShadeSetup {
         const sub = this.s.tasks[this.s.cur].sub;
         if (sub === 'dzdown') return this.afterDz();
         if (sub === 'mdown') return this.finishCal();
+        if (sub === 'down' && !this.slackOk()) return this.afterDz();
         if (sub === 'tdown') return this.finishTilt();
         this.go({ up: 'down', down: 'dzq', dzup: 'dzdown', mup: 'mdown', tup: 'tdown' }[sub]);
     }
@@ -1204,6 +1207,8 @@ class ShadeSetup {
     }
     // ---------- Réglage fin : passage à mi-course (vitesse variable d'un tablier enroulé) ----------
     curveOk() { return SETUP_CURVE_TYPES.includes(this.s.shade.shadeType); }
+    // Un tassement déjà enregistré reste visible sur tout type : on doit pouvoir le retirer.
+    slackOk() { const sh = this.s.shade; return SETUP_SLACK_TYPES.includes(sh.shadeType) || !!(sh.slackUp || sh.slackDown); }
     afterDz() { if (this.curveOk()) this.go('midq'); else this.finishCal(); }
     // Fenêtre où la mi-course a un sens, en ms depuis le départ du moteur : la course utile.
     midBounds(sub) {
