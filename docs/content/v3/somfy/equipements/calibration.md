@@ -24,6 +24,9 @@ le déploiement et le repli, selon le type d'équipement).
 
 **Annuler la mesure** interrompt un chrono en cours. Si vous **connaissez déjà les temps**, le
 bouton **Je connais déjà les temps** permet de les saisir directement : de **0,5 à 180 secondes**.
+Sous les deux temps, deux réglages fins se règlent par **Oui** / **Non** : **Tassement des lames**
+(volet roulant seulement) et **Vitesse variable** (store enrouleur, store banne et volet roulant).
+Sur **Oui**, leurs champs apparaissent ; ils sont décrits ci-dessous.
 
 Une fois fait, la ligne affiche les temps mesurés ; **Mesurer à nouveau** ou **Modifier les
 temps** les reprennent.
@@ -48,6 +51,39 @@ n'y a rien à mesurer.
       commencent à se tasser**, puis une seconde fois **quand le moteur s'arrête**.
     - **Pas de tassement dans ce sens** si le moteur s'arrête en même temps que l'équipement se
       pose.
+
+### La vitesse variable { #vitesse-variable }
+
+Un tablier qui s'enroule sur un axe n'avance pas à vitesse constante : le moteur tourne à vitesse
+fixe, mais **plus le rouleau est gros, plus l'équipement va vite**. Il descend donc vite au départ
+et ralentit en approchant du bas ; à la montée, il démarre lentement et accélère. Avec une vitesse
+supposée constante, une consigne à 50 % l'arrête trop bas.
+
+Pour un **store enrouleur**, un **store banne** ou un **volet roulant**, l'assistant pose une
+dernière question, **facultative** : **« Réglage fin : sa vitesse change-t-elle en cours de
+route ? »**
+
+- **Non, terminer** : la vitesse reste supposée constante.
+- **Oui, la mesurer** : on chronomètre le **passage à mi-course** dans chaque sens.
+    - Partez d'une butée (**fermé** pour la montée, **ouvert** pour la descente), cliquez sur
+      **Démarrer**, puis sur **À mi-course** quand l'équipement a parcouru **la moitié de sa
+      course**. Il continue ensuite jusqu'en butée.
+    - Ajustez le repère de ± 0,1 s si besoin, puis passez à l'autre sens.
+
+Une seule mesure par sens suffit : ESPSomfy-RTS en déduit la courbe complète, et la position
+affichée suit le vrai rythme de l'équipement sur toute la course.
+
+Ce réglage se reprend **à tout moment** : la ligne **Temps de course** de la fiche affiche
+« vitesse variable » quand il est réglé, et le lien **Réglage fin : vitesse variable** rouvre la
+question avec trois choix : **Mesurer à nouveau**, **Valider**, ou **Revenir à une vitesse
+constante**. En saisie manuelle, ce sont les champs **Mi-course montée** et **Mi-course
+descente**, en secondes depuis le départ du moteur en butée.
+
+!!! note "Mi-course et tassement"
+
+    Sur un volet roulant qui a un tassement, le chrono de la montée part toujours du démarrage du
+    moteur : le temps de détassement est compris dans la mesure, ESPSomfy-RTS le retire lui-même.
+    Le passage à mi-course doit tomber **après** ce temps et **avant** l'arrivée en butée.
 
 ## Orientation des lames { #orientation-des-lames }
 

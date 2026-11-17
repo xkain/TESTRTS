@@ -23,6 +23,7 @@ Des cases à cocher choisissent précisément quoi réinstaller depuis le fichie
 |---|---|
 | Équipements, groupes, pièces et plannings | Tous vos équipements déclarés, leur organisation en groupes et pièces, et vos programmations horaires |
 | Répéteurs | La liste des répéteurs radio enregistrés |
+| Télécommandes écoutées | Les télécommandes et capteurs que l'appareil écoute, avec leur nom |
 | Paramètres système | Nom d'hôte, NTP, préférences d'affichage, témoin LED, sécurité… |
 | Paramètres réseau | Configuration Wi-Fi/Ethernet |
 | Paramètres MQTT | Connexion au courtier MQTT |
@@ -43,16 +44,21 @@ Au moins une case doit être cochée pour que le bouton **Téléverser** accepte
     les plannings actuellement sur l'appareil, puis ne les recharge que si le fichier en
     contient effectivement. Une sauvegarde faite avant que vos plannings n'existent (ou un
     fichier tronqué) les supprime donc, même si vous ne cherchiez qu'à récupérer vos
-    équipements — voir [Anatomie du fichier de sauvegarde](anatomie-sauvegarde.md#bloc-plannings)
-    pour le détail technique.
+    équipements — voir [Anatomie du fichier de sauvegarde](anatomie-sauvegarde.md#règles-de-lecture)
+    pour le détail technique. Il en va de même des répéteurs et des télécommandes écoutées
+    quand leur case est cochée.
 
 ## Fichier accepté
 
 Un fichier `.backup` de moins de 32 Ko, au-delà, il est automatiquement refusé comme
-invraisemblable pour un fichier de ce type. Si le fichier sélectionné provient d'une version
-**antérieure à la v2.5.0**, une fenêtre d'avertissement propose de continuer ou d'annuler :
-les réglages de broches radio qu'il contient ne seront alors pas restaurés correctement, à
-vérifier manuellement dans [Configurer la Radio](../radio/index.md) après coup.
+invraisemblable pour un fichier de ce type. Les deux formats sont acceptés : le format
+**NDJSON** des sauvegardes v3, et l'**ancien format** des sauvegardes v2.x.x, reconnu
+automatiquement — voir [Anatomie du fichier de sauvegarde](anatomie-sauvegarde.md).
+
+Si le fichier provient d'une version **antérieure à la v2.5.0**, une fenêtre d'avertissement
+propose de continuer ou d'annuler : les réglages de broches radio qu'il contient ne seront alors
+pas restaurés correctement, à vérifier manuellement dans [Configurer la Radio](../radio/index.md)
+après coup.
 
 ## Déroulement
 

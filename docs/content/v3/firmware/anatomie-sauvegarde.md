@@ -2,14 +2,154 @@
 
 !!! note "Note"
 
-    Cette page documente le format binaire du fichier `.backup` produit par **Sauvegarder**
-    (voir [Maintenance](index.md#maintenance)) — reprise et mise à jour, pour la v3.0.0, de la
-    page [Backup File Anatomy](https://github.com/rstrouse/ESPSomfy-RTS/wiki/Backup-File-Anatomy)
-    du projet d'origine (rstrouse). Elle s'adresse à qui veut inspecter, éditer à la main ou
-    scripter un fichier de sauvegarde — ce n'est pas un pré-requis pour utiliser
+    Cette page documente le fichier `.backup` produit par **Sauvegarder** (voir
+    [Maintenance](index.md#maintenance)). Elle s'adresse à qui veut inspecter, éditer à la main
+    ou scripter un fichier de sauvegarde — ce n'est pas un pré-requis pour utiliser
     [Restaurer le système](restaurer.md) au quotidien.
 
-## Versionnage
+Depuis la v3.0.0, la sauvegarde est écrite au format **NDJSON** : une ligne par élément (un
+équipement, un groupe, un planning…), chaque ligne étant un petit objet JSON complet. Le fichier
+se lit et se modifie avec n'importe quel éditeur de texte, et une ligne abîmée n'empêche pas de
+relire les autres.
+
+L'ancien format, positionnel, n'est plus écrit, mais il est **toujours relu** : une sauvegarde
+faite sur une v2.x.x se restaure telle quelle. Sa description est conservée plus bas, dans
+[Ancien format positionnel](#ancien-format-positionnel).
+
+!!! warning "Un fichier à ne jamais publier"
+
+    Le fichier ne contient **aucun mot de passe**, mais il contient, en clair, l'**adresse radio**
+    et le **code tournant** de chaque équipement et de chaque groupe. Ces deux valeurs suffisent à
+    fabriquer des commandes radio valides à la place de l'appareil, **sans passer par son code
+    PIN**. Ne collez jamais une sauvegarde telle quelle dans un forum ou une demande d'aide.
+
+## Le format NDJSON
+
+### Principe
+
+* **Une ligne = un objet JSON**, terminé par un retour à la ligne.
+* La clé **`rec`** dit ce que décrit la ligne : `meta`, `settings`, `shade`…
+* Les autres clés portent **les mêmes noms que l'API HTTP** de l'appareil (`upTime`,
+  `remoteAddress`…). Leur ordre dans la ligne n'a pas d'importance.
+* Les nombres sont des nombres, les textes des chaînes entre guillemets, les listes (télécommandes
+  liées, membres d'un groupe) des tableaux de la longueur qu'il faut.
+
+!!! note "Note"
+
+    Toutes les valeurs ci-dessous sont **fictives**. Un vrai fichier se reconnaît à sa première
+    ligne, qui commence toujours par `{"rec":"meta"`.
+
+```json
+{"rec":"meta","fmt":1,"fw":"v3.0.0","serverId":"A1B2C3","chip":"ESP32-D0WD-V3","profile":"GENERIC","created":"2026-11-17T21:14:45.492+0000"}
+{"rec":"settings","hostname":"ESPSomfyRTS","ntpServer":"pool.ntp.org","posixZone":"CET-1CEST,M3.5.0,M10.5.0/3","accentColor":"#2563eb","ssdpBroadcast":true,"checkForUpdate":true,"language":"fr","headerMobileDisplay":0,"reverseDashboardColumns":false,"defaultMobileTab":"groups","showRadioActivity":false,"themeMode":0,"showMovementIndicator":true,"ledPin":2,"ledActiveLow":false,"ledAddressable":false,"ledColorOrder":0,"ledColorActivity":"#ffffff","ledRfBlink":true,"iconPack":"","dashCompact":0,"geoLat":48.85,"geoLon":2.35}
+{"rec":"room","roomId":1,"name":"Salon","sortOrder":0}
+{"rec":"shade","shadeId":1,"paired":true,"shadeType":4,"remoteAddress":100101,"name":"Volet Salon","tiltType":0,"proto":0,"bitLength":56,"upTime":30000,"downTime":26300,"tiltTimeUp":7000,"tiltTimeDown":7000,"stepSize":100,"flags":0,"myPos":-1,"myTiltPos":-1,"currentPos":0,"currentTiltPos":0,"flipCommands":false,"flipPosition":false,"repeats":1,"sortOrder":0,"gpioUp":0,"gpioDown":0,"gpioMy":0,"gpioFlags":0,"roomId":1,"ledFeedback":true,"tiltFirstOnOpen":true,"tiltFirstOnClose":true,"slackUp":400,"slackDown":250,"upMidTime":17200,"downMidTime":11000,"outputMode":0,"pulseTime":200,"stateVocab":0,"setupSteps":7,"lastRollingCode":247,"linkedRemotes":[200301]}
+{"rec":"group","groupId":1,"groupType":0,"remoteAddress":100201,"name":"Rez-de-chaussée","proto":0,"bitLength":56,"repeats":1,"sortOrder":0,"flipCommands":false,"roomId":0,"ledFeedback":false,"lastRollingCode":18,"linkedShades":[1]}
+{"rec":"schedule","scheduleId":1,"name":"Fermeture soir","dayMask":127,"hour":21,"minute":30,"targetType":0,"targetId":1,"targetPos":100,"targetTilt":-1,"enabled":true,"retries":1,"positionMode":0,"timeRef":0,"sunOffset":0}
+```
+
+Dans cet exemple, l'équipement 1 est un volet roulant avec un
+[tassement des lames](../somfy/equipements/calibration.md#le-tassement-des-lames) de 0,4 s à la
+montée et 0,25 s à la descente, et une [vitesse variable](../somfy/equipements/calibration.md#vitesse-variable)
+réglée (`upMidTime`, `downMidTime`). Il est lié à une télécommande et membre du groupe 1, que le
+planning 1 ferme chaque soir à 21 h 30.
+
+### Ordre des lignes
+
+L'appareil écrit les lignes dans cet ordre, de haut en bas :
+
+| `rec` | Nombre | Contenu | Case de [restauration](restaurer.md) |
+| --- | --- | --- | --- |
+| `meta` | 1, toujours en première ligne | Identité du fichier | — |
+| `settings` | 1 | Paramètres système : nom d'hôte, NTP, affichage, témoin LED, position géographique | Paramètres système |
+| `net` | 1 | Wi-Fi/Ethernet, adressage IP | Paramètres réseau |
+| `mqtt` | 1 | Connexion au courtier | Paramètres MQTT |
+| `radio` | 1 | Module radio : broches, fréquences, puissance | Paramètres radio |
+| `room` | 0 à 30 | Pièces | Équipements, groupes, pièces et plannings |
+| `shade` | 0 à 30 | Équipements | Équipements, groupes, pièces et plannings |
+| `group` | 0 à 14 | Groupes | Équipements, groupes, pièces et plannings |
+| `repeater` | 0 à 7 | Répéteurs | Répéteurs |
+| `listener` | 0 à 14 | Télécommandes écoutées | Télécommandes écoutées |
+| `schedule` | 0 à 30 | Plannings | Équipements, groupes, pièces et plannings |
+
+### Ligne `meta`
+
+| Clé | Contenu |
+| --- | --- |
+| `fmt` | Version du **format de fichier**, `1` aujourd'hui. Elle ne change qu'en cas de rupture : ajouter ou retirer un champ n'en est pas une (voir les règles ci-dessous) |
+| `fw` | Version du firmware qui a écrit le fichier |
+| `serverId` | Identifiant de l'appareil d'origine. Sert à décider si la configuration Ethernet peut être restaurée |
+| `chip`, `profile` | Modèle de puce et profil matériel, pour le diagnostic |
+| `created` | Date et heure de la sauvegarde |
+
+`fw`, `chip`, `profile` et `created` ne sont jamais restaurés : ils répondent à « d'où vient ce
+fichier ? ».
+
+### Les autres lignes
+
+| `rec` | Clés |
+| --- | --- |
+| `settings` | `hostname`, `ntpServer`, `posixZone`, `accentColor`, `ssdpBroadcast`, `checkForUpdate`, `language`, `headerMobileDisplay`, `reverseDashboardColumns`, `defaultMobileTab`, `showRadioActivity`, `themeMode`, `showMovementIndicator`, `ledPin`, `ledActiveLow`, `ledAddressable`, `ledColorOrder`, `ledColorActivity`, `ledRfBlink`, `iconPack`, `dashCompact`, `geoLat`, `geoLon` |
+| `net` | `connType`, `dhcp`, `ip`, `gateway`, `subnet`, `dns1`, `dns2`, `ethBoardType`, `ethPhyType`, `ethCLKMode`, `ethPhyAddress`, `ethPWRPin`, `ethMDCPin`, `ethMDIOPin` |
+| `mqtt` | `enabled`, `hostname`, `port`, `pubDisco`, `rootTopic`, `discoTopic`, `clientId` |
+| `radio` | `enabled`, `proto`, `type`, `radioBoardType`, `SCKPin`, `CSNPin`, `MOSIPin`, `MISOPin`, `TXPin`, `RXPin`, `frequency`, `rxFrequency`, `rxBandwidth`, `txPower` |
+| `room` | `roomId`, `name`, `sortOrder` |
+| `shade` | `shadeId`, `paired`, `shadeType`, `remoteAddress`, `name`, `tiltType`, `proto`, `bitLength`, `upTime`, `downTime`, `tiltTimeUp`, `tiltTimeDown`, `stepSize`, `flags`, `myPos`, `myTiltPos`, `currentPos`, `currentTiltPos`, `flipCommands`, `flipPosition`, `repeats`, `sortOrder`, `gpioUp`, `gpioDown`, `gpioMy`, `gpioFlags`, `roomId`, `ledFeedback`, `tiltFirstOnOpen`, `tiltFirstOnClose`, `slackUp`, `slackDown`, `upMidTime`, `downMidTime`, `outputMode`, `pulseTime`, `stateVocab`, `setupSteps`, `lastRollingCode`, `remoteModel` (seulement si une télécommande virtuelle est choisie), `linkedRemotes` (tableau d'adresses, 15 au plus) |
+| `group` | `groupId`, `groupType`, `remoteAddress`, `name`, `proto`, `bitLength`, `repeats`, `sortOrder`, `flipCommands`, `roomId`, `ledFeedback`, `lastRollingCode`, `remoteModel` (même règle), `linkedShades` (tableau d'identifiants d'équipements) |
+| `repeater` | `address`, `name` (seulement si le répéteur est nommé) |
+| `listener` | `address`, `name` |
+| `schedule` | `scheduleId`, `name`, `dayMask`, `hour`, `minute`, `targetType` (0 = équipement, 1 = groupe), `targetId`, `targetPos`, `targetTilt` (-1 = aucune), `enabled`, `retries`, `positionMode` (0 = position, 1 = My, 2 = inclinaison seule), `timeRef` (0 = heure fixe, 1 = lever, 2 = coucher du soleil), `sunOffset` (minutes) |
+
+Le sens de chaque valeur d'un équipement ou d'un groupe (types, protocoles, masques de bits) est
+le même que dans l'ancien format : voir
+[Enregistrement Équipement](#enregistrement-équipement) et
+[Enregistrement Groupe](#enregistrement-groupe). Les temps sont en millisecondes ; `upMidTime` et
+`downMidTime` sont l'instant du passage à mi-course, compté depuis le départ du moteur en butée,
+`0` voulant dire « vitesse constante ».
+
+### Règles de lecture
+
+À la restauration, l'appareil applique ces règles :
+
+* **La première ligne doit être une ligne `meta` lisible.** Sinon le fichier est refusé en entier :
+  c'est le seul contrôle bloquant.
+* **Une ligne illisible est ignorée**, et la lecture continue à la suivante : JSON invalide, ou
+  ligne de plus de 2 048 caractères.
+* **Un `rec` inconnu est ignoré.** Une sauvegarde faite par une version plus récente se relit donc
+  sans erreur.
+* **Une clé absente laisse la valeur en place.** Retirer une clé d'une ligne ne remet pas le
+  réglage à zéro ; pour le changer, il faut écrire la nouvelle valeur.
+* **Le fichier fait foi pour les listes.** Si la case correspondante est cochée, les répéteurs,
+  les télécommandes écoutées et les plannings de l'appareil sont d'abord vidés, puis remplis avec
+  les lignes du fichier : aucune ligne `schedule` veut dire « aucun planning ».
+* **La configuration Ethernet** (`eth…`) n'est restaurée que si `serverId` est celui de
+  l'appareil : des broches propres à une autre carte rendraient le réseau muet.
+* **Un code tournant ne recule jamais.** L'appareil garde le plus grand des deux : celui du
+  fichier ou celui qu'il a en mémoire. Restaurer une vieille sauvegarde ne désynchronise donc pas
+  les moteurs.
+* `repeats` est ramené à 1 au moins.
+
+### Ce qui n'est pas dans le fichier
+
+* Le nom et la clé du réseau **Wi-Fi** ;
+* l'identifiant et le mot de passe du **courtier MQTT** ;
+* le **code PIN** ou le mot de passe de l'interface ;
+* les réglages de fonctionnement passagers (journaux de débogage, état de l'assistant de
+  premier démarrage…).
+
+Après une restauration sur un appareil neuf, il faut donc repasser par son
+[point d'accès](../../aide/point-d-acces.md) pour le Wi-Fi, puis ressaisir les mots de passe.
+
+## Ancien format positionnel { #ancien-format-positionnel }
+
+Les versions v2.x.x, et les versions de développement de la v3 jusqu'au passage au NDJSON,
+écrivaient un fichier positionnel : un enregistrement par ligne, des champs de largeur fixe
+séparés par des virgules. L'appareil le reconnaît à son premier caractère (un chiffre au lieu
+de `{`) et le relit toujours. Ce format est décrit ci-dessous, reprise et mise à jour de la page
+[Backup File Anatomy](https://github.com/rstrouse/ESPSomfy-RTS/wiki/Backup-File-Anatomy) du
+projet d'origine (rstrouse).
+
+### Versionnage
 
 Chaque fichier porte un numéro de version d'en-tête. Le firmware s'en sert pour continuer à
 relire correctement des sauvegardes plus anciennes à mesure que de nouveaux champs
@@ -17,21 +157,20 @@ s'ajoutent — un champ apparu après coup est simplement absent d'un vieux fich
 lecteur lui laisse sa valeur par défaut plutôt que de décaler tout le reste. Chaque champ
 documenté plus bas porte la version d'en-tête à partir de laquelle il est présent.
 
-**La v3.0.0 écrit la version d'en-tête 27.** Les versions v2.x.x écrivent la 25, et la v2.6.2
-la 26, qui n'ajoute à la 25 que la *Couleur d'accentuation* — voir
-[l'anatomie du format v2](../../v2/maintenance/anatomie-sauvegarde.md). Tout ce que la v3.0.0
+**Les fichiers de la v3 portent la version d'en-tête 27.** Les versions v2.x.x écrivent la 25,
+et la v2.6.2 la 26, qui n'ajoute à la 25 que la *Couleur d'accentuation* — voir
+[l'anatomie du format v2](../../v2/maintenance/anatomie-sauvegarde.md). Tout ce que la v3
 ajoute est regroupé dans ce bloc 27, résumé dans
 [Ce qui change par rapport au format v2](#ce-qui-change-par-rapport-au-format-v2).
 
 !!! note "Note"
 
-    Ce format sert aussi, sous une forme réduite, au fichier interne `/shades.cfg` que
-    l'appareil tient en fonctionnement normal : il ne contient que les enregistrements
+    Ce format reste celui du fichier interne `/shades.cfg` que l'appareil tient en
+    fonctionnement normal, sous une forme réduite : il ne contient que les enregistrements
     Pièce, Équipement, Groupe et Répéteurs, sans les blocs Réglages, Réseau et Radio ni le bloc
-    Plannings, qui n'existent que dans un `.backup` produit par **Sauvegarder**. C'est ce
-    dernier, le plus complet, qui est documenté ici.
+    Plannings. C'est la version complète, celle des anciens `.backup`, qui est documentée ici.
 
-## Principe général
+### Principe général
 
 Comme dans le format d'origine, le fichier est entièrement en texte lisible : un en-tête sur
 la première ligne, puis un enregistrement par ligne. Chaque donnée est séparée par une
@@ -144,7 +283,7 @@ par section, dans la suite de la page :
     fixe sur un groupe, lever du soleil avec avance de 15 min du lundi au vendredi (masque `62`),
     et coucher du soleil en mode My avec un retard de 20 min.
 
-## Ce qui change par rapport au format v2
+### Ce qui change par rapport au format v2
 
 Pour qui connaît déjà le [format v2](../../v2/maintenance/anatomie-sauvegarde.md), voici
 l'ensemble des différences, toutes détaillées dans les sections qui suivent :
@@ -167,7 +306,7 @@ l'ensemble des différences, toutes détaillées dans les sections qui suivent :
     donc juste, et le message `File size is not correct` n'apparaît plus à la restauration
     d'un fichier v27.
 
-## Enregistrement d'en-tête
+### Enregistrement d'en-tête
 
 Un seul enregistrement, toujours en première ligne du fichier, entièrement à largeur fixe.
 Longueur totale : **76 octets**.
@@ -215,7 +354,7 @@ Longueur totale : **76 octets**.
     atteinte. C'est ce nombre réduit — **14, 30, 14**, et **30** pour les plannings — qui
     apparaît partout ailleurs dans cette documentation.
 
-## Enregistrement Pièce
+### Enregistrement Pièce
 
 Un enregistrement par pièce déclarée (jusqu'à 32, dont 30 réellement atteignables depuis
 l'interface — voir la note ci-dessus). Entièrement à largeur fixe, inchangé depuis le format
@@ -229,10 +368,12 @@ d'origine. Longueur totale : **29 octets**.
 
 Voir [Pièces](../somfy/pieces.md).
 
-## Enregistrement Équipement
+### Enregistrement Équipement
 
 Un enregistrement par équipement configuré (jusqu'à 32, dont 30 réellement atteignables
-depuis l'interface — voir la note plus haut). Longueur totale : **444 octets**.
+depuis l'interface — voir la note plus haut). Longueur totale : **444 octets**, puis **477**
+avec le modèle de télécommande virtuelle ; `/shades.cfg` en est à **499** avec la vitesse
+variable. Chaque champ ajouté n'est lu que si la longueur annoncée l'inclut.
 
 | Nom | Longueur | Commentaire | Depuis la version |
 | --- | --- | --- | --- |
@@ -270,15 +411,18 @@ depuis l'interface — voir la note plus haut). Longueur totale : **444 octets**
 | Temps d'inclinaison à la descente | 10 | En ms | 27+ |
 | Inclinaison d'abord à l'ouverture | 5 | `true`/`false`, `true` par défaut | 27+ |
 | Inclinaison d'abord à la fermeture | 5 | `true`/`false`, `true` par défaut | 27+ |
-| Zone morte (montée) | 10 | En ms, 0 par défaut — début de la montée pendant lequel la position reste à 100 % | 27+ |
-| Zone morte (descente) | 10 | En ms, 0 par défaut — fin de la descente, position déjà à 100 % pendant que le moteur termine | 27+ |
+| Tassement des lames (montée) | 10 | En ms, 0 par défaut — début de la montée, lames qui se détassent : la position reste à 100 % | 27+ |
+| Tassement des lames (descente) | 10 | En ms, 0 par défaut — fin de la descente, lames qui se tassent : position déjà à 100 % pendant que le moteur termine | 27+ |
 | Mode de sortie | 3 | 0=Maintien, 1=Impulsion — interrupteurs uniquement (types 9 et 10), ignoré ailleurs | 27+ |
 | Durée d'impulsion | 5 | En ms, 50 à 10 000, 200 par défaut — mode Impulsion uniquement | 27+ |
 | Vocabulaire d'état | 3 | 0=Marche/Arrêt, 1=Allumé/Éteint, 2=Ouvert/Fermé, 3=Actif/Inactif — purement d'affichage | 27+ |
 | Étapes de mise en service | 3 | Masque de bits, voir la table ci-dessous. Absent d'un enregistrement de 352 octets | 27+ |
 | Télécommande liée 8 à 15 | 10 chacune | Adresse de la télécommande. Absentes d'un enregistrement de 352 ou 356 octets | 27+ |
+| Modèle de télécommande virtuelle | 33 | Texte, vide si aucun modèle choisi. Absent d'un enregistrement de moins de 477 octets | 27+ |
+| Mi-course (montée) | 10 | En ms depuis le départ du moteur en butée basse, 0 = vitesse constante — voir [la vitesse variable](../somfy/equipements/calibration.md#vitesse-variable). Seulement dans `/shades.cfg` (499 octets) | 27+ |
+| Mi-course (descente) | 10 | En ms depuis le départ du moteur en butée haute, 0 = vitesse constante | 27+ |
 
-### Indicateurs capteurs
+#### Indicateurs capteurs
 
 Le champ *Indicateurs capteurs* est un masque de bits, écrit en décimal. Les valeurs
 observées dans un fichier sont donc des sommes : `131` = `0x80 | 0x02 | 0x01`.
@@ -295,7 +439,7 @@ observées dans un fichier sont donc des sommes : `131` = `0x80 | 0x02 | 0x01`.
 Les bits `0x08` et `0x40`, documentés en v2 pour la sortie lumière des types Garage, ne sont
 plus utilisés par la v3.0.0. Voir [Lier un capteur](../somfy/equipements/liaison-telecommande.md).
 
-### Étapes de mise en service
+#### Étapes de mise en service
 
 Le champ *Étapes de mise en service* retient, un bit par étape, ce que
 l'[assistant de mise en service](../somfy/equipements/mise-en-service.md) a déjà mené à
@@ -323,7 +467,7 @@ n'indique ce qui a été fait, et l'interface n'affiche alors aucun état.
     356 octets aux étapes de mise en service ; le lecteur ne cherche alors pas à lire ce qui
     suit, qui mordrait sur l'enregistrement suivant.
 
-### Types d'équipement
+#### Types d'équipement
 
 Un total de 17 types d'équipement :
 
@@ -352,7 +496,7 @@ libellés affichés par l'interface ont changé. Les codes 9 et 10 s'appelaient 
 dans le format d'origine et **Contact sec** en v2 — voir
 [Types d'équipement disponibles](../somfy/equipements/index.md#types-déquipement-disponibles).
 
-## Enregistrement Groupe
+### Enregistrement Groupe
 
 Un enregistrement par groupe (jusqu'à 16, dont 14 réellement atteignables depuis l'interface
 — voir la note plus haut), absent des fichiers antérieurs à la version 11. Longueur totale :
@@ -385,7 +529,7 @@ Un enregistrement par groupe (jusqu'à 16, dont 14 réellement atteignables depu
     dispersés dans la liste, ils se retrouvent regroupés en tête. L'ordre des identifiants dans
     le fichier n'a donc aucune importance.
 
-## Enregistrement Répéteurs
+### Enregistrement Répéteurs
 
 Un seul enregistrement, 7 adresses à la suite — absent des fichiers antérieurs à la
 version 21. Longueur totale : **77 octets**.
@@ -394,7 +538,7 @@ version 21. Longueur totale : **77 octets**.
 | --- | --- | --- | --- |
 | Adresse répéteur 1 à 7 | 10 chacune | 0 = emplacement inutilisé. Voir [Répéteurs](../somfy/repeteurs.md) | 21+ |
 
-## Enregistrement Réglages
+### Enregistrement Réglages
 
 Un seul enregistrement, de longueur **variable** (elle dépend de la longueur réelle des
 textes qu'il contient). Absent des fichiers antérieurs à la version 14. Il n'est restauré que
@@ -456,7 +600,7 @@ si la case **Paramètres** est cochée — voir [Restaurer le système](restaure
     uPnP* qui suit sinon n'en a jamais. Ces fichiers se restaurent donc correctement, couleur
     comprise, comme ceux de la v2.6.2 qui annoncent la version 26.
 
-## Enregistrement Réseau
+### Enregistrement Réseau
 
 Un seul enregistrement, de longueur variable — absent des fichiers antérieurs à la
 version 14. Comme dans le format d'origine, **aucun mot de passe** (Wi-Fi, MQTT) n'y figure.
@@ -499,7 +643,7 @@ La première moitié n'est restaurée qu'avec la case **Réseau**, la partie MQT
     Les sept derniers champs (câblage Ethernet) ne sont restaurés que si l'identifiant serveur
     du fichier est celui de l'appareil — voir la note de l'enregistrement d'en-tête.
 
-## Enregistrement Radio (Transceiver)
+### Enregistrement Radio (Transceiver)
 
 Un seul enregistrement, entièrement à largeur fixe — absent des fichiers antérieurs à la
 version 14. Longueur totale : **68 octets**.
@@ -529,7 +673,7 @@ version 14. Longueur totale : **68 octets**.
     modulation RTS est OOK, pas FSK : la déviation n'intervient pas à la réception, elle
     n'avait donc aucun effet réel — voir [Configurer la radio](../radio/index.md).
 
-## Bloc Plannings
+### Bloc Plannings
 
 **Absent du format d'origine et du format v2.** Les plannings (voir
 [Planification](../somfy/equipements/plannification.md)) sont écrits à la suite de

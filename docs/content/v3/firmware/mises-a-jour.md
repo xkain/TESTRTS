@@ -204,6 +204,19 @@ ESPSomfyRTS_[1: vX.X.X]_ota_[2: carte][3: suffixe].bin
 >
 > Exemple boîtier : `ESPSomfyRTS_v3.0.1_ota_esp32_BOX_eth.bin`
 
+!!! note "Les autres fichiers d'une release"
+
+    Une release contient aussi des fichiers qui **ne servent pas à la mise à jour** et que cette
+    fenêtre refuse :
+
+    * `ESPSomfyRTS_vX.X.X_factory_….zip` : les images complètes de l'[Installateur
+      Web](../../outils/installateur-web.md), pour une première installation par USB ;
+    * `ESPSomfyRTS_vX.X.X_fs_<langue>_4mb.zip` et `…_c6.zip`, avec leur index
+      `ESPSomfyRTS_vX.X.X_fs_langs.json` : les images de langue que l'Installateur Web écrit à la
+      suite du firmware quand vous choisissez une langue.
+
+    Seul le fichier `_ota_` correspond à votre appareil ici.
+
 ### Contrôles avant envoi
 
 Plusieurs vérifications bloquent un envoi incompatible avant même qu'il ne parte :

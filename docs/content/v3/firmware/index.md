@@ -93,7 +93,8 @@ clignotement sur activité radio) : voir [Témoin LED de statut](led-de-statut.m
 ## Maintenance
 
 * **Sauvegarder** : génère un fichier `.backup` contenant l'intégralité de la configuration
-    actuelle.
+    actuelle, sans aucun mot de passe. Il contient en revanche les adresses radio et les codes
+    tournants de vos équipements : **ne le publiez jamais**, dans un forum ou une demande d'aide.
 * **Restaurer le système** : réinstalle tout ou partie d'une configuration depuis un fichier
     `.backup` — voir [Restaurer le système](restaurer.md). Le détail technique du
     format de ce fichier est documenté sur sa propre page,

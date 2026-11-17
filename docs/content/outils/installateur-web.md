@@ -137,13 +137,25 @@ Choisir l'édition Ethernet & Wi-Fi fait apparaître un avertissement : ce modè
 demande de maintenir son bouton-poussoir pendant l'écriture (voir
 [le cas particulier](#boitier-ethernet) plus bas).
 
-#### Choisir la version
+#### Choisir la version et la langue
 
 Après le matériel, le sélecteur propose les **cinq dernières versions publiées**,
 directement installables. Les plus anciennes y figurent aussi, mais grisées et
 marquées « téléversement manuel » : elles existent toujours, elles s'installent par
 l'autre bouton. Une **pré-version** affiche un avertissement : elle est publiée pour
 être essayée, pas pour un usage quotidien.
+
+Juste en dessous, **Langue de l'appareil** choisit la langue de l'interface dès le premier
+démarrage. La liste est triée par nom de langue, et celle de votre navigateur est
+présélectionnée. **Anglais seulement** installe l'appareil tel qu'il sort de l'usine.
+L'anglais reste toujours installé, en plus de la langue choisie : c'est la langue de secours de
+l'interface. D'autres langues s'ajoutent ensuite depuis
+[Gérer les langues](../v3/general/langues.md).
+
+Ce choix n'apparaît que pour les cartes génériques, et pour les versions qui publient leurs
+images de langue. Un boîtier officiel démarre en français ; une version sans images de langue
+démarre en anglais. Dans les deux cas, les autres langues s'installent ensuite depuis
+[Gérer les langues](../v3/general/langues.md).
 
 ### 3. Téléverser un fichier
 
@@ -213,7 +225,8 @@ Dès que vous cliquez sur **Installer**, une fenêtre suit chaque étape **laiss
 3. **Effacement de la mémoire flash.** Toute la mémoire est effacée, comme annoncé plus
    haut : la sauvegarde doit donc avoir été faite **avant** de lancer l'installation.
 4. **Écriture du firmware.** Une barre de progression et un pourcentage suivent
-   l'écriture. **Ne débranchez pas l'appareil et ne fermez pas l'onglet** avant la fin.
+   l'écriture. Si vous avez choisi une langue, son image est écrite juste après, dans la même
+   installation. **Ne débranchez pas l'appareil et ne fermez pas l'onglet** avant la fin.
 5. **Installation terminée.** Votre apparail va redemarrer automatiquement de lui-même.
 
 <div class="rts-row" markdown>
