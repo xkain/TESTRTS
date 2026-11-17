@@ -141,6 +141,8 @@ void SomfyShade::clear() {
   // Zone morte (issue #40) : 0 = pas de compensation, comportement d'avant l'issue.
   this->slackUp = 0;
   this->slackDown = 0;
+  this->upMidTime = 0;
+  this->downMidTime = 0;
   this->tiltFirstOnOpen = true;
   this->tiltFirstOnClose = true;
   this->stepSize = 100;
@@ -421,6 +423,8 @@ void SomfyShade::load() {
     // donc naturellement -- aucune migration à prévoir dans la branche 16 bits ci-dessus.
     this->slackUp = pref.getUInt("slackUp", this->slackUp);
     this->slackDown = pref.getUInt("slackDown", this->slackDown);
+    this->upMidTime = pref.getUInt("upMidTime", this->upMidTime);
+    this->downMidTime = pref.getUInt("downMidTime", this->downMidTime);
     this->setRemoteAddress(pref.getUInt("remoteAddress", 0));
     this->currentPos = pref.getFloat("currentPos", 0);
     this->target = floor(this->currentPos);
@@ -783,6 +787,8 @@ bool SomfyShade::save() {
     pref.putUInt("tiltTimeDown", this->tiltTimeDown);
     pref.putUInt("slackUp", this->slackUp);
     pref.putUInt("slackDown", this->slackDown);
+    pref.putUInt("upMidTime", this->upMidTime);
+    pref.putUInt("downMidTime", this->downMidTime);
     pref.putFloat("currentPos", this->currentPos);
     pref.putFloat("currentTiltPos", this->currentTiltPos);
     pref.putUShort("myPos", this->myPos);

@@ -12,7 +12,7 @@
 // 26 = v2.6.2 (25 + couleur d'accentuation), 27 = v3 : les champs propres à la v3 se gardent à 27.
 #define SHADE_HDR_VER 27
 #define SHADE_HDR_SIZE 76
-#define SHADE_REC_SIZE 477
+#define SHADE_REC_SIZE 499
 #define GROUP_REC_SIZE 239
 #define SCHEDULE_HDR_VER 1
 #define SCHEDULE_REC_SIZE 79   // dayMask..enabled (60) + retries (4) + positionMode (4) + timeRef (4) + sunOffset (7)
@@ -1059,6 +1059,11 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
     }
     if(this->header.shadeRecordSize >= 477) this->readString(shade->remoteModel, sizeof(shade->remoteModel));
     else shade->remoteModel[0] = '\0';
+    if(this->header.shadeRecordSize >= 499) {
+      shade->upMidTime = this->readUInt32(0);
+      shade->downMidTime = this->readUInt32(0);
+    }
+    else shade->upMidTime = shade->downMidTime = 0;
   }
   else shade->remoteModel[0] = '\0';
   if(this->file.position() != startPos + this->header.shadeRecordSize) {
@@ -1218,7 +1223,9 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   for(uint8_t j = 0; j < SOMFY_EXTRA_LINKED_REMOTES; j++) {
     this->writeUInt32(shade->linkedRemotes[SOMFY_LEGACY_LINKED_REMOTES + j].getRemoteAddress());
   }
-  this->writeString(shade->remoteModel, sizeof(shade->remoteModel), CFG_REC_END);
+  this->writeString(shade->remoteModel, sizeof(shade->remoteModel));
+  this->writeUInt32(shade->upMidTime);
+  this->writeUInt32(shade->downMidTime, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::exists() { return CfgStore::fsFor("/shades.cfg").exists("/shades.cfg"); }

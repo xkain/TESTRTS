@@ -189,6 +189,8 @@ bool ShadeConfigFile::backupNdjson(SomfyShadeController *s) {
     fmt.addElem("tiltFirstOnClose", shade->tiltFirstOnClose);
     fmt.addElem("slackUp", (uint32_t)shade->slackUp);
     fmt.addElem("slackDown", (uint32_t)shade->slackDown);
+    fmt.addElem("upMidTime", (uint32_t)shade->upMidTime);
+    fmt.addElem("downMidTime", (uint32_t)shade->downMidTime);
     fmt.addElem("outputMode", static_cast<uint8_t>(shade->outputMode));
     fmt.addElem("pulseTime", (uint32_t)shade->pulseTime);
     fmt.addElem("stateVocab", static_cast<uint8_t>(shade->stateVocab));
@@ -330,6 +332,8 @@ static void ndjsonApplyShade(JsonObject &obj, SomfyShade *shade) {
   jget(obj, "tiltFirstOnClose", shade->tiltFirstOnClose);
   jget(obj, "slackUp", shade->slackUp);
   jget(obj, "slackDown", shade->slackDown);
+  jget(obj, "upMidTime", shade->upMidTime);
+  jget(obj, "downMidTime", shade->downMidTime);
   if(obj.containsKey("outputMode")) {
     uint8_t v = obj["outputMode"];
     shade->outputMode = (v == static_cast<uint8_t>(switch_output_t::pulse)) ? switch_output_t::pulse : switch_output_t::latching;

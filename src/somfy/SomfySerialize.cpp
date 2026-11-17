@@ -133,6 +133,8 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
     // reste ici : un client qui n'en a pas connaissance ne les remet pas à 0 par omission.
     jget(obj, "slackUp", this->slackUp);
     jget(obj, "slackDown", this->slackDown);
+    jget(obj, "upMidTime", this->upMidTime);
+    jget(obj, "downMidTime", this->downMidTime);
     // Interrupteurs. Bornés à l'écriture plutôt que fait confiance à l'appelant : ces deux champs
     // sont exposés en REST et en MQTT, donc atteignables par autre chose que notre interface.
     if(obj.containsKey("outputMode")) {
@@ -229,6 +231,8 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
       // neutre, pas un réglage d'usine à retrouver : elle ne casse aucun calcul.
       this->slackUp = 0;
       this->slackDown = 0;
+      this->upMidTime = 0;
+      this->downMidTime = 0;
     }
     jget(obj, "flipCommands", this->flipCommands);
     jget(obj, "ledFeedback", this->ledFeedback);
@@ -315,6 +319,8 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
   json.addElem("downTime", (uint32_t)this->downTime);
   json.addElem("slackUp", (uint32_t)this->slackUp);
   json.addElem("slackDown", (uint32_t)this->slackDown);
+  json.addElem("upMidTime", (uint32_t)this->upMidTime);
+  json.addElem("downMidTime", (uint32_t)this->downMidTime);
   json.addElem("outputMode", static_cast<uint8_t>(this->outputMode));
   json.addElem("pulseTime", (uint32_t)this->pulseTime);
   json.addElem("stateVocab", static_cast<uint8_t>(this->stateVocab));

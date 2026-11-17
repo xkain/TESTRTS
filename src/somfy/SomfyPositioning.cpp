@@ -23,6 +23,25 @@
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
 
+// Course d'un tablier enroulé : le moteur tourne à vitesse constante mais le rayon du rouleau
+// varie, d'où une vitesse exponentielle. f(tau) = fraction de course parcourue au temps relatif
+// tau ; k > 0 freine (descente d'un volet), k < 0 accélère (montée), k = 0 reste linéaire.
+static float curveFrac(float tau, float k) { return k == 0.0f ? tau : (1.0f - expf(-k * tau)) / (1.0f - expf(-k)); }
+static float curveTau(float frac, float k) { return k == 0.0f ? frac : -logf(1.0f - frac * (1.0f - expf(-k))) / k; }
+// k tel que la mi-course tombe à midMs. Dichotomie plutôt que Newton : partie d'un point fixe,
+// la méthode de Newton sort du domaine dès que le rapport vitesse haute/basse dépasse ~5.
+static float curveFor(uint32_t midMs, int32_t useful) {
+  if(midMs == 0 || (int32_t)midMs >= useful) return 0.0f;
+  const float r = (float)midMs / (float)useful;
+  if(fabsf(r - 0.5f) < 0.005f) return 0.0f;
+  float lo = -30.0f, hi = 30.0f;
+  for(uint8_t i = 0; i < 32; i++) {
+    const float m = (lo + hi) / 2.0f;
+    if(curveFrac(r, m) < 0.5f) lo = m; else hi = m;
+  }
+  return (lo + hi) / 2.0f;
+}
+
 void SomfyShade::checkMovement() {
   if(this->txHold) return;
   const uint32_t curTime = millis();
@@ -76,6 +95,14 @@ void SomfyShade::checkMovement() {
   // ("pas de temps de course configuré") et portent donc toujours sur les valeurs brutes.
   const int32_t usefulDown = max((int32_t)1, downTime - slackDown);
   const int32_t usefulUp = max((int32_t)1, upTime - slackUp);
+  // La mi-course de montée part de la butée basse : son temps mort de tête s'en retranche.
+  const int32_t midUp = this->upMidTime > (uint32_t)slackUp ? (int32_t)this->upMidTime - slackUp : 0;
+  const uint32_t sig = (uint32_t)midUp * 2654435761u ^ this->downMidTime * 40503u ^ (uint32_t)usefulUp * 97u ^ (uint32_t)usefulDown;
+  if(sig != this->curveSig) {
+    this->curveSig = sig;
+    this->curveUp = curveFor(midUp, usefulUp);
+    this->curveDown = curveFor(this->downMidTime, usefulDown);
+  }
 
 
   // We are checking movement for essentially 3 types of motors.
@@ -200,7 +227,7 @@ void SomfyShade::checkMovement() {
       // réellement de bouger ; le plaquage qui suit se déroule hors de ce compteur, sans qu'on ait
       // à le modéliser -- une cible à 100 % n'émet aucun My (voir plus bas), le moteur va à sa
       // propre butée. Zone morte nulle => usefulDown == downTime, calcul inchangé au bit près.
-      int32_t msFrom0 = (int32_t)floor((this->startPos/100) * usefulDown);
+      int32_t msFrom0 = (int32_t)floor(curveTau(this->startPos/100, this->curveDown) * usefulDown);
 
       // So if the start position is .1 it is 10% closed so we have a 1000ms (1sec) of time to account for
       // before we add any more time.
@@ -217,7 +244,7 @@ void SomfyShade::checkMovement() {
         // a ratio of how much time has travelled over the total time to go 100%.
 
         // We should now have the number of ms it will take to reach the shade fully close.
-        this->p_currentPos((min(max((float)0.0, (float)msFrom0 / (float)usefulDown), (float)1.0)) * 100);
+        this->p_currentPos((min(max((float)0.0, curveFrac((float)msFrom0 / (float)usefulDown, this->curveDown)), (float)1.0)) * 100);
         // If the current position is >= 1 then we are at the bottom of the shade.
         if(this->currentPos >= 100) {
           this->p_currentPos(100.0);
@@ -271,7 +298,9 @@ void SomfyShade::checkMovement() {
       // porte donc sur la butée (100 % exactement, valeur à laquelle les deux branches clampent), et
       // non sur un seuil : une descente partielle arrêtée à 99 % n'a pas de jeu à reprendre.
       if(this->startPos >= 100.0f) elapsed = max((int32_t)0, elapsed - slackUp);
-      int32_t msFrom100 = usefulUp - (int32_t)floor((this->startPos/100) * usefulUp);
+      // Sans courbe, l'expression d'origine : le résultat reste identique à la milliseconde.
+      int32_t msFrom100 = this->curveUp == 0.0f ? usefulUp - (int32_t)floor((this->startPos/100) * usefulUp)
+                                                : (int32_t)floor(curveTau(1.0f - this->startPos/100, this->curveUp) * usefulUp);
       msFrom100 += elapsed;
       msFrom100 = min(usefulUp, msFrom100);
       if(msFrom100 >= usefulUp) {
@@ -279,7 +308,7 @@ void SomfyShade::checkMovement() {
         //this->p_direction(0);
       }
       else {
-        float fpos = ((float)1.0 - min(max((float)0.0, (float)msFrom100 / (float)usefulUp), (float)1.0)) * 100;
+        float fpos = ((float)1.0 - min(max((float)0.0, curveFrac((float)msFrom100 / (float)usefulUp, this->curveUp)), (float)1.0)) * 100;
         // We should now have the number of ms it will take to reach the shade fully open.
         // If we are at the top of the shade then set the movement to 0.
         if(fpos <= 0.0) {

@@ -11,6 +11,8 @@
 const SETUP_BIT = { pair: 1, dir: 2, cal: 4, tilt: 8, order: 16, opts: 32 };
 const SETUP_INIT = { pair: 'pret', unpair: 'pret', remote: 'listen', dir: 'test', cal: 'intro', tilt: 'tup', order: 'open', opts: 'q' };
 const SETUP_MIN_MS = 500, SETUP_MAX_MS = 180000, SETUP_LISTEN_MS = 30000;
+// Tabliers enroulés (store, store banne, volet roulant) : seuls à proposer la mi-course.
+const SETUP_CURVE_TYPES = [0, 3, 4];
 // Temps de réaction retiré du clic « Il s'est arrêté » de l'apprentissage My.
 const SETUP_REACT_MS = 300;
 
@@ -221,7 +223,7 @@ class ShadeSetup {
             const fam = this.familyOf(m.shadeType);
             const obj = { name: `${fam ? tr(fam.label) : m.name} ${(somfy.shades || []).filter(x => x.shadeType === m.shadeType).length + 1}`.slice(0, 20),
                           roomId: 0, remoteAddress: c.addr };
-            ['shadeType', 'bitLength', 'flipCommands', 'flipPosition', 'upTime', 'downTime', 'slackUp', 'slackDown', 'tiltType', 'tiltTimeUp', 'tiltTimeDown',
+            ['shadeType', 'bitLength', 'flipCommands', 'flipPosition', 'upTime', 'downTime', 'slackUp', 'slackDown', 'upMidTime', 'downMidTime', 'tiltType', 'tiltTimeUp', 'tiltTimeDown',
              'tiltFirstOnOpen', 'tiltFirstOnClose', 'stepSize', 'sunSensor', 'repeats', 'ledFeedback', 'stateVocab', 'outputMode', 'pulseTime']
                 .forEach(k => { if (m[k] !== undefined) obj[k] = m[k]; });
             obj.proto = m.proto < 8 ? m.proto : c.proto;
@@ -571,6 +573,9 @@ class ShadeSetup {
             if (shade.slackUp) s.marks.dzup = { inter: shade.slackUp, final: shade.upTime };
             if (shade.slackDown) s.marks.dzdown = { inter: shade.downTime - shade.slackDown, final: shade.downTime };
             s.dzManual = !!(shade.slackUp || shade.slackDown);
+            if (shade.upMidTime) s.marks.mup = { inter: null, final: shade.upMidTime };
+            if (shade.downMidTime) s.marks.mdown = { inter: null, final: shade.downMidTime };
+            s.midManual = !!(shade.upMidTime || shade.downMidTime);
         }
         if (done('tilt') && !s.marks.tup) Object.assign(s.marks, { tup: { inter: null, final: shade.tiltTimeUp }, tdown: { inter: null, final: shade.tiltTimeDown } });
     }
@@ -692,7 +697,7 @@ class ShadeSetup {
             // Le désappairage ne se trouve que derrière cette ligne : on le dit.
             case 'pair': return `${tr('SETUP_S_PAIRED')}<span class="setup-hint"> · ${tr('SETUP_S_PAIRED_HINT')}</span>`;
             case 'dir': return tr(toggle ? 'SETUP_S_RESPONDS' : shade.flipCommands ? 'SETUP_V_DIR_FLIPPED' : 'SETUP_V_DIR_NORMAL');
-            case 'cal': return `${f(shade.upTime)}${dz(shade.slackUp)} / ${f(shade.downTime)}${dz(shade.slackDown)}`;
+            case 'cal': return `${f(shade.upTime)}${dz(shade.slackUp)} / ${f(shade.downTime)}${dz(shade.slackDown)}${shade.upMidTime || shade.downMidTime ? ' · ' + tr('SETUP_S_MIDCURVE') : ''}`;
             case 'tilt': return `${f(shade.tiltTimeUp)} / ${f(shade.tiltTimeDown)}`;
             case 'order': return `${first(shade.tiltFirstOnOpen)} / ${first(shade.tiltFirstOnClose)}`;
             case 'opts': {
@@ -1052,6 +1057,7 @@ class ShadeSetup {
     best(d) { return this.s.marks['dz' + d] ? 'dz' + d : d; }
     // Temps mort >= 0 et course utile >= SETUP_MIN_MS.
     clampMark(sub, which, val) {
+        if (sub[0] === 'm') { const [lo, hi] = this.midBounds(sub); return Math.max(lo + 100, Math.min(hi - 100, val)); }
         const k = this.s.marks[sub], slackFirst = this.dirOf(sub) === 'up';
         if (which === 'final') {
             const lo = k.inter == null ? SETUP_MIN_MS : (slackFirst ? k.inter + SETUP_MIN_MS : Math.max(SETUP_MIN_MS, k.inter));
@@ -1080,20 +1086,24 @@ class ShadeSetup {
         };
         const cells = `<div class="setup-meas">${cell('up', this.t('SETUP_CELL', { verb: W.up, from: W.closed, to: W.open }))}${cell('down', this.t('SETUP_CELL', { verb: W.down, from: W.open, to: W.closed }))}</div>`;
         if (T.sub === 'view') return `${cells}
-            <div class="setup-actions"><button type="button" line onclick="shadeSetup.go('manual')">${tr('SETUP_EDIT_TIMES')}</button><button type="button" onclick="shadeSetup.remeasure()">${tr('SETUP_REMEASURE')}</button></div>`;
+            <div class="setup-actions"><button type="button" line onclick="shadeSetup.go('manual')">${tr('SETUP_EDIT_TIMES')}</button><button type="button" onclick="shadeSetup.remeasure()">${tr('SETUP_REMEASURE')}</button></div>
+            ${this.curveOk() ? `<button type="button" class="setup-link setup-start" onclick="shadeSetup.go('midq')">${tr('SETUP_MID_FINE')}</button>` : ''}`;
         if (T.sub === 'intro') return `
             <p class="setup-p">${tr('SETUP_CAL_INTRO')}</p>
             <p class="setup-p sub">${tr('SETUP_CAL_INTRO_2')}${s.tt > 0 ? ' ' + tr('SETUP_CAL_TILT_AFTER') : ''}</p>
             <div class="setup-actions"><button type="button" onclick="shadeSetup.go('up')">${tr('BT_BEGIN')}</button></div>
             <button type="button" class="setup-link setup-start" onclick="shadeSetup.go('manual')">${tr('SETUP_CAL_KNOWN')}</button>`;
         if (T.sub === 'manual') {
-            const v = (d, f) => { if (f === 'slack') { const x = this.slackOf('dz' + d); return x ? x / 1000 : ''; } return M[d] ? M[d].final / 1000 : ''; };
+            const v = (d, f) => { if (f === 'slack') { const x = this.slackOf('dz' + d); return x ? x / 1000 : ''; } const k = M[f === 'mid' ? 'm' + d : d]; return k ? k.final / 1000 : ''; };
             const field = (id, label, val) => this.timeField(id, label, val);
             return `
             <div class="setup-fields">${field('setupUpT', this.t('SETUP_TIME_OF', { what: W.upN }), v('up', 'final'))}${field('setupDownT', this.t('SETUP_TIME_OF', { what: W.downN }), v('down', 'final'))}</div>
-            <label class="setup-keep"><input type="checkbox"${s.dzManual ? ' checked' : ''} onchange="shadeSetup.dzToggle(this.checked)"> ${tr('DEVICE_DEADZONE')}</label>
+            <label class="setup-keep"><input type="checkbox"${s.dzManual ? ' checked' : ''} onchange="shadeSetup.manToggle('dzManual', this.checked)"> ${tr('DEVICE_DEADZONE')}</label>
             <p class="setup-p sub">${tr('DEVICE_DEADZONE_DESC')}</p>
             ${s.dzManual ? `<div class="setup-fields">${field('setupDzUp', tr('DEVICE_DEADZONE_UP'), v('up', 'slack'))}${field('setupDzDown', tr('DEVICE_DEADZONE_DOWN'), v('down', 'slack'))}</div>` : ''}
+            ${this.curveOk() ? `<label class="setup-keep"><input type="checkbox"${s.midManual ? ' checked' : ''} onchange="shadeSetup.manToggle('midManual', this.checked)"> ${tr('DEVICE_MIDCOURSE')}</label>
+            <p class="setup-p sub">${tr('DEVICE_MIDCOURSE_DESC')}</p>
+            ${s.midManual ? `<div class="setup-fields">${field('setupMidUp', tr('DEVICE_MIDCOURSE_UP'), v('up', 'mid'))}${field('setupMidDown', tr('DEVICE_MIDCOURSE_DOWN'), v('down', 'mid'))}</div>` : ''}` : ''}
             <div class="setup-err" id="setupManErr"></div>
             <div class="setup-actions"><button type="button" class="btn-success" onclick="shadeSetup.manual()">${tr('SETUP_VALIDATE')}</button></div>`;
         }
@@ -1101,7 +1111,18 @@ class ShadeSetup {
             <p class="setup-p"><b>${tr('SETUP_DZ_Q')}</b></p>
             <p class="setup-p sub">${this.t('SETUP_DZ_EXPLAIN', { theUp: W.theUp, theDown: W.theDown })}</p>
             <p class="setup-p sub">${tr('SETUP_DZ_WHY')}</p>
-            <div class="setup-actions"><button type="button" line onclick="shadeSetup.go('dzup')">${tr('SETUP_DZ_YES')}</button><button type="button" onclick="shadeSetup.finishCal()">${tr('SETUP_DZ_NO')}</button></div>`;
+            <div class="setup-actions"><button type="button" line onclick="shadeSetup.go('dzup')">${tr('SETUP_DZ_YES')}</button><button type="button" onclick="shadeSetup.afterDz()">${tr('SETUP_DZ_NO')}</button></div>`;
+        if (T.sub === 'midq') {
+            const has = M.mup || M.mdown;
+            return `${cells}
+            <p class="setup-p"><b>${tr('SETUP_MID_Q')}</b></p>
+            <p class="setup-p sub">${this.t('SETUP_MID_EXPLAIN', { open: W.open })}</p>
+            <p class="setup-p sub">${tr('SETUP_MID_LATER')}</p>
+            ${has ? `<div class="setup-intermark">${this.t('SETUP_MID_CUR', { up: M.mup ? this.fmt(M.mup.final) : '—', down: M.mdown ? this.fmt(M.mdown.final) : '—' })}</div>` : ''}
+            <div class="setup-actions"><button type="button" line onclick="shadeSetup.midStart()">${tr(has ? 'SETUP_REMEASURE' : 'SETUP_MID_YES')}</button><button type="button" onclick="shadeSetup.finishCal()">${tr(has ? 'SETUP_VALIDATE' : 'SETUP_DZ_NO')}</button></div>
+            ${has ? `<button type="button" class="setup-link setup-start" onclick="shadeSetup.midClear()">${tr('SETUP_MID_CLEAR')}</button>` : ''}`;
+        }
+        if (T.sub === 'mup' || T.sub === 'mdown') return this.bodyMid(T, cells);
         const sub = T.sub, up = this.dirOf(sub) === 'up', dz = sub.startsWith('dz'), run = !!s.timer, k = M[sub];
         const interLbl = up ? tr('CAL_MARK_MOVING') : this.t('SETUP_MARK_IS', { state: W.closed });
         const finalLbl = (dz && !up) ? tr('CAL_MARK_MOTOR_STOPPED') : this.t('SETUP_MARK_IS', { state: up ? W.open : W.closed });
@@ -1168,30 +1189,76 @@ class ShadeSetup {
     redo() { delete this.s.marks[this.s.tasks[this.s.cur].sub]; this.s.err = ''; this.render(); }
     next() {
         const sub = this.s.tasks[this.s.cur].sub;
-        if (sub === 'dzdown') return this.finishCal();
+        if (sub === 'dzdown') return this.afterDz();
+        if (sub === 'mdown') return this.finishCal();
         if (sub === 'tdown') return this.finishTilt();
-        this.go({ up: 'down', down: 'dzq', dzup: 'dzdown', tup: 'tdown' }[sub]);
+        this.go({ up: 'down', down: 'dzq', dzup: 'dzdown', mup: 'mdown', tup: 'tdown' }[sub]);
     }
     // « Pas de temps mort dans ce sens » : la mesure simple de ce sens reste valable.
     noDz() {
         const sub = this.s.tasks[this.s.cur].sub;
         delete this.s.marks[sub];
         if (sub === 'dzup') this.go('dzdown');
-        else this.finishCal();
+        else this.afterDz();
+    }
+    // ---------- Réglage fin : passage à mi-course (vitesse variable d'un tablier enroulé) ----------
+    curveOk() { return SETUP_CURVE_TYPES.includes(this.s.shade.shadeType); }
+    afterDz() { if (this.curveOk()) this.go('midq'); else this.finishCal(); }
+    // Fenêtre où la mi-course a un sens, en ms depuis le départ du moteur : la course utile.
+    midBounds(sub) {
+        const d = this.dirOf(sub), b = this.best(d), k = this.s.marks[b];
+        if (!k) return [0, SETUP_MAX_MS];
+        const slack = this.slackOf(b);
+        return d === 'up' ? [slack, k.final] : [0, k.final - slack];
+    }
+    midOf(d) {
+        const k = this.s.marks['m' + d];
+        if (!k) return 0;
+        const [lo, hi] = this.midBounds('m' + d);
+        return k.final > lo && k.final < hi ? k.final : 0;
+    }
+    midStart() { delete this.s.marks.mup; delete this.s.marks.mdown; this.go('mup'); }
+    midClear() { delete this.s.marks.mup; delete this.s.marks.mdown; this.s.midManual = false; this.finishCal(); }
+    // Le moteur n'est pas arrêté : l'équipement finit sa course en butée, position connue.
+    midMark() {
+        const s = this.s, sub = s.tasks[s.cur].sub, el = Date.now() - s.t0, [lo, hi] = this.midBounds(sub);
+        this.stopTimer();
+        if (el <= lo || el >= hi) { s.err = tr('ERR_MIDCOURSE_INVALID'); return this.render(); }
+        s.marks[sub] = { inter: null, final: el };
+        s.midManual = true;
+        this.render();
+    }
+    bodyMid(T, cells) {
+        const s = this.s, W = s.W, up = T.sub === 'mup', k = s.marks[T.sub], btn = tr('SETUP_MID_MARK');
+        const instr = this.t('SETUP_MID_INSTR', { pos: up ? W.closed : W.open, btn });
+        if (s.timer) return `${cells}
+            <p class="setup-p">${instr}</p>
+            ${this.chronoHtml(true)}
+            <button type="button" class="btn-success" onclick="shadeSetup.midMark()">${btn}</button>
+            <button type="button" class="setup-link setup-start" onclick="shadeSetup.cancel()">${tr('SETUP_CANCEL_MEASURE')}</button>`;
+        if (k) return `${cells}
+            <div class="setup-marks"><p class="setup-p sub">${tr('CAL_ADJUST_INTRO')}</p>${this.rowAdj(tr('SETUP_MID_TIME'), 'final', k.final)}</div>
+            <div class="setup-actions"><button type="button" line onclick="shadeSetup.redo()">${tr('CAL_BTN_REDO')}</button><button type="button" onclick="shadeSetup.next()">${up ? this.t('SETUP_MID_NEXT', { what: W.downN }) : tr('SETUP_VALIDATE_TIMES')}</button></div>`;
+        return `${cells}
+            <p class="setup-p">${instr}</p>
+            ${this.chronoHtml(false)}
+            ${s.err ? `<div class="setup-err">${s.err}</div>` : ''}
+            <div class="setup-actions"><button type="button" line onclick="shadeSetup.sendCmd('${up ? 'Down' : 'Up'}')">${this.t('SETUP_FIRST', { cmd: up ? W.down : W.up })}</button><button type="button" onclick="shadeSetup.start()">${tr('BT_START')}</button></div>`;
     }
     finishCal() {
         const M = this.s.marks, bu = this.best('up'), bd = this.best('down');
-        const fields = { upTime: M[bu].final, downTime: M[bd].final, slackUp: this.slackOf(bu), slackDown: this.slackOf(bd) };
+        const fields = { upTime: M[bu].final, downTime: M[bd].final, slackUp: this.slackOf(bu), slackDown: this.slackOf(bd), upMidTime: this.midOf('up'), downMidTime: this.midOf('down') };
         Object.assign(this.s.shade, fields);
         const part = (b) => this.fmt(M[b].final) + (this.slackOf(b) ? ' · ' + this.t('SETUP_S_DEADZONE', { t: this.fmt(this.slackOf(b)) }) : '');
-        this.complete(fields, `${part(bu)} / ${part(bd)}`);
+        this.complete(fields, `${part(bu)} / ${part(bd)}${fields.upMidTime || fields.downMidTime ? ' · ' + tr('SETUP_S_MIDCURVE') : ''}`);
     }
-    dzToggle(on) {
-        const u = this.$('#setupUpT').value, d = this.$('#setupDownT').value;
-        this.s.dzManual = on;
+    // Une case cochée redessine la saisie : ce qui est déjà tapé est repris tel quel.
+    manToggle(key, on) {
+        const ids = ['#setupUpT', '#setupDownT', '#setupDzUp', '#setupDzDown', '#setupMidUp', '#setupMidDown'], keep = {};
+        ids.forEach(id => { const e = this.$(id); if (e) keep[id] = e.value; });
+        this.s[key] = on;
         this.render();
-        this.$('#setupUpT').value = u;
-        this.$('#setupDownT').value = d;
+        Object.keys(keep).forEach(id => { const e = this.$(id); if (e) e.value = keep[id]; });
     }
     manual() {
         const s = this.s, num = id => { const e = this.$(id); return e && e.value !== '' ? Math.round(parseFloat(String(e.value).replace(',', '.')) * 1000) : 0; };
@@ -1200,10 +1267,14 @@ class ShadeSetup {
         if (!(u >= SETUP_MIN_MS && u <= SETUP_MAX_MS) || !(d >= SETUP_MIN_MS && d <= SETUP_MAX_MS)) { err.textContent = tr('SETUP_ERR_TIMES'); return; }
         if (isNaN(su) || isNaN(sd) || su < 0 || sd < 0) { err.textContent = tr('ERR_DEADZONE_INVALID'); return; }
         if (u - su < SETUP_MIN_MS || d - sd < SETUP_MIN_MS) { err.textContent = tr('ERR_DEADZONE_TOO_LONG'); return; }
+        const mid = s.midManual && this.curveOk(), mu = mid ? num('#setupMidUp') : 0, md = mid ? num('#setupMidDown') : 0;
+        if (isNaN(mu) || isNaN(md) || (mu && !(mu > su && mu < u)) || (md && !(md > 0 && md < d - sd))) { err.textContent = tr('ERR_MIDCOURSE_INVALID'); return; }
         // Grandeurs dérivées saisies directement : on reconstruit des repères équivalents.
         s.marks = { up: { inter: null, final: u }, down: { inter: null, final: d } };
         if (su) s.marks.dzup = { inter: su, final: u };
         if (sd) s.marks.dzdown = { inter: d - sd, final: d };
+        if (mu) s.marks.mup = { inter: null, final: mu };
+        if (md) s.marks.mdown = { inter: null, final: md };
         this.finishCal();
     }
 

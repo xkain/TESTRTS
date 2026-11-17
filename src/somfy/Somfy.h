@@ -307,6 +307,10 @@ class SomfyShade : public SomfyRemote {
     // brute : elles signifient "pas de temps de course configuré", ce qui reste une autre question.
     uint32_t usefulUpTime() const { return this->upTime > this->slackUp ? this->upTime - this->slackUp : 1; }
     uint32_t usefulDownTime() const { return this->downTime > this->slackDown ? this->downTime - this->slackDown : 1; }
+    // Vitesse variable d'un tablier enroulé : instant du passage à mi-course, chronométré depuis
+    // le départ du moteur (butée basse pour upMidTime, haute pour downMidTime). 0 = linéaire.
+    uint32_t upMidTime = 0;
+    uint32_t downMidTime = 0;
     // Pour tiltType::integrated, ordre tilt/translation par sens de mouvement -- true = incliner
     // d'abord puis translater (comportement historique, seul modélisé jusqu'ici). Certains moteurs
     // (issue #33, remote 80 bits) font l'inverse à la fermeture : ils translatent d'abord et
@@ -329,6 +333,11 @@ class SomfyShade : public SomfyRemote {
     // shades.cfg, un contact au repos étant le seul état qu'il ait un sens de retrouver au
     // redémarrage.
     uint32_t pulseExpires = 0;
+    // Courbure de course dérivée des temps de mi-course. Écrite par loopTask seule (checkMovement),
+    // recalculée quand la signature des temps change : async_tcp n'écrit que les entrées.
+    float curveUp = 0.0f;
+    float curveDown = 0.0f;
+    uint32_t curveSig = 0xFFFFFFFFu;
     bool save();
     bool isIdle();
     bool isInGroup();
