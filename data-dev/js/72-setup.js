@@ -1096,13 +1096,14 @@ class ShadeSetup {
         if (T.sub === 'manual') {
             const v = (d, f) => { if (f === 'slack') { const x = this.slackOf('dz' + d); return x ? x / 1000 : ''; } const k = M[f === 'mid' ? 'm' + d : d]; return k ? k.final / 1000 : ''; };
             const field = (id, label, val) => this.timeField(id, label, val);
+            // Rangée en <div> : un <label> ferait basculer le Oui/Non au clic sur le texte.
+            const opt = (key, lbl, desc) => `<div class="gen-row"><span class="gen-row-text"><b>${tr(lbl)}</b><span>${tr(desc)}</span></span>
+                <span class="gen-seg gen-seg-bool"><input type="checkbox" aria-label="${escAttr(tr(lbl))}"${s[key] ? ' checked' : ''} onchange="shadeSetup.manToggle('${key}', this.checked)"><span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span></div>`;
             return `
             <div class="setup-fields">${field('setupUpT', this.t('SETUP_TIME_OF', { what: W.upN }), v('up', 'final'))}${field('setupDownT', this.t('SETUP_TIME_OF', { what: W.downN }), v('down', 'final'))}</div>
-            <label class="setup-keep"><input type="checkbox"${s.dzManual ? ' checked' : ''} onchange="shadeSetup.manToggle('dzManual', this.checked)"> ${tr('DEVICE_DEADZONE')}</label>
-            <p class="setup-p sub">${tr('DEVICE_DEADZONE_DESC')}</p>
+            ${opt('dzManual', 'SETUP_DEADTIME', 'DEVICE_DEADZONE_DESC')}
             ${s.dzManual ? `<div class="setup-fields">${field('setupDzUp', tr('DEVICE_DEADZONE_UP'), v('up', 'slack'))}${field('setupDzDown', tr('DEVICE_DEADZONE_DOWN'), v('down', 'slack'))}</div>` : ''}
-            ${this.curveOk() ? `<label class="setup-keep"><input type="checkbox"${s.midManual ? ' checked' : ''} onchange="shadeSetup.manToggle('midManual', this.checked)"> ${tr('DEVICE_MIDCOURSE')}</label>
-            <p class="setup-p sub">${tr('DEVICE_MIDCOURSE_DESC')}</p>
+            ${this.curveOk() ? `${opt('midManual', 'DEVICE_MIDCOURSE', 'DEVICE_MIDCOURSE_DESC')}
             ${s.midManual ? `<div class="setup-fields">${field('setupMidUp', tr('DEVICE_MIDCOURSE_UP'), v('up', 'mid'))}${field('setupMidDown', tr('DEVICE_MIDCOURSE_DOWN'), v('down', 'mid'))}</div>` : ''}` : ''}
             <div class="setup-err" id="setupManErr"></div>
             <div class="setup-actions"><button type="button" class="btn-success" onclick="shadeSetup.manual()">${tr('SETUP_VALIDATE')}</button></div>`;

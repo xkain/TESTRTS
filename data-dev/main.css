@@ -5047,7 +5047,6 @@ body.fw-update .set-fw-new {
 @keyframes setupPulse { 50% { opacity: .35; transform: scale(.85); } }
 :is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-facts { display: flex; flex-wrap: wrap; gap: 6px; }
 :is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-facts span { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--color-bg-badge); color: var(--color-text-main); }
-#divShadeSetup .setup-keep { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-main); }
 #divShadeSetup .setup-link { background: none; border: 0; padding: 0; width: auto; min-width: 0; height: auto; color: var(--color-accent); cursor: pointer; font-size: 13px; text-decoration: underline; text-transform: none; }
 #divShadeSetup .setup-start { align-self: flex-start; }
 #divShadeSetup .setup-p { margin: 0; color: var(--color-text-main); font-size: 14px; line-height: 1.45; }
