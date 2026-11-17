@@ -840,6 +840,7 @@ function _resolveDefaultChild(grpid) {
 }
 const ROUTE_LEAF_PARENT = {
     divSystemOptions: 'divSystemSettings',
+    divSecurity: 'divSystemSettings',
     divFirmware: 'divSystemSettings',
     divNetAdapter: 'divNetworkSettings',
     divHomeAssistant: 'divIntegrationSettings',
@@ -856,6 +857,7 @@ const ROUTE_LEAF_PARENT = {
 const ROUTE_SLUGS = {
     divHomePnl: 'dashboard',
     divSystemOptions: 'general',
+    divSecurity: 'security',
     divFirmware: 'firmware',
     divNetAdapter: 'connection',
     divHomeAssistant: 'home-assistant',
@@ -1091,7 +1093,7 @@ const uiAdvanced = {
 const BREADCRUMB_PARENT = {
     divSomfyMotors: 'sec-habitation', divSomfyGroups: 'sec-habitation', divSomfyRooms: 'sec-habitation', divSomfySchedules: 'sec-habitation',
     divHomeAssistant: 'sec-domotique', divMQTT: 'sec-domotique', divListener: 'sec-domotique',
-    divNetAdapter: 'sec-systeme', divTransceiverSettings: 'sec-systeme', divSystemOptions: 'sec-systeme', divFirmware: 'sec-systeme',
+    divNetAdapter: 'sec-systeme', divTransceiverSettings: 'sec-systeme', divSecurity: 'sec-systeme', divSystemOptions: 'sec-systeme', divFirmware: 'sec-systeme',
     divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings',
 };
 const SIDEBAR_OWNER = { divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings' };
@@ -1108,6 +1110,7 @@ const DOC_PAGES = {
     divNetAdapter: 'reseau/',
     divMQTT: 'reseau/parametres-mqtt/',
     divSystemOptions: 'general/',
+    divSecurity: 'general/',
     divFirmware: 'firmware/',
     divSettingsPnl: '',
 };

@@ -1746,6 +1746,7 @@ body.is-home-welcome .container {
 
 /* --- Pages Général et Appareil (#divSystemOptions, #divFirmware, maquette A2) : colonne d'identité, onglets, tuiles --- */
 #divSystemOptions.subtab-content,
+#divSecurity.subtab-content,
 #divFirmware.subtab-content,
 #divNetAdapter.subtab-content,
 #divHomeAssistant.subtab-content,
@@ -1764,6 +1765,7 @@ body.is-home-welcome .container {
     font-size: 16px;
 }
 #divSystemOptions [hidden],
+#divSecurity [hidden],
 #divFirmware [hidden],
 #divNetAdapter [hidden],
 #divHomeAssistant [hidden],
@@ -1776,6 +1778,7 @@ body.is-home-welcome .container {
 }
 /* Sans ça, le fond s'arrête sous la dernière tuile quand l'onglet affiché est court (mobile). */
 .container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divSystemOptions:not([style*="none"])),
+.container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divSecurity:not([style*="none"])),
 .container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divFirmware:not([style*="none"])),
 .container:has(#divConfigPnl:not([style*="none"]) > #divNetworkSettings:not([style*="none"]) > #divNetAdapter:not([style*="none"])),
 .container:has(#divConfigPnl:not([style*="none"]) > #divIntegrationSettings:not([style*="none"]) > :is(#divHomeAssistant, #divMQTT, #divListener):not([style*="none"])),
@@ -2223,17 +2226,19 @@ label.gen-row {
     height: 56px;
     font-size: 2.4em;
 }
-.gen-sec-foot {
+/* Page Sécurité, tuile Portée : inerte quand la protection est désactivée ; note Home Assistant. */
+#secScopeTile.is-off .gen-row { opacity: 0.55; }
+.sec-ha-note {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px;
-    margin-top: auto;
-    padding-top: 14px;
-    border-top: 1px solid var(--divider);
+    gap: 10px;
+    align-items: flex-start;
 }
-.gen-sec-foot .gen-tile-desc {
-    flex: 1 1 200px;
+.sec-ha-note svg {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin-top: 2px;
+    fill: currentColor;
 }
 .gen-pager {
     display: flex;

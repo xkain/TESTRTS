@@ -232,6 +232,7 @@
                 <div class="nav-section-title"><span class="nav-section-label" tr="TAB_SYSTEME"></span></div>
                 <a class="sub-nav-item" data-grpid="divNetAdapter"><svg class="nav-icon"><use href="#svg-tabReseau"></use></svg><span tr="TAB_NETWORK"></span></a>
                 <a class="sub-nav-item" data-grpid="divTransceiverSettings"><svg class="nav-icon"><use href="#svg-antenna"></use></svg><span tr="TAB_RADIO"></span></a>
+                <a class="sub-nav-item" data-grpid="divSecurity"><svg class="nav-icon"><use href="#svg-lock"></use></svg><span tr="GENERAL_TITLE_SECURITY"></span></a>
                 <a class="sub-nav-item" data-grpid="divSystemOptions"><svg class="nav-icon"><use href="#svg-tabSystem"></use></svg><span tr="SUBTAB_GENERAL"></span></a>
                 <a class="sub-nav-item" data-grpid="divFirmware"><svg class="nav-icon"><use href="#svg-navFirmware"></use></svg><span tr="SUBTAB_DEVICE"></span></a>
             </div>
@@ -284,6 +285,7 @@
                         <div class="set-sec" tr="TAB_SYSTEME"></div>
                         <a class="set-tile" data-grpid="divNetAdapter"><span class="set-tile-icon"><svg><use href="#svg-tabReseau"></use></svg></span><b tr="TAB_NETWORK"></b><span id="setValNet" class="set-tile-val" tr="SETTINGS_DESC_CONNECTION"></span></a>
                         <a class="set-tile" data-grpid="divTransceiverSettings"><span class="set-tile-icon"><svg><use href="#svg-antenna"></use></svg></span><b tr="TAB_RADIO"></b><span id="setValRadio" class="set-tile-val" tr="LANG_MODAL_ACTIVE"></span></a>
+                        <a class="set-tile" data-grpid="divSecurity"><span class="set-tile-icon"><svg><use href="#svg-lock"></use></svg></span><b tr="GENERAL_TITLE_SECURITY"></b><span class="set-tile-val" tr="SETTINGS_DESC_SECURITY"></span></a>
                         <a class="set-tile" data-grpid="divSystemOptions"><span class="set-tile-icon"><svg><use href="#svg-tabSystem"></use></svg></span><b tr="SUBTAB_GENERAL"></b><span class="set-tile-val" tr="SETTINGS_DESC_GENERAL"></span></a>
                         <a class="set-tile" data-grpid="divFirmware"><span class="set-tile-icon"><svg><use href="#svg-navFirmware"></use></svg></span><b tr="SUBTAB_DEVICE"></b><span class="set-tile-val set-fw-idle" tr="SETTINGS_DESC_FIRMWARE"></span><span class="set-tile-val set-fw-new" tr="FW_UPDATE_AVAILABLE"></span></a>
                     </div>
@@ -294,7 +296,7 @@
                 </div>
 
                 <div id="divSystemSettings">
-                    <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL"></span><span data-grpid="divFirmware" tr="SUBTAB_DEVICE"></span></div>
+                    <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL"></span><span data-grpid="divSecurity" tr="GENERAL_TITLE_SECURITY"></span><span data-grpid="divFirmware" tr="SUBTAB_DEVICE"></span></div>
                     <div id="divSystemOptions" class="subtab-content">
                         <div class="gen-layout">
                             <section class="hero">
@@ -313,7 +315,6 @@
                                                 <div><dt tr="GENERAL_TILE_LANG"></dt><dd id="genChipLang"></dd></div>
                                                 <div><dt tr="GENERAL_TIMEZONE"></dt><dd id="genChipTz"></dd></div>
                                                 <div><dt tr="GENERAL_THEME"></dt><dd id="genChipTheme"></dd></div>
-                                                <div><dt tr="GENERAL_TITLE_SECURITY"></dt><dd id="genChipSec"></dd></div>
                                             </dl>
                                         </div>
                                     </div>
@@ -324,11 +325,10 @@
                                 <nav id="genTabs" class="gen-tabs" role="tablist">
                                     <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="GENERAL_TITLE_REGION"></button>
                                     <button type="button" class="gen-tab" role="tab" data-tab="1" tr="GENERAL_TITLE_LOOK"></button>
-                                    <button type="button" class="gen-tab" role="tab" data-tab="2" tr="GENERAL_TITLE_SECURITY"></button>
                                 </nav>
                                 <div id="genPanels" class="gen-panels">
                                     <div class="gen-grid" role="tabpanel" data-tab="0">
-                                        <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_REGION"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i><i></i></span></header>
+                                        <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_REGION"></h2><span class="gen-sec-mini" aria-hidden="true"><i class="on"></i><i></i></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="GENERAL_TILE_LANG"></h3>
                                             <div id="currentLangDisplay" class="gen-tile-value"></div>
@@ -379,7 +379,7 @@
                                     </div>
 
                                     <div class="gen-grid" role="tabpanel" data-tab="1" hidden>
-                                        <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_LOOK"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i></span></header>
+                                        <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_LOOK"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="GENERAL_DISPLAY_MODE"></h3>
                                             <div class="gen-seg dirty-target">
@@ -461,23 +461,50 @@
                                             </div>
                                         </div>
                                     </div>
-
-                                    <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
-                                        <header class="gen-sec-head"><h2 tr="GENERAL_TITLE_SECURITY"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i class="on"></i></span></header>
-                                        <div id="genSecTile" class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="GENERAL_SECURITY"></h3>
-                                            <div id="genSecBody" class="gen-sec-body"></div>
-                                            <div class="gen-sec-foot">
-                                                <span class="gen-tile-desc" tr="GENERAL_SECURITY_SEPARATE"></span>
-                                                <button id="btnGenSecApply" type="button" class="gen-btn gen-btn-primary" onclick="general.saveSecurity();" disabled><svg><use href="#svg-lock"></use></svg><span tr="BT_APPLY"></span></button>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                                 <nav id="genPager" class="gen-pager" hidden>
                                     <button type="button" id="btnGenPrev" class="gen-btn gen-pager-btn"><svg><use href="#svg-arrowLeft"></use></svg><span></span></button>
                                     <button type="button" id="btnGenNext" class="gen-btn gen-pager-btn gen-pager-next"><span></span><svg><use href="#svg-arrowRight"></use></svg></button>
                                 </nav>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="divSecurity" class="subtab-content" style="display:none;">
+                        <div class="gen-layout">
+                            <section class="hero">
+                                <span class="hero-media"><svg><use href="#svg-lock"></use></svg></span>
+                                <div class="hero-head">
+                                    <span class="hero-eyebrow" tr="TAB_SYSTEME"></span>
+                                    <h2 class="hero-title" tr="GENERAL_TITLE_SECURITY"></h2>
+                                    <span id="secHeroSub" class="hero-sub"></span>
+                                    <p class="hero-desc" tr="SECURITY_PAGE_DESC"></p>
+                                </div>
+                                <div class="hero-data">
+                                    <div class="hero-fold">
+                                        <button type="button" class="hero-fold-btn" onclick="this.parentNode.classList.toggle('is-open');"><b tr="DETAILS"></b><span id="secHeroSum"></span><svg><use href="#svg-arrowRight"></use></svg></button>
+                                        <div class="hero-fold-body">
+                                            <dl class="hero-facts">
+                                                <div><dt tr="SECURITY_FACT_MODE"></dt><dd id="secFactMode"></dd></div>
+                                                <div><dt tr="SECURITY_TILE_SCOPE"></dt><dd id="secFactScope"></dd></div>
+                                                <div><dt tr="TAB_DASHBOARD"></dt><dd id="secFactDash"></dd></div>
+                                                <div><dt tr="MARKETP"></dt><dd id="secFactHa"></dd></div>
+                                            </dl>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                            <div class="gen-body">
+                                <div class="gen-grid">
+                                    <div id="genSecTile" class="gen-tile">
+                                        <h3 class="gen-tile-title" tr="SECURITY_TILE_MODE"></h3>
+                                        <div id="genSecBody" class="gen-sec-body"></div>
+                                    </div>
+                                    <div id="secScopeTile" class="gen-tile">
+                                        <h3 class="gen-tile-title" tr="SECURITY_TILE_SCOPE"></h3>
+                                        <div id="secScopeBody" class="gen-sec-body"></div>
+                                        <p class="gen-tile-desc is-info sec-ha-note"><svg><use href="#svg-homeAssistant0"></use></svg><span tr="SECURITY_HA_NOTE"></span></p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -61,7 +61,34 @@ class General {
         ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateDirtyCount(), 0)));
         this._bindGeo();
         this._saveBar = new SaveBar(page, { onSave: () => this.setGeneral(), onRevert: () => this.revertGeneral() });
+        // Page Sécurité : sa propre barre, comme les autres pages ; Annuler redessine depuis l'état enregistré.
+        const sec = get('divSecurity');
+        ['input', 'change'].forEach(evt => sec.addEventListener(evt, () => setTimeout(() => this.updateSecurityDirty(), 0)));
+        this._secBar = new SaveBar(sec, { onSave: () => this.saveSecurity(), onRevert: () => this.renderSecurityTile() });
         this.renderSecurityTile();
+    }
+    // Différences entre la saisie et l'état enregistré ; les secrets ne s'affichent jamais en clair.
+    updateSecurityDirty() {
+        if (!this._secBar) return;
+        const sec = get('divSecurity');
+        sec.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+        const diffs = [], mark = (el, d) => { if (el) el.classList.add('is-dirty'); diffs.push(d); };
+        const saved = this._currentSecurityType || 0;
+        const radio = sec.querySelector('input[name="secTypeGroup"]:checked');
+        const type = radio ? parseInt(radio.value, 10) : saved;
+        if (type !== saved) mark(radio, { label: tr('SECURITY_TILE_MODE'), from: this._securityLabel(saved), to: this._securityLabel(type) });
+        if (type === 1 && secretPinValue(sec.querySelectorAll('#divPopupPin .pin-digit')).length) mark(sec.querySelector('.pin-digit-row'), { label: tr('SECURITY_PIN_CODE'), from: '', to: '', secret: true });
+        if (type === 2) {
+            const user = get('fldUsername'), savedUser = (this._securityData && this._securityData.username) || '';
+            if (user && user.value !== savedUser) mark(user, { label: tr('SECURITY_USERNAME'), from: savedUser, to: user.value });
+            const pwd = get('fldPassword'), again = get('fldRenterPassword');
+            if ((pwd && secretValue(pwd)) || (again && secretValue(again))) mark(pwd, { label: tr('SECURITY_PASSWORD'), from: '', to: '', secret: true });
+        }
+        const cb = get('cbSecureConfigOnly'), savedCfg = !!(this._securityData && this._securityData.permissions && this._securityData.permissions.configOnly);
+        if (type !== 0 && cb && cb.checked !== savedCfg) mark(cb, { label: tr('SECURITY_SECURE_CONFIG_ONLY'), from: tr(savedCfg ? 'BT_YES' : 'BT_NO'), to: tr(cb.checked ? 'BT_YES' : 'BT_NO') });
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        this._secBar.update(diffs);
     }
     showGeneralTab(i) {
         this._tabs.show(i);
@@ -112,10 +139,9 @@ class General {
         _recomputeIsDirty();
         if (!isDirty) document.body.classList.remove('dirty-alerted');
         this._saveBar.update(diffs);
-        get('btnGenSecApply').disabled = !get('genSecTile').querySelector('.is-dirty');
     }
     _clearPageDirty() {
-        const sec = get('genSecTile');
+        const sec = get('divSecurity');
         get('divSystemSettings').querySelectorAll('.is-dirty').forEach(el => { if (!sec.contains(el)) el.classList.remove('is-dirty'); });
         _recomputeIsDirty();
         if (!isDirty) document.body.classList.remove('dirty-alerted');
@@ -150,8 +176,7 @@ class General {
         set('genChipTz', tz && tz.selectedIndex >= 0 ? tz.options[tz.selectedIndex].text : '');
         const theme = document.querySelector('input[name="genTheme"]:checked');
         set('genChipTheme', theme ? theme.nextElementSibling.textContent : '');
-        set('genChipSec', this._securityLabel(this._currentSecurityType || 0));
-        set('genHeroSum', ['genChipLang', 'genChipTz', 'genChipTheme', 'genChipSec'].map(id => get(id)?.textContent).filter(Boolean).join(' · '));
+        set('genHeroSum', ['genChipLang', 'genChipTz', 'genChipTheme'].map(id => get(id)?.textContent).filter(Boolean).join(' · '));
     }
     readAccent() {
         const v = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim();
@@ -1819,8 +1844,8 @@ class General {
     // rendu, la confirmation comprise : le gestionnaire de mots de passe du navigateur peut repeupler
     // un champ juste après l'insertion (d'où aussi les attributs autocomplete).
     renderSecurityTile() {
-        const tile = get('genSecTile'), body = get('genSecBody');
-        if (!tile || !body) return;
+        const tile = get('genSecTile'), body = get('genSecBody'), scope = get('secScopeBody');
+        if (!tile || !body || !scope) return;
         const currentType = this._currentSecurityType || 0;
         const radio = (v, key) => `<label><input type="radio" name="secTypeGroup" value="${v}" ${currentType === v ? 'checked' : ''}><span>${tr(key)}</span></label>`;
         body.innerHTML = `
@@ -1860,9 +1885,8 @@ class General {
         </div>
         </div>
         <p id="secPasswordHint" class="gen-tile-desc"></p>
-        </div>
-
-        <div id="genSecConfigOnly" class="gen-row dirty-target">
+        </div>`;
+        scope.innerHTML = `        <div id="genSecConfigOnly" class="gen-row dirty-target">
         <span class="gen-row-text"><b>${tr('SECURITY_SECURE_CONFIG_ONLY')}</b><span>${tr('SECURITY_SECURE_CONFIG_DESC')}</span></span>
         <span class="gen-seg gen-seg-bool">
         <input id="cbSecureConfigOnly" name="hardwired" type="checkbox" data-bind="security.permissions.configOnly">
@@ -1871,7 +1895,9 @@ class General {
         </span>
         </div>`;
 
-        ui.toElement(body, { security: this._securityData || { username: '', permissions: { configOnly: false } } });
+        const secData = { security: this._securityData || { username: '', permissions: { configOnly: false } } };
+        ui.toElement(body, secData);
+        ui.toElement(scope, secData);
         initSecretPinGroup(body.querySelectorAll('#divPopupPin .pin-digit'), this._hasPin);
         initSecretField(body.querySelector('#fldPassword'), this._hasPassword);
         initSecretField(body.querySelector('#fldRenterPassword'), false);
@@ -1892,7 +1918,9 @@ class General {
             const val = parseInt(body.querySelector('input[name="secTypeGroup"]:checked')?.value || '0', 10);
             body.querySelector('#divPopupPin').hidden = val !== 1;
             body.querySelector('#divPopupPassword').hidden = val !== 2;
-            body.querySelector('#genSecConfigOnly').hidden = val === 0;
+            // Sans protection, la portée n'a pas d'objet : la ligne reste visible mais inerte.
+            scope.querySelector('#cbSecureConfigOnly').disabled = val === 0;
+            get('secScopeTile').classList.toggle('is-off', val === 0);
             const desc = body.querySelector('#secTypeDesc');
             desc.textContent = tr(SEC_DESC[val]);
             desc.classList.toggle('is-warning', val === 0);
@@ -1913,10 +1941,31 @@ class General {
                 if (e.key === 'Backspace' && e.target.value.length === 0 && index > 0) pinInputs[index - 1].focus();
             });
         });
-        clearDirty(tile);
+        clearDirty(get('divSecurity'));
+        this._renderSecurityHero();
+        this.updateSecurityDirty();
+    }
+    // Héros de la page Sécurité : l'état ENREGISTRÉ sur l'appareil, jamais la saisie en cours.
+    _renderSecurityHero() {
+        const type = this._currentSecurityType || 0;
+        const cfgOnly = !!(this._securityData && this._securityData.permissions && this._securityData.permissions.configOnly);
+        const set = (id, v) => { const el = get(id); if (el) el.textContent = v; };
+        const mode = this._securityLabel(type);
+        const scope = type ? tr(cfgOnly ? 'SECURITY_SCOPE_CONFIG' : 'SECURITY_SCOPE_ALL') : '—';
+        const sub = get('secHeroSub');
+        if (sub) {
+            sub.textContent = type ? tr('SECURITY_STATE_ON').replace('{MODE}', mode).replace('{SCOPE}', scope) : tr('SECURITY_STATE_NONE');
+            sub.setAttribute('data-tone', type ? 'ok' : 'warn');
+        }
+        set('secFactMode', mode);
+        set('secFactScope', scope);
+        set('secFactDash', tr(!type || cfgOnly ? 'SECURITY_DASH_FREE' : 'SECURITY_DASH_LOCKED'));
+        set('secFactHa', tr(type ? 'SECURITY_HA_SAME' : 'SECURITY_HA_NONE'));
+        set('secHeroSum', type ? `${mode} · ${scope}` : mode);
     }
     saveSecurity() {
-        const popupContent = get('genSecBody');
+        // Les deux tuiles (mode, portée) : le mode et ses secrets d'un côté, la case de portée de l'autre.
+        const popupContent = get('divSecurity');
         let s;
         let finalType = 0;
         let pinInputs = [];
