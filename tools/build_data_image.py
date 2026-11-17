@@ -251,8 +251,11 @@ def minify_css(text: str) -> str:
     # 2. Remplacer les retours à la ligne et tabulations par des espaces simples
     text = re.sub(r"\s+", " ", text)
 
-    # 3. Supprimer les espaces inutiles autour des caractères de structure CSS
-    text = re.sub(r"\s*([:{};,])\s*", r"\1", text)
+    # 3. Supprimer les espaces inutiles autour des caractères de structure CSS.
+    # Jamais l'espace AVANT un ':' : dans un sélecteur c'est un combinateur descendant, et
+    # « .a :is(.b) » collé en « .a:is(.b) » ne vise plus du tout les mêmes éléments.
+    text = re.sub(r"\s*([{};,])\s*", r"\1", text)
+    text = re.sub(r":\s+", ":", text)
 
     # 4. ASTUCE POUR FIREFOX : On isole les règles -webkit- en réinjectant un espace
     # après chaque fermeture d'accolade qui les concerne pour casser le bloc unique.
