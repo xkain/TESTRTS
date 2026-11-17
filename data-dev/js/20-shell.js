@@ -1039,12 +1039,12 @@ const mobileNav = {
         document.querySelectorAll('#mobileNav [data-tab-root]').forEach(b =>
             b.addEventListener('click', () => this.goTab(b.getAttribute('data-tab-root'))));
     },
-    // Tuiles des listes du Menu : « n sur MAX », relu à chaque ouverture du Menu.
+    // Tuiles des listes du Menu : « n/MAX », relu à chaque ouverture du Menu.
     syncMenu() {
         if (typeof somfy === 'undefined') return;
         document.querySelectorAll('#divSettingsPnl [data-cap]').forEach(el => {
             const kind = el.getAttribute('data-cap'), n = somfy._cfgItems(kind).length, max = somfy._cfgConf(kind).max;
-            el.textContent = max ? `${n} ${tr('LIST_CAP_OF').replace('{MAX}', max)}` : `${n}`;
+            el.textContent = max ? `${n}/${max}` : `${n}`;
         });
     },
     addMenu() {

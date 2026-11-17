@@ -3888,14 +3888,40 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 /* =======================================================================
  *  FICHE D'ÉTAT DE L'APPAREIL (wifi.openStatus, 50-wifi.js)
  *  ======================================================================= */
+/* Couleurs des fenêtres A2 : corps --surface, encarts --panel ; en-tête dans la peau du hero, logo
+   et pastille repris de la carte du Menu (.set-id-*, main.css). */
 .dstat-sheet .message-content {
-    background: var(--panel);
+    border-color: var(--border);
+    background: var(--surface);
     color: var(--text);
     text-align: left;
 }
-.dstat-sheet .message-content > :not(.modalHeader):not(.modalHeader-handle) {
+.dstat-sheet .message-content > :not(.dstat-head) {
     margin-left: 16px;
     margin-right: 16px;
+}
+.dstat-head {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 16px;
+}
+.dstat-head .modalHeader-handle {
+    height: 20px;
+    margin: -10px 0 -4px;
+}
+.dstat-head .modalHeader-handle::after {
+    background: var(--border);
+}
+.dstat-head-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.dstat-head-top b {
+    font-size: 17px;
 }
 .dstat-alert {
     margin: 0 0 12px;
@@ -3919,7 +3945,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     margin-bottom: 12px;
     padding: 12px 14px;
     border-radius: var(--r-4);
-    background: var(--surface);
+    background: var(--panel);
 }
 .dstat-block h4 {
     margin: 0 0 4px;
@@ -3933,8 +3959,11 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    padding: 5px 0;
+    padding: 9px 0;
     font-size: 14px;
+}
+.dstat-kv + .dstat-kv {
+    border-top: 1px solid var(--divider);
 }
 .dstat-kv span {
     color: var(--text-3);
@@ -3947,10 +3976,25 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     white-space: nowrap;
 }
 .dstat-help {
-    width: auto;
-    margin-bottom: 16px;
-    background: var(--surface);
-    border: 0;
-    text-transform: none;
-    letter-spacing: normal;
+    display: flex;
+    align-items: center;
+    align-self: center;
+    gap: 6px;
+    margin: 4px 0 18px;
+    padding: 6px 2px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+    cursor: pointer;
+}
+.dstat-help svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+.dstat-help svg:last-child {
+    width: 12px;
+    height: 12px;
+    opacity: .8;
 }

@@ -353,11 +353,20 @@ class Wifi {
     }
     updateNetBanner(type) {
         const st = this.netBannerState(type);
-        // Tuile d'état et tuile Réseau de l'écran Réglages : même calcul que le micro-bandeau.
-        const tile = get('setStateTile');
-        if (tile) tile.dataset.tone = st ? st.tone : 'ok';
+        // Carte d'état et tuile Réseau du Menu : même calcul que le micro-bandeau.
         const label = this.netLabel(type);
-        if (get('setStateSub')) get('setStateSub').textContent = label;
+        const card = get('setStateTile');
+        if (card) {
+            card.dataset.tone = st ? st.tone : 'ok';
+            get('setStateMsg').hidden = !st;
+            if (st) get('setStateMsg').textContent = st.text;
+            get('setStateHost').textContent = window.__currentHostname || 'ESPSomfy RTS';
+            get('setStateAddr').textContent = location.hostname;
+            get('setStateNet').textContent = label;
+            const onWifi = this._onWifi(type);
+            get('setStateSigBox').hidden = !onWifi;
+            if (onWifi) get('setStateSig').textContent = `${this._wifiRssi} ${tr('UNIT_DBM')}`;
+        }
         const v = get('setValNet');
         if (v) {
             v.removeAttribute('tr');
@@ -375,19 +384,29 @@ class Wifi {
     }
     // Fiche d'état (tuile d'état de Réglages) : ce que l'en-tête ne montre plus. Tout est déjà
     // dans la page ; l'adresse est celle par laquelle le téléphone joint l'appareil.
+    _onWifi(type) {
+        return this._wifiLinkUp && type !== 'hotspot' && type !== 'poe' && this.netLabel(type) !== tr('CONNEXION_ETHERNET');
+    }
     openStatus() {
         const type = this._netType || (this.isHotspot ? 'hotspot' : 'wifi');
         const st = this.netBannerState(type);
         const txt = (sel) => document.querySelector(sel)?.textContent.trim() || '--';
         const kv = (k, v) => `<div class="dstat-kv"><span>${tr(k)}</span><b>${escHtml(String(v))}</b></div>`;
-        const onWifi = this._wifiLinkUp && this.netLabel(type) !== tr('CONNEXION_ETHERNET') && type !== 'poe';
+        const host = window.__currentHostname || 'ESPSomfy RTS';
         const div = document.createElement('div');
         div.className = 'modal-overlay dstat-sheet';
-        div.innerHTML = `<div class="message-content">${modalHeader('MQTT_P_STATUS', 'svg-logo')}
+        div.innerHTML = `<div class="message-content">
+            <div class="dstat-head hero-skin" data-tone="${st ? st.tone : 'ok'}">
+                <div class="modalHeader-handle" onclick="handleMobileDismiss(this)"></div>
+                <div class="dstat-head-top"><span class="set-id-logo"><svg><use href="#svg-logo"></use></svg></span>
+                    <span class="set-state-text"><b>${tr('MQTT_P_STATUS')}</b><span class="set-tile-val">${escHtml([host, document.querySelector('.fw-version')?.textContent.trim()].filter(Boolean).join(' · '))}</span></span>
+                    <button type="button" class="genmod-close" aria-label="${tr('BT_CLOSE')}" onclick="requestCloseOverlay(this.closest('.modal-overlay'));"><svg><use href="#svg-close"></use></svg></button></div>
+                <span class="set-id-pill">${tr('NET_STATUS_UP')}</span>
+            </div>
             ${st ? `<p class="dstat-alert" data-tone="${st.tone}">${escHtml(st.text)}</p>` : ''}
             <div class="dstat-block"><h4>${tr('SUBTAB_CONNECTION')}</h4>
                 ${kv('TAB_NETWORK', this.netLabel(type))}
-                ${onWifi && type !== 'hotspot' ? kv('M_SIGNAL', `${this._wifiRssi} ${tr('UNIT_DBM')}`) : ''}
+                ${this._onWifi(type) ? kv('M_SIGNAL', `${this._wifiRssi} ${tr('UNIT_DBM')}`) : ''}
                 ${kv('RADIO_ADDRESS', location.hostname)}
             </div>
             <div class="dstat-block">
@@ -395,7 +414,7 @@ class Wifi {
                 ${kv('FW_DIAG_RESET', txt('.info-reset'))}
                 ${kv('FIRMWARE_MT_INSTALLED', txt('.fw-version'))}
             </div>
-            <button type="button" class="settings-row dstat-help" onclick="openPageHelp();"><span class="uniblocSvg-F"><svg><use href="#svg-navHelp"></use></svg></span><span class="settings-row-text"><b>${tr('HELP_THIS_PAGE')}</b></span><svg class="settings-row-chev"><use href="#svg-linkOut"></use></svg></button>
+            <a class="dstat-help" onclick="openPageHelp();"><svg><use href="#svg-navHelp"></use></svg>${tr('HELP_THIS_PAGE')}<svg><use href="#svg-linkOut"></use></svg></a>
         </div>`;
         shOverlay(div);
     }

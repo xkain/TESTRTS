@@ -4389,13 +4389,16 @@ div.frame-pulses {
         animation: slideUpFooter 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards;
     }
 }
+.container:has(#divConfigPnl:not([style*="none"]) > #divSettingsPnl:not([style*="none"])) {
+    background: var(--bg);
+}
 #divSettingsPnl {
     max-width: 720px;
     margin: 0 auto;
-    padding: 14px 14px 24px;
+    padding: 14px 14px 96px;
     box-sizing: border-box;
 }
-/* Menu (mobile) : grille de tuiles résumé ; le Tableau de bord en tête, puis les trois sections
+/* Menu (mobile) : grille de tuiles résumé ; la carte d'état en tête, puis les trois sections
    de la barre latérale sous un intertitre chacune. */
 .set-grid {
     display: grid;
@@ -4432,21 +4435,13 @@ div.frame-pulses {
     margin-top: 6px;
     font-size: 15px;
 }
-.set-dash {
+.set-wide {
     grid-column: 1 / -1;
     flex-direction: row;
     align-items: center;
     gap: 12px;
-    background: var(--on-fill);
-    color: var(--on-fill-text);
 }
-.set-dash .set-tile-icon {
-    background: rgba(255, 255, 255, 0.14);
-    color: inherit;
-}
-.set-dash b { margin: 0; }
-.set-dash .set-tile-val { color: inherit; opacity: 0.8; }
-.set-dash .set-state-chev { fill: currentColor; opacity: 0.8; }
+.set-wide b { margin: 0; }
 .set-tile-icon {
     display: grid;
     place-items: center;
@@ -4482,39 +4477,119 @@ body.fw-update .set-fw-new {
     color: var(--color-danger);
     font-weight: 700;
 }
-.set-state {
-    grid-column: 1 / -1;
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-}
-.set-state b {
-    margin: 0;
-}
 .set-state-text {
     display: flex;
     flex: 1;
     flex-direction: column;
     min-width: 0;
 }
-.set-state-dot {
+/* Carte d'identité (#setStateTile), dans la peau du hero. Logo et pastille servent aussi à l'en-tête
+   de la fiche d'état (.dstat-head, overlays.css). */
+.set-id {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--r-5);
+    text-decoration: none;
+    cursor: pointer;
+}
+.set-id [hidden] {
+    display: none;
+}
+.set-id-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.set-id-top b {
+    font-size: 17px;
+}
+.set-id-top .fw-version:not(:empty)::after {
+    content: " · ";
+}
+.set-id-logo {
+    display: grid;
     flex: none;
-    width: 10px;
-    height: 10px;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--r-3);
+    background: var(--surface);
+}
+.set-id-logo svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+.set-id-pill {
+    display: inline-flex;
+    flex: none;
+    align-self: flex-start;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ok);
+}
+.set-id-top .set-id-pill {
+    align-self: center;
+}
+.set-id-pill::before {
+    content: "";
+    width: 8px;
+    height: 8px;
     border-radius: var(--radius-full);
-    background: var(--ok);
-    box-shadow: 0 0 0 4px var(--ok-bg);
+    background: currentColor;
 }
-.set-state[data-tone="warn"] {
-    background: var(--warn-bg);
+:is(.set-id, .dstat-head)[data-tone="warn"] .set-id-pill {
+    color: var(--warn);
 }
-.set-state[data-tone="warn"] .set-state-dot {
-    background: var(--warn);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--warn) 20%, transparent);
+:is(.set-id, .dstat-head)[data-tone="info"] .set-id-pill {
+    color: var(--info);
 }
-.set-state[data-tone="info"] .set-state-dot {
-    background: var(--accent);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+.set-id-msg {
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--warn);
+}
+.set-id[data-tone="info"] .set-id-msg {
+    color: var(--text);
+}
+.set-id-facts {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 1px;
+    overflow: hidden;
+    border-radius: var(--r-3);
+    background: var(--divider);
+}
+.set-id-facts > span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: 8px 10px;
+    background: var(--sunken);
+}
+.set-id-facts small,
+.set-id-facts b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.set-id-facts small {
+    font-size: 11px;
+    color: var(--text-3);
+}
+.set-id-facts b {
+    font-size: 13px;
 }
 .set-state-chev {
     flex: none;
@@ -5035,18 +5110,15 @@ body.fw-update .set-fw-new {
 .uniRow:focus-within .field-pen { opacity: 1; }
 .uniRow:focus-within .field-pen path { fill: var(--color-accent); }
 .uniRow:has(> .field-pen) .inputAndSelect:focus { outline: none; }
-:is(#divSettingsPnl) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
-:is(#divSettingsPnl) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
-:is(#divSettingsPnl) { padding-bottom: 70px; }
-body:has(.inst-overlay, .modal-overlay) :is(#divSettingsPnl) > .button-container-footerHtml { display: none; }
+#divSettingsPnl > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--divider); box-shadow: none; }
+#divSettingsPnl > .button-container-footerHtml button { width: auto; min-width: 160px; height: 46px; flex: none; margin: 0; padding: 0 18px; border: 0; border-radius: var(--r-2); background: var(--on-fill); color: var(--on-fill-text); font-size: 15px; font-weight: 700; text-transform: none; letter-spacing: normal; }
+#divSettingsPnl > .button-container-footerHtml button:hover { background: var(--on-fill); opacity: .9; }
+.set-help-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 2px; font-size: 13.5px; font-weight: 600; color: var(--accent); text-decoration: none; cursor: pointer; }
+.set-help-link svg { width: 16px; height: 16px; fill: currentColor; }
+.set-help-link svg:last-child { width: 12px; height: 12px; opacity: .8; }
+body:has(.inst-overlay, .modal-overlay) #divSettingsPnl > .button-container-footerHtml { display: none; }
 @media (min-width: 768px) {
-    :is(#divSettingsPnl) > .button-container-footerHtml { left: var(--sidebar-width); }
-}
-@media (max-width: 767px) {
-    /* Au fil de la liste : fixé en bas, il recouvrirait la barre d'onglets. */
-    :is(#divSettingsPnl) > .button-container-footerHtml { position: static; z-index: auto; justify-content: center; padding: 20px 0 0; gap: 10px; transform: none; animation: none; visibility: visible; background: none; border: 0; box-shadow: none; }
-    :is(#divSettingsPnl) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; }
-    :is(#divSettingsPnl) { padding-bottom: 24px; }
+    #divSettingsPnl > .button-container-footerHtml { left: var(--sidebar-width); }
 }
 /* --- Page Connexion (#divNetAdapter) sur le gabarit Général : tête d'état, types, résumé --- */
 #divNetAdapter .net-off {
