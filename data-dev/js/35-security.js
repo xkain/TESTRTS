@@ -208,6 +208,8 @@ class Security {
                     // du contenu de langue récupéré par le relais navigateur (Phase 4 i18n), pour
                     // éviter une dérive avec une branche main ayant évolué depuis ce firmware.
                     window.__fwVersionTag = ctx.version;
+                    // Comparé au meta.serverId d'une sauvegarde : « cet appareil » ou un autre.
+                    window.__serverId = ctx.serverId;
                     // Langue embarquée d'usine pour cet environnement de build (fr sur BOX, en
                     // sinon) -- protégée contre la suppression dans le catalogue (cf.
                     // renderLangCatalog), à la place d'un "en" en dur qui ne serait plus forcément

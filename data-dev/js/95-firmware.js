@@ -125,36 +125,105 @@ class Firmware {
     }
 
     restore(o = {}) {
-        //[id, bind, texte, checked]
-        const opts = [
-            ['cbRestoreShades', 'shades', 'RESTORE_DEVICES_GROUPS', 1],
-            ['cbRestoreRepeaters', 'repeaters', 'RESTORE_REPEATERS', 0],
-            ['cbRestoreListeners', 'listeners', 'RESTORE_LISTENERS', 0],
-            ['cbRestoreSystem', 'settings', 'RESTORE_SYSTEM_SETTINGS', 0],
-            ['cbRestoreNetwork', 'network', 'RESTORE_NETWORK_SETTINGS', 0],
-            ['cbRestoreMQTT', 'mqtt', 'RESTORE_MQTT_SETTINGS', 0],
-            ['cbRestoreTransceiver', 'transceiver', 'RESTORE_RADIO_SETTINGS', 0]
-        ];
-        // Migration (assistant de mise en service) : tout précocher sauf le réseau, que
-        // l'assistant configure juste après -- le connType d'un autre matériel piégerait l'appareil.
-        if (o.migrate) opts.forEach(x => { if (x[1] !== 'network') x[3] = 1; });
-        const checks = opts.map(o => `
-        <label class="genmod-check"><input id="${o[0]}" type="checkbox" data-bind="${o[1]}" ${o[3] ? 'checked' : ''}><span>${tr(o[2])}</span></label>`).join('');
+        this._rstMigrate = !!o.migrate;
+        // skin sans data-obj connu : peau du hero à la teinte neutre de la page Maintenance.
         const div = this.createFileUploader('/restore', {
-            titleKey: 'RESTORE_TITLE', descKey: 'RESTORE_DESC', icon: 'svg-restore',
+            titleKey: 'RESTORE_TITLE', descKey: 'RESTORE_DESC', icon: 'svg-restore', skin: 'fw',
             stateKey: tr('RESTORE_STATE_FILE'), stateValue: '—',
             sectionKey: 'RESTORE_SECTION', hintKey: 'RESTORE_CONFIRM_SUB',
             afterDrop: `
-            <div class="icon-pack-label"><span>${tr('RESTORE_WHAT')}</span><span id="restoreCount"></span></div>
-            <div class="genmod-checks" id="jsUniRestore">${checks}</div>`
+            <div id="rstIntro" class="genmod-note is-info"><svg><use href="#svg-info"></use></svg><span><b>${tr('RESTORE_INTRO_TITLE')}</b>${tr('RESTORE_INTRO')}</span></div>
+            <div id="rstBody" class="genmod-form"></div>`
         });
-        const count = () => {
-            const all = div.querySelectorAll('#jsUniRestore input');
-            div.querySelector('#restoreCount').textContent = tr('RESTORE_COUNT').replace('%1', [...all].filter(c => c.checked).length).replace('%2', all.length);
-        };
-        div.querySelector('#jsUniRestore').addEventListener('change', count);
-        count();
+        div.querySelector('#rstBody').addEventListener('change', () => this.syncRestore(div));
+        const btn = div.querySelector('#btnUploadFile');
+        btn.textContent = tr('BT_RESTORE');
+        btn.disabled = true;
         shOverlay(div);
+    }
+    // Le fichier est lu ici, avant tout envoi : une sauvegarde v3 (NDJSON) dit d'où elle vient et ce
+    // qu'elle contient. L'ancien format n'est pas décodé : seul son numéro de génération est lu.
+    readBackup(file) {
+        const r = new FileReader();
+        r.onload = () => this.renderRestore(file, String(r.result));
+        r.readAsText(file.slice(0, 65537));
+    }
+    renderRestore(file, txt) {
+        const w = get('divUploadFile'), body = w && w.querySelector('#rstBody');
+        if (!body) return;
+        const h = escHtml;
+        const f = { shade: [], group: [], room: [], schedule: [], repeater: [], listener: [] };
+        const old = txt[0] !== '{';
+        if (!old) txt.split('\n').forEach(l => {
+            try { const x = JSON.parse(l); if (Array.isArray(f[x.rec])) f[x.rec].push(x); else f[x.rec] = x; } catch (e) { }
+        });
+        const meta = f.meta;
+        if (!old && !meta) return ui.errorMessage(tr('MSG_ALERT'), tr('ERR_INVALID_FILE_BACKUP'));
+        const s = f.settings || {}, net = f.net || {}, mq = f.mqtt || {}, rd = f.radio || {};
+        const same = !old && meta.serverId === window.__serverId;
+        const profile = get('divContainer').getAttribute('data-hardwareprofile') || '';
+        const otherBoard = !old && meta.profile && meta.profile !== profile;
+        const d = !old && new Date(meta.created), date = d && d.getFullYear() > 2020 ? d.toLocaleDateString() : '';
+        const cur = [(somfy.shades || []).length, (somfy.groups || []).length, _rooms.filter(r => r.roomId).length,
+            (somfy.schedules || []).length, (somfy.repeaters || []).length, (somfy.listeners || []).length];
+        const fil = [f.shade.length, f.group.length, f.room.length, f.schedule.length, f.repeater.length, f.listener.length];
+        const diff = i => tr('RESTORE_DIFF').replace('%1', fil[i]).replace('%2', cur[i]);
+        const emptied = i => !fil[i] && cur[i] && [tr('RESTORE_EMPTIED').replace('%s', cur[i]), 'is-warn'];
+        const names = new Set(f.schedule.map(x => x.name));
+        const lost = (somfy.schedules || []).filter(x => !names.has(x.name)).map(x => h(x.name));
+        const conn = [, 'CONNEXION_WIFI', 'CONNEXION_ETHERNET', 'CONNEXION_ETHERNET'][net.connType];
+        const rows = [
+            ['shades', 'RESTORE_DEVICES_GROUPS', [
+                !old && tr('RESTORE_DEVICES_DIFF').replace(/%(\d)/g, (m, i) => i < 4 ? fil[i - 1] : cur[i - 4]),
+                tr('RESTORE_ROLLING')]],
+            ['', 'SUBTAB_SCHEDULES', [
+                !old && diff(3),
+                !old && lost.length && [tr('RESTORE_SCHED_LOST').replace('%s', lost.join(', ')), 'is-warn'],
+                [tr('RESTORE_SCHED_DEP'), 'rst-dep-note']]],
+            ['repeaters', 'RESTORE_REPEATERS', [!old && diff(4), !old && emptied(4)]],
+            ['listeners', 'RESTORE_LISTENERS', [!old && diff(5), !old && emptied(5)]],
+            ['settings', 'RESTORE_SYSTEM_SETTINGS', [!old && tr('RESTORE_SYSTEM_SUM').replace('%s', `<em>${h(s.hostname)}</em>`)]],
+            ['network', 'RESTORE_NETWORK_SETTINGS', [
+                !old && conn && `${tr(conn)} · ${net.dhcp ? 'DHCP' : tr('RESTORE_NET_FIXED').replace('%s', h(net.ip))}`,
+                !old && !same && net.connType > 1 && [tr('RESTORE_ETH_IGNORED'), 'is-info']]],
+            ['mqtt', 'RESTORE_MQTT_SETTINGS', [!old && (mq.enabled ? tr('RESTORE_MQTT_SUM').replace('%s', h(`${mq.hostname}:${mq.port}`)) : tr('IS_DISABLED'))]],
+            ['transceiver', 'RESTORE_RADIO_SETTINGS', [
+                !old && rd.frequency && `${(+rd.frequency).fmt('#,##0.00')} ${tr('UNIT_MHZ')}`,
+                otherBoard && [tr('RESTORE_RADIO_BOARD').replace('%s', h(tr(meta.profile))), 'is-warn'],
+                old && parseInt(txt) < 25 && [tr('RESTORE_OLD_RADIO'), 'is-warn']]]
+        ];
+        // Migration (assistant de mise en service) : tout sauf le réseau, que l'assistant configure
+        // juste après -- le connType d'un autre matériel piégerait l'appareil.
+        const on = b => b === 'shades' || (this._rstMigrate && b !== 'network');
+        const seg = (b, c) => `<span class="gen-seg gen-seg-bool"><input type="checkbox" ${b ? `data-bind="${b}"` : 'disabled'}${c ? ' checked' : ''}><span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span>`;
+        const chip = (t, c = '') => `<span class="rst-chip ${c}">${t}</span>`;
+        body.innerHTML = `
+        <div class="rst-file">
+        <span class="rst-file-ico"><svg><use href="#svg-save"></use></svg></span>
+        <b class="rst-file-name">${h(file.name)}</b>
+        <span class="rst-file-sub">${(file.size / 1024).fmt('#,##0.0')} ${tr('UNIT_KO')} · ${old ? tr('RESTORE_OLD_READ') : tr('RESTORE_CREATED').replace('%s', date || '—')}</span>
+        <label for="fileName" class="gen-btn">${tr('BT_CHANGE')}</label>
+        <div class="rst-meta">${old ? chip(tr('RESTORE_OLD_FORMAT'), 'is-info') : chip(tr(same ? 'RESTORE_SAME_DEVICE' : 'RESTORE_OTHER_DEVICE'), same ? 'is-ok' : 'is-info')
+            + chip(h(meta.fw)) + chip(h([meta.chip, meta.profile && tr(meta.profile)].filter(Boolean).join(' · ')), otherBoard ? 'is-warn' : '')}</div>
+        </div>
+        <div class="icon-pack-label"><span>${tr('RESTORE_WHAT')}</span><span id="restoreCount"></span></div>
+        <div id="jsUniRestore" class="rst-checks">${rows.map(([b, k, l]) => `
+        <div class="gen-row rst-row${b ? '' : ' rst-dep'}"><span class="gen-row-text"><b>${tr(k)}</b>${l.filter(Boolean).map(x => Array.isArray(x)
+            ? `<span class="${x[1]}">${x[0]}</span>` : `<span>${x}</span>`).join('')}</span>${seg(b, b ? on(b) : on('shades'))}</div>`).join('')}
+        </div>
+        <div class="genmod-note rst-never"><svg><use href="#svg-lock"></use></svg><span><b>${tr('RESTORE_NEVER_TITLE')}</b>${tr('RESTORE_NEVER')}</span></div>`;
+        w.querySelectorAll('#rstIntro, .file-drop').forEach(e => { e.style.display = 'none'; });
+        w.querySelector('#uploadState .genmod-state-val').innerHTML = old ? tr('RESTORE_OLD_FORMAT') : `${h(s.hostname)}${date ? `<small>${date}</small>` : ''}`;
+        this.syncRestore(w);
+    }
+    // Les plannings n'ont pas d'option propre côté firmware (opts.shades) : leur Oui/Non suit.
+    syncRestore(w) {
+        const ins = [...w.querySelectorAll('#jsUniRestore input[data-bind]')], n = ins.filter(c => c.checked).length;
+        w.querySelector('.rst-dep input').checked = ins[0].checked;
+        w.querySelector('#restoreCount').textContent = tr('RESTORE_COUNT').replace('%1', n).replace('%2', ins.length);
+        const btn = w.querySelector('#btnUploadFile');
+        btn.disabled = !n;
+        btn.textContent = n ? `${tr('BT_RESTORE')} (${n})` : tr('BT_RESTORE');
     }
 
 
@@ -255,7 +324,7 @@ class Firmware {
         </div>`;
         const drop = `
         <input id="fileName" type="file" name="updateFS" style="display:none"
-        onchange="const f=this.files[0];if(f){get('span-selected-file').innerText=f.name;firmware.checkBackupVersion(f)}"/>
+        onchange="const f=this.files[0];if(f){get('span-selected-file').innerText=f.name;if(get('rstBody'))firmware.readBackup(f)}"/>
         ${fileDropZone('fileName', pickKey, 'span-selected-file')}`;
         const inProgress = (titleKey, msgKey) => `
         <p id="divUploadInProgressNotice" class="gen-tile-desc is-warning" style="display:none"><b>${tr(titleKey)}</b><br>${tr(msgKey)}</p>`;
@@ -274,7 +343,6 @@ class Firmware {
             ${step(3, this.backupRow())}
             </div>`}
             ${o.afterDrop || ''}
-            ${isRestore ? `<p class="gen-tile-desc is-warning">${tr('RESTORE_NETWORK_WARNING')}</p>` : ''}
             <div id="divFileUploadProgress" style="display:none">
             <div class="progress-bar-header"><span class="progress-bar-label"></span><span class="progress-bar-value" id="progFileUpload-value">0%</span></div>
             <div class="progress-bar" id="progFileUpload"><div class="progress-bar-fill"></div></div>
@@ -286,26 +354,6 @@ class Firmware {
         <button id="btnClose" type="button" class="gen-btn" data-genmod-close>${tr('BT_CANCEL_1')}</button>
         <button id="btnUploadFile" type="button" class="gen-btn gen-btn-primary" onclick="firmware.uploadFile('${service}',get('divUploadFile'),ui.fromElement(get('divUploadFile')))">${tr('BT_UPLOAD_FILE')}</button>`;
         return div;
-    }
-    checkBackupVersion(file) {
-        const val = document.querySelector('#uploadState .genmod-state-val');
-        if (val && get('jsUniRestore')) val.textContent = file.name;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const lines = e.target.result.split('\n');
-            if (lines.length > 0) {
-                const ver = parseInt(lines[0].split(',')[0]);
-                if (!isNaN(ver) && ver < 25) {
-                    ui.confirm({ title: tr('PROMPT_RESTORE_FILE_TITLE'), confirm: tr('BT_CONTINUE'),
-                        desc: `<p>${tr('PROMPT_RESTORE_FILE_DESC')}</p><p><b>${tr('PROMPT_RESTORE_FILE_DESC_1')}</b></p>` }).then(ok => {
-                        if (ok) return;
-                        get('fileName').value = "";
-                        get('span-selected-file').innerText = tr('FILE_PICK_BACKUP');
-                    });
-                }
-            }
-        };
-        reader.readAsText(file.slice(0, 100));
     }
     procMemoryStatus(mem) {
         // Le firmware envoie des OCTETS (ESP.getFreeHeap() et compagnie, cf. NetManager::emitHeap).

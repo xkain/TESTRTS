@@ -648,12 +648,17 @@
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="FIRMWARE_MT_SAVE_BACKUP"></h3>
                                             <p class="gen-tile-desc" tr="FW_BACKUP_DESC"></p>
-                                            <button type="button" class="gen-btn gen-btn-primary" onclick="firmware.backup();"><svg><use href="#svg-download"></use></svg><span tr="FW_BACKUP"></span></button>
+                                            <p class="fw-bk-sub" tr="FW_BACKUP_HAS"></p>
+                                            <ul class="fw-bk-chips"><li tr="RESTORE_DEVICES_GROUPS"></li><li tr="SUBTAB_SCHEDULES"></li><li tr="RESTORE_REPEATERS"></li><li tr="RESTORE_LISTENERS"></li><li tr="RESTORE_SYSTEM_SETTINGS"></li><li tr="RESTORE_NETWORK_SETTINGS"></li><li tr="RESTORE_MQTT_SETTINGS"></li><li tr="RESTORE_RADIO_SETTINGS"></li></ul>
+                                            <p class="fw-bk-sub" tr="RESTORE_NEVER_TITLE"></p>
+                                            <p class="gen-tile-desc" tr="RESTORE_NEVER"></p>
+                                            <div class="gen-btn-row fw-tile-foot"><button type="button" class="gen-btn gen-btn-primary" onclick="firmware.backup();"><svg><use href="#svg-download"></use></svg><span tr="FW_BACKUP"></span></button></div>
                                         </div>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="RESTORE_TITLE"></h3>
                                             <p class="gen-tile-desc" tr="FW_RESTORE_DESC"></p>
-                                            <button type="button" class="gen-btn" onclick="firmware.restore();"><svg><use href="#svg-upload"></use></svg><span tr="FW_RESTORE"></span></button>
+                                            <p class="gen-tile-desc" tr="FW_RESTORE_FORMATS"></p>
+                                            <div class="gen-btn-row fw-tile-foot"><button type="button" class="gen-btn" onclick="firmware.restore();"><svg><use href="#svg-upload"></use></svg><span tr="FW_RESTORE"></span></button></div>
                                         </div>
                                     </div>
 

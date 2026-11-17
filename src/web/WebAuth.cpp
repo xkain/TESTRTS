@@ -337,10 +337,8 @@ namespace WebAuth {
       return;
     }
 
-    // `serverId` et `model` ne sont lus par AUCUN appelant -- ni l'interface (vérifié sur tous les
-    // chunks de data-dev/js/), ni les routes miroir du port 8081, `/discovery` servant déjà
-    // l'identité de l'appareil aux intégrations. Conservés derrière l'authentification plutôt que
-    // supprimés : les retirer serait un changement de contrat que rien n'oblige ici.
+    // `serverId` : lu par la fenêtre de restauration (sauvegarde de cet appareil ou d'un autre).
+    // `model` n'est lu par aucun appelant ; conservé, le retirer changerait le contrat.
     resp.addElem("serverId", settings.serverId);
     resp.addElem("model", "ESPSomfyRTS");
     resp.addElem("version", settings.fwVersion.name);
