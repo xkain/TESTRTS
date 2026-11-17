@@ -1161,7 +1161,7 @@
                                                 <div><dt tr="MQTT_TITLE_BROKER"></dt><dd id="mqttHeroBroker" class="mqtt-mono"></dd></div>
                                                 <div><dt tr="MQTT_ROOT_TOPIC"></dt><dd id="mqttHeroRoot" class="mqtt-mono"></dd></div>
                                                 <div><dt tr="MQTT_DISCOVERY"></dt><dd id="mqttHeroDisco"></dd></div>
-                                                <div><dt tr="MQTT_CREDENTIALS"></dt><dd id="mqttHeroCred"></dd></div>
+                                                <div><dt tr="CREDENTIALS"></dt><dd id="mqttHeroCred"></dd></div>
                                             </dl>
                                         </div>
                                     </div>
@@ -1199,10 +1199,10 @@
                                             <p class="gen-tile-desc" tr="MQTT_BROKER_ADDR_DESC"></p>
                                         </div>
                                         <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="MQTT_CREDENTIALS"></h3>
+                                            <h3 class="gen-tile-title" tr="CREDENTIALS"></h3>
                                             <div class="gen-field-pair">
                                                 <div class="gen-field">
-                                                    <label class="gen-field-label" for="fldMqttUsername" tr="SECURITY_USERNAME"></label>
+                                                    <label class="gen-field-label" for="fldMqttUsername" tr="MQTT_USERNAME"></label>
                                                     <div class="gen-input-box dirty-target">
                                                         <input id="fldMqttUsername" class="gen-input" name="mqtt-username" type="text" maxlength="32" autocomplete="off" data-bind="mqtt.username">
                                                     </div>
@@ -2596,52 +2596,34 @@
             </section>
         </div>
         <div id="divUnauthenticated" style="display:none;">
-            <input id="fldLoginType" type="hidden" data-bind="login.type" data-datatype="int" />
-            <div class="welcomeTop">
-                <svg><use href="#svg-logo"></use></svg>
-                <p>ESPSomfy-RTS</p>
-            </div>
-
-            <div id="divLoginPin" style="display:none;">
-                <div style="text-align:center;">
-                    <div id="fldPinEntry" style="display:inline-block;" onkeydown="ui.pinKeyPressed(event);">
-                        <input class="pin-digit" aria-labelledby="lblPinEntry" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d0" onfocus="ui.pinDigitFocus(event);">
-                        <input class="pin-digit" aria-labelledby="lblPinEntry" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d1" onfocus="ui.pinDigitFocus(event);">
-                        <input class="pin-digit" aria-labelledby="lblPinEntry" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d2" onfocus="ui.pinDigitFocus(event);">
-                        <input class="pin-digit" aria-labelledby="lblPinEntry" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d3" onfocus="ui.pinDigitFocus(event);">
+            <div class="login-bg hero-skin"></div>
+            <button id="btnLoginBack" type="button" class="login-back" hidden onclick="security.cancelLogin();"><svg><use href="#svg-arrowLeft"></use></svg><span tr="TAB_DASHBOARD"></span></button>
+            <div class="login-brand"><svg><use href="#svg-logo"></use></svg><span>ESPSomfy-RTS</span></div>
+            <form id="frmUnauthLogin" class="login-card" action="/login" method="post" onsubmit="security.login(event); return false;">
+                <input id="fldLoginType" type="hidden" data-bind="login.type" data-datatype="int" />
+                <span class="hero-media"><svg><use href="#svg-lock"></use></svg></span>
+                <h2 id="loginTitle"></h2>
+                <div id="divLoginPin" style="display:none;">
+                    <div id="fldPinEntry" class="login-pin-row" onkeydown="ui.pinKeyPressed(event);">
+                        <input class="pin-digit" aria-labelledby="loginTitle" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d0" onfocus="ui.pinDigitFocus(event);">
+                        <input class="pin-digit" aria-labelledby="loginTitle" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d1" onfocus="ui.pinDigitFocus(event);">
+                        <input class="pin-digit" aria-labelledby="loginTitle" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d2" onfocus="ui.pinDigitFocus(event);">
+                        <input class="pin-digit" aria-labelledby="loginTitle" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d3" onfocus="ui.pinDigitFocus(event);">
                     </div>
-                    <label id="lblPinEntry" style="display: block;" tr="SECURITY_ENTER_PIN" ></label>
+                    <div class="login-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+                    <div class="login-keys" onclick="security.padKey(event);"><button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button><button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button><button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button><button type="button" class="is-text login-cancel" data-k="c" tr="BT_CANCEL_1"></button><button type="button" data-k="0">0</button><button type="button" data-k="b" title="" tr="LOGIN_KEY_BACK"><svg><use href="#svg-arrowLeft"></use></svg></button></div>
                 </div>
-            </div>
-
-            <form id="frmUnauthLogin" action="/login" method="post" onsubmit="security.login(event); return false;">
-
                 <div id="divLoginPassword" style="display:none;">
-                    <div>
-                        <div class="auth-password-input">
-                            <input id="fldLoginUsername" name="username" type="text" autocomplete="username" data-bind="login.username" maxlength="32" placeholder="Nom d'utilisateur" tr="SECURITY_USERNAME"/>
-                            <svg class="pwd-icon pwd-iconLeft"><use href="#svg-user"></use></svg>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="auth-password-input password-container">
-                            <input id="fldLoginPassword" name="password" type="password" autocomplete="current-password" data-bind="login.password" maxlength="32" placeholder="Entrer votre Mot de passe" tr="SECURITY_PASSWORD_PLH"/>
-                            <svg class="pwd-icon pwd-iconLeft"><use href="#svg-cadenas"></use></svg>
-                            <div id="togglePassword" class="password-eye" onclick="security.toggleFieldPassword('fldLoginPassword', this)">
-                                <svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="gen-field"><label class="gen-field-label" for="fldLoginUsername" tr="SECURITY_USERNAME"></label><div class="gen-input-box"><input id="fldLoginUsername" class="gen-input" name="username" type="text" autocomplete="username" data-bind="login.username" maxlength="32"></div></div>
+                    <div class="gen-field"><label class="gen-field-label" for="fldLoginPassword" tr="SECURITY_PASSWORD"></label><div class="gen-input-box"><input id="fldLoginPassword" class="gen-input" name="password" type="password" autocomplete="current-password" data-bind="login.password" maxlength="32"><div id="togglePassword" class="password-eye" onclick="security.toggleFieldPassword('fldLoginPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div></div></div>
                 </div>
-
-                <div style="text-align:center;"><span id="spanLoginMessage" style="color:red"></span></div>
-
+                <p id="spanLoginMessage" class="login-msg"></p>
+                <div id="loginButtons" class="login-btns" style="display:none;">
+                    <button id="btnLogin" type="submit" class="gen-btn gen-btn-primary"><svg><use href="#svg-lock"></use></svg><span tr="BT_LOGIN"></span></button>
+                    <button id="btnCancelLogin" type="button" class="gen-btn login-cancel" onclick="security.cancelLogin();" tr="BT_CANCEL"></button>
+                </div>
             </form>
-            <div id="loginButtons" class="button-container-row" style="display:none;text-align:center;">
-                <button id="btnLogin" type="submit" form="frmUnauthLogin" tr="BT_LOGIN"></button>
-                <button id="btnCancelLogin" line type="button" onclick="security.cancelLogin();" tr="BT_CANCEL"></button>
-            </div>
-
+            <p id="loginScope" class="login-scope"></p>
         </div>
         <!-- Assistant de première connexion : rempli par onboarding.open() (60-onboarding.js). -->
         <div id="divOnboardingWizard" style="display:none;"></div>

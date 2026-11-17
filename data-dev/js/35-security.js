@@ -189,16 +189,18 @@ class Security {
 
                         const typeFld = qs('#fldLoginType');
                         if (typeFld) typeFld.value = ctx.type;
+                        pnl.dataset.mode = ctx.type === 1 ? 'pin' : 'pwd';
                         pnl.style.display = 'flex';
 
                         // Le libellé du bouton dépend du contexte : "Annuler" s'il existe un dashboard
                         // public où revenir (sécurité "config only"), "Effacer" sinon (rien à annuler).
-                        const cancelBtn = qs('#btnCancelLogin');
-                        if (cancelBtn) {
-                            const configOnly = (ctx.permissions & 0x01) === 0x01;
-                            cancelBtn.setAttribute('tr', configOnly ? 'BT_CANCEL_1' : 'BT_CLEAR');
-                            if (typeof translator !== 'undefined') translator.translate(cancelBtn);
-                        }
+                        // Ni nom d'hôte ni adresse sur cet écran : il protège l'appareil, il ne le décrit pas.
+                        const configOnly = (ctx.permissions & 0x01) === 0x01;
+                        const setTr = (el, key) => { el.setAttribute('tr', key); if (typeof translator !== 'undefined') translator.translate(el); };
+                        pnl.querySelectorAll('.login-cancel').forEach(b => setTr(b, configOnly ? 'BT_CANCEL_1' : 'BT_CLEAR'));
+                        qs('#btnLoginBack').hidden = !configOnly;
+                        setTr(qs('#loginTitle'), ctx.type === 1 ? 'SECURITY_PIN_CODE' : 'CREDENTIALS');
+                        setTr(qs('#loginScope'), configOnly ? 'LOGIN_SCOPE_CONFIG' : 'LOGIN_SCOPE_ALL');
                     }
                     // Mémorisé pour le nouvel essai déclenché par 'afterlogin' si l'auth était requise.
                     window.__activeLangCode = ctx.language;
@@ -285,6 +287,32 @@ class Security {
             this.resetLoginForm();
         }
     }
+    // Pavé tactile : il remplit les quatre .pin-digit, que login() lit comme au clavier.
+    padKey(evt) {
+        const k = evt.target.closest('button')?.dataset.k;
+        if (!k) return;
+        if (k === 'c') return this.cancelLogin();
+        const digits = this._pinDigits();
+        const n = digits.filter(d => d.value).length;
+        if (k === 'b') { if (n) digits[n - 1].value = ''; }
+        else if (n < 4) digits[n].value = k;
+        this._syncPinDots();
+        if (k !== 'b' && n === 3) this.login();
+    }
+    _pinDigits() { return [...get('divLoginPin').querySelectorAll('.pin-digit')]; }
+    _syncPinDots() {
+        const n = this._pinDigits().filter(d => d.value).length;
+        get('divLoginPin').querySelectorAll('.login-dots i').forEach((d, i) => d.classList.toggle('on', i < n));
+    }
+    // Sans ce vidage, le pavé resterait plein après un refus et n'accepterait plus de chiffre.
+    _rejectPin() {
+        if (this.type !== 1) return;
+        this.resetLoginForm();
+        document.querySelectorAll('#fldPinEntry, #divLoginPin .login-dots').forEach(el => {
+            el.classList.add('is-invalid');
+            setTimeout(() => el.classList.remove('is-invalid'), 400);
+        });
+    }
     // Filet de sécurité commun à tous les helpers HTTP : un 401 signifie que la clé de session
     // n'est plus valable (sécurité activée ou modifiée depuis un autre appareil, redémarrage,
     // changement d'IP client -- le jeton est calculé à partir de celle-ci, cf. Web::createAPIToken).
@@ -309,6 +337,7 @@ class Security {
         const msg = pnl.querySelector('#spanLoginMessage');
         if (msg) msg.innerHTML = '';
         pnl.querySelectorAll('.pin-digit').forEach(inp => inp.value = '');
+        this._syncPinDots();
         const userFld = pnl.querySelector('#fldLoginUsername');
         if (userFld) userFld.value = '';
         const pwdFld = pnl.querySelector('#fldLoginPassword');
@@ -381,6 +410,7 @@ class Security {
                 else {
                     let text = tr(log.msg);
                     if (log.maxAttempts) text += ` (${tr('LOGIN_ATTEMPT_LABEL')} ${log.attempt}/${log.maxAttempts})`;
+                    this._rejectPin();
                     msg.innerHTML = text;
                 }
             }
@@ -393,7 +423,11 @@ class Security {
         if (this._lockoutInterval) clearInterval(this._lockoutInterval);
 
         let remaining = Math.max(1, parseInt(seconds, 10) || 0);
+        const keys = pnl.querySelector('.login-keys');
         if (btn) { btn.disabled = true; btn.classList.add('disabled'); }
+        keys?.classList.add('is-locked');
+        msg.classList.add('is-lock');
+        this._rejectPin();
 
         const render = () => {
             const m = Math.floor(remaining / 60);
@@ -409,6 +443,8 @@ class Security {
                 clearInterval(this._lockoutInterval);
                 this._lockoutInterval = null;
                 if (btn) { btn.disabled = false; btn.classList.remove('disabled'); }
+                keys?.classList.remove('is-locked');
+                msg.classList.remove('is-lock');
                 msg.innerHTML = '';
             } else {
                 render();

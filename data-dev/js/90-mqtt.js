@@ -95,7 +95,7 @@ class MQTT {
             field('MQTT_HERO_ENABLE', 'cbMqttEnabled', !!s.enabled, get('cbMqttEnabled').checked, yesNo),
             field('MQTT_HOST', 'fldMqttHost', s.hostname || '', val('fldMqttHost')),
             field('MQTT_PORT', 'fldMqttPort', String(s.port ?? ''), val('fldMqttPort')),
-            field('SECURITY_USERNAME', 'fldMqttUsername', s.username || '', val('fldMqttUsername')),
+            field('MQTT_USERNAME', 'fldMqttUsername', s.username || '', val('fldMqttUsername')),
             field('SECURITY_PASSWORD', 'fldMqttPassword', '', secretValue(get('fldMqttPassword')), undefined, true),
             field('MQTT_ROOT_TOPIC', 'fldMqttTopic', s.rootTopic || '', val('fldMqttTopic')),
             field('MQTT_CLIENT_ID', 'fldMqttClientId', s.clientId || '', val('fldMqttClientId')),
