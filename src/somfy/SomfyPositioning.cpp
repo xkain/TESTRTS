@@ -964,6 +964,11 @@ void SomfyShade::moveToTarget(float pos, float tilt) {
       cmd = somfy_commands::Up;
     else if(tilt >= 0 && tilt > this->currentTiltPos)
       cmd = somfy_commands::Down;
+    // Butée demandée alors que l'estimation y est déjà : l'ordre part quand même, pour recaler une
+    // estimation qui a dérivé (le moteur ignore une butée qu'il occupe). Pas avec une inclinaison
+    // demandée ni sur moteur intégré/Euro : là, un Bas en butée incline les lames.
+    else if(tilt < 0 && (this->tiltType == tilt_types::none || this->tiltType == tilt_types::tiltmotor) && (pos == 0.0f || pos == 100.0f))
+      cmd = pos == 0.0f ? somfy_commands::Up : somfy_commands::Down;
   }
   if(cmd != somfy_commands::My) {
     DBG_PRINT("Moving to ");
