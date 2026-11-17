@@ -14,11 +14,15 @@
     "TOPBAR_NET_AP": "Point d'accès (AP):",
     "RADIO_ACTIVITY_TOOLTIP": "Activité radio / mouvement",
     "NETBANNER_AP": "Point d'accès de secours : « {SSID} » ne répond pas",
-    "NETBANNER_FIRST": "Vous êtes connecté au réseau de l'appareil. Choisissez votre Wi-Fi dans Réglages › Réseau.",
+    "NETBANNER_FIRST": "Vous êtes connecté au réseau de l'appareil. Choisissez votre Wi-Fi dans Menu › Réseau.",
     "NETBANNER_WEAK": "Signal Wi-Fi faible ({DBM} dBm) : des commandes peuvent se perdre",
     "NETBANNER_FALLBACK": "Câble Ethernet débranché : l'appareil est passé en Wi-Fi",
 
 "INDEX_TAB": "TAB",
+    "TAB_DASHBOARD": "Tableau de bord",
+    "TAB_HABITATION": "Habitation",
+    "TAB_DOMOTIQUE": "Domotique",
+    "TAB_SYSTEME": "Système",
     "TAB_RADIO": "Radio",
     "TAB_NETWORK": "Réseau",
 
@@ -41,7 +45,7 @@
     "SUBTAB_REMOTES": "Télécommandes liées",
 
 "INDEX_SETTINGS_PANEL": "SETTINGS PANEL",
-    "SETTINGS_TITLE": "Réglages",
+    "MENU_TITLE": "Menu",
     "SETTINGS_DESC_TRANSCEIVER": "Module, broches, fréquence",
     "SETTINGS_DESC_LISTENERS": "Télécommandes captées",
     "SETTINGS_DESC_REPEATER": "Relayer les trames",
@@ -143,6 +147,7 @@
     "DASH_SHOW_ALL": "Tout afficher",
     "DASH_HOUSE_ALL": "Toute la maison",
     "DASH_HOUSE_SUB": "{n} équipement(s) · sans portail, garage ni store banne",
+    "DASH_NAV_SUB": "{n} équipement(s)",
     "DASH_OPEN_ALL": "Tout ouvrir",
     "DASH_STOP_ALL": "Tout arrêter",
     "DASH_CLOSE_ALL": "Tout fermer",

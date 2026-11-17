@@ -14,11 +14,15 @@
     "TOPBAR_NET_AP": "Punto de acceso (AP):",
     "RADIO_ACTIVITY_TOOLTIP": "Actividad de radio / movimiento",
     "NETBANNER_AP": "Punto de acceso de emergencia: «{SSID}» no responde",
-    "NETBANNER_FIRST": "Está conectado a la red del propio dispositivo. Elija su Wi-Fi en Ajustes › Red.",
+    "NETBANNER_FIRST": "Está conectado a la red del propio dispositivo. Elija su Wi-Fi en Menú › Red.",
     "NETBANNER_WEAK": "Señal Wi-Fi débil ({DBM} dBm): pueden perderse órdenes",
     "NETBANNER_FALLBACK": "Cable Ethernet desconectado: el dispositivo ha pasado a Wi-Fi",
 
 "INDEX_TAB": "TAB",
+    "TAB_DASHBOARD": "Panel",
+    "TAB_HABITATION": "Hogar",
+    "TAB_DOMOTIQUE": "Domótica",
+    "TAB_SYSTEME": "Sistema",
     "TAB_RADIO": "Radio",
     "TAB_NETWORK": "Red",
 
@@ -41,7 +45,7 @@
     "SUBTAB_REMOTES": "Mandos vinculados",
 
 "INDEX_SETTINGS_PANEL": "SETTINGS PANEL",
-    "SETTINGS_TITLE": "Ajustes",
+    "MENU_TITLE": "Menú",
     "SETTINGS_DESC_TRANSCEIVER": "Módulo, pines, frecuencia",
     "SETTINGS_DESC_LISTENERS": "Mandos capturados",
     "SETTINGS_DESC_REPEATER": "Retransmitir tramas",
@@ -143,6 +147,7 @@
     "DASH_SHOW_ALL": "Mostrar todo",
     "DASH_HOUSE_ALL": "Toda la casa",
     "DASH_HOUSE_SUB": "{n} equipo(s) · sin portones, puertas de garaje ni toldos",
+    "DASH_NAV_SUB": "{n} equipo(s)",
     "DASH_OPEN_ALL": "Abrir todo",
     "DASH_STOP_ALL": "Detener todo",
     "DASH_CLOSE_ALL": "Cerrar todo",

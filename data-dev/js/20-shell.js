@@ -962,43 +962,38 @@ function _updateBreadcrumb(topId, leafId, detailLabel = null) {
         _setBreadcrumbLink(activeEl, null);
         return;
     }
-    // Le fil suit la barre latérale (Maison, Plannings, Réglages) et non plus les sections du
-    // routeur ; une page sans parent (Plannings) s'écrit seule au premier niveau.
+    // Le fil suit la barre latérale : la section (Habitation, Domotique, Système) ou, pour les
+    // sous-pages de Radio, la page qui les porte.
     const parentId = BREADCRUMB_PARENT[leafId] || null;
+    const isSection = !!parentId && parentId.startsWith('sec-');
     const navLabel = (id) => document.querySelector(`.sidebar-nav [data-grpid="${id}"] span`)?.textContent.trim() || '';
     const leafLabel = navLabel(leafId) || document.querySelector(`.subtab-container > span[data-grpid="${leafId}"]`)?.textContent.trim() || '';
-    const topLabel = parentId === 'settings' ? (document.querySelector('.sidebar-nav .nav-section-label')?.textContent.trim() || '')
+    const topLabel = isSection ? (document.querySelector(`.nav-section[data-section="${parentId}"] .nav-section-label`)?.textContent.trim() || '')
         : (parentId ? navLabel(parentId) : leafLabel);
     parentEl.textContent = topLabel;
     activeEl.textContent = parentId ? leafLabel : '';
     const inEditor = detailLabel !== null;
     if (detailEl) detailEl.textContent = inEditor ? (detailLabel || '') : '';
     bc.setAttribute('data-depth', inEditor ? '3' : (activeEl.textContent ? '2' : '1'));
-    _setBreadcrumbLink(parentEl, parentId && parentId !== 'settings' ? parentId : (!parentId && inEditor ? leafId : null));
+    _setBreadcrumbLink(parentEl, parentId && !isSection ? parentId : (!parentId && inEditor ? leafId : null));
     _setBreadcrumbLink(activeEl, (inEditor && activeEl.textContent) ? leafId : null);
 }
-// Navigation mobile : deux onglets (Maison, Réglages), un titre et un retour.
+// Navigation mobile : deux destinations (Tableau de bord, Menu), un titre et un retour.
 // La pile ne retient que les pas faits DANS l'appli ; vide (lien direct, F5), le retour remonte
 // au parent logique au lieu de quitter la page par history.back().
-const MOBILE_HOME_LEAVES = new Set(['divSomfyMotors', 'divSomfyGroups', 'divSomfyRooms', 'divSomfySchedules']);
 const mobileNav = {
     stack: [],
     pushing: false,
     tab: 'divHomePnl',
     state: { topId: 'divHomePnl', leafId: 'divHomePnl', editor: false },
-    tabOf(topId, leafId) {
-        if (topId === 'divHomePnl' || MOBILE_HOME_LEAVES.has(leafId)) return 'divHomePnl';
-        return 'divSettingsPnl';
-    },
+    tabOf(topId) { return topId === 'divHomePnl' ? 'divHomePnl' : 'divSettingsPnl'; },
     // Appelé avant chaque location.hash posé par l'appli : mémorise d'où l'on part.
     willPush(fromSlug) { if (!this.pushing && fromSlug) this.stack.push(fromSlug); },
     // hashchange venu du navigateur : si c'est un retour d'un cran, la pile suit.
     onBrowserNav(slug) { if (this.stack[this.stack.length - 1] === slug) this.stack.pop(); },
     parentOf() {
         const { leafId, editor } = this.state;
-        if (editor) return leafId;
-        if (MOBILE_HOME_LEAVES.has(leafId)) return 'divHomePnl';
-        return 'divSettingsPnl';
+        return editor ? leafId : 'divSettingsPnl';
     },
     isRoot() {
         const { topId, leafId, editor } = this.state;
@@ -1017,7 +1012,7 @@ const mobileNav = {
     },
     sync(topId, leafId, detailLabel) {
         this.state = { topId, leafId, editor: detailLabel !== null && detailLabel !== undefined };
-        this.tab = this.tabOf(topId, leafId);
+        this.tab = this.tabOf(topId);
         document.querySelectorAll('#mobileNav [data-tab-root]').forEach(b => {
             const on = b.getAttribute('data-tab-root') === this.tab;
             b.classList.toggle('is-active', on);
@@ -1034,7 +1029,7 @@ const mobileNav = {
         if (title) {
             const leafLabel = document.querySelector(`.subtab-container > span[data-grpid="${leafId}"]`)?.textContent.trim()
                 || document.querySelector(`.set-tile[data-grpid="${leafId}"] b`)?.textContent.trim() || '';
-            const ROOT_TITLES = { divHomePnl: 'DASH_HOUSE_TITLE', divSettingsPnl: 'SETTINGS_TITLE' };
+            const ROOT_TITLES = { divHomePnl: 'TAB_DASHBOARD', divSettingsPnl: 'MENU_TITLE' };
             title.textContent = root ? tr(ROOT_TITLES[this.tab]) : (detailLabel || leafLabel);
             // La marque vit dans l'onglet du navigateur, plus dans l'en-tête.
             document.title = (title.textContent ? title.textContent + ' · ' : '') + 'ESPSomfy-RTS';
@@ -1043,6 +1038,14 @@ const mobileNav = {
     bind() {
         document.querySelectorAll('#mobileNav [data-tab-root]').forEach(b =>
             b.addEventListener('click', () => this.goTab(b.getAttribute('data-tab-root'))));
+    },
+    // Tuiles des listes du Menu : « n sur MAX », relu à chaque ouverture du Menu.
+    syncMenu() {
+        if (typeof somfy === 'undefined') return;
+        document.querySelectorAll('#divSettingsPnl [data-cap]').forEach(el => {
+            const kind = el.getAttribute('data-cap'), n = somfy._cfgItems(kind).length, max = somfy._cfgConf(kind).max;
+            el.textContent = max ? `${n} ${tr('LIST_CAP_OF').replace('{MAX}', max)}` : `${n}`;
+        });
     },
     addMenu() {
         // La tuile ouvre la liste, le rond « + » ajoute : deux boutons frères, pas imbriqués.
@@ -1086,12 +1089,12 @@ const uiAdvanced = {
 };
 // Parent affiché dans le fil d'Ariane et entrée de la barre latérale qui porte une page.
 const BREADCRUMB_PARENT = {
-    divSomfyMotors: 'divHomePnl', divSomfyGroups: 'divHomePnl', divSomfyRooms: 'divHomePnl',
-    divNetAdapter: 'settings', divTransceiverSettings: 'settings', divHomeAssistant: 'settings', divSystemOptions: 'settings', divFirmware: 'settings',
+    divSomfyMotors: 'sec-habitation', divSomfyGroups: 'sec-habitation', divSomfyRooms: 'sec-habitation', divSomfySchedules: 'sec-habitation',
+    divHomeAssistant: 'sec-domotique', divMQTT: 'sec-domotique', divListener: 'sec-domotique',
+    divNetAdapter: 'sec-systeme', divTransceiverSettings: 'sec-systeme', divSystemOptions: 'sec-systeme', divFirmware: 'sec-systeme',
     divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings',
-    divMQTT: 'divHomeAssistant', divListener: 'divHomeAssistant',
 };
-const SIDEBAR_OWNER = { divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings', divMQTT: 'divHomeAssistant', divListener: 'divHomeAssistant' };
+const SIDEBAR_OWNER = { divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings' };
 const DOC_PAGES = {
     divHomePnl: 'tableau-de-bord/',
     divSomfyMotors: 'somfy/equipements/',
@@ -1234,7 +1237,8 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
         // Sidebar : le dashboard est une section de premier niveau à part (pas un vrai
         // data-grpid de .submenu), mais elle doit quand même recevoir .active comme les
         // autres -- sinon aucune entrée de la sidebar n'apparaît sélectionnée sur le dashboard.
-        document.querySelectorAll('.nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === 'divHomePnl'));
+        document.querySelectorAll('.nav-item[data-grpid], .nav-dash[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === 'divHomePnl'));
+        document.querySelectorAll('.nav-section[data-section]').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.sub-nav-item[data-grpid]').forEach(i => i.classList.remove('active'));
         document.querySelectorAll('.nav-section[data-section]').forEach(s => s.classList.remove('active'));
 
@@ -1268,13 +1272,15 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
         if (topId === 'divNetworkSettings' && typeof wifi !== 'undefined') wifi.loadNetwork();
 
         // Sections de premier niveau : sidebar (.nav-item + son .submenu), puis leurs panneaux.
-        document.querySelectorAll('.nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === leafId));
-        document.querySelectorAll('.nav-section[data-section]').forEach(s => s.classList.toggle('active', s.getAttribute('data-section') === topId));
+        document.querySelectorAll('.nav-item[data-grpid], .nav-dash[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === leafId));
+        const section = BREADCRUMB_PARENT[SIDEBAR_OWNER[leafId] || leafId] || '';
+        document.querySelectorAll('.nav-section[data-section]').forEach(s => s.classList.toggle('active', s.getAttribute('data-section') === section));
         ['divHomePnl', ...ROUTE_TOP_LEVEL_IDS].forEach(id => {
             const panel = get(id);
             if (panel) panel.style.display = (id === topId) ? '' : 'none';
         });
         get('divSettingsPnl').style.display = (topId === 'divSettingsPnl') ? '' : 'none';
+        if (topId === 'divSettingsPnl') mobileNav.syncMenu();
 
         // Sous-onglet actif : sidebar (.sub-nav-item), puis les panneaux listés par .subtab-container.
         document.querySelectorAll('.sub-nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === (SIDEBAR_OWNER[leafId] || leafId)));
@@ -1332,7 +1338,7 @@ function bindNavigation() {
     mobileNav.bind();
     document.querySelectorAll('.hero').forEach(h => h.insertAdjacentHTML('beforeend', `<button type="button" class="gen-hero-help" onclick="openPageHelp();" tr="HELP_THIS_PAGE" title=""><svg><use href="#svg-navHelp"></use></svg></button>`));
     uiAdvanced.apply();
-    document.querySelectorAll('.nav-item, .sub-nav-item, .settings-row[data-grpid], .set-tile[data-grpid]').forEach(item => {
+    document.querySelectorAll('.nav-item, .nav-dash, .sub-nav-item, .settings-row[data-grpid], .set-tile[data-grpid]').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const grpid = item.getAttribute('data-grpid');

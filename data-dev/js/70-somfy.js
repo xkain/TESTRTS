@@ -1120,6 +1120,11 @@ class Somfy {
         this.syncRoomSums();
         const sub = document.querySelector('.dash-house-sub');
         if (sub) sub.textContent = tr('DASH_HOUSE_SUB').replace('{n}', this.houseShades().length);
+        // Sous-titre de l'entrée Tableau de bord (barre latérale, Menu mobile) : « n équipement(s) · o/t ouvert(s) ».
+        const all = this.shades || [], positioned = all.filter(sh => !this.dryContactShadeTypes.includes(sh.shadeType));
+        const open = positioned.filter(sh => sh.position !== this.closedPosition(sh.shadeType, sh.flipPosition)).length;
+        const navSub = tr('DASH_NAV_SUB').replace('{n}', all.length) + (positioned.length ? ' · ' + tr('IS_SUMMARY_OPEN').replace('{n}', open).replace('{t}', positioned.length) : '');
+        document.querySelectorAll('[data-dash-sub]').forEach(el => { el.textContent = navSub; });
         const moving = (this.shades || []).filter(sh => (parseInt(sh.direction, 10) || 0) !== 0 || (parseInt(sh.tiltDirection, 10) || 0) !== 0);
         const stop = document.querySelector('.dash-house-stop');
         if (stop) { stop.classList.toggle('is-moving', moving.length > 0); stop.setAttribute('aria-label', tr('DASH_STOP_ALL')); stop.title = tr('DASH_STOP_ALL'); }

@@ -14,11 +14,15 @@
     "TOPBAR_NET_AP": "Access Point (AP):",
     "RADIO_ACTIVITY_TOOLTIP": "Radio / movement activity",
     "NETBANNER_AP": "Backup access point: “{SSID}” is not responding",
-    "NETBANNER_FIRST": "You are connected to the device's own network. Choose your Wi-Fi in Settings › Network.",
+    "NETBANNER_FIRST": "You are connected to the device's own network. Choose your Wi-Fi in Menu › Network.",
     "NETBANNER_WEAK": "Weak Wi-Fi signal ({DBM} dBm): commands may get lost",
     "NETBANNER_FALLBACK": "Ethernet cable unplugged: the device switched to Wi-Fi",
 
 "INDEX_TAB": "TAB",
+    "TAB_DASHBOARD": "Dashboard",
+    "TAB_HABITATION": "Home",
+    "TAB_DOMOTIQUE": "Home automation",
+    "TAB_SYSTEME": "System",
     "TAB_RADIO": "Radio",
     "TAB_NETWORK": "Network",
 
@@ -41,7 +45,7 @@
     "SUBTAB_REMOTES": "Linked remotes",
 
 "INDEX_SETTINGS_PANEL": "SETTINGS PANEL",
-    "SETTINGS_TITLE": "Settings",
+    "MENU_TITLE": "Menu",
     "SETTINGS_DESC_TRANSCEIVER": "Module, pins, frequency",
     "SETTINGS_DESC_LISTENERS": "Captured remotes",
     "SETTINGS_DESC_REPEATER": "Relay frames",
@@ -143,6 +147,7 @@
     "DASH_SHOW_ALL": "Show everything",
     "DASH_HOUSE_ALL": "Whole house",
     "DASH_HOUSE_SUB": "{n} device(s) · excluding gates, garage doors and awnings",
+    "DASH_NAV_SUB": "{n} device(s)",
     "DASH_OPEN_ALL": "Open all",
     "DASH_STOP_ALL": "Stop all",
     "DASH_CLOSE_ALL": "Close all",

@@ -14,11 +14,15 @@
     "TOPBAR_NET_AP": "Zugangspunkt (AP):",
     "RADIO_ACTIVITY_TOOLTIP": "Funk-/Bewegungsaktivität",
     "NETBANNER_AP": "Notfall-Zugangspunkt: „{SSID}“ antwortet nicht",
-    "NETBANNER_FIRST": "Sie sind mit dem Netzwerk des Geräts verbunden. Wählen Sie Ihr WLAN unter Einstellungen › Netzwerk.",
+    "NETBANNER_FIRST": "Sie sind mit dem Netzwerk des Geräts verbunden. Wählen Sie Ihr WLAN unter Menü › Netzwerk.",
     "NETBANNER_WEAK": "Schwaches WLAN-Signal ({DBM} dBm): Befehle können verloren gehen",
     "NETBANNER_FALLBACK": "Ethernet-Kabel getrennt: Das Gerät ist auf WLAN umgestiegen",
 
 "INDEX_TAB": "TAB",
+    "TAB_DASHBOARD": "Übersicht",
+    "TAB_HABITATION": "Zuhause",
+    "TAB_DOMOTIQUE": "Hausautomation",
+    "TAB_SYSTEME": "System",
     "TAB_RADIO": "Funk",
     "TAB_NETWORK": "Netzwerk",
 
@@ -41,7 +45,7 @@
     "SUBTAB_REMOTES": "Verknüpfte Fernbedienungen",
 
 "INDEX_SETTINGS_PANEL": "SETTINGS PANEL",
-    "SETTINGS_TITLE": "Einstellungen",
+    "MENU_TITLE": "Menü",
     "SETTINGS_DESC_TRANSCEIVER": "Modul, Pins, Frequenz",
     "SETTINGS_DESC_LISTENERS": "Erfasste Fernbedienungen",
     "SETTINGS_DESC_REPEATER": "Rahmen weiterleiten",
@@ -143,6 +147,7 @@
     "DASH_SHOW_ALL": "Alles anzeigen",
     "DASH_HOUSE_ALL": "Ganzes Haus",
     "DASH_HOUSE_SUB": "{n} Gerät(e) · ohne Tore, Garagentore und Markisen",
+    "DASH_NAV_SUB": "{n} Gerät(e)",
     "DASH_OPEN_ALL": "Alle öffnen",
     "DASH_STOP_ALL": "Alle stoppen",
     "DASH_CLOSE_ALL": "Alle schließen",
