@@ -17,18 +17,14 @@
     --color-accent-transp-94: color-mix(in srgb,var(--color-accent),transparent 94%);
     --color-accent-transp-80: color-mix(in srgb,var(--color-accent),transparent 80%);
     --color-accent-transp-70: color-mix(in srgb,var(--color-accent),transparent 70%);
-    --color-accent-card-blend:color-mix(in srgb,var(--color-accent) 20%,var(--color-bg-card));
     --color-accent-light:color-mix(in srgb,var(--color-accent),#ffffff 15%);
     --color-success:#4caf50;
-    --color-success-tint-bg: color-mix(in srgb, var(--color-success), transparent 90%);
     --color-success-tint-border: color-mix(in srgb, var(--color-success), transparent 82%);
     --color-warning:#f69300;
     --color-warning-tint-bg: color-mix(in srgb, var(--color-warning), transparent 90%);
     --color-warning-tint-border: color-mix(in srgb, var(--color-warning), transparent 82%);
-    --color-violet:#8b5cf6;
     --color-dirty-subtle: color-mix(in srgb, var(--color-accent), var(--color-border) 60%);
     --color-danger:#f44336;
-    --color-danger-bg:#d81c122b;
     --color-danger-tint-bg: color-mix(in srgb, var(--color-danger), transparent 90%);
     --color-danger-tint-border: color-mix(in srgb, var(--color-danger), transparent 82%);
     --color-signal-good: #069800;
@@ -36,7 +32,6 @@
     --color-signal-bad: #e74c3c;
     --color-text-warning:#d9534f;
     --color-text-subtitle:#888;
-    --color-svg-interface:#737679;
     --shadow-card: 0 4px 6px rgba(0,0,0,0.1);
 
     --radius-xxl: 25px;
@@ -61,8 +56,6 @@
 
     --color-bg-surface-2: #fff;
     --color-bg-surface-3: #fbfbfb;
-    --color-bg-surface-4: #eee;
-    --color-accent-94: color-mix(in srgb,var(--color-accent),#f8fafd 94%);
 
     --color-bg-body:#fff;
     --color-text-main:#000000;
@@ -74,42 +67,24 @@
        écarté -- c'est déjà la couleur du remplissage du slider juste en dessous. */
     --color-bg-chip-contrast:#2b2d31;
     --color-text-chip-contrast:#f2f3f5;
-    --color-text-muted:#848484;
     --color-text-secondary:#4a4a4a;
     --color-border-hr:#e8e8e8;
     --color-border-hr-soft:rgba(2,2,2,0.1);
     --color-border-switch: #c7c7c7;
     --color-switch-checked:#6a6a6a;
-    --color-bg-switch-track:#ccc;
     --color-bg-radio-card:color-mix(in srgb, var(--color-accent) 3%, #fff);
     --color-icon-muted:#c7cad1;
     --color-bg-switch-channel:#595d60;
     --color-button:#5e5e5e;
-    --color-button-alt:#4a4a4a;
-    --color-bg-shade-row-button:#fbfbfb;
-    --color-button-pair-link: #343434;
 
     --color-bg-badge:color-mix(in srgb, var(--color-accent) 14%, #fff);
-    --color-bg-icon: color-mix(in srgb, var(--color-accent) 4%, #fff);
 
-    --color-icon-border: color-mix(in srgb, var(--color-accent) 16%, #fff);
 
-    --color-bg-card-container: #fff;
     --color-bg-card: #fcfcfd;
     --color-bg-row: #fbfbfb;
-    --color-bg-inset:#f6f6f6;
     --color-bg-alt:#f0f0f0;
     --shadow-button-gradient:0 -8px 20px rgba(0,0,0,0.08);
     --border-button:1px solid rgba(0,0,0,0.06);
-    --color-border-card:#e7e6e6;
-    --color-config-icon-bg:#808080;
-    --color-config-icon-fg:#f0f0f0;
-    --color-shade-icon-0:#101010;
-    --color-shade-icon-1:#5e5d5d;
-    --color-shade-icon-2:#343333;
-    --color-shade-icon-3:#434343;
-    --color-shade-icon-4:#332b28;
-    --color-shade-icon-5:#515255;
     --color-shade-fab:var(--color-accent);
     --color-shade-fab-l:color-mix(in srgb,var(--color-accent),#fff 32%);
     --color-shade-fab-d:color-mix(in srgb,var(--color-accent),#000 38%);
@@ -137,16 +112,12 @@
     --color-bg-room-pill-hover:color-mix(in srgb, var(--color-accent) 10%, #fff);
     --color-bg-room-count:color-mix(in srgb, var(--color-accent) 16%, #fff);
     --color-drag-handle:#5e5d5d;
-    --color-drag-handle-hover:#8e8c8c;
-    --color-border-shade-card:#999;
-    --color-shade-card-shadow:rgba(125,125,125,0.6);
     --color-help-icon:#c3c3c3;
     --color-overlay-backdrop:rgba(236,236,236,0.3);
     --color-border:#dfe0e1;
     --color-border-alt:#dfe0e1;
     --color-bg-input:#dfdfdf;
 
-    --color-control-txt:#1e1e1e;
     --color-control-bg:#f0f2f5;
     --color-control-bg-hover:#e2e5ea;
     --color-control-border:#dcdfe4;
@@ -155,7 +126,6 @@
     --color-icon-badge-bg:#5e5d5d;
     --brightness-hover:0.9;
     --color-shadow:#ababab;
-    --color-shadow-alt:#868686;
 
     --color-tooltip-bg:#f6f6f6;
     --color-tooltip-link:var(--color-accent);
@@ -170,8 +140,6 @@
     --color-bg-surface-1: #111;
     --color-bg-surface-2: #131315;
     --color-bg-surface-3: #1c1e21;
-    --color-bg-surface-4: #0f0f0f;
-    --color-accent-94: color-mix(in srgb,var(--color-accent),#010101 94%);
 
     --color-bg-body:#1c1c1c;
     --color-text-main:#e4e3e8;
@@ -179,42 +147,24 @@
     /* Cf. le commentaire du thème clair : la pastille s'inverse d'un thème à l'autre. */
     --color-bg-chip-contrast:#dfe1e5;
     --color-text-chip-contrast:#000000;
-    --color-text-muted:#4a4a4a;
     --color-text-secondary:#9a999e;
     --color-border-hr:#3a3a3c;
     --color-border-hr-soft:rgba(255,255,255,0.1);
     --color-border-switch:#434243;
     --color-switch-checked:#505050;
     --color-bg-switch-channel:#ababab;
-    --color-bg-switch-track:#646368;
     --color-bg-radio-card:#131313;
     --color-icon-muted:#0f0f0f;
     --color-button:#2d2d2f;
-    --color-button-alt:#4a4a4a;
-    --color-bg-shade-row-button:#c6c6c6;
-    --color-button-pair-link: #dadada;
 
     --color-bg-badge: color-mix(in srgb, var(--color-accent) 8%, #000000);
 
-    --color-bg-icon: color-mix(in srgb, var(--color-accent) 4%, #000000);
 
-    --color-icon-border: color-mix(in srgb, var(--color-accent) 22%, #000000);
-    --color-bg-card-container: #0d0d0d;
     --color-bg-card: #131315;
     --color-bg-row: #1c1e21;
-    --color-bg-inset:#202020;
     --color-bg-alt:#010101;
     --shadow-button-gradient:0 -12px 30px rgba(0,0,0,0.8);
     --border-button:1px solid rgba(255,255,255,0.12);
-    --color-border-card:transparent;
-    --color-config-icon-bg:#4a4a4a;
-    --color-config-icon-fg:#9a999e;
-    --color-shade-icon-0:#fff;
-    --color-shade-icon-1:#dedede;
-    --color-shade-icon-2:#b8b8b8;
-    --color-shade-icon-3:#b4b4b4;
-    --color-shade-icon-4:#616161;
-    --color-shade-icon-5:#818181;
     --color-shade-fab:color-mix(in srgb,var(--color-accent),#000 15%);
     --color-shade-fab-l:color-mix(in srgb,var(--color-accent),#fff 12%);
     --color-shade-fab-d:color-mix(in srgb,var(--color-accent),#000 55%);
@@ -242,16 +192,12 @@
     --color-bg-room-pill-hover:color-mix(in srgb, var(--color-accent) 22%, #5e5e5e);
     --color-bg-room-count:rgba(255,255,255,0.15);
     --color-drag-handle:#4a4a4a;
-    --color-drag-handle-hover:#313131;
-    --color-border-shade-card:#333;
-    --color-shade-card-shadow:rgba(0,0,0,0.6);
     --color-help-icon:#474747;
     --color-overlay-backdrop:rgba(2,2,2,0.0);
     --color-border:#282828;
     --color-border-alt:#1e1e1e;
     --color-bg-input:#333;
 
-    --color-control-txt:#1e1e1e;
     --color-control-bg:#23272f;
     --color-control-bg-hover:#2d323c;
     --color-control-border:#343945;
@@ -260,7 +206,6 @@
     --color-icon-badge-bg:#4a4a4a;
     --brightness-hover:1.3;
     --color-shadow:#090909;
-    --color-shadow-alt:#000000;
     --color-tooltip-bg:#1c1e21;
     --color-tooltip-link:color-mix(in srgb,var(--color-accent),#ffffff 55%);
     --opacity-logo-page:0.1;
@@ -299,18 +244,20 @@
     --tile-icon: 48px;
 }
 :root[data-theme="light"] {
-    /* Fond neutre (gris froid) choisi le 16/11 : le gris chaud #eceae6 rendait mal. */
-    --bg: #eef0f3;
-    --panel: #f8f9fb;
+    /* Fond neutre (gris froid) choisi le 16/11 : le gris chaud #eceae6 rendait mal.
+       Contrastes revus le 18/11 : tuile/page et contrôle/tuile >= 1,25, bordure de champ >= 3:1. */
+    --bg: #e1e5eb;
+    --panel: #f3f5f8;
     --surface: #ffffff;
-    --surface-2: #f2f4f7;
-    --sunken: #dde1e7;
+    --surface-2: #e2e6ec;
+    --sunken: #d2d7df;
     --topbar: #f8fafd;
-    --border: #dcdfe4;
-    --divider: #e6e9ee;
+    --border: #c3c9d2;
+    --control-border: #878e99;
+    --divider: #dde1e7;
     --text: #17181c;
     --text-2: #3b3d44;
-    --text-3: #6b6d74;
+    --text-3: #5b5e66;
     /* Suit la couleur d'accent choisie dans Général (posée en style sur <html>). */
     --accent: var(--color-accent);
     --on-fill: #17181c;
@@ -346,17 +293,18 @@
     --scrim-page: rgba(0, 0, 0, .14);
 }
 :root[data-theme="dark"], .hero, .hero-skin {
-    --bg: #0e1013;
-    --panel: #1a1e24;
-    --surface: #222730;
-    --surface-2: #2a2f38;
-    --sunken: #16191e;
+    --bg: #0b0d10;
+    --panel: #181c22;
+    --surface: #232933;
+    --surface-2: #343b47;
+    --sunken: #15181d;
     --topbar: #14171b;
-    --border: #363c47;
-    --divider: #2a2f38;
+    --border: #4a5260;
+    --control-border: #7d8695;
+    --divider: #353c48;
     --text: #eceef2;
     --text-2: #c3c8d1;
-    --text-3: #9aa0ab;
+    --text-3: #a3a9b4;
     /* Accent éclairci pour le fond sombre (#1a5fb4 -> ~#6aa5ee) ; color-mix si « from » manque. */
     --accent: color-mix(in srgb, var(--color-accent), #ffffff 40%);
     --accent: oklch(from var(--color-accent) max(l, 0.72) c h);
@@ -383,6 +331,36 @@
     --wait-border: #2f353f;
     --danger-field-bg: #2d1c1c;
     --scrim-page: rgba(0, 0, 0, .35);
+}
+/* Palette unique : l'ancienne échelle --color-* (pages pas encore migrées) suit les jetons A2 pour
+   les fonds, bordures et textes. Accent, couleurs d'état et teintes des équipements restent les
+   leurs (remplissages sous texte blanc, illustrations). Même spécificité que les blocs de thème,
+   placé après eux : c'est lui qui l'emporte. */
+:root[data-theme="light"], :root[data-theme="dark"] {
+    --color-bg-page: var(--bg);
+    --color-bg-body: var(--bg);
+    --color-bg-surface-0: var(--surface);
+    --color-bg-surface-1: var(--panel);
+    --color-bg-surface-2: var(--surface);
+    --color-bg-surface-3: var(--surface-2);
+    --color-bg-card: var(--surface);
+    --color-bg-row: var(--surface-2);
+    --color-bg-nav-row: var(--surface-2);
+    --color-bg-alt: var(--surface-2);
+    --color-bg-input: var(--surface-2);
+    --color-tooltip-bg: var(--panel);
+    --color-control-bg: var(--surface-2);
+    --color-control-bg-hover: var(--sunken);
+    --color-control-border: var(--border);
+    --color-border: var(--border);
+    --color-border-alt: var(--border);
+    --color-border-hr: var(--divider);
+    --color-border-hr-soft: var(--divider);
+    --color-border-switch: var(--control-border);
+    --color-text-main: var(--text);
+    --color-text-secondary: var(--text-3);
+    --color-text-subtitle: var(--text-3);
+    --color-help-icon: var(--text-3);
 }
 
 /* =======================================================================
@@ -1032,9 +1010,8 @@ input[type=text] {
     margin-bottom:14px;
     appearance:none;
     color:var(--color-text-main);
-    background:#f0f0f0;
     background-color:transparent;
-    border:1px solid #555;
+    border:1px solid var(--control-border);
     padding:8px;
     border-radius:var(--radius-row);
 }
@@ -1064,7 +1041,7 @@ select:focus,
 input[type=password]:focus,
 input[type=number]:focus,
 input[type=text]:focus {
-    border-color:#4C669F;
+    border-color:var(--color-accent);
     outline:0;
 }
 input[type="checkbox"] {
@@ -1312,7 +1289,7 @@ input[type="number"] {
 }
 fieldset {
     display:block;
-    border:1px solid #ccc;
+    border:1px solid var(--color-border);
     border-radius:5px;
     padding:25px;
     margin-top:20px;

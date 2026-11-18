@@ -1018,7 +1018,7 @@ button[line].fw-sidebar-button:hover {
     font-size: 0.9em;
 }
 .md-link, .md-link-auto {
-    color: #58a6ff !important;
+    color: var(--accent) !important;
     text-decoration: underline;
 }
 .md-link {
@@ -1268,6 +1268,8 @@ button[line].fw-sidebar-button:hover {
 .scan-head { position: relative; padding-right: 56px; }
 .scan-head > .genmod-close { display: flex; position: absolute; top: 0; right: 0; }
 .scan-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+/* Posé sur la page et non dans une tuile : un cran au-dessus du fond (--surface), sinon il s'y fond. */
+.scan-actions .gen-btn:not(.gen-btn-primary, .gen-btn-danger) { background: var(--surface); }
 .scan-legend {
     display: flex;
     flex-direction: column;

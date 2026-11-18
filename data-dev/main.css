@@ -12,7 +12,6 @@ body.mode-hotspot .hotspot-hidden {
     display: none !important;
 }
 .container {
-    background: #626262;
     margin-top: var(--topbar-height);
     margin-left: var(--sidebar-width);
     width: auto;
@@ -1765,7 +1764,7 @@ body.is-home-welcome .container {
 .container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divFirmware:not([style*="none"])),
 .container:has(#divConfigPnl:not([style*="none"]) > #divNetworkSettings:not([style*="none"]) > #divNetAdapter:not([style*="none"])),
 .container:has(#divConfigPnl:not([style*="none"]) > #divIntegrationSettings:not([style*="none"]) > :is(#divHomeAssistant, #divMQTT, #divListener):not([style*="none"])),
-.container:has(#divConfigPnl:not([style*="none"]) > #divRadioSettings:not([style*="none"]) > :is(#divRepeater, #divFrameLog, #divTransceiverSettings):not([style*="none"])) {
+.container:has(#divConfigPnl:not([style*="none"]) > #divRadioSettings:not([style*="none"]) > :is(#divRepeater, #divFrameLog, #divScanFrequency, #divTransceiverSettings):not([style*="none"])) {
     background: var(--bg);
 }
 .gen-layout {
@@ -1940,7 +1939,7 @@ body.is-home-welcome .container {
     min-height: 46px;
     box-sizing: border-box;
     padding: 0 12px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--control-border);
     border-radius: var(--r-2);
     background: var(--surface);
     transition: border-color .15s;
@@ -3277,7 +3276,7 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
 }
 .radio-graph-label-title {
     font-size: 10px;
-    color: #7c7c7c;
+    color: var(--color-text-secondary);
     font-weight: bold;
     letter-spacing: 1px;
     margin-bottom: 4px;
@@ -5964,7 +5963,7 @@ input.gen-input.mqtt-mono {
 .tools-more.is-open .tools-more-btn { background: var(--on-fill); color: var(--on-fill-text); }
 .tools-more-pop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 6; display: none; width: 260px; box-sizing: border-box; padding: 10px 8px 8px; border-radius: var(--r-4); background: var(--surface); box-shadow: var(--shadow-window); }
 .tools-more.is-open .tools-more-pop { display: block; }
-.gen-search { flex: 1 1 260px; display: flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: var(--r-2); border: 1px solid var(--border); background: var(--surface); color: var(--text-3); }
+.gen-search { flex: 1 1 260px; display: flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: var(--r-2); border: 1px solid var(--control-border); background: var(--surface); color: var(--text-3); }
 .gen-search:focus-within { border-color: var(--color-accent); }
 .gen-search svg { flex: none; width: 18px; height: 18px; fill: currentColor; }
 .gen-search-input { flex: 1; min-width: 0; margin: 0; padding: 10px 0; border: 0; outline: none; background: transparent; color: var(--text); font: inherit; font-size: var(--fs-4); }
