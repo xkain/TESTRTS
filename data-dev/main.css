@@ -5993,10 +5993,10 @@ input.gen-input.mqtt-mono {
 .cfg-drop-target { outline: 2px solid var(--color-accent); outline-offset: 3px; border-radius: var(--r-5); }
 .cfg-tiles-title.cfg-drop-target { border-radius: var(--r-2); }
 .cfg-tile-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-.cfg-tile-icon { display: grid; place-items: center; flex: none; width: var(--tile-icon); height: var(--tile-icon); border-radius: var(--r-3); background: var(--surface-2); color: var(--text-2); }
+.cfg-tile-icon { display: grid; place-items: center; flex: none; width: var(--tile-icon); height: var(--tile-icon); border-radius: 50%; background: color-mix(in srgb, var(--accent) 15%, var(--surface)); color: var(--accent); }
 .cfg-tile-icon svg { width: 28px; height: 28px; }
 .cfg-tile-stack { display: flex; }
-.cfg-tile-stack > span { display: grid; place-items: center; width: 36px; height: 36px; margin-left: -8px; border-radius: var(--r-2); border: 2px solid var(--surface); background: var(--surface-2); color: var(--text-2); }
+.cfg-tile-stack > span { display: grid; place-items: center; width: 36px; height: 36px; margin-left: -8px; border-radius: 50%; border: 2px solid var(--surface); background: color-mix(in srgb, var(--accent) 15%, var(--surface)); color: var(--accent); }
 .cfg-tile-stack > span:first-child { margin-left: 0; }
 .cfg-tile-stack svg { width: 18px; height: 18px; }
 .cfg-tile-stack .cfg-tile-more-n { background: var(--on-fill); color: var(--on-fill-text); font-size: var(--fs-1); font-weight: 700; }
@@ -6085,7 +6085,6 @@ input.gen-input.mqtt-mono {
     .sched-tiles { grid-template-columns: minmax(0, 1fr); }
     .cfg-tile { --tile-pad: 14px; --tile-minh: 150px; --tile-icon: 40px; gap: 8px; border-radius: var(--r-4); }
     .cfg-drop-slot, .cfg-drop-zone { border-radius: var(--r-4); }
-    .cfg-tile-icon { border-radius: var(--r-2); }
     .cfg-tile-icon svg { width: 24px; height: 24px; }
     .cfg-tile-name .name-text { font-size: var(--fs-4); }
     .cfg-tile-add { font-size: var(--fs-3); }
