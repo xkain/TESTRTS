@@ -1221,6 +1221,9 @@ button[line].fw-sidebar-button:hover {
  *  Même forme que la fiche d'un équipement du tableau de bord : 440 px, pleine hauteur, à droite.
  *  is-danger le teinte en rouge, opaque (jeton mêlé au panneau, jamais une transparence).
  *  ======================================================================= */
+/* Feuille « Détails » d'un hero : le contenu du bloc replié, hors du hero (jetons de la page). */
+.side-panel .hero-fold-body { display: block; padding: 0; }
+.side-panel .hero-fold-body .gen-btn { width: 100%; margin-top: 14px; justify-content: center; }
 .side-panel-overlay { position: fixed; inset: 0; z-index: 2000; display: flex; justify-content: flex-end; background: rgba(0, 0, 0, 0); transition: background 0.25s ease; }
 .side-panel-overlay.open { background: rgba(0, 0, 0, 0.35); }
 .side-panel {
@@ -1282,6 +1285,8 @@ button[line].fw-sidebar-button:hover {
 /* Modale de lecture (is-sheet) : sur mobile, feuille qui monte du bas comme les autres modales. */
 @media (max-width: 767px) {
     .side-panel-overlay.is-sheet { align-items: flex-end; }
+    /* Feuille « Détails » d'un hero (openHeroDetails) : à la hauteur de son contenu, pas 90 %. */
+    .is-sheet.is-fit .side-panel { height: auto; max-height: 90%; }
     .is-sheet .side-panel { width: 100%; height: 90%; border-radius: var(--r-5) var(--r-5) 0 0; box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2); transform: translateY(100%); }
     .is-sheet.open .side-panel { transform: none; }
     .is-sheet .side-panel::before { content: ''; align-self: center; flex: none; width: 40px; height: 5px; margin-top: 10px; border-radius: var(--r-pill); background: var(--border); }

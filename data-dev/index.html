@@ -299,7 +299,7 @@
                     <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL"></span><span data-grpid="divSecurity" tr="GENERAL_TITLE_SECURITY"></span><span data-grpid="divFirmware" tr="SUBTAB_DEVICE"></span></div>
                     <div id="divSystemOptions" class="subtab-content">
                         <div class="gen-layout">
-                            <section class="hero">
+                            <section class="hero" data-sys>
                                 <span class="hero-media"><svg><use href="#svg-tabSystem"></use></svg></span>
                                 <div class="hero-head">
                                     <span class="hero-eyebrow" tr="GENERAL_TITLE"></span>
@@ -471,7 +471,7 @@
                     </div>
                     <div id="divSecurity" class="subtab-content" style="display:none;">
                         <div class="gen-layout">
-                            <section class="hero">
+                            <section class="hero" data-sys>
                                 <span class="hero-media"><svg><use href="#svg-lock"></use></svg></span>
                                 <div class="hero-head">
                                     <span class="hero-eyebrow" tr="TAB_SYSTEME"></span>
@@ -510,7 +510,7 @@
                     </div>
                     <div id="divFirmware" class="subtab-content" style="display:none;">
                         <div class="gen-layout">
-                            <section id="fwHero" class="hero fw-hero" data-state="idle">
+                            <section id="fwHero" class="hero fw-hero" data-state="idle" data-sys>
                                 <span class="hero-media"><svg><use href="#svg-navFirmware"></use></svg></span>
                                 <div class="hero-head">
                                     <span class="hero-eyebrow">ESPSomfy-RTS</span>
@@ -742,7 +742,7 @@
                     <div id="subtabContainer-divNetworkSettings" class="subtab-container"><span class="selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION"></span></div>
                     <div id="divNetAdapter" class="subtab-content">
                         <div class="gen-layout">
-                            <section id="netHero" class="hero net-hero" data-obj="reseau">
+                            <section id="netHero" class="hero net-hero" data-obj="reseau" data-sys>
                                 <span id="netHeroHalo" class="hero-media">
                                     <svg id="netHeroWave" class="net-hero-wave"><use href="#svg-wifi-0"></use><use href="#svg-wifi-1"></use><use href="#svg-wifi-2"></use><use href="#svg-wifi-3"></use></svg>
                                     <svg id="netHeroIconSvg"><use id="netHeroIcon" href="#svg-ethernet"></use></svg>
@@ -1872,7 +1872,7 @@
                     </div>
                     <div id="divTransceiverSettings" class="subtab-content">
                         <div class="gen-layout rdc-page">
-                            <section class="hero" data-obj="radio">
+                            <section class="hero" data-obj="radio" data-sys>
                                 <span id="rdcHalo" class="hero-media"><svg><use href="#svg-tabRadio"></use></svg></span>
                                 <div class="hero-head">
                                     <div class="hero-titlerow">
@@ -2310,7 +2310,7 @@
                     </div>
                     <div id="divRepeater" style="display:none;" class="subtab-content">
                         <div id="divRepeaterPage" class="gen-layout rx-page">
-                            <section class="hero" data-obj="radio">
+                            <section class="hero" data-obj="radio" data-sys>
                                 <span class="hero-media"><svg><use href="#svg-repeater"></use></svg></span>
                                 <div class="hero-head">
                                     <span class="hero-eyebrow" tr="SUBTAB_REPEATER"></span>
@@ -2341,7 +2341,7 @@
                     </div>
                     <div id="divFrameLog" class="subtab-content" style="display:none;">
                         <div class="gen-layout lg-page">
-                            <section class="hero" data-obj="radio">
+                            <section class="hero" data-obj="radio" data-sys>
                                 <span id="divLogLiveState" class="hero-media" data-state="live"><svg><use href="#svg-wave"></use></svg></span>
                                 <div class="hero-head">
                                     <span class="hero-eyebrow" tr="SUBTAB_LOGS"></span>

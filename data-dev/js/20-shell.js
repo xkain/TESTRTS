@@ -1339,7 +1339,12 @@ function bindMobileUptimeTooltip() {
 
 function bindNavigation() {
     mobileNav.bind();
-    document.querySelectorAll('.hero').forEach(h => h.insertAdjacentHTML('beforeend', `<button type="button" class="gen-hero-help" onclick="openPageHelp();" tr="HELP_THIS_PAGE" title=""><svg><use href="#svg-navHelp"></use></svg></button>`));
+    // Hero avec un bloc Détails : sur mobile, un menu ⋮ (Détails, Aide) remplace le « ? » et le bloc.
+    const more = `<div class="hero-more overlayHeader-dropdown-container" onclick="event.stopPropagation();"><button type="button" class="gen-hero-help" aria-haspopup="menu" tr="OPTION" title="" onclick="somfy.toggleTileMenu(this);"><svg><use href="#svg-menuVertical"></use></svg></button>
+        <div class="overlayHeader-dropdown-menu" role="menu"><div class="dropdown-item" role="menuitem" onclick="openHeroDetails(this);"><svg><use href="#svg-info"></use></svg><span tr="DETAILS"></span></div>
+        <div class="dropdown-item" role="menuitem" onclick="this.parentElement.classList.remove('show'); openPageHelp();"><svg><use href="#svg-navHelp"></use></svg><span tr="HELP_THIS_PAGE"></span></div></div></div>`;
+    document.querySelectorAll('.hero').forEach(h => h.insertAdjacentHTML('beforeend', h.querySelector('.hero-fold') ? more
+        : `<button type="button" class="gen-hero-help" onclick="openPageHelp();" tr="HELP_THIS_PAGE" title=""><svg><use href="#svg-navHelp"></use></svg></button>`));
     uiAdvanced.apply();
     document.querySelectorAll('.nav-item, .nav-dash, .sub-nav-item, .settings-row[data-grpid], .set-tile[data-grpid]').forEach(item => {
         item.addEventListener('click', (e) => {
@@ -1751,6 +1756,22 @@ function genModalShell(o) {
 // sans avoir à y penser. Sans effet hors des fenêtres genmod-.
 // Panneau latéral (side-panel-, overlays.css) : 440 px collé à droite, feuille du bas sur mobile
 // si is-sheet. Fermé par la croix ou tout [data-close], un clic sur le fond et Échap.
+// Mobile : « Détails » d'un hero en feuille du bas. Copie du bloc replié, ids retirés (la page garde
+// les siens, mis à jour en direct) ; un bouton de la feuille la referme avant d'agir.
+function openHeroDetails(item) {
+    const h = item.closest('.hero'), body = h.querySelector('.hero-fold-body').cloneNode(true);
+    item.parentElement.classList.remove('show');
+    body.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+    body.querySelectorAll('button, a').forEach(e => e.setAttribute('data-close', ''));
+    const div = document.createElement('div');
+    div.className = 'side-panel-overlay is-sheet is-fit';
+    div.innerHTML = `<aside class="side-panel" role="dialog" aria-modal="true"><div class="side-panel-head">
+        <div><span class="side-panel-kicker">${tr('DETAILS')}</span><h2>${escHtml((h.querySelector('.hero-title') || {}).textContent || '')}</h2></div>
+        <button type="button" class="genmod-close" data-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
+        <div class="side-panel-body"></div></aside>`;
+    div.querySelector('.side-panel-body').appendChild(body);
+    openSidePanel(div);
+}
 function openSidePanel(div) {
     const close = () => {
         if (div.dataset.closing) return;

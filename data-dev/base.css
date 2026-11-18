@@ -1968,6 +1968,8 @@ button:disabled:active {
  *  .hero-media (pastille) / .hero-head / .hero-act / .hero-data (blocs).
  *  data-obj : couleur de la pastille ; data-tone : état (ok, warn, bad, off).
  *  data-mobile="hide" : masqué sous 1000 px. data-static : texte masqué aussi.
+ *  data-sys : page de réglage de l'appareil (section Système), fond gris sombre au lieu du bleu ;
+ *  un cran plus clair que le menu latéral, pour que les deux ne se fondent pas.
  *  ========================================================================= */
 /* Peau du hero : jetons et dégradé. .hero-skin la pose sur une colonne qui n'est pas un .hero
    (identité des fenêtres pièce et planning). */
@@ -2036,6 +2038,8 @@ button:disabled:active {
 :is(.hero, .hero-skin)[data-obj="equipement"] { --hc: #1a5fb4; }
 :is(.hero, .hero-skin)[data-obj="groupe"] { --hc: #6d28d9; }
 :is(.hero, .hero-skin)[data-obj="planning"] { --hc: #a21caf; }
+:is(.hero, .hero-skin)[data-sys] { --g: #2f343c; background: #23272e; }
+:root[data-theme="dark"] :is(.hero, .hero-skin)[data-sys] { background: #272c34; }
 .hero[data-tone="warn"] { --hc: #c2410c; }
 .hero[data-tone="bad"] { --hc: #b3261e; }
 .hero[data-tone="off"] { --hc: #64748b; }
@@ -2251,9 +2255,20 @@ button:disabled:active {
         color: #ffffff;
     }
 }
+.hero-more { display: none; }
 @media (max-width: 767px) {
     /* Place du « ? » d'aide, posé en haut à droite (main.css, .gen-hero-help). */
     .hero { padding-right: 52px; }
+    /* Bloc Détails : il passe dans le menu ⋮ (feuille du bas), seul son résumé reste, en petite ligne. */
+    .hero:has(.hero-more) { overflow: visible; z-index: 5; }
+    .hero-fold { background: none; }
+    .hero-fold-btn { min-height: 0; padding: 0; pointer-events: none; }
+    .hero-fold-btn > b, .hero-fold-btn > svg, .hero-fold.is-open .hero-fold-body { display: none; }
+    .hero-fold-btn span { font-size: var(--fs-2); }
+    .hero-more { display: block; position: absolute; top: 12px; right: 12px; }
+    .hero-more > .gen-hero-help { position: static; }
+    .hero-more .overlayHeader-dropdown-menu { width: 230px; text-align: left; }
+    .hero-more .dropdown-item svg { width: 18px; height: 18px; fill: currentColor; }
 }
 @media (min-width: 768px) and (max-width: 999px) {
     .hero {
