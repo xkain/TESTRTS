@@ -32,9 +32,9 @@ class GroupSetup {
         const div = document.createElement('div');
         div.id = 'divGroupSetup';
         div.className = 'modal-overlay genmod-overlay wiz-overlay';
-        div.innerHTML = `<div class="message-content wiz-window">
+        div.innerHTML = `<div class="message-content wiz-window">${wizCloseHtml()}
             <aside class="wiz-side hero-skin" data-obj="groupe">
-            <div class="wiz-side-head"><button type="button" class="wiz-close" data-wiz-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
+            <div class="wiz-side-head"></div>
             <div class="wiz-sum"><span class="wiz-sum-icon"><svg><use href="#svg-group"></use></svg></span><span class="wiz-sum-text"><h2 class="wiz-title">${tr(titleKey)}</h2><b></b><span></span><small class="wiz-now"></small></span></div>
             <ol class="wiz-steps"></ol><div class="wiz-pbar" aria-hidden="true"></div>
             </aside>
@@ -67,7 +67,7 @@ class GroupSetup {
         this.$('.wiz-side-head .pair-mode-menu')?.remove();
         this.$('.pair-mode-badge')?.remove();
         if (step === 2 && s.tasks[s.cur]) {
-            this.$('.wiz-close').insertAdjacentHTML('beforebegin', pairMode.menu('groupSetup.setPairMode'));
+            this.$('.wiz-side-head').insertAdjacentHTML('beforeend', pairMode.menu('groupSetup.setPairMode'));
             if (expert) this.$('.wiz-pbar').insertAdjacentHTML('afterend', pairMode.badge());
         }
         this.$('.wiz-sum-text b').textContent = name || tr('GSETUP_W_NEW');
@@ -246,7 +246,7 @@ class GroupSetup {
         const x = pairMode.expert();
         this.$('.wiz-side-head .pair-mode-menu')?.remove();
         this.$('.pair-mode-badge')?.remove();
-        this.$('.wiz-close').insertAdjacentHTML('beforebegin', pairMode.menu('groupSetup.setPairMode'));
+        this.$('.wiz-side-head').insertAdjacentHTML('beforeend', pairMode.menu('groupSetup.setPairMode'));
         this.$('.wiz-steps').hidden = x;
         this.$('.wiz-now').textContent = '';
         this.$('.wiz-pbar').hidden = x;

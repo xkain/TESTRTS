@@ -38,6 +38,11 @@ const pairMode = {
 // state ('on', 'done', 'skipped' ou ''), phase (titre posé avant l'étape), pick (code onclick) }.
 // prev / next servent au mobile, qui n'affiche que la précédente, la courante et la suivante ;
 // la barre segmentée (bar) y garde la vue d'ensemble, et now (« Étape 2 sur 5 · Appairage ») l'étape courante.
+// Croix des assistants : enfant direct de .wiz-window, hors de la colonne en peau de hero (dont
+// les jetons la rendraient invisible sur le corps clair, où elle se pose sur PC).
+function wizCloseHtml(attr = 'data-wiz-close') {
+    return `<button type="button" class="wiz-close" ${attr} aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-closeOverlay"></use></svg></button>`;
+}
 function wizStepsHtml(items) {
     const cur = items.findIndex(x => x.state === 'on');
     const steps = items.map((x, i) => `${x.phase ? `<li class="wiz-phase${i ? '' : ' first'}" aria-hidden="true">${escHtml(x.phase)}</li>` : ''}<li class="wiz-step${x.state ? ' ' + x.state : ''}${i === cur - 1 ? ' prev' : i === cur + 1 ? ' next' : ''}${x.pick ? ' pick' : ''}"${x.pick ? ` onclick="${x.pick}"` : ''}${x.state === 'on' ? ' aria-current="step"' : ''}>
@@ -141,9 +146,9 @@ class ShadeSetup {
         this.w = null;
         const div = document.createElement('div');
         div.id = 'divShadeSetup';
-        div.className = 'modal-overlay genmod-overlay';
+        div.className = 'modal-overlay genmod-overlay genmod-task';
         div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
-            id: 'taskWin', icon: 'svg-pair', titleKey: 'PAIRING', descKey: 'SETUP_TW_PAIR_DESC', sectionKey: 'PAIRING',
+            id: 'taskWin', icon: 'svg-pair', obj: 'equipement', titleKey: 'PAIRING', descKey: 'SETUP_TW_PAIR_DESC', sectionKey: 'PAIRING',
             stateKey: '', stateValue: '', hintKey: 'SETUP_PAIR_2MIN', footId: 'taskWinFoot', bodyHtml: ''
         })}</div>`;
         div.addEventListener('click', (e) => { if (e.target.closest('[data-genmod-close]')) this.close(); });
@@ -156,9 +161,9 @@ class ShadeSetup {
         const div = document.createElement('div');
         div.id = 'divShadeSetup';
         div.className = 'modal-overlay genmod-overlay wiz-overlay';
-        div.innerHTML = `<div class="message-content wiz-window">
+        div.innerHTML = `<div class="message-content wiz-window">${wizCloseHtml()}
             <aside class="wiz-side hero-skin" data-obj="equipement">
-            <div class="wiz-side-head"><button type="button" class="wiz-close" data-wiz-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
+            <div class="wiz-side-head"></div>
             <div class="wiz-sum"><span class="wiz-sum-icon"><svg><use href="#svg-shutter"></use></svg></span><span class="wiz-sum-text"><h2 class="wiz-title"></h2><b></b><span></span><small class="wiz-now"></small></span></div>
             <ol class="wiz-steps"></ol><div class="wiz-pbar" aria-hidden="true"></div>
             </aside>
@@ -379,7 +384,7 @@ class ShadeSetup {
         const pm = !created || T.id === 'pair', expert = pm && pairMode.expert();
         this.$('.wiz-side-head .pair-mode-menu')?.remove();
         this.$('.pair-mode-badge')?.remove();
-        if (pm) this.$('.wiz-close').insertAdjacentHTML('beforebegin', pairMode.menu('shadeSetup.setPairMode'));
+        if (pm) this.$('.wiz-side-head').insertAdjacentHTML('beforeend', pairMode.menu('shadeSetup.setPairMode'));
         if (expert) this.$('.wiz-pbar').insertAdjacentHTML('afterend', pairMode.badge());
         const head = (title) => `<div class="wiz-head"><h2 class="wiz-h">${title}</h2></div>`;
         const okSvg = '<svg><use href="#svg-check"></use></svg>';

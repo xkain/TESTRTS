@@ -2034,12 +2034,12 @@ button:disabled:active {
         linear-gradient(155deg, color-mix(in srgb, var(--g) 52%, #000000) 0%, var(--g) 45%,
                         color-mix(in srgb, var(--g) 70%, #000000) 75%, color-mix(in srgb, var(--g) 42%, #000000) 100%);
 }
-:is(.hero, .hero-skin)[data-obj="reseau"], :is(.hero, .hero-skin)[data-obj="piece"] { --hc: #0f766e; }
-:is(.hero, .hero-skin)[data-obj="radio"] { --hc: #5b21b6; }
-:is(.hero, .hero-skin)[data-obj="integ"] { --hc: #0277bd; }
-:is(.hero, .hero-skin)[data-obj="equipement"] { --hc: #1a5fb4; }
-:is(.hero, .hero-skin)[data-obj="groupe"] { --hc: #6d28d9; }
-:is(.hero, .hero-skin)[data-obj="planning"] { --hc: #a21caf; }
+:is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="reseau"], :is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="piece"] { --hc: #0f766e; }
+:is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="radio"] { --hc: #5b21b6; }
+:is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="integ"] { --hc: #0277bd; }
+:is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="equipement"] { --hc: #1a5fb4; }
+:is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="groupe"] { --hc: #6d28d9; }
+:is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="planning"] { --hc: #a21caf; }
 :is(.hero, .hero-skin)[data-sys] { --g: #2f343c; background: #23272e; }
 :root[data-theme="dark"] :is(.hero, .hero-skin)[data-sys] { background: #272c34; }
 .hero[data-tone="warn"] { --hc: #c2410c; }

@@ -26,8 +26,8 @@ class Somfy {
     frameLogVisible = false;
     frameStamps = [];
     frameRateTimer = null;
-    isScanClosing = false;
-    scanObserver = null;
+    _scanRunning = false;
+    _scanStopping = false;
     // Puissances d'émission du CC1101, en dBm. Le curseur #slidTxPower ne transporte PAS ces
     // valeurs mais leur INDICE (min=0 max=10, cf. index.html) : la table n'est donc pas un simple
     // encadrement min/max comme pour fréquence, bande passante et déviation, et une valeur
@@ -612,8 +612,12 @@ class Somfy {
             if (!scan.scanning) this.wizStopping = false;
             return;
         }
-        const div = this.scanFrequency();
+        // Trames restantes d'un balayage qu'on vient d'arrêter : jusqu'au scanning:false du boîtier.
+        if (this._scanStopping) { if (!scan.scanning) this._scanStopping = false; return; }
+        if (currentLeafId !== 'divScanFrequency') { this.scanToast(scan.scanning); return; }
+        const div = this.scanPage();
         if (!div) return;
+        if (scan.scanning && !this._scanRunning) { this._scanRunning = true; this.scanSetMode(div, 'run'); }
         const s = this._scan || (this._scan = { pts: Array(100).fill(null), max: {}, idx: -1, pass: 1 });
         const f = parseFloat(scan.testFreq), r = parseInt(scan.testRSSI, 10);
         if (isFinite(f) && isFinite(r)) {
@@ -672,11 +676,12 @@ class Somfy {
         return `<span class="genmod-state-key">${tr('SCANFREQ_LEGEND')}</span>`
             + row('ok', 'SCANFREQ_RSSI_EXCELLENT') + row('weak', 'SCANFREQ_RSSI_WEAK') + row('noise', 'SCANFREQ_RSSI_NOISE');
     }
-    // run : balayage en cours ; found : une frequence retenue ; none : rien au-dessus du bruit.
+    // run : balayage en cours ; found : une frequence retenue ; none : rien au-dessus du bruit ;
+    // idle : page ouverte sans balayage (lien direct).
     scanSetMode(div, mode) {
         // toggleAttribute et non .hidden : les éléments SVG du graphique n'ont pas la propriété.
         const show = (sel, on) => { const e = div.querySelector(sel); if (e) e.toggleAttribute('hidden', !on); };
-        show('#scanIntro', mode === 'run');
+        show('#scanIntro', mode === 'run' || mode === 'idle');
         show('#scanFound', mode === 'found');
         show('#scanNone', mode === 'none');
         show('#scanReadCur', mode === 'run');
@@ -687,9 +692,9 @@ class Somfy {
         show('#btnStopScanning', mode === 'run');
         show('#btnRestartScanning', mode !== 'run');
         show('#btnCopyFrequency', mode === 'found');
-        show('#btnCloseScanning', mode === 'none');
-        div.querySelector('.genmod-head-title').textContent = tr(mode === 'run' ? 'SCANFREQ_RUNNING' : 'SCANFREQ_DONE');
-        div.querySelector('#scanWinHint').textContent = mode === 'none' ? '' : tr(mode === 'run' ? 'SCANFREQ_HINT_RUN' : 'SCANFREQ_HINT_FOUND');
+        div.querySelector('#btnRestartScanning').textContent = tr(mode === 'idle' ? 'BT_BEGIN' : 'BT_RESTART');
+        div.querySelector('#scanHeadTitle').textContent = tr({ run: 'SCANFREQ_RUNNING', idle: 'SCANFREQ_TITLE' }[mode] || 'SCANFREQ_DONE');
+        div.querySelector('#scanWinHint').textContent = mode === 'run' ? tr('SCANFREQ_HINT_RUN') : mode === 'found' ? tr('SCANFREQ_HINT_FOUND') : '';
         if (mode !== 'found') return;
         const f = parseFloat(div.getAttribute('data-frequency')), r = div.getAttribute('data-rssi');
         div.querySelector('#scanFoundTitle').textContent = tr('SCANFREQ_FOUND_TITLE').replace('{f}', f.toFixed(3));
@@ -698,136 +703,130 @@ class Somfy {
         const x = Math.min(99, Math.max(0, Math.round((f - 433) * 100))) * 6 + 3;
         div.querySelector('#scanBestMark').setAttribute('d', `M${x - 7} 0h14l-7 9z`);
     }
+    // Page Balayage, sous-page de Radio : bâtie à la première visite puis réutilisée.
+    scanPage() {
+        const page = get('divScanFrequency');
+        if (!page || page.firstElementChild) return page;
+        const axis = [['433.00', 0, 'start'], ['433.25', 150, 'middle'], ['433.50', 300, 'middle'], ['433.75', 450, 'middle'], ['434.00 MHz', 600, 'end']]
+            .map(([t, x, a]) => `<text x="${x}" y="190" text-anchor="${a}">${t}</text>`).join('');
+        const read = (id, key, best) => `<div class="scan-read${best ? ' is-best' : ''}" id="${id}">
+            <span class="genmod-state-key">${tr(key)}</span>
+            <span class="scan-read-val"><b id="span${best ? 'Best' : 'Test'}Freq">---.--</b><small>${tr('UNIT_MHZ')}</small></span>
+            <span class="scan-read-sig"><span id="span${best ? 'Best' : 'Test'}RSSI">--</span> ${tr('UNIT_DBM')} <span class="scan-q" id="scan${best ? 'Best' : 'Test'}Q"></span></span></div>`;
+        const note = (id, cls, ico, title, desc) => `<div class="genmod-note ${cls}" id="${id}" hidden><svg><use href="#svg-${ico}"></use></svg>
+            <div><b${title ? '' : ` id="${id}Title"`}>${title}</b><span${desc ? '' : ` id="${id}Desc"`}>${desc}</span></div></div>`;
+        page.innerHTML = `<div class="gen-layout scan-page">
+            <section class="hero" data-obj="radio" data-sys>
+            <span class="hero-media"><svg><use href="#svg-scan"></use></svg></span>
+            <div class="hero-head"><span class="hero-eyebrow">${tr('SUBTAB_RADIO')}</span><h2 class="hero-title">${tr('SCANFREQ_TITLE')}</h2><p class="hero-desc">${tr('SCANFREQ_SCAN_DESC')}</p></div>
+            <div class="hero-data"><div class="rx-stats"><div class="rx-stat"><b id="scanRx">—</b><span>${tr('SCANFREQ_CURRENT')} (${tr('UNIT_MHZ')})</span></div>
+            <div class="rx-stat"><b id="scanBw">—</b><span>${tr('SCANFREQ_WINDOW')} (${tr('UNIT_KHZ')})</span></div></div>
+            <div class="scan-legend">${this.scanLegend()}</div></div>
+            </section>
+            <div class="gen-body">
+            <header class="rx-head scan-head">
+            <button type="button" class="genmod-close" aria-label="${escAttr(tr('BT_CLOSE'))}" onclick="activateGrpid('divTransceiverSettings');"><svg><use href="#svg-closeOverlay"></use></svg></button>
+            <h2 class="rx-head-title" id="scanHeadTitle"></h2><p class="rx-head-desc" id="scanWinHint"></p>
+            <div class="scan-actions">
+            <button id="btnStopScanning" type="button" class="gen-btn gen-btn-danger" onclick="somfy.stopScanningFrequency();">${tr('BT_STOP_SCAN')}</button>
+            <button id="btnRestartScanning" type="button" class="gen-btn" onclick="somfy.scanFrequency(true);" hidden>${tr('BT_RESTART')}</button>
+            <button id="btnCopyFrequency" type="button" class="gen-btn gen-btn-primary" onclick="somfy.setScannedFrequency();" hidden></button>
+            </div></header>
+            <p class="scan-intro" id="scanIntro">${tr('SCANFREQ_HOLD_DESC')}</p>
+            ${note('scanFound', 'is-ok', 'succes', '', '')}
+            ${note('scanNone', 'is-warn', 'warning', tr('SCANFREQ_NO_SIGNAL'), tr('SCANFREQ_NO_SIGNAL_DESC'))}
+            <div class="scan-reads">${read('scanReadCur', 'SCANFREQ_SCAN', false)}${read('scanReadBest', 'SCANFREQ_FREQUENCY', true)}</div>
+            <div class="scan-chart">
+            <div class="scan-chart-head"><span class="genmod-state-key">${tr('SCANFREQ_GRAPH_TITLE')}</span><span id="scanPass"></span></div>
+            <svg viewBox="0 0 600 196" role="img" aria-label="${escAttr(tr('SCANFREQ_GRAPH_TITLE'))}">
+            <rect id="scanWinRect" class="scan-win" y="6" height="164" rx="6"></rect>
+            <path class="scan-grid" d="M0 50H600M0 110H600"></path><path class="scan-axis" d="M0 170H600"></path>
+            <path id="scanBarsN" class="scan-bar is-noise"></path><path id="scanBarsW" class="scan-bar is-weak"></path><path id="scanBarsG" class="scan-bar is-ok"></path>
+            <line id="scanCursor" class="scan-cursor" x1="0" y1="2" x2="0" y2="172"></line>
+            <path id="scanBestMark" class="scan-best" hidden></path>
+            <g class="scan-ticks">${axis}</g>
+            </svg>
+            <div class="scan-chart-leg"><span><i class="scan-leg-win"></i>${tr('SCANFREQ_WINDOW')}</span>
+            <span id="scanLegCursor"><i class="scan-leg-cur"></i>${tr('SCANFREQ_CURSOR')}</span>
+            <span id="scanLegBest" hidden><i class="scan-leg-cur"></i>${tr('SCANFREQ_BEST')}</span></div>
+            </div>
+            <div class="scan-legend scan-legend-mob">${this.scanLegend()}</div>
+            </div></div>`;
+        return page;
+    }
+    // Entrée sur la page (route) : sans balayage en cours, elle repart au repos.
+    scanEnter() {
+        const page = this.scanPage();
+        if (!page) return;
+        this.scanWin(page);
+        this.scanSetMode(page, this._scanRunning ? 'run' : 'idle');
+    }
+    // Écoute réglée sur la page Radio, relue à chaque départ : elle a pu changer entre deux visites.
+    scanWin(page) {
+        const rx = (parseFloat(get('slidRxFrequency')?.value) || 433420) / 1000;
+        const bw = (parseFloat(get('slidRxBandwidth')?.value) || 9997) / 100;
+        const X = (f) => Math.min(600, Math.max(0, (f - 433) * 600));
+        const winX = X(rx - bw / 2000), r = page.querySelector('#scanWinRect');
+        r.setAttribute('x', winX.toFixed(1));
+        r.setAttribute('width', Math.max(3, X(rx + bw / 2000) - winX).toFixed(1));
+        page.querySelector('#scanRx').textContent = rx.toFixed(3);
+        page.querySelector('#scanBw').textContent = '± ' + Math.round(bw / 2);
+    }
+    // Bouton Balayer de la page Radio (initScan) ; sans argument, mène seulement à la page.
     scanFrequency(initScan) {
-        // Meme garde que le test et l'assistant : le balayage a BESOIN de la radio. Sans ce
-        // controle, la fenetre de depannage s'ouvrait et tournait indefiniment sans rien trouver
-        // -- exactement le "ca bugue" qu'on cherche a eviter ailleurs.
-        // Seulement sur la demande explicite : procFrequencyScan() rappelle cette methode sans
-        // argument a chaque trame recue, et un garde-fou la ferait echouer en plein balayage.
+        // Meme garde que le test et l'assistant : le balayage a BESOIN de la radio.
         if (initScan && !this.radioPrete()) return;
-        // Demande EXPLICITE de l'utilisateur (bouton Scanner) : elle prime sur tout reliquat de
-        // l'assistant, sinon un drapeau reste leve par une coupure reseau figerait cette fenetre.
-        if (initScan) this.wizStopping = false;
-        if (this.isScanClosing) return;
-        let div = get('divScanFrequency');
-
-        if (!div) {
-            const rx = (parseFloat(get('slidRxFrequency')?.value) || 433420) / 1000;
-            const bw = (parseFloat(get('slidRxBandwidth')?.value) || 9997) / 100;
-            const X = (f) => Math.min(600, Math.max(0, (f - 433) * 600));
-            const winX = X(rx - bw / 2000), winW = Math.max(3, X(rx + bw / 2000) - winX);
-            const axis = [['433.00', 0, 'start'], ['433.25', 150, 'middle'], ['433.50', 300, 'middle'], ['433.75', 450, 'middle'], ['434.00 MHz', 600, 'end']]
-                .map(([t, x, a]) => `<text x="${x}" y="190" text-anchor="${a}">${t}</text>`).join('');
-            const read = (id, key, best) => `<div class="scan-read${best ? ' is-best' : ''}" id="${id}">
-                <span class="genmod-state-key">${tr(key)}</span>
-                <span class="scan-read-val"><b id="span${best ? 'Best' : 'Test'}Freq">---.--</b><small>${tr('UNIT_MHZ')}</small></span>
-                <span class="scan-read-sig"><span id="span${best ? 'Best' : 'Test'}RSSI">--</span> ${tr('UNIT_DBM')} <span class="scan-q" id="scan${best ? 'Best' : 'Test'}Q"></span></span></div>`;
-            const note = (id, cls, ico, title, desc) => `<div class="genmod-note ${cls}" id="${id}" hidden><svg><use href="#svg-${ico}"></use></svg>
-                <div><b${title ? '' : ` id="${id}Title"`}>${title}</b><span${desc ? '' : ` id="${id}Desc"`}>${desc}</span></div></div>`;
-            div = firmware.taskWindow('divScanFrequency', {
-                id: 'scanWin', icon: 'svg-scan', titleKey: 'SCANFREQ_TITLE', descKey: 'SCANFREQ_SCAN_DESC',
-                stateKey: tr('SCANFREQ_CURRENT'), stateValue: rx.toFixed(3) + ' ' + tr('UNIT_MHZ'),
-                stateNote: '± ' + Math.round(bw / 2) + ' ' + tr('UNIT_KHZ'),
-                sideExtra: `<div class="scan-legend">${this.scanLegend()}</div>`,
-                sectionKey: 'SCANFREQ_RUNNING', hintKey: 'SCANFREQ_HINT_RUN', footId: 'scanFoot',
-                bodyHtml: `<p class="scan-intro" id="scanIntro">${tr('SCANFREQ_HOLD_DESC')}</p>
-                ${note('scanFound', 'is-ok', 'succes', '', '')}
-                ${note('scanNone', 'is-warn', 'warning', tr('SCANFREQ_NO_SIGNAL'), tr('SCANFREQ_NO_SIGNAL_DESC'))}
-                <div class="scan-reads">${read('scanReadCur', 'SCANFREQ_SCAN', false)}${read('scanReadBest', 'SCANFREQ_FREQUENCY', true)}</div>
-                <div class="scan-chart">
-                <div class="scan-chart-head"><span class="genmod-state-key">${tr('SCANFREQ_GRAPH_TITLE')}</span><span id="scanPass"></span></div>
-                <svg viewBox="0 0 600 196" role="img" aria-label="${escAttr(tr('SCANFREQ_GRAPH_TITLE'))}">
-                <rect class="scan-win" x="${winX.toFixed(1)}" y="6" width="${winW.toFixed(1)}" height="164" rx="6"></rect>
-                <path class="scan-grid" d="M0 50H600M0 110H600"></path><path class="scan-axis" d="M0 170H600"></path>
-                <path id="scanBarsN" class="scan-bar is-noise"></path><path id="scanBarsW" class="scan-bar is-weak"></path><path id="scanBarsG" class="scan-bar is-ok"></path>
-                <line id="scanCursor" class="scan-cursor" x1="0" y1="2" x2="0" y2="172"></line>
-                <path id="scanBestMark" class="scan-best" hidden></path>
-                <g class="scan-ticks">${axis}</g>
-                </svg>
-                <div class="scan-chart-leg"><span><i class="scan-leg-win"></i>${tr('SCANFREQ_WINDOW')}</span>
-                <span id="scanLegCursor"><i class="scan-leg-cur"></i>${tr('SCANFREQ_CURSOR')}</span>
-                <span id="scanLegBest" hidden><i class="scan-leg-cur"></i>${tr('SCANFREQ_BEST')}</span></div>
-                </div>
-                <div class="scan-legend scan-legend-mob">${this.scanLegend()}</div>`
-            }, 'genmod-assist');
-            div.querySelector('#scanFoot').innerHTML = `
-            <button id="btnCloseScanning" type="button" class="gen-btn" data-genmod-close hidden>${tr('BT_CLOSE')}</button>
-            <button id="btnRestartScanning" type="button" class="gen-btn" onclick="somfy.scanFrequency(true)" hidden>${tr('BT_RESTART')}</button>
-            <button id="btnStopScanning" type="button" class="gen-btn gen-btn-danger" onclick="somfy.stopScanningFrequency(true)">${tr('BT_STOP_SCAN')}</button>
-            <button id="btnCopyFrequency" type="button" class="gen-btn gen-btn-primary" onclick="somfy.setScannedFrequency()" hidden></button>`;
-            shOverlay(div);
-
-            if (this.scanObserver) this.scanObserver.disconnect();
-            this.scanObserver = new MutationObserver(() => { if (!get('divScanFrequency')) this.terminateScanUI(true); });
-            this.scanObserver.observe(get('divContainer'), { childList: true });
-            this.scanSetMode(div, 'run');
-        }
-        if (initScan) {
-            div.setAttribute('data-initscan', true);
-            div.removeAttribute('data-frequency');
+        const go = () => {
+            const page = this.scanPage();
+            if (!page) return;
+            this.scanWin(page);
+            if (currentLeafId !== 'divScanFrequency') activateGrpid('divScanFrequency');
+            if (!initScan) return;
+            // Demande EXPLICITE : elle prime sur tout reliquat de l'assistant ou d'un arrêt en vol.
+            this.wizStopping = this._scanStopping = false;
+            page.removeAttribute('data-frequency');
             this._scan = { pts: Array(100).fill(null), max: {}, idx: -1, pass: 1 };
-            ['spanTestFreq', 'spanBestFreq'].forEach(id => { div.querySelector('#' + id).textContent = '---.--'; });
-            ['Test', 'Best'].forEach(w => { div.querySelector(`#span${w}RSSI`).textContent = '--'; div.querySelector(`#scan${w}Q`).textContent = ''; });
-            this.scanDraw(div);
-            this.scanSetMode(div, 'run');
-
-            putJSONSync('/beginFrequencyScan', {}, (err) => {
-                if (err) return;
-                // Pas de onConfirm ici : le MutationObserver pose plus haut (cf. scanObserver)
-                // declenche deja terminateScanUI(true) -- donc l'arret propre cote firmware
-                // (/endFrequencyScan) -- des que ce div quitte le DOM, quel que soit le chemin.
-                setOverlayLock(div, 'confirm', {
-                    titleKey: 'PROMPT_FREQ_SCAN_TITLE',
-                    msgKey: 'PROMPT_FREQ_SCAN_MSG',
-                });
-                // genModalBusy() vient de griser la croix : ici elle doit rester, et demander
-                // confirmation avant d'arreter le balayage.
-                div.querySelectorAll('.genmod-close').forEach(b => { b.disabled = false; });
-            });
-        }
-        return div;
+            ['spanTestFreq', 'spanBestFreq'].forEach(id => { page.querySelector('#' + id).textContent = '---.--'; });
+            ['Test', 'Best'].forEach(w => { page.querySelector(`#span${w}RSSI`).textContent = '--'; page.querySelector(`#scan${w}Q`).textContent = ''; });
+            this.scanDraw(page);
+            this.scanSetMode(page, 'run');
+            putJSONSync('/beginFrequencyScan', {}, (err) => { if (!err) this._scanRunning = true; });
+        };
+        if (initScan && currentLeafId !== 'divScanFrequency') confirmDiscardChanges(go);
+        else go();
     }
-
+    // Hors de la page, le balayage d'un autre appareil (ou abandonné) rend la radio sourde : on le
+    // signale sans prendre l'écran, au lieu d'ouvrir la page d'office.
+    scanToast(on) {
+        const t = ui.findToast('scan');
+        if (!on) { if (t) t.close(); return; }
+        if (t) return;
+        ui.toast({ id: 'scan', level: 'warn', icon: 'svg-scan', duration: 0, title: tr('SCANFREQ_RUNNING'), actions: [
+            { label: tr('BT_SEE'), onClick: (x) => { x.close(); this._scanRunning = true; this.scanFrequency(); } },
+            { label: tr('BT_STOP'), onClick: (x) => { x.close(); this._scanStopping = true; putJSONSync('/endFrequencyScan', {}, () => {}); } },
+        ] });
+    }
+    // Sortie de la page : le balayage ne doit pas survivre à l'écran qui l'affiche.
+    scanLeave() {
+        if (!this._scanRunning) return;
+        this._scanRunning = false;
+        this._scanStopping = true;
+        putJSONSync('/endFrequencyScan', {}, (err) => { if (err) logger.error('Failed to end frequency scan:', err); });
+    }
+    // Le balayage mesure une télécommande : il règle l'ÉCOUTE, jamais l'émission (cf. refreshRadio).
     setScannedFrequency() {
-        let div = get('divScanFrequency');
-        let freq = parseFloat(div.getAttribute('data-frequency'));
-        // Le balayage mesure une telecommande : il regle l'ECOUTE, jamais l'emission.
-        let slid = get('slidRxFrequency');
-        slid.value = Math.round(freq * 1000);
-        somfy.rxFrequencyChanged(slid);
-        slid.dispatchEvent(new Event('change', { bubbles: true }));
-        closeOverlay(div);
+        this._scanCopy = parseFloat(get('divScanFrequency').getAttribute('data-frequency'));
+        activateGrpid('divTransceiverSettings');
     }
-    stopScanningFrequency(killScan) {
-        let div = get('divScanFrequency');
-        if (!div) return;
-        if (killScan !== true) {
-            closeOverlay(div);
-            return;
-        }
+    stopScanningFrequency() {
+        const page = get('divScanFrequency');
+        this._scanStopping = true;
         putJSONSync('/endFrequencyScan', {}, (err) => {
             if (err) { ui.serviceError(err); return; }
-            // Le scan est termine : la fenetre peut de nouveau se fermer sans confirmation.
-            clearOverlayLock(div);
-            const freq = parseFloat(div.getAttribute('data-frequency'));
-            this.scanSetMode(div, freq > 0 ? 'found' : 'none');
+            this._scanRunning = false;
+            const freq = parseFloat(page.getAttribute('data-frequency'));
+            this.scanSetMode(page, freq > 0 ? 'found' : 'none');
         });
-    }
-    terminateScanUI(killScan) {
-        this.isScanClosing = true;
-
-        if (this.scanObserver) {
-            this.scanObserver.disconnect();
-            this.scanObserver = null;
-        }
-        if (killScan) {
-            putJSONSync('/endFrequencyScan', {}, (err) => {
-                if (err) logger.error('Failed to end frequency scan:', err);
-            });
-        }
-        let div = get('divScanFrequency');
-        if (div) closeOverlay(div);
-        setTimeout(() => { this.isScanClosing = false; }, 1000);
     }
 
     btnDown = null;
@@ -1805,16 +1804,17 @@ class Somfy {
     // trouverait pas et la ligne resterait vide jusqu'au premier évènement socket.
     updateVRPosition(shade, root) {
         const ov = root || document.querySelector('.vr-overlay');
-        const el = ov ? ov.querySelector('.vr-target-pos') : null;
+        const el = ov ? ov.querySelector('.side-panel-desc') : null;
         if (!el) return;
-        if (!shade || typeof shade.position !== 'number') { el.textContent = ''; return; }
-        if (this.dryContactShadeTypes.includes(this.shadeTypeOf(shade))) {
-            el.textContent = this.shadeStateLabel(shade.position, shade.flipPosition, this.shadeVocabOf(shade));
-            return;
+        let txt = '';
+        if (shade && typeof shade.position === 'number') {
+            if (this.dryContactShadeTypes.includes(this.shadeTypeOf(shade))) txt = this.shadeStateLabel(shade.position, shade.flipPosition, this.shadeVocabOf(shade));
+            else {
+                txt = `${tr('POS_SHORT')} ${Math.round(shade.position)}%`;
+                if (shade.tiltType) txt += ` ${tr('TILT_SHORT')} ${Math.round(shade.tiltPosition)}%`;
+            }
         }
-        let txt = `${tr('POS_SHORT')} ${Math.round(shade.position)}%`;
-        if (shade.tiltType) txt += ` ${tr('TILT_SHORT')} ${Math.round(shade.tiltPosition)}%`;
-        el.textContent = txt;
+        el.textContent = [tr('SUBTAB_VIRTUAL_REMOTE_L'), txt].filter(Boolean).join(' · ');
     }
     // Fermeture SUBIE (la cible vient de disparaître), à distinguer des sorties décidées par
     // l'utilisateur : pas de passage par requestCloseOverlay(), il n'y a rien à confirmer et rien
@@ -1830,28 +1830,16 @@ class Somfy {
         this._vrTarget = { type: type, id: parseInt(id, 10) };
         const info = this.vrTarget();
         if (!info) { this._vrTarget = null; return; }
-        // En-tête écrit ici plutôt que par modalHeader()/overlayHeader() : le premier passe en
-        // colonne centrée sur mobile, le second pose un menu déroulant dont la télécommande n'a que faire.
-        // data-radio est recopié du panneau sur l'overlay : le badge de l'en-tête porte le témoin radio.
+        // data-radio est recopié du panneau sur l'overlay : la pastille de l'en-tête porte le témoin radio.
         // Deux vues sur le même bloc : « Télécommande », une feuille comme celle du tableau de bord,
         // et « Avancé », une fenêtre coque à gauche, fonctions à droite (canevas A2, VrWin).
         let div = document.createElement('div');
-        div.className = 'modal-overlay vr-overlay';
+        div.className = 'modal-overlay vr-overlay is-panel';
         div.setAttribute('data-radio', content.getAttribute('data-radio') || 'on');
         div.setAttribute('data-view', 'remote');
         div.innerHTML = `
         <div class="message-content vr-overlay-content" role="dialog" aria-modal="true">
-        <div class="overlayHeader vr-overlay-header">
-        <div class="overlayHeader-badge">
-        <svg><use href="#${info.type === 'group' ? 'svg-group' : 'svg-remote'}"></use></svg>
-        </div>
-        <div class="vr-title">
-        <span class="vr-target-kicker">${tr('SUBTAB_VIRTUAL_REMOTE_L')}</span>
-        <b class="vr-target-name"></b>
-        <span class="vr-target-pos"></span>
-        </div>
-        <div close title="${tr('BT_CLOSE')}"><svg><use href="#svg-closeOverlay"></use></svg></div>
-        </div>
+        ${panelHead({ icon: info.type === 'group' ? 'svg-group' : 'svg-remote', obj: info.type === 'group' ? 'groupe' : 'equipement', title: '', desc: ' ', close: true })}
         <div class="overlay-scroll-content"></div>
         <nav class="vr-tabs">
         <button type="button" class="vr-tab" data-view="remote" aria-pressed="true" onclick="somfy.setVRView('remote');"><svg><use href="#svg-remote"></use></svg><span>${tr('SUBTAB_VIRTUAL_REMOTE_S')}</span></button>
@@ -1860,12 +1848,10 @@ class Somfy {
         </div>`;
         // Le nom de la cible est posé en textContent et non injecté dans le gabarit : c'est la
         // seule chaîne de cet en-tête qui vienne de l'utilisateur.
-        const name = div.querySelector('.vr-target-name');
-        if (name) name.textContent = info.name;
+        div.querySelector('.side-panel-head h2').textContent = info.name;
         this.updateVRPosition(info.shade, div);
         if (div.getAttribute('data-radio') === 'off') {
-            const badge = div.querySelector('.overlayHeader-badge');
-            if (badge) badge.setAttribute('title', tr('RADIO_DISABLED'));
+            div.querySelector('.side-panel-head .hero-media').setAttribute('title', tr('RADIO_DISABLED'));
         }
         // Mise en page et champs réglables AVANT le déplacement : get() passe par
         // document.getElementById(), qui ne voit rien dans un overlay pas encore inséré. Réglé
@@ -1887,6 +1873,7 @@ class Somfy {
         if (!ov) return;
         ov.setAttribute('data-view', view);
         ov.classList.toggle('genmod-overlay', view === 'adv');
+        ov.classList.toggle('is-panel', view === 'remote');
         ov.querySelectorAll('.vr-tab').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === view ? 'true' : 'false'));
         const body = ov.querySelector('.overlay-scroll-content');
         if (body) body.scrollTop = 0;
@@ -2243,7 +2230,7 @@ class Somfy {
         const ov = document.querySelector('.vr-overlay');
         if (!ov) return;
         ov.setAttribute('data-radio', isOn ? 'on' : 'off');
-        const badge = ov.querySelector('.overlayHeader-badge');
+        const badge = ov.querySelector('.side-panel-head .hero-media');
         if (badge) {
             if (isOn) badge.removeAttribute('title');
             else badge.setAttribute('title', txt);
@@ -2256,7 +2243,7 @@ class Somfy {
     // appuis rapprochés ne rejoueraient pas l'animation, le navigateur ne voyant aucun changement.
     pulseVRBadge() {
         const ov = document.querySelector('.vr-overlay');
-        const badge = ov ? ov.querySelector('.overlayHeader-badge') : null;
+        const badge = ov ? ov.querySelector('.side-panel-head .hero-media') : null;
         if (!badge) return;
         badge.classList.remove('pulse');
         void badge.offsetWidth;
@@ -2357,7 +2344,17 @@ class Somfy {
     // vide, et la ligne d'etat dira toujours la verite sur ce qu'on sait.
     refreshRadio() {
         getJSON('/getRadio', (err, res) => {
-            if (err || !res || !res.config) return;
+            // Fréquence rapportée de la page Balayage : posée APRÈS la remise à l'image de la carte.
+            const copy = () => {
+                if (this._scanCopy > 0) {
+                    const slid = get('slidRxFrequency');
+                    slid.value = Math.round(this._scanCopy * 1000);
+                    this.rxFrequencyChanged(slid);
+                    slid.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                this._scanCopy = 0;
+            };
+            if (err || !res || !res.config) return copy();
             this._radioApplied = Object.assign({}, res.config);
             ui.toElement(get('divTransceiverSettings'), { transceiver: res });
             const cb = get('cbEnableRadio');
@@ -2373,6 +2370,7 @@ class Somfy {
             // Le formulaire vient d'etre remis a l'image de la carte : il n'y a plus rien
             // d'en attente, et laisser un etat "modifie" ferait mentir l'alerte de sortie.
             clearDirty(get('divTransceiverSettings'));
+            copy();
             this.setRadioEnabled(!!res.config.enabled);
             this._wizPending = false;
             this.renderRadioFleet();
@@ -2508,14 +2506,17 @@ class Somfy {
         let div = get('divRadioWizard');
         if (!div) {
             const win = this.radioWindow;
-            div = firmware.taskWindow('divRadioWizard', {
-                id: 'rw', icon: 'svg-remote', titleKey: 'RADIO_WIZ_TITLE', descKey: 'RADIO_WIZ_DESC',
-                stateKey: tr('RADIO_WIZ_WINDOW'),
-                stateValue: win ? `${win.min.toFixed(3)} – ${win.max.toFixed(3)} ${tr('UNIT_MHZ')}` : '—',
-                sideExtra: `<div class="genmod-state rw-fleet" id="rwFleet"></div>`,
-                sectionKey: 'RADIO_WIZ_TITLE', hintKey: '', footId: 'wizFooter',
-                bodyHtml: `<div id="wizBody" class="rw-body"></div>`
-            }, 'genmod-assist');
+            div = document.createElement('div');
+            div.id = 'divRadioWizard';
+            div.className = 'modal-overlay genmod-overlay wiz-overlay';
+            div.innerHTML = `<div class="message-content wiz-window">${wizCloseHtml('close')}
+            <aside class="wiz-side hero-skin" data-obj="radio">
+            <div class="wiz-sum"><span class="wiz-sum-icon"><svg><use href="#svg-remote"></use></svg></span><span class="wiz-sum-text"><h2 class="wiz-title">${tr('RADIO_WIZ_TITLE')}</h2>
+            <b>${win ? `${win.min.toFixed(3)} – ${win.max.toFixed(3)} ${tr('UNIT_MHZ')}` : '—'}</b><span>${tr('RADIO_WIZ_WINDOW')}</span><small class="wiz-now"></small></span></div>
+            <ol class="wiz-steps"></ol><div class="wiz-pbar" aria-hidden="true"></div>
+            </aside>
+            <section class="wiz-main"><div id="wizBody" class="rw-body"></div><div id="rwFleet" class="rw-fleet"></div></section>
+            <footer class="wiz-foot" id="wizFooter"></footer></div>`;
             div._onClosed = () => this.wizAbandon();
             shOverlay(div);
         }
@@ -2548,9 +2549,9 @@ class Somfy {
         switch (w.etat) {
             case 'intro': {
                 step = 0;
-                const etape = (i, k, d) => `<div class="rw-step"><span class="rw-step-num">${i}</span><div><b>${tr(k)}</b><span>${tr(d)}</span></div></div>`;
+                const conseil = (k) => `<li><b>${tr(k)}</b><span>${tr(k + '_DESC')}</span></li>`;
                 body.innerHTML = titre(tr('RADIO_WIZ_STEP1_TITLE'), tr('RADIO_WIZ_STEP1_DESC'))
-                    + `<div class="rw-steps">${etape(1, 'RADIO_WIZ_INTRO_A', 'RADIO_WIZ_INTRO_A_DESC')}${etape(2, 'RADIO_WIZ_INTRO_B', 'RADIO_WIZ_INTRO_B_DESC')}${etape(3, 'RADIO_WIZ_INTRO_C', 'RADIO_WIZ_INTRO_C_DESC')}</div>`;
+                    + `<ul class="rw-tips">${conseil('RADIO_WIZ_INTRO_A')}${conseil('RADIO_WIZ_INTRO_B')}${conseil('RADIO_WIZ_INTRO_C')}</ul>`;
                 foot.innerHTML = btn('btnWizCancel', 'BT_CANCEL', '', 'wizFermer();')
                                + btn('btnWizGo', 'BT_BEGIN', 'gen-btn-primary', 'wizDecoder();');
                 break;
@@ -2643,9 +2644,12 @@ class Somfy {
             }
         }
         if (chart) body.insertAdjacentHTML('beforeend', this.wizChart(chart));
-        get('rwHint').textContent = hint;
-        div.querySelector('.genmod-head-title').innerHTML = ['RADIO_WIZ_STEP_PREP', 'RADIO_WIZ_STEP_TEST', 'RADIO_WIZ_STEP_SET']
-            .map((k, i) => `<span class="rw-stp${i === step ? ' is-on' : i < step ? ' is-done' : ''}"><i>${i < step ? '✓' : i + 1}</i>${tr(k)}</span>`).join('<span class="rw-sep" aria-hidden="true"></span>');
+        foot.insertAdjacentHTML('afterbegin', `<span class="wiz-foot-gap"></span><span class="wiz-foot-hint">${escHtml(hint)}</span>`);
+        const bar = wizStepsHtml(['RADIO_WIZ_STEP_PREP', 'RADIO_WIZ_STEP_TEST', 'RADIO_WIZ_STEP_SET'].map((k, i) => ({ title: tr(k),
+            state: i === step ? 'on' : i < step ? 'done' : '', desc: i === 1 && n ? `${tr('RADIO_FLEET_TESTED')} · ${n}` : '' })));
+        div.querySelector('.wiz-steps').innerHTML = bar.steps;
+        div.querySelector('.wiz-pbar').innerHTML = bar.bar;
+        div.querySelector('.wiz-now').textContent = bar.now;
         this.wizFleetSide();
         this.wizMajVerrou();
         this.renderRadioFleet();
@@ -2924,7 +2928,7 @@ class Somfy {
         if (this.wiz && this.wiz.etat === 'ecoute') {
             setOverlayLock(div, 'confirm', { titleKey: 'PROMPT_FREQ_SCAN_TITLE', msgKey: 'PROMPT_FREQ_SCAN_MSG' });
             // Comme le balayage : la croix reste active et demande confirmation.
-            div.querySelectorAll('.genmod-close').forEach(b => { b.disabled = false; });
+            div.querySelectorAll('.wiz-close').forEach(b => { b.disabled = false; });
         } else {
             clearOverlayLock(div);
         }
@@ -4290,11 +4294,11 @@ class Somfy {
     openCardSheet(kind, id, tab) {
         const host = get('divHomePnl');
         if (!host) return;
-                let ov = host.querySelector('.card-sheet-overlay:not([data-closing])');
+                let ov = host.querySelector('.side-panel-overlay:not([data-closing])');
         if (!ov) {
             ov = document.createElement('div');
-            ov.className = 'card-sheet-overlay';
-            ov.onclick = (e) => { if (e.target === ov) this.closeCardSheet(); };
+            ov.className = 'side-panel-overlay';
+            ov.onclick = (e) => { if (e.target === ov || e.target.closest('[data-close]')) this.closeCardSheet(); };
             host.appendChild(ov);
             void ov.offsetHeight;
             ov.classList.add('open');
@@ -4309,7 +4313,7 @@ class Somfy {
     closeCardSheet() {
         this._cardSheet = null;
         if (this._cardSheetKey) { document.removeEventListener('keydown', this._cardSheetKey); this._cardSheetKey = null; }
-        const ov = document.querySelector('.card-sheet-overlay:not([data-closing])');
+        const ov = document.querySelector('#divHomePnl > .side-panel-overlay:not([data-closing])');
         if (!ov) return;
         ov.dataset.closing = 'true';
         ov.classList.remove('open');
@@ -4372,7 +4376,7 @@ class Somfy {
     }
     renderCardSheet() {
         const cs = this._cardSheet;
-        const ov = document.querySelector('.card-sheet-overlay:not([data-closing])');
+        const ov = document.querySelector('#divHomePnl > .side-panel-overlay:not([data-closing])');
         if (!cs || !ov) return;
         if (ov.querySelector('input[type=range]:active, input[type=range][data-dragging="true"]')) return;
         const isShade = cs.kind === 'shade';
@@ -4383,17 +4387,17 @@ class Somfy {
         const prev = ov.querySelector('.card-sheet-body');
         const top = prev ? prev.scrollTop : 0;
         const room = (_rooms.find(r => r.roomId === item.roomId) || { name: '' }).name;
-        let icon = `<div class="group-icon-wrapper"><svg><use href="#svg-group"></use></svg></div>`;
+        let icon = '<svg><use href="#svg-group"></use></svg>';
         if (isShade) {
             const st = this.shadeTypes.find(x => x.type === item.shadeType) || { ico: 'svg-window-shade' };
             const p = item.flipPosition ? 100 - item.position : item.position;
             icon = `<svg class="somfy-shade-icon" data-shadeid="${item.shadeId}" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${item.tiltType ? item.tiltPosition : 0}"><use href="#${st.ico}"></use></svg>`;
         }
-        ov.innerHTML = `<div class="card-sheet" role="dialog" aria-modal="true" ${isShade ? `data-shadeid="${item.shadeId}" data-tilt="${item.tiltType || 0}"` : `data-groupid="${item.groupId}"`}>
-        <div class="card-sheet-grip"></div>
-        <div class="card-sheet-head">${cs.tab ? `<button type="button" class="card-sheet-back" title="${tr('BT_GO_BACK')}" onclick="somfy.cardSheetTab(0);"><svg><use href="#svg-arrowLeft"></use></svg></button>` : icon}<div class="card-sheet-title"><b>${escHtml(item.name)}</b>${room ? `<span>${escHtml(room)}</span>` : ''}</div><div close title="${tr('BT_CLOSE')}" onclick="somfy.closeCardSheet();"><svg><use href="#svg-closeOverlay"></use></svg></div></div>
+        ov.innerHTML = `<aside class="side-panel card-sheet" role="dialog" aria-modal="true" ${isShade ? `data-shadeid="${item.shadeId}" data-tilt="${item.tiltType || 0}"` : `data-groupid="${item.groupId}"`}>
+        ${panelHead({ media: icon, obj: isShade ? 'equipement' : 'groupe', title: escHtml(item.name), desc: room ? escHtml(room) : '', close: true,
+            lead: cs.tab ? `<button type="button" class="card-sheet-back" title="${tr('BT_GO_BACK')}" onclick="somfy.cardSheetTab(0);"><svg><use href="#svg-arrowLeft"></use></svg></button>` : '' })}
         <div class="card-sheet-body">${tabs.map((t, i) => `<div class="card-sheet-pane"${i === cs.tab ? '' : ' hidden'}>${t.html}</div>`).join('')}</div>
-        </div>`;
+        </aside>`;
         ov.querySelector('.card-sheet-body').scrollTop = top;
         const panes = ov.querySelectorAll('.card-sheet-pane');
         tabs.forEach((t, i) => { if (t.bind) t.bind(panes[i]); });
@@ -6074,9 +6078,9 @@ class Somfy {
     _rxLinkWin(id, o) {
         const div = document.createElement('div');
         div.id = id;
-        div.className = 'modal-overlay genmod-overlay';
+        div.className = 'modal-overlay genmod-overlay genmod-task';
         div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
-            id, icon: o.icon, titleKey: o.titleKey, descKey: o.descKey,
+            id, icon: o.icon, obj: 'radio', titleKey: o.titleKey, descKey: o.descKey,
             stateKey: tr(o.countKey), stateValue: '', sectionKey: 'LINK_HEAD_LISTEN', hintKey: '', footId: id + 'Foot', bodyHtml: '',
             sideExtra: o.warnKey ? `<p class="rx-link-warn"><svg><use href="#svg-warning"></use></svg><span>${tr(o.warnKey)}</span></p>` : ''
         })}</div>`;

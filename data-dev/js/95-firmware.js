@@ -460,14 +460,10 @@ class Firmware {
     notesModal(tag, html) {
         const url = `https://github.com/xkain/TESTRTS/releases/tag/${encodeURIComponent(tag)}`;
         const div = document.createElement('div');
-        div.className = 'side-panel-overlay is-sheet';
+        div.className = 'side-panel-overlay';
         div.innerHTML = `
         <aside class="side-panel" role="dialog" aria-modal="true" aria-labelledby="notesPanelTitle">
-        <div class="side-panel-head">
-        <span class="side-panel-icon"><svg><use href="#svg-doc"></use></svg></span>
-        <div><span class="side-panel-kicker">${tr('NOTES_KICKER')}</span><h2 id="notesPanelTitle">${escHtml(tag)}</h2></div>
-        <button type="button" class="genmod-close" data-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button>
-        </div>
+        ${panelHead({ icon: 'svg-doc', id: 'notesPanelTitle', title: tr('NOTES_KICKER'), desc: escHtml(tag) })}
         <div class="side-panel-body"><div class="side-panel-sec side-panel-md">${html}</div></div>
         <div class="side-panel-foot"><div class="genmod-foot-btns">
         <a class="gen-btn" href="${url}" target="_blank" rel="noopener"><span>${tr('NOTES_GITHUB')}</span><svg><use href="#svg-linkOut"></use></svg></a>

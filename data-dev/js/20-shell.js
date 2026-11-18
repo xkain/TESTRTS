@@ -853,6 +853,7 @@ const ROUTE_LEAF_PARENT = {
     divListener: 'divIntegrationSettings',
     divRepeater: 'divRadioSettings',
     divFrameLog: 'divRadioSettings',
+    divScanFrequency: 'divRadioSettings',
 };
 const ROUTE_SLUGS = {
     divHomePnl: 'dashboard',
@@ -870,6 +871,7 @@ const ROUTE_SLUGS = {
     divSomfySchedules: 'schedules',
     divTransceiverSettings: 'radio',
     divFrameLog: 'radio-logs',
+    divScanFrequency: 'radio-scan',
     divSettingsPnl: 'settings',
 };
 const ROUTE_SLUG_TO_GRPID = Object.fromEntries(Object.entries(ROUTE_SLUGS).map(([id, slug]) => [slug, id]));
@@ -1064,9 +1066,9 @@ const mobileNav = {
                 + `<button type="button" class="add-tile-plus" data-add="${kind}" aria-label="${tr(addKey)}" title="${tr(addKey)}"${max && n >= max ? ' disabled' : ''}><svg><use href="#svg-add"></use></svg></button></div>`;
         };
         const div = document.createElement('div');
-        div.className = 'modal-overlay mobile-add-menu';
-        div.innerHTML = `<div class="message-content">${modalHeader('DASH_ADD_MENU_TITLE', 'svg-add', { subtitle: 'DASH_ADD_MENU_DESC' })}
-            <div class="set-grid add-grid">${KINDS.map(tile).join('')}</div></div>`;
+        div.className = 'modal-overlay is-panel';
+        div.innerHTML = `<div class="message-content">${panelHead({ icon: 'svg-add', title: tr('DASH_ADD_MENU_TITLE'), desc: tr('DASH_ADD_MENU_DESC'), close: true, center: true })}
+            <div class="side-panel-body"><div class="set-grid add-grid">${KINDS.map(tile).join('')}</div></div></div>`;
         div.addEventListener('click', (e) => {
             const add = e.target.closest('[data-add]');
             const page = e.target.closest('[data-page]');
@@ -1094,9 +1096,9 @@ const BREADCRUMB_PARENT = {
     divSomfyMotors: 'sec-habitation', divSomfyGroups: 'sec-habitation', divSomfyRooms: 'sec-habitation', divSomfySchedules: 'sec-habitation',
     divHomeAssistant: 'sec-domotique', divMQTT: 'sec-domotique', divListener: 'sec-domotique',
     divNetAdapter: 'sec-systeme', divTransceiverSettings: 'sec-systeme', divSecurity: 'sec-systeme', divSystemOptions: 'sec-systeme', divFirmware: 'sec-systeme',
-    divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings',
+    divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings', divScanFrequency: 'divTransceiverSettings',
 };
-const SIDEBAR_OWNER = { divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings' };
+const SIDEBAR_OWNER = { divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings', divScanFrequency: 'divTransceiverSettings' };
 const DOC_PAGES = {
     divHomePnl: 'tableau-de-bord/',
     divSomfyMotors: 'somfy/equipements/',
@@ -1107,6 +1109,7 @@ const DOC_PAGES = {
     divListener: 'somfy/telecommandes-ecoutees/',
     divRepeater: 'somfy/repeteurs/',
     divFrameLog: 'radio/journal/',
+    divScanFrequency: 'radio/',
     divNetAdapter: 'reseau/',
     divMQTT: 'reseau/parametres-mqtt/',
     divSystemOptions: 'general/',
@@ -1306,6 +1309,8 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
         if (leafId === 'divTransceiverSettings') somfy.refreshRadio();
         if (leafId === 'divFrameLog') somfy.showFrameLog();
         else somfy.frameLogVisible = false;
+        if (leafId === 'divScanFrequency') somfy.scanEnter();
+        else somfy.scanLeave();
     }
     const slug = _routeSlug(leafId, activeEditor);
     currentSlug = slug;
@@ -1541,29 +1546,6 @@ function secretPinValue(inputs) {
     return list.map(inp => inp.value || '').join('');
 }
 
-function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
-    const subtitle = options.subtitle ? `<span class="modalHeader-subtitle">${tr(options.subtitle)}</span>` : '';
-    const rightContent = options.rightContent || '';
-
-    return `
-    <div class="modalHeader-handle" onclick="handleMobileDismiss(this)"></div>
-
-    <div class="modalHeader">
-    <div class="modalHeader-block">
-    <div class="modalHeader-badge">
-    <svg><use href="#${icon}"></use></svg>
-    </div>
-
-    <div class="modalHeader-texts">
-    <span class="modalHeader-title">${tr(title)}</span>
-    ${subtitle}
-    </div>
-    </div>
-
-    <div class="modalHeader-right">${rightContent}</div>
-    </div>`;
-}
-
 // --- Sections d'une page migrée (classes gen-, main.css) ----------------------------------
 // Sous 768 px les titres de section se collent sous la navigation : le filet ne se pose que sur
 // le titre effectivement collé, d'où le calcul au défilement.
@@ -1727,9 +1709,9 @@ function genModalState(keyLabel, value, note = '') {
 }
 function genModalShell(o) {
     const close = () => `<button type="button" class="genmod-close" data-genmod-close
-    aria-label="${tr('BT_CLOSE')}"><svg><use href="#svg-close"></use></svg></button>`;
+    aria-label="${tr('BT_CLOSE')}"><svg><use href="#svg-closeOverlay"></use></svg></button>`;
     return `
-    <section class="genmod-side${o.skin ? ' hero-skin" data-obj="' + o.skin : ''}">
+    <section class="genmod-side${o.skin ? ' hero-skin" data-obj="' + o.skin : o.obj ? '" data-obj="' + o.obj : ''}">
     <div class="modalHeader-handle" onclick="handleMobileDismiss(this)"></div>
     <svg class="genmod-side-icon"><use href="#${o.icon}"></use></svg>
     <div>
@@ -1754,20 +1736,29 @@ function genModalShell(o) {
 // Verrou en vol : la croix et les moyens d'import cessent de répondre. Appelée par
 // setOverlayLock / clearOverlayLock, donc tout chemin qui pose ou lève un verrou est couvert
 // sans avoir à y penser. Sans effet hors des fenêtres genmod-.
-// Panneau latéral (side-panel-, overlays.css) : 440 px collé à droite, feuille du bas sur mobile
-// si is-sheet. Fermé par la croix ou tout [data-close], un clic sur le fond et Échap.
-// Mobile : « Détails » d'un hero en feuille du bas. Copie du bloc replié, ids retirés (la page garde
-// les siens, mis à jour en direct) ; un bouton de la feuille la referme avant d'agir.
+// En-tête d'un Panneau (overlays.css) : poignée mobile, pastille ronde des pages, titre et
+// description, croix grise. title/desc sont du HTML : échapper ce qui vient de l'utilisateur.
+// o : icon | media, obj, tone ('bad'…), title, desc, id (du titre), close, center (mobile), lead (avant la pastille).
+function panelHead(o) {
+    const media = o.media || `<svg><use href="#${o.icon}"></use></svg>`;
+    return `<div class="modalHeader-handle" data-close onclick="handleMobileDismiss(this)"></div>
+    <div class="side-panel-head${o.center ? ' is-center' : ''}">${o.lead || ''}<span class="hero-media${o.tone ? ' is-' + o.tone : ''}"${o.obj ? ` data-obj="${o.obj}"` : ''}>${media}</span>
+    <div class="side-panel-texts"><h2${o.id ? ` id="${o.id}"` : ''}>${o.title}</h2>${o.desc ? `<p class="side-panel-desc">${o.desc}</p>` : ''}</div>
+    ${o.close ? `<button type="button" class="genmod-close" close data-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-closeOverlay"></use></svg></button>` : ''}</div>`;
+}
+// Panneau hébergé par openSidePanel : fermé par la croix ou tout [data-close], un clic sur le
+// fond et Échap. « Détails » d'un hero : copie du bloc replié, ids retirés (la page garde les
+// siens, mis à jour en direct) ; un bouton du panneau le referme avant d'agir.
 function openHeroDetails(item) {
     const h = item.closest('.hero'), body = h.querySelector('.hero-fold-body').cloneNode(true);
     item.parentElement.classList.remove('show');
     body.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
     body.querySelectorAll('button, a').forEach(e => e.setAttribute('data-close', ''));
     const div = document.createElement('div');
-    div.className = 'side-panel-overlay is-sheet is-fit';
-    div.innerHTML = `<aside class="side-panel" role="dialog" aria-modal="true"><div class="side-panel-head">
-        <div><span class="side-panel-kicker">${tr('DETAILS')}</span><h2>${escHtml((h.querySelector('.hero-title') || {}).textContent || '')}</h2></div>
-        <button type="button" class="genmod-close" data-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
+    div.className = 'side-panel-overlay';
+    div.innerHTML = `<aside class="side-panel" role="dialog" aria-modal="true">${panelHead({
+        icon: (h.querySelector('.hero-media use')?.getAttribute('href') || '#svg-info').slice(1), obj: h.dataset.obj,
+        title: escHtml((h.querySelector('.hero-title') || {}).textContent || ''), desc: tr('DETAILS'), close: true })}
         <div class="side-panel-body"></div></aside>`;
     div.querySelector('.side-panel-body').appendChild(body);
     openSidePanel(div);

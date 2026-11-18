@@ -391,30 +391,27 @@ class Wifi {
         const type = this._netType || (this.isHotspot ? 'hotspot' : 'wifi');
         const st = this.netBannerState(type);
         const txt = (sel) => document.querySelector(sel)?.textContent.trim() || '--';
-        const kv = (k, v) => `<div class="dstat-kv"><span>${tr(k)}</span><b>${escHtml(String(v))}</b></div>`;
+        const kv = (k, v) => `<div class="side-panel-kv"><span>${tr(k)}</span><b>${escHtml(String(v))}</b></div>`;
         const host = window.__currentHostname || 'ESPSomfy RTS';
         const div = document.createElement('div');
-        div.className = 'modal-overlay dstat-sheet';
+        div.className = 'modal-overlay is-panel';
         div.innerHTML = `<div class="message-content">
-            <div class="dstat-head hero-skin" data-tone="${st ? st.tone : 'ok'}">
-                <div class="modalHeader-handle" onclick="handleMobileDismiss(this)"></div>
-                <div class="dstat-head-top"><span class="set-id-logo"><svg><use href="#svg-logo"></use></svg></span>
-                    <span class="set-state-text"><b>${tr('MQTT_P_STATUS')}</b><span class="set-tile-val">${escHtml([host, document.querySelector('.fw-version')?.textContent.trim()].filter(Boolean).join(' · '))}</span></span>
-                    <button type="button" class="genmod-close" aria-label="${tr('BT_CLOSE')}" onclick="requestCloseOverlay(this.closest('.modal-overlay'));"><svg><use href="#svg-close"></use></svg></button></div>
-                <span class="set-id-pill">${tr('NET_STATUS_UP')}</span>
-            </div>
+            ${panelHead({ icon: 'svg-logo', obj: 'reseau', tone: st && st.tone === 'warn' ? 'medium' : '', title: escHtml(host), close: true, center: true,
+                desc: escHtml([document.querySelector('.fw-version')?.textContent.trim(), tr('NET_STATUS_UP')].filter(Boolean).join(' · ')) })}
+            <div class="side-panel-body">
             ${st ? `<p class="dstat-alert" data-tone="${st.tone}">${escHtml(st.text)}</p>` : ''}
-            <div class="dstat-block"><h4>${tr('SUBTAB_CONNECTION')}</h4>
+            <div class="side-panel-sec"><h3>${tr('SUBTAB_CONNECTION')}</h3>
                 ${kv('TAB_NETWORK', this.netLabel(type))}
                 ${this._onWifi(type) ? kv('M_SIGNAL', `${this._wifiRssi} ${tr('UNIT_DBM')}`) : ''}
                 ${kv('RADIO_ADDRESS', location.hostname)}
             </div>
-            <div class="dstat-block">
+            <div class="side-panel-sec">
                 ${kv('TOPBAR_UPTIME', txt('.uptime-display'))}
                 ${kv('FW_DIAG_RESET', txt('.info-reset'))}
                 ${kv('FIRMWARE_MT_INSTALLED', txt('.fw-version'))}
             </div>
             <a class="dstat-help" onclick="openPageHelp();"><svg><use href="#svg-navHelp"></use></svg>${tr('HELP_THIS_PAGE')}<svg><use href="#svg-linkOut"></use></svg></a>
+            </div>
         </div>`;
         shOverlay(div);
     }
@@ -773,14 +770,10 @@ class Wifi {
             <li><i>1</i><span>${tr('SAVEWIFI_STEP_0')}</span></li><li><i>2</i><span>${tr('SAVEWIFI_STEP_1')}</span></li><li><i>3</i><span>${tr('SAVEWIFI_STEP_2')}</span></li></ol></div>` : '';
         const div = document.createElement('div');
         div.id = 'divNetworkConfirmationOverlay';
-        div.className = 'side-panel-overlay';
+        div.className = 'side-panel-overlay is-full';
         div.innerHTML = `
         <aside class="side-panel" role="dialog" aria-modal="true" aria-labelledby="netPanelTitle">
-        <div class="side-panel-head">
-        <span class="side-panel-icon"><svg><use href="#svg-save"></use></svg></span>
-        <div><span class="side-panel-kicker">${tr('NETSAVE_KICKER')}</span><h2 id="netPanelTitle">${tr('SAVEWIFI_TITLE')}</h2></div>
-        <button type="button" class="genmod-close" data-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button>
-        </div>
+        ${panelHead({ icon: 'svg-save', obj: 'reseau', id: 'netPanelTitle', title: tr('SAVEWIFI_TITLE'), desc: tr('NETSAVE_KICKER') })}
         <div class="side-panel-body" data-part="form">
         <div class="genmod-note is-info"><svg><use href="#svg-info"></use></svg><div><span>${tr('SAVEWIFI_INTRO')}</span></div></div>
         <div class="side-panel-sec"><h3>${tr('NETSAVE_NAME')}</h3>
@@ -942,14 +935,10 @@ class Wifi {
         if (get('divEthernetConfirmationOverlay')) return;
         const div = document.createElement('div');
         div.id = 'divEthernetConfirmationOverlay';
-        div.className = 'side-panel-overlay';
+        div.className = 'side-panel-overlay is-full';
         div.innerHTML = `
         <aside class="side-panel is-danger" role="alertdialog" aria-modal="true" aria-labelledby="ethPanelTitle">
-        <div class="side-panel-head">
-        <span class="side-panel-icon"><svg><use href="#svg-ethernet"></use></svg></span>
-        <div><span class="side-panel-kicker">${tr('ETH_CONFIRM_KICKER')}</span><h2 id="ethPanelTitle">${tr('ETH_SETTINGS_TITLE')}</h2></div>
-        <button type="button" class="genmod-close" data-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button>
-        </div>
+        ${panelHead({ icon: 'svg-ethernet', tone: 'bad', id: 'ethPanelTitle', title: tr('ETH_SETTINGS_TITLE'), desc: tr('ETH_CONFIRM_KICKER') })}
         <div class="side-panel-body">
         <div class="genmod-note is-danger"><svg><use href="#svg-warning"></use></svg><div><b>${tr('ETH_SETTINGS_WARNING_DESC_1')}</b><span>${tr('ETH_CONFIRM_CHECK')}</span></div></div>
         ${this._ethSummaryHtml(obj.ethernet)}

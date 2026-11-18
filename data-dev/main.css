@@ -2804,8 +2804,8 @@ button.fw-act:hover .fw-act-chev {
 }
 /* -----------------------------------------------------------------------
  *  Télécommande virtuelle
- *  Deux vues portées par .vr-overlay[data-view] : « remote », une feuille comme la fiche du tableau
- *  de bord (.card-sheet), et « adv », une fenêtre coque à gauche, fonctions à droite. Règles
+ *  Deux vues portées par .vr-overlay[data-view] : « remote », un Panneau (.is-panel, comme la fiche
+ *  du tableau de bord), et « adv », une fenêtre coque à gauche, fonctions à droite. Règles
  *  d'overlay qualifiées par .vr-overlay : overlays.css est chargée APRÈS main.css.
  * ----------------------------------------------------------------------- */
 .vr-cmd-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
@@ -2872,16 +2872,10 @@ html[data-feedback-commands="off"] .rcpack [data-press] { display: none; }
 
 .vr-overlay { --vr-radio-color: var(--color-accent); }
 .vr-overlay[data-radio="off"] { --vr-radio-color: var(--color-danger); }
-.vr-overlay[data-radio="off"] .overlayHeader-badge { border-color: var(--color-danger); color: var(--color-danger); }
-.vr-overlay .overlayHeader-badge.pulse { animation: vrBadgePing 0.6s ease-out; }
-.vr-overlay .vr-overlay-content { max-width: 480px; max-height: 92vh; max-height: 92dvh; text-align: left; }
-.vr-overlay .vr-overlay-header { justify-content: flex-start; gap: 12px; min-height: 0; padding: 12px 16px; }
-.vr-overlay .vr-overlay-header [close] { margin-left: auto; }
-.vr-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.vr-target-kicker { font-size: 0.72em; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--color-text-secondary); }
-.vr-target-name { overflow: hidden; font-size: 1.1em; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; color: var(--color-text-main); }
-.vr-target-pos { font-size: 0.8em; color: var(--color-text-secondary); }
-.vr-target-pos:empty { display: none; }
+.vr-overlay[data-radio="off"] .side-panel-head .hero-media { --hc: #b3261e; }
+.vr-overlay .hero-media.pulse { animation: vrBadgePing 0.6s ease-out; }
+.vr-overlay[data-view="adv"] .vr-overlay-content { max-width: 480px; max-height: 92vh; max-height: 92dvh; text-align: left; }
+.vr-overlay[data-view="remote"] .rcpack { --rc-bg: var(--panel); }
 .vr-overlay .overlay-scroll-content { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px; }
 .vr-tabs { flex: none; display: flex; gap: 4px; padding: 4px 8px calc(4px + env(safe-area-inset-bottom)); border-top: 1px solid var(--color-border); }
 .vr-tab { flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 7px; width: auto; min-width: 0; min-height: 44px; margin: 0; padding: 0 10px; border: 0; border-radius: 999px; background: none; color: var(--color-text-secondary); font-size: 0.85em; font-weight: 600; text-transform: none; letter-spacing: normal; cursor: pointer; }
@@ -2902,23 +2896,19 @@ html[data-feedback-commands="off"] .rcpack [data-press] { display: none; }
     .vr-overlay[data-view="adv"] :is(.overlay-scroll-content, #divVRContent) { display: contents; }
     .vr-overlay[data-view="adv"] .vr-side { grid-column: 1; grid-row: 1 / -1; justify-content: center; min-height: 0; overflow: auto; padding: clamp(20px, 3vh, 40px) clamp(20px, 2.5vw, 40px); }
     .vr-overlay[data-view="adv"] .rcpack { --rc-bg: var(--panel); }
-    .vr-overlay[data-view="adv"] :is(.vr-overlay-header, .vr-tabs, .vr-adv, .vr-hold-hint) { grid-column: 2; background: var(--surface); }
-    .vr-overlay[data-view="adv"] .vr-overlay-header { grid-row: 1; align-items: flex-start; padding: 18px 22px 10px 28px; border: 0; border-radius: 0 var(--r-5) 0 0; }
-    .vr-overlay[data-view="adv"] .overlayHeader-badge { display: none; }
-    .vr-overlay[data-view="adv"] .vr-target-name { font-size: 1.375em; font-weight: 800; letter-spacing: -0.01em; white-space: normal; }
-    .vr-overlay[data-view="adv"] .vr-target-pos { align-self: flex-start; margin-top: 8px; padding: 5px 11px; border-radius: 999px; background: var(--surface-2); font-size: var(--fs-1); font-weight: 700; color: var(--text-2); }
+    .vr-overlay[data-view="adv"] :is(.side-panel-head, .vr-tabs, .vr-adv, .vr-hold-hint) { grid-column: 2; background: var(--surface); }
+    .vr-overlay[data-view="adv"] .side-panel-head { grid-row: 1; align-items: flex-start; padding: 18px 22px 10px 28px; border: 0; border-radius: 0 var(--r-5) 0 0; }
+    .vr-overlay[data-view="adv"] .side-panel-head .hero-media { display: none; }
+    .vr-overlay[data-view="adv"] .side-panel-head h2 { font-size: 1.375em; letter-spacing: -0.01em; }
+    .vr-overlay[data-view="adv"] .side-panel-desc { align-self: flex-start; margin-top: 8px; padding: 5px 11px; border-radius: 999px; background: var(--surface-2); font-size: var(--fs-1); font-weight: 700; color: var(--text-2); }
     .vr-overlay[data-view="adv"] .vr-tabs { grid-row: 2; order: 0; justify-self: stretch; margin: 0; padding: 0 22px 14px 28px; border: 0; border-bottom: 1px solid var(--divider); border-radius: 0; }
     .vr-overlay[data-view="adv"] .vr-tab { flex: 0 1 180px; background: var(--surface-2); }
     .vr-overlay[data-view="adv"] .vr-tab[aria-pressed="true"] { background: var(--text); color: var(--surface); }
     .vr-overlay[data-view="adv"] .vr-adv { grid-row: 3; min-height: 0; overflow-y: auto; padding: 18px 28px 24px; }
     .vr-overlay[data-view="adv"] .vr-hold-hint { grid-row: 4; padding: 12px 28px; border-top: 1px solid var(--divider); border-radius: 0 0 var(--r-5) 0; }
 }
-/* Ordinateur : la vue « Télécommande » est le panneau pleine hauteur de la fiche du tableau de bord,
-   onglets en pilule sous l'en-tête. */
+/* Ordinateur : onglets en pilule sous l'en-tête (la vue « Télécommande » est un Panneau, overlays.css). */
 @media (min-width: 1001px) {
-    .vr-overlay[data-view="remote"] { justify-content: flex-end; align-items: stretch; }
-    .vr-overlay[data-view="remote"] .vr-overlay-content { width: 440px; max-width: 100%; height: 100%; max-height: none; border: 0; border-left: 1px solid var(--color-border); border-radius: 0; background: var(--color-bg-surface-1); box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15); }
-    .vr-overlay[data-view="remote"] .rcpack { --rc-bg: var(--color-bg-surface-1); }
     .vr-tabs { order: 1; margin: 0 16px 6px; padding: 4px; border: 0; border-radius: 999px; background: var(--color-bg-card); }
     .vr-overlay[data-view="adv"] .vr-tabs { max-width: 360px; background: var(--color-bg-row); }
     .vr-overlay .overlay-scroll-content { order: 2; }
@@ -4502,8 +4492,7 @@ body.fw-update .set-fw-new {
     flex-direction: column;
     min-width: 0;
 }
-/* Carte d'identité (#setStateTile), dans la peau du hero. Logo et pastille servent aussi à l'en-tête
-   de la fiche d'état (.dstat-head, overlays.css). */
+/* Carte d'identité (#setStateTile), dans la peau du hero. */
 .set-id {
     grid-column: 1 / -1;
     display: flex;
@@ -4565,10 +4554,10 @@ body.fw-update .set-fw-new {
     border-radius: var(--radius-full);
     background: currentColor;
 }
-:is(.set-id, .dstat-head)[data-tone="warn"] .set-id-pill {
+.set-id[data-tone="warn"] .set-id-pill {
     color: var(--warn);
 }
-:is(.set-id, .dstat-head)[data-tone="info"] .set-id-pill {
+.set-id[data-tone="info"] .set-id-pill {
     color: var(--info);
 }
 .set-id-msg {
@@ -5777,21 +5766,11 @@ input.gen-input.mqtt-mono {
 #divHomePnl .card-member em { font-style: normal; text-align: right; color: var(--color-text-secondary); }
 #divHomePnl .card-bar { height: 4px; border-radius: 4px; background: var(--color-control-bg); overflow: hidden; }
 #divHomePnl .card-bar i { display: block; height: 100%; background: var(--color-accent); }
-#divHomePnl .card-sheet-overlay { position: fixed; inset: 0; z-index: 1500; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, 0); transition: background 0.25s ease; }
-#divHomePnl .card-sheet-overlay.open { background: rgba(0, 0, 0, 0.5); }
-#divHomePnl .card-sheet { display: flex; flex-direction: column; width: 100%; max-width: 560px; max-height: 92vh; max-height: 92dvh; background: var(--panel); border: 0; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35); transform: translateY(100%); transition: transform 0.25s ease; overflow: hidden; }
-#divHomePnl .card-sheet-overlay.open .card-sheet { transform: none; }
-#divHomePnl .card-sheet-grip { flex: none; align-self: center; width: 38px; height: 4px; margin-top: 8px; border-radius: 2px; background: var(--color-control-border); }
-#divHomePnl .card-sheet-head { flex: none; display: flex; align-items: center; gap: 12px; padding: 8px 16px 12px; border-bottom: 1px solid var(--color-border); }
-#divHomePnl .card-sheet-head > .somfy-shade-icon { flex: none; width: 40px; height: 40px; }
 #divHomePnl .card-sheet-back { flex: none; display: grid; place-items: center; width: 40px; height: 40px; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: var(--radius-full); background: var(--color-bg-nav-row); color: var(--color-accent); cursor: pointer; }
 #divHomePnl .card-sheet-back svg { width: 22px; height: 22px; fill: currentColor; }
 #divHomePnl .card-sheet .group-icon-wrapper { flex: none; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-icon-badge); background: var(--color-accent-transp-80); color: var(--color-accent); }
 #divHomePnl .card-sheet .group-icon-wrapper svg { width: 60%; height: 60%; }
-#divHomePnl .card-sheet-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-#divHomePnl .card-sheet-title b { font-weight: 600; color: var(--color-text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#divHomePnl .card-sheet-title span { font-size: 0.8em; color: var(--color-text-secondary); }
-#divHomePnl .card-sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+#divHomePnl .card-sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 20px calc(20px + env(safe-area-inset-bottom, 0px)); }
 #divHomePnl .card-sheet-pane { display: flex; flex-direction: column; gap: 16px; }
 #divHomePnl .card-sheet-pane[hidden] { display: none; }
 #divHomePnl .card-sheet-hero { display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -5840,18 +5819,10 @@ input.gen-input.mqtt-mono {
 #divHomePnl .card-sheet .card-member { cursor: pointer; padding: 4px 0; }
 #divHomePnl .card-sheet-mymode button { height: 34px; }
 #divHomePnl .card-sheet-hint { margin: 0; font-size: 0.78em; line-height: 1.45; color: var(--color-text-secondary); }
-/* Ordinateur : la fiche devient un panneau pleine hauteur à droite (maquette A2 « feuille ouverte »),
-   onglets en pilule sous l'en-tête. Le contenu des onglets ne change pas. fitCardSheetHeight() pose
-   un flex en ligne sur le corps, pensé pour la feuille du bas : le panneau le remplace. */
-@media (min-width: 1001px) {
-    #divHomePnl .card-sheet-overlay { align-items: stretch; justify-content: flex-end; }
-    #divHomePnl .card-sheet-overlay.open { background: rgba(0, 0, 0, 0.35); }
-    #divHomePnl .card-sheet { width: 440px; max-width: 100%; height: 100%; max-height: none; border: 0; border-left: 1px solid var(--color-border); border-radius: 0; background: var(--color-bg-surface-1); box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15); transform: translateX(100%); }
-    #divHomePnl .card-sheet-grip { display: none; }
-    #divHomePnl .card-sheet-head { padding: 18px 20px 14px; border-bottom: 0; }
-    #divHomePnl .card-sheet-head > .somfy-shade-icon { width: 48px; height: 48px; }
-    #divHomePnl .card-sheet-title b { font-size: 1.1em; font-weight: 700; }
-    #divHomePnl .card-sheet-body { order: 2; flex: 1 1 auto !important; padding: 14px 20px 20px; }
+/* Coque Panneau (overlays.css). fitCardSheetHeight() fige le corps pour la feuille du bas mobile ;
+   le panneau latéral le laisse remplir la hauteur. */
+@media (min-width: 768px) {
+    #divHomePnl .card-sheet-body { flex: 1 1 auto !important; }
 }
 #divHomePnl :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: none; }
 #divHomePnl.show-hidden-cards :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: flex; opacity: 0.5; }

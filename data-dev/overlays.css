@@ -480,60 +480,6 @@ body.modal-open {
 .modalHeader-handle {
     display: none;
 }
-.modalHeader,
-.overlayHeader{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 16px 20px;
-    min-height: 64px;
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--color-border);
-    box-sizing: border-box;
-}
-.modalHeader{
-    margin-bottom: 20px;
-}
-.overlayHeader{
-    margin-bottom: 0;
-}
-.modalHeader-block{
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-.modalHeader-badge,
-.overlayHeader-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius:var(--radius-icon-badge);
-    background: var(--color-accent-transp-80);
-    border: 1px solid var(--color-accent-transp-70);
-    color: var(--color-accent);
-    flex-shrink: 0;
-}
-.modalHeader-badge svg,
-.overlayHeader-badge svg {
-    width: 28px;
-    height: 28px;
-    fill: currentColor;
-}
-.modalHeader-texts {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    text-align: left;
-}
-.modalHeader-title {
-    font-size: 1.25em;
-    font-weight: 600;
-    color: var(--color-text-main);
-    line-height: 1.2;
-}
 .overlayHeader-state {
     flex-shrink: 0;
     padding: 1px 8px;
@@ -544,20 +490,6 @@ body.modal-open {
     font-size: 0.75em;
     font-weight: 600;
     white-space: nowrap;
-}
-.modalHeader-subtitle{
-    font-size: 0.9em;
-    color: var(--color-text-subtitle);
-    line-height: 1.3;
-}
-/* Les overlays ont toujours un bouton close dans .overlayHeader-right : une ligne pleine largeur
-   vient le frôler de 1-2px. Les modales n'ont pas ce bouton dans leur en-tête, donc rien à fuir. */
-.modalHeader-right{
-    display: flex;
-    align-items: center;
-}
-.modalHeader-right{
-    gap: 15px;
 }
 
 /* =======================================================================
@@ -1217,16 +1149,17 @@ button[line].fw-sidebar-button:hover {
     background-color: var(--color-danger);
 }
 /* =======================================================================
- *  PANNEAU LATÉRAL (side-panel-) : confirmation Ethernet (ethernetConfirmationOverlay, 50-wifi.js)
- *  Même forme que la fiche d'un équipement du tableau de bord : 440 px, pleine hauteur, à droite.
- *  is-danger le teinte en rouge, opaque (jeton mêlé au panneau, jamais une transparence).
+ *  PANNEAU (side-panel-) : feuille latérale de 440 px sur PC et tablette, feuille montante sur
+ *  mobile. Deux hôtes, une seule apparence : .side-panel-overlay (openSidePanel) et
+ *  .modal-overlay.is-panel (shOverlay : garde des modifications, empilement). En-tête : panelHead().
  *  ======================================================================= */
 /* Feuille « Détails » d'un hero : le contenu du bloc replié, hors du hero (jetons de la page). */
 .side-panel .hero-fold-body { display: block; padding: 0; }
 .side-panel .hero-fold-body .gen-btn { width: 100%; margin-top: 14px; justify-content: center; }
 .side-panel-overlay { position: fixed; inset: 0; z-index: 2000; display: flex; justify-content: flex-end; background: rgba(0, 0, 0, 0); transition: background 0.25s ease; }
 .side-panel-overlay.open { background: rgba(0, 0, 0, 0.35); }
-.side-panel {
+.side-panel,
+.is-panel > .message-content {
     display: flex;
     flex-direction: column;
     width: min(440px, 100%);
@@ -1234,25 +1167,25 @@ button[line].fw-sidebar-button:hover {
     font-size: 16px;
     background: var(--panel);
     color: var(--text);
+    text-align: left;
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
-    transform: translateX(100%);
-    transition: transform 0.25s ease;
 }
+.side-panel { transform: translateX(100%); transition: transform 0.25s ease; }
 .side-panel-overlay.open .side-panel { transform: none; }
 .side-panel.is-danger { background: color-mix(in srgb, var(--danger) 9%, var(--panel)); border-left: 3px solid var(--danger); }
-.side-panel-head { display: flex; align-items: flex-start; gap: 12px; padding: 18px 20px 14px; }
-.side-panel-head h2 { margin: 0; font-size: var(--fs-7); font-weight: 800; line-height: 1.2; }
+.side-panel-head { display: flex; align-items: center; gap: 12px; padding: 18px 20px 14px; }
+/* Pastille ronde des pages ; :where() laisse [data-obj] et .is-bad (base.css) fixer sa couleur. */
+:where(.side-panel-head) > .hero-media { --hero-media: 48px; --hc: #475569; --hero-ring: color-mix(in srgb, color-mix(in srgb, currentColor 60%, #ffffff) 40%, transparent); box-shadow: 0 0 0 4px var(--hero-ring); }
+.side-panel-head > .hero-media .somfy-shade-icon { width: 58%; height: 58%; }
+.side-panel-texts { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.side-panel-head h2 { margin: 0; font-size: var(--fs-5); font-weight: 800; line-height: 1.2; }
+.side-panel-desc { margin: 0; font-size: var(--fs-2); line-height: 1.3; color: var(--text-2); }
 .side-panel-head .genmod-close { display: flex; }
-.side-panel-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: var(--r-3); background: var(--surface); color: var(--color-accent); }
-.side-panel-icon svg { width: 24px; height: 24px; fill: currentColor; }
-.side-panel.is-danger .side-panel-icon,
-.side-panel.is-danger .side-panel-kicker { color: var(--danger); }
-.side-panel-kicker { display: block; font-size: var(--fs-2); font-weight: 700; }
-.side-panel-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 4px 20px 20px; }
+.side-panel-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 4px 20px 20px; }
 .side-panel-sec { display: flex; flex-direction: column; padding: 6px 16px; border-radius: var(--r-4); background: var(--surface); }
 .side-panel-sec h3 { margin: 10px 0 4px; font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
 .side-panel-kv { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--divider); font-size: var(--fs-3); }
-.side-panel-sec h3 + .side-panel-kv { border-top: 0; }
+.side-panel-sec h3 + .side-panel-kv, .side-panel-sec > .side-panel-kv:first-child { border-top: 0; }
 .side-panel-kv span { color: var(--text-3); }
 .side-panel-kv b { text-align: right; font-variant-numeric: tabular-nums; }
 .side-panel-q { margin: 0; font-size: var(--fs-4); font-weight: 700; }
@@ -1279,18 +1212,28 @@ button[line].fw-sidebar-button:hover {
 .side-panel-wait span:last-child { font-size: var(--fs-3); line-height: 1.5; color: #c9ccd3; }
 .side-panel-spin { width: 44px; height: 44px; border-radius: var(--r-pill); border: 4px solid rgba(255, 255, 255, .15); border-top-color: #fff; animation: wait-spinner-rotate 0.9s linear infinite; }
 .side-panel-btn-spin { width: 16px; height: 16px; flex: none; border-radius: var(--r-pill); border: 3px solid rgba(255, 255, 255, .35); border-top-color: #fff; animation: wait-spinner-rotate 0.9s linear infinite; }
+/* Hôte modal-overlay : glisse de la droite au lieu du zoom des modales (le mobile garde slideUp). */
+@media (min-width: 768px) {
+    .modal-overlay.is-panel { justify-content: flex-end; align-items: stretch; transform: none; }
+    .is-panel > .message-content { max-width: none; max-height: none; border: 0; border-radius: 0; overflow: hidden; transform: translateX(100%); transition: transform 0.25s ease; }
+    .is-panel.overlay-entered > .message-content { transform: none; }
+    .is-panel.overlay-exit > .message-content { transform: translateX(100%); }
+}
+/* Mobile : feuille montante à la hauteur de son contenu ; .is-full garde le plein écran
+   (confirmations réseau, qu'on ne quitte pas par erreur). */
 @media (max-width: 767px) {
     .side-panel.is-danger { border-left: 0; border-top: 3px solid var(--danger); }
-}
-/* Modale de lecture (is-sheet) : sur mobile, feuille qui monte du bas comme les autres modales. */
-@media (max-width: 767px) {
-    .side-panel-overlay.is-sheet { align-items: flex-end; }
-    /* Feuille « Détails » d'un hero (openHeroDetails) : à la hauteur de son contenu, pas 90 %. */
-    .is-sheet.is-fit .side-panel { height: auto; max-height: 90%; }
-    .is-sheet .side-panel { width: 100%; height: 90%; border-radius: var(--r-5) var(--r-5) 0 0; box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2); transform: translateY(100%); }
-    .is-sheet.open .side-panel { transform: none; }
-    .is-sheet .side-panel::before { content: ''; align-self: center; flex: none; width: 40px; height: 5px; margin-top: 10px; border-radius: var(--r-pill); background: var(--border); }
-    .is-sheet .side-panel-head { padding-top: 10px; }
+    .side-panel-overlay:not(.is-full) { align-items: flex-end; }
+    .side-panel-overlay:not(.is-full) .side-panel,
+    .is-panel > .message-content { width: 100%; height: auto; max-height: 90%; overflow: hidden; border-radius: var(--r-5) var(--r-5) 0 0; box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2); }
+    .side-panel-overlay:not(.is-full) .side-panel { transform: translateY(100%); }
+    .side-panel-overlay.open:not(.is-full) .side-panel { transform: none; }
+    .side-panel-overlay.is-full .modalHeader-handle { display: none; }
+    :is(.side-panel, .is-panel) .modalHeader-handle { margin-bottom: 0; }
+    .side-panel-head.is-center { position: relative; flex-direction: column; gap: 8px; padding: 0 60px 16px; text-align: center; }
+    .side-panel-head.is-center > .hero-media { --hero-media: 64px; margin-bottom: 4px; }
+    .side-panel-head.is-center .side-panel-texts { align-items: center; }
+    .side-panel-head.is-center .genmod-close { position: absolute; top: -8px; right: 14px; }
 }
 /* Notes de version rendues depuis le Markdown (parseMarkdown) dans une carte. */
 .side-panel-md { padding: 14px 16px; font-size: var(--fs-3); line-height: 1.6; color: var(--text-2); }
@@ -1318,21 +1261,13 @@ button[line].fw-sidebar-button:hover {
 }
 
 /* =======================================================================
- *  FENÊTRE BALAYAGE DE LA BANDE (#divScanFrequency, scanFrequency() dans 70-somfy.js)
- *  Coque genmod- des fenêtres de tâche ; genmod-assist la colle aux bords de la zone de
- *  contenu, comme les assistants de la maquette A2.
+ *  PAGE BALAYAGE DE LA BANDE (#divScanFrequency, scanPage() dans 70-somfy.js)
+ *  Sous-page de Radio : hero et corps des pages ; la croix ramène à Radio.
  *  ======================================================================= */
 #divScanFrequency [hidden] { display: none; }
-@media (min-width: 1000px) {
-    .genmod-assist::before { inset: var(--topbar-height) 0 0 var(--sidebar-width); }
-    .genmod-assist .message-content.genmod-window {
-        margin: var(--topbar-height) 0 0 var(--sidebar-width);
-        border-radius: 0;
-        box-shadow: none;
-    }
-    .genmod-assist .genmod-side,
-    .genmod-assist .genmod-main { border-radius: 0; }
-}
+.scan-head { position: relative; padding-right: 56px; }
+.scan-head > .genmod-close { display: flex; position: absolute; top: 0; right: 0; }
+.scan-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
 .scan-legend {
     display: flex;
     flex-direction: column;
@@ -1388,9 +1323,8 @@ button[line].fw-sidebar-button:hover {
 .scan-chart-leg i { width: 14px; height: 10px; border-radius: 3px; }
 .scan-leg-win { background: color-mix(in srgb, var(--ok) 18%, transparent); box-shadow: inset 0 0 0 1px var(--ok); }
 .scan-leg-cur { background: var(--color-accent); }
-#divScanFrequency .genmod-foot-btns .gen-btn { white-space: nowrap; }
 @media (max-width: 999px) {
-    .genmod-side .scan-legend { display: none; }
+    .scan-page .hero .scan-legend { display: none; }
     .scan-legend-mob { display: flex; }
 }
 @media (max-width: 767px) {
@@ -1432,7 +1366,7 @@ button[line].fw-sidebar-button:hover {
 :is(#divLinkListener, #divLinkRepeater) .genmod-note .setup-facts { margin-top: 8px; }
 :is(#divLinkListener, #divLinkRepeater) .genmod-note .setup-facts span { background: color-mix(in srgb, var(--surface) 75%, transparent); color: var(--text-2); font-weight: 700; }
 .rx-link-name { max-width: 460px; }
-#divLinkRepeater .genmod-side-icon { color: var(--violet); }
+#divLinkRepeater .genmod-side { --hc: var(--violet); }
 #divLinkRepeater .rx-link-meter i { background: var(--violet); }
 :is(#divLinkListener, #divLinkRepeater) .genmod-foot-btns .gen-btn { white-space: nowrap; }
 @media (max-width: 999px) {
@@ -1443,19 +1377,14 @@ button[line].fw-sidebar-button:hover {
 }
 
 /* =======================================================================
- *  FENÊTRE TEST DES TÉLÉCOMMANDES (#divRadioWizard, radioWizard() dans 70-somfy.js)
- *  Même coque que le balayage (genmod-assist) ; la liste des télécommandes testées vit dans la
- *  colonne d'identité, le fil des trois étapes dans l'en-tête.
+ *  ASSISTANT TEST DES TÉLÉCOMMANDES (#divRadioWizard, radioWizard() dans 70-somfy.js)
+ *  Coque des assistants (wiz-window) ; les télécommandes testées sous le contenu de l'étape.
  *  ======================================================================= */
-#divRadioWizard .genmod-head-title { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.rw-stp { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; border-radius: var(--r-pill); background: var(--surface-2); font-size: var(--fs-2); font-weight: 700; color: var(--text-3); }
-.rw-stp i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: var(--r-pill); background: var(--border); font-style: normal; font-size: var(--fs-1); font-weight: 800; }
-.rw-stp.is-on { background: var(--info-bg); color: var(--info); }
-.rw-stp.is-on i { background: var(--color-accent); color: var(--color-text-on-accent); }
-.rw-stp.is-done { color: var(--ok); }
-.rw-stp.is-done i { background: var(--ok); color: var(--surface); }
-.rw-sep { width: 14px; height: 2px; border-radius: 2px; background: var(--border); }
-.rw-fleet { width: 100%; max-width: 320px; text-align: left; }
+.rw-fleet { width: 100%; text-align: left; }
+.rw-tips { display: flex; flex-direction: column; gap: 12px; max-width: 640px; margin: 0; padding: 0; list-style: none; }
+.rw-tips li { display: flex; flex-direction: column; gap: 2px; padding-left: 14px; border-left: 3px solid var(--divider); }
+.rw-tips b { font-size: var(--fs-4); color: var(--text); }
+.rw-tips span { font-size: var(--fs-3); line-height: 1.5; color: var(--text-2); }
 .rw-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--divider); font-size: var(--fs-3); }
 .genmod-state-key + .rw-row { border-top: 0; }
 .rw-row b { flex: 1; min-width: 0; color: var(--text); }
@@ -1470,11 +1399,6 @@ button[line].fw-sidebar-button:hover {
 .rw-title { margin: 0; font-size: var(--fs-6); font-weight: 800; color: var(--text); }
 .rw-desc { margin: 0; max-width: 640px; font-size: var(--fs-4); line-height: 1.55; color: var(--text-2); }
 .rw-desc.rw-small { font-size: var(--fs-3); color: var(--text-3); }
-.rw-steps { display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
-.rw-step { display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-radius: var(--r-4); background: var(--surface-2); }
-.rw-step b { display: block; margin-bottom: 2px; font-size: var(--fs-4); color: var(--text); }
-.rw-step div > span { font-size: var(--fs-3); line-height: 1.5; color: var(--text-2); }
-.rw-step-num { display: grid; place-items: center; width: 30px; height: 30px; flex: none; border-radius: var(--r-pill); background: var(--color-accent); color: var(--color-text-on-accent); font-size: var(--fs-3); font-weight: 800; }
 .rw-listen { display: flex; align-items: center; gap: 18px; padding: 18px 20px; border-radius: var(--r-4); background: var(--info-bg); color: var(--info); }
 .rw-listen.is-heard { background: var(--ok-bg); color: var(--ok); }
 .rw-listen-icon { display: grid; place-items: center; width: 56px; height: 56px; flex: none; border-radius: var(--r-pill); background: var(--surface); }
@@ -1507,14 +1431,12 @@ button[line].fw-sidebar-button:hover {
 .rw-leg-prop { background: color-mix(in srgb, var(--color-accent) 18%, transparent); box-shadow: inset 0 0 0 2px var(--color-accent); }
 .rw-leg-shift { width: 10px !important; border-radius: var(--r-pill) !important; background: var(--warn); }
 .rw-leg-outlier { width: 10px !important; border-radius: var(--r-pill) !important; box-shadow: inset 0 0 0 2px var(--danger); }
-#divRadioWizard .genmod-foot-btns .gen-btn { white-space: nowrap; }
 @media (max-width: 767px) {
     .rw-listen { padding: 14px; gap: 14px; }
     .rw-listen-icon { width: 44px; height: 44px; }
     .rw-chrono { font-size: 2.125em; }
     .rw-vals { gap: 10px; }
     .rw-val b { font-size: 1.25em; }
-    #divRadioWizard .genmod-head { display: flex; }
 }
 
 /* =========================================================================
@@ -2169,23 +2091,22 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     text-align: center;
     border-radius: var(--r-5) 0 0 var(--r-5);
 }
+.genmod-side { --hc: #475569; }
+/* Pastille ronde des pages, couleur de l'objet ([data-obj] de la section, base.css). */
 .genmod-side-icon {
+    --hero-ring: color-mix(in srgb, color-mix(in srgb, currentColor 60%, #ffffff) 40%, transparent);
     width: clamp(72px, min(7vw, 13vh), 120px);
     height: clamp(72px, min(7vw, 13vh), 120px);
     flex: none;
-    fill: currentColor;
-    color: var(--color-accent);
-}
-/* Fenêtres pièce et planning (genModalShell, skin) : peau du hero, icône en pastille. */
-.hero-skin .genmod-side-icon {
     box-sizing: border-box;
     padding: clamp(14px, 1.4vw, 24px);
     border-radius: 50%;
     background: color-mix(in srgb, var(--hc) 12%, #ffffff);
     color: var(--hc);
+    fill: currentColor;
     box-shadow: 0 0 0 clamp(4px, 1vw, 12px) var(--hero-ring);
 }
-:root[data-theme="dark"] .hero-skin .genmod-side-icon {
+:root[data-theme="dark"] .genmod-side-icon {
     background: color-mix(in srgb, var(--hc) 35%, #12161c);
     color: color-mix(in srgb, var(--hc) 45%, #ffffff);
 }
@@ -2345,16 +2266,12 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     color: var(--danger);
 }
 
-/* Tablette : une seule colonne, fenêtre à la hauteur de son contenu plutôt
-   qu'étirée sur toute la page, et l'identité devient l'en-tête de la fenêtre. */
+/* Tablette : même cadre à 16 px que sur PC, une seule colonne ; l'identité devient l'en-tête
+   (pastille, titre, croix) et l'état une bande pleine largeur dessous. */
 @media (max-width: 999px) {
     .message-content.genmod-window {
-        align-self: center;
-        flex: 0 1 auto;
-        height: auto;
-        max-height: calc(100% - var(--topbar-height) - 32px);
         grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: auto minmax(0, auto);
+        grid-template-rows: auto minmax(0, 1fr);
     }
     .genmod-side {
         display: grid;
@@ -2366,21 +2283,27 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
         text-align: left;
         border-radius: var(--r-5) var(--r-5) 0 0;
     }
-    .genmod-side-icon { width: 72px; height: 72px; }
-    .genmod-side-title { font-size: 26px; }
-    .genmod-side-desc { max-width: none; }
+    .genmod-side .modalHeader-handle { grid-column: 1 / -1; justify-self: stretch; }
+    .genmod-side-icon { width: 48px; height: 48px; padding: 11px; box-shadow: 0 0 0 4px var(--hero-ring); }
+    .genmod-side-title { font-size: var(--fs-5); }
+    .genmod-side-desc { max-width: none; margin-top: 2px; font-size: var(--fs-2); }
     .genmod-state {
         grid-column: 1 / -1;
+        justify-self: stretch;
         flex-direction: row;
         align-items: baseline;
         gap: 10px;
+        width: auto;
         max-width: none;
-        padding: 10px 14px;
+        margin: 2px -24px -18px;
+        padding: 10px 24px;
+        border-radius: 0;
+        background: var(--surface-2);
     }
     .genmod-state-val { font-size: var(--fs-5); }
     .genmod-side .genmod-close { display: flex; align-self: start; justify-self: end; }
     .genmod-main {
-        grid-template-rows: auto minmax(0, auto) auto;
+        grid-template-rows: auto minmax(0, 1fr) auto;
         border-radius: 0 0 var(--r-5) var(--r-5);
     }
     .genmod-head .genmod-close { display: none; }
@@ -2399,27 +2322,9 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
         grid-template-rows: auto minmax(0, 1fr);
         border-radius: var(--r-5) var(--r-5) 0 0;
     }
-    .genmod-side {
-        display: flex;
-        justify-content: flex-start;
-        gap: 10px;
-        padding: 0 16px 14px;
-        text-align: center;
-        border-radius: var(--r-5) var(--r-5) 0 0;
-    }
-    .genmod-side-icon { width: 56px; height: 56px; }
-    .genmod-side-title { font-size: var(--fs-7); }
-    .genmod-side-desc { font-size: var(--fs-2); }
-    .genmod-state {
-        flex-direction: row;
-        align-items: baseline;
-        justify-content: center;
-        gap: 8px;
-        max-width: none;
-        padding: 8px 12px;
-    }
+    .genmod-side { gap: 10px 12px; padding: 0 16px 14px; }
+    .genmod-state { gap: 8px; margin: 2px -16px -14px; padding: 8px 16px; }
     .genmod-state-val { font-size: var(--fs-4); }
-    .genmod-side .genmod-close { display: none; }
     .genmod-head { display: none; }
     .genmod-body { padding: 12px 16px 14px; }
     /* nowrap : hérité en colonne, le flex-wrap du pied d'ordinateur l'écrase. */
@@ -2579,8 +2484,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .genmod-body .fw-id .help-container { display: none; }
 }
 /* Mode Développeur validé : la colonne d'identité se teinte, on ne l'oublie pas en cours de route. */
-#divGitInstall[data-mode="dev"] .genmod-side { background: color-mix(in srgb, var(--danger) 9%, var(--panel)); }
-#divGitInstall[data-mode="dev"] .genmod-side-icon,
+#divGitInstall[data-mode="dev"] .genmod-side { --hc: var(--danger); background: color-mix(in srgb, var(--danger) 9%, var(--panel)); }
 #divGitInstall[data-mode="dev"] .genmod-state-note { color: var(--danger); }
 #divGitInstall[data-mode="dev"] .genmod-seg input:checked + span { background: var(--danger); color: var(--danger-bg); }
 /* Tablette et mobile : l'état passe en ligne ; celui du canal garde le sélecteur et sa note
@@ -2606,21 +2510,11 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     }
     .genmod-task .genmod-side { border-radius: 0; padding-top: 14px; }
     .genmod-task .modalHeader-handle { display: none; }
-    .genmod-task .genmod-side .genmod-close { display: flex; position: absolute; top: 12px; right: 12px; }
     .genmod-task .genmod-backup { flex: none; }
     /* Pied compact : boutons côte à côte, et plus de coins arrondis en bas d'un plein écran. */
     .genmod-task .genmod-main { border-radius: 0; }
     .genmod-task button.genmod-backup { padding: 8px 12px; }
-    /* GitHub : le choix du canal quitte le bloc d'état pour un sélecteur compact posé en haut à
-       gauche, en face de la croix ; le reste de l'en-tête ne bouge pas. */
-    #divGitInstall .genmod-state:has(.genmod-seg) {
-        position: absolute;
-        top: 12px;
-        left: 12px;
-        width: auto;
-        padding: 0;
-        background: none;
-    }
+    /* GitHub : la bande d'état ne garde que le choix du canal, en sélecteur compact. */
     #divGitInstall .genmod-state:has(.genmod-seg) > :not(.genmod-mode-select) { display: none; }
     #divGitInstall .genmod-mode-select {
         display: block;
@@ -2860,8 +2754,15 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .wiz-side { grid-area: side; display: flex; flex-direction: column; gap: 22px; min-height: 0; overflow: auto; padding: clamp(24px, 4vh, 44px) clamp(20px, 2.2vw, 36px); background-color: var(--panel); }
 .wiz-side-head { display: flex; align-items: center; gap: 12px; }
 .wiz-title { margin: 0; font-size: clamp(24px, 2.2vw, 34px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
-.wiz-close, .wiz-close:hover { display: none; flex: none; place-items: center; width: 40px; height: 40px; margin: 0 0 0 auto; padding: 0; border: 1px solid var(--border); border-radius: var(--r-2); background: var(--surface-2); color: var(--text-2); }
+.wiz-close, .wiz-close:hover { display: grid; flex: none; place-items: center; width: 40px; height: 40px; margin: 0 0 0 auto; padding: 0; border: 1px solid var(--border); border-radius: var(--r-2); background: var(--surface-2); color: var(--text-2); }
 .wiz-close svg { width: 18px; height: 18px; }
+/* Croix des assistants : coin haut droit de la fenêtre (au-dessus du corps sur PC, du bandeau
+   d'identité en dessous de 1000 px) ; le menu du mode d'appairage reste dans la colonne. */
+.message-content.wiz-window { position: relative; }
+.wiz-window > .wiz-close { position: absolute; top: 22px; right: 24px; z-index: 2; }
+@media (min-width: 1000px) {
+    .wiz-window:has(> .wiz-close) .wiz-head { padding-right: 48px; }
+}
 .wiz-steps { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
 .wiz-step { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 10px 0; color: var(--text-3); }
 .wiz-step-n { display: grid; place-items: center; flex: none; width: 32px; height: 32px; box-sizing: border-box; border: 2px solid var(--sunken); border-radius: var(--r-pill); font-size: var(--fs-3); font-weight: 800; }
@@ -3087,11 +2988,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .sw-add:hover { border-color: var(--on-fill); }
 .sw-add svg { width: 20px; height: 20px; fill: currentColor; }
 .genmod-side .sw-off { align-self: center; padding: 4px 10px; border-radius: var(--r-pill); background: var(--warn-bg); color: var(--warn); font-size: var(--fs-1); font-weight: 700; }
-.sw-hour-overlay .message-content.sw-hour { display: flex; flex-direction: column; gap: 0; width: min(680px, calc(100% - 32px)); max-width: none; max-height: calc(100% - 48px); padding: 0; border-radius: var(--r-5); background: var(--surface); overflow: hidden; text-align: left; }
-.sw-hour-head { display: flex; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--border); }
-.sw-hour-head h3 { margin: 0; font-size: var(--fs-6); font-weight: 800; color: var(--text); }
-.sw-hour-head .genmod-close { display: flex; margin-left: auto; }
-.sw-hour-body { display: flex; flex-direction: column; gap: 14px; min-height: 0; padding: 18px 22px; overflow: auto; }
 .sw-col { display: flex; flex-direction: column; gap: 10px; }
 .sw-slh { display: flex; justify-content: space-between; align-items: baseline; }
 .sw-slh b { font-size: var(--fs-5); font-weight: 800; color: var(--text); }
@@ -3099,13 +2995,8 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .sw-chips .schedule-quickpos-btn svg { width: 20px; height: 20px; fill: currentColor; }
 .sw-chips .schedule-quickpos-btn.active { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
 .sw-hour .schedule-sun-offset-field { flex: 0 0 110px; height: auto; padding: 0 12px; }
-.sw-hour-foot { padding: 12px 22px; border-top: 1px solid var(--border); }
 .sw-hour .gen-btn, .sw-days .tw-link { width: auto; }
 @media (max-width: 767px) {
-    .sw-hour-overlay { align-items: flex-end; }
-    .sw-hour-overlay .message-content.sw-hour { width: 100%; max-height: 92%; border-radius: var(--r-5) var(--r-5) 0 0; }
-    .sw-hour-body { padding: 14px 16px; }
-    .sw-hour-foot { padding: 12px 16px; }
     .sw-hr { gap: 10px; padding: 10px 12px; }
     .sw-hr-time { min-width: 52px; font-size: var(--fs-5); }
     /* Jours : les sept ronds se partagent la ligne (44 px au plus), « Tous les jours » passe dessous. */
@@ -3144,7 +3035,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .message-content.wiz-window, .onb-window { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "side" "main" "foot"; }
     .wiz-side { gap: 14px; padding: 18px 24px; overflow: visible; }
     .wiz-title { font-size: var(--fs-7); }
-    .wiz-close, .wiz-close:hover { display: grid; }
     .wiz-steps { flex-direction: row; gap: 8px; }
     .wiz-step { flex: 1; gap: 8px; padding: 8px 10px; border-radius: var(--r-3); background: var(--surface); }
     .wiz-step-text small { display: none; }
@@ -3196,7 +3086,8 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .wiz-pbar { display: flex; }
     /* Peau du hero : une ligne d'identité, l'étape courante en toutes lettres et la barre ; les
        trois repères disparaissent, le bandeau dit déjà où l'on est. */
-    .hero-skin .wiz-side-head { top: 12px; right: 12px; }
+    .hero-skin .wiz-side-head { top: 12px; right: 60px; }
+    .wiz-window > .wiz-close { top: 12px; right: 12px; }
     .wiz-sum { gap: 14px; padding-right: 52px; }
     .wiz-sum-icon { width: 46px; box-shadow: 0 0 0 3px var(--hero-ring); }
     .wiz-sum-text span { display: none; }
@@ -3213,7 +3104,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     #divShadeSetup :is(.wiz-main, .genmod-body) .setup-chip { display: flex; align-items: center; min-height: 44px; padding: 0 16px; border: 2px solid var(--surface-2); border-radius: var(--r-5); background: var(--surface); color: var(--text); font-size: var(--fs-3); font-weight: 700; }
     #divShadeSetup :is(.wiz-main, .genmod-body) .setup-chip.sel { border-color: var(--on-fill); background: var(--on-fill); color: var(--on-fill-text); }
     /* Page de création : le pied devient le message flottant de la barre d'enregistrement (.save-bar). */
-    .message-content.wiz-window { position: relative; }
     .wiz-main.wiz-main-float { padding-bottom: 96px; }
     .wiz-foot.wiz-float { position: absolute; left: 12px; right: 12px; bottom: 14px; z-index: 1; flex-wrap: nowrap; gap: 8px; padding: 8px 8px 8px 12px; border: 0; border-radius: var(--r-3); background: var(--on-fill); color: var(--on-fill-text); box-shadow: 0 10px 24px rgba(0, 0, 0, .2); }
     .wiz-foot.wiz-float .wiz-foot-hint { order: 0; flex: 1 1 auto; min-width: 0; overflow: hidden; font-size: var(--fs-2); font-weight: 700; color: inherit; text-overflow: ellipsis; white-space: nowrap; }
@@ -3336,9 +3226,8 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .modal-overlay.overlay-exit .message-content {
         animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     }
-    /* Pas de poignée pour #divGitInstall malgré modalHeader() utilisé ici comme sur les autres
-       .modal-overlay : cf. bloc non scopé #divGitInstall .modalHeader-handle plus bas, applicable
-       sur tous les écrans donc pas besoin de le répéter dans ce bloc mobile-only. */
+    /* Pas de poignée pour #divGitInstall : cf. bloc non scopé #divGitInstall .modalHeader-handle,
+       applicable sur tous les écrans. */
     .modalHeader-handle {
         display: block;
         position: relative;
@@ -3364,40 +3253,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .modalHeader-handle:active::after {
         opacity: 1;
         background-color: var(--color-accent);
-    }
-    .modalHeader {
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 16px;
-        padding: 0 20px;
-        border-bottom: none;
-        height: auto;
-        margin-bottom: 0;
-    }
-    .modalHeader-block {
-        flex-direction: column;
-        align-items: center;
-    }
-    .modalHeader-badge {
-        width: 60px;
-        height: 60px;
-    }
-    .modalHeader-badge svg {
-        width: 28px;
-        height: 28px;
-    }
-    .modalHeader-texts {
-        align-items: center;
-        text-align: center;
-    }
-    .modalHeader-title {
-        font-size: 1.35em;
-    }
-    .modalHeader-right {
-        width: 100%;
-        justify-content: center;
-        margin-top: 8px;
     }
     .inst-overlay {
         position: fixed !important;
@@ -3795,14 +3650,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 /* =======================================================================
  *  MENU « + » DE LA MAISON (mobileNav.addMenu, 20-shell.js)
  *  ======================================================================= */
-.mobile-add-menu .message-content {
-    background: var(--panel);
-    color: var(--text);
-    text-align: left;
-}
-.mobile-add-menu .add-grid {
-    margin: 0 16px 16px;
-}
 .add-tile {
     position: relative;
     display: flex;
@@ -3923,43 +3770,8 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 /* =======================================================================
  *  FICHE D'ÉTAT DE L'APPAREIL (wifi.openStatus, 50-wifi.js)
  *  ======================================================================= */
-/* Couleurs des fenêtres A2 : corps --surface, encarts --panel ; en-tête dans la peau du hero, logo
-   et pastille repris de la carte du Menu (.set-id-*, main.css). */
-.dstat-sheet .message-content {
-    border-color: var(--border);
-    background: var(--surface);
-    color: var(--text);
-    text-align: left;
-}
-.dstat-sheet .message-content > :not(.dstat-head) {
-    margin-left: 16px;
-    margin-right: 16px;
-}
-.dstat-head {
-    display: flex;
-    flex: none;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 14px;
-    padding: 16px;
-}
-.dstat-head .modalHeader-handle {
-    height: 20px;
-    margin: -10px 0 -4px;
-}
-.dstat-head .modalHeader-handle::after {
-    background: var(--border);
-}
-.dstat-head-top {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.dstat-head-top b {
-    font-size: 17px;
-}
 .dstat-alert {
-    margin: 0 0 12px;
+    margin: 0;
     padding: 10px 12px;
     border-radius: var(--r-3);
     font-size: 13px;
@@ -3973,49 +3785,12 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     background: color-mix(in srgb, var(--accent) 12%, transparent);
     color: var(--accent);
 }
-.dstat-block {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin-bottom: 12px;
-    padding: 12px 14px;
-    border-radius: var(--r-4);
-    background: var(--panel);
-}
-.dstat-block h4 {
-    margin: 0 0 4px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .07em;
-    text-transform: uppercase;
-    color: var(--text-3);
-}
-.dstat-kv {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 9px 0;
-    font-size: 14px;
-}
-.dstat-kv + .dstat-kv {
-    border-top: 1px solid var(--divider);
-}
-.dstat-kv span {
-    color: var(--text-3);
-}
-.dstat-kv b {
-    min-width: 0;
-    overflow: hidden;
-    text-align: right;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
 .dstat-help {
     display: flex;
     align-items: center;
     align-self: center;
     gap: 6px;
-    margin: 4px 0 18px;
+    margin: 0;
     padding: 6px 2px;
     font-size: 13.5px;
     font-weight: 600;

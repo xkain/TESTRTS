@@ -706,12 +706,12 @@ class _SomfySchedule {
 
         let div = document.createElement('div');
         div.id = 'divEditScheduleHourOverlay';
-        div.className = 'modal-overlay sw-hour-overlay';
+        div.className = 'modal-overlay is-panel';
         div.innerHTML = `
         <div class="message-content sw-hour" id="divScheduleHourContent" role="dialog" aria-modal="true" aria-labelledby="swHourTitle">
-        <div class="sw-hour-head"><h3 id="swHourTitle">${tr(isNew ? 'SCHEDULE_HOUR_CREATE_TITLE' : 'SCHEDULE_HOUR_EDIT_TITLE')}</h3>
-        <button type="button" class="genmod-close" data-genmod-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-close"></use></svg></button></div>
-        <div class="sw-hour-body">
+        ${panelHead({ icon: 'svg-horloge', obj: 'planning', id: 'swHourTitle', title: tr(isNew ? 'SCHEDULE_HOUR_CREATE_TITLE' : 'SCHEDULE_HOUR_EDIT_TITLE'),
+            desc: escHtml(get('fldScheduleName')?.value || model.name || '') })}
+        <div class="side-panel-body">
         <div class="sw-sec"><span>${tr('SCHEDULE_TIME')}</span></div>
         <div class="gen-field-pair">
         <div class="gen-field"><label class="gen-field-label" for="selScheduleTimeRef">${tr('SCHEDULE_TIME_REF')}</label>
@@ -774,12 +774,11 @@ class _SomfySchedule {
         <label class="gen-row dirty-target" for="cbScheduleEnabled"><span class="gen-row-text"><b>${tr('SCHEDULE_HOUR_ENABLED')}</b><span>${tr('SCHEDULE_ENABLED_DESC')}</span></span>
         <span class="gen-seg gen-seg-bool"><input id="cbScheduleEnabled" type="checkbox" checked><span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span></label>
         </div>
-        <div class="genmod-foot sw-hour-foot"><span class="genmod-foot-hint"></span><div class="genmod-foot-btns">
+        <div class="side-panel-foot"><div class="genmod-foot-btns">
         <button id="btnScheduleHourCancel" class="gen-btn" type="button">${tr('BT_CANCEL')}</button>
         <button id="btnScheduleHourConfirm" class="gen-btn gen-btn-primary" type="button">${tr('BT_CONFIRM')}</button>
         </div></div>
         </div>`;
-        div.addEventListener('click', (e) => { if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div); });
 
         get('divContainer').appendChild(div);
         shOverlay(div);
