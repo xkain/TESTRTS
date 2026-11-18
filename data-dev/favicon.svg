@@ -1,9 +1,11 @@
-<svg version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
- <style>path { fill: none; stroke: #000; } rect { fill: #000; }
-              @media (prefers-color-scheme: dark) { path { stroke: #fff; } rect { fill: #fff; } }</style>
- <path d="M1.5 7.5 8 2l6.5 5.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
- <rect x="2.5" y="9" width="2" height="6.5" rx=".7"/>
- <rect x="6" y="9" width="7.5" height="1.6" rx=".6"/>
- <rect x="6" y="11.45" width="7.5" height="1.6" rx=".6"/>
- <rect x="6" y="13.9" width="7.5" height="1.6" rx=".6"/>
+<svg version="1.1" viewBox="40 30 450 400" xmlns="http://www.w3.org/2000/svg">
+ <linearGradient id="l" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="425"><stop offset="0" stop-color="#2289ee"/><stop offset="1" stop-color="#1561d6"/></linearGradient>
+ <linearGradient id="r" gradientUnits="userSpaceOnUse" x1="230" y1="40" x2="470" y2="260"><stop offset="0" stop-color="#36b4ff"/><stop offset="1" stop-color="#2289ee"/></linearGradient>
+ <linearGradient id="s" gradientUnits="userSpaceOnUse" x1="235" y1="0" x2="470" y2="0"><stop offset="0" stop-color="#3a9cf0"/><stop offset="1" stop-color="#36b4ff"/></linearGradient>
+ <path fill="url(#l)" d="M50 405V203q0-18 14-30L212 52l66 72-128 126v155q0 18-18 18H68q-18 0-18-18z"/>
+ <path fill="#000" opacity=".16" d="M50 296l100-46v173H68q-18 0-18-18z"/>
+ <path d="M204 62l70 70" stroke="#000" stroke-opacity=".28" stroke-width="12"/>
+ <path fill="url(#r)" d="M212 52q14-12 32-12h46q16 0 28 10l162 136v80L278 124z"/>
+ <g fill="url(#s)"><path d="M235 230h170l26 24H235z"/><rect x="235" y="277" width="235" height="24" rx="3"/><rect x="235" y="325" width="235" height="24" rx="3"/><rect x="235" y="373" width="235" height="24" rx="3"/></g>
+ <rect x="442" y="262" width="28" height="161" fill="#000" opacity=".22"/>
 </svg>
