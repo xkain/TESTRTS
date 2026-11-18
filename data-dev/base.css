@@ -1978,6 +1978,8 @@ button:disabled:active {
     --g: color-mix(in srgb, var(--color-accent) 78%, #0b1220);
     --g: oklch(from var(--color-accent) min(l, 0.5) c h);
     --hc: #475569;
+    /* Anneau de la pastille : la couleur de son icône (currentColor, résolu sur la pastille), éclaircie. */
+    --hero-ring: color-mix(in srgb, color-mix(in srgb, currentColor 60%, #ffffff) 40%, transparent);
     --hero-media: clamp(96px, min(9vw, 17vh), 150px);
     --hero-col: 340px;
     --text: #ffffff;
@@ -2053,7 +2055,7 @@ button:disabled:active {
     border-radius: 50%;
     background: color-mix(in srgb, var(--hc) 12%, #ffffff);
     color: var(--hc);
-    box-shadow: 0 0 0 clamp(4px, 1vw, 12px) rgba(255, 255, 255, .18);
+    box-shadow: 0 0 0 clamp(4px, 1vw, 12px) var(--hero-ring);
 }
 :root[data-theme="dark"] .hero-media {
     background: color-mix(in srgb, var(--hc) 35%, #12161c);
@@ -2182,7 +2184,7 @@ button:disabled:active {
         overflow: visible;
         text-align: left;
     }
-    .hero-media { box-shadow: 0 0 0 4px rgba(255, 255, 255, .18); }
+    .hero-media { box-shadow: 0 0 0 4px var(--hero-ring); }
     .hero-head { align-items: flex-start; gap: 2px; }
     .hero-head:has(> .hero-titlerow) { justify-self: stretch; }
     .hero-chips { justify-content: flex-start; }

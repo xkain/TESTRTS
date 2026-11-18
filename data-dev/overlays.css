@@ -2183,7 +2183,7 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     border-radius: 50%;
     background: color-mix(in srgb, var(--hc) 12%, #ffffff);
     color: var(--hc);
-    box-shadow: 0 0 0 clamp(4px, 1vw, 12px) rgba(255, 255, 255, .18);
+    box-shadow: 0 0 0 clamp(4px, 1vw, 12px) var(--hero-ring);
 }
 :root[data-theme="dark"] .hero-skin .genmod-side-icon {
     background: color-mix(in srgb, var(--hc) 35%, #12161c);
@@ -2892,7 +2892,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .wiz-side.hero-skin { position: relative; gap: 26px; }
 .hero-skin .wiz-side-head { position: absolute; top: 16px; right: 20px; z-index: 1; }
 .wiz-sum { display: flex; flex-direction: column; align-items: center; gap: 14px; padding-bottom: 26px; border-bottom: 1px solid var(--divider); text-align: center; }
-.wiz-sum-icon { display: grid; place-items: center; flex: none; width: clamp(96px, min(9vw, 17vh), 132px); aspect-ratio: 1; border-radius: 50%; background: color-mix(in srgb, var(--hc) 12%, #ffffff); color: var(--hc); box-shadow: 0 0 0 clamp(4px, 1vw, 12px) rgba(255, 255, 255, .18); }
+.wiz-sum-icon { display: grid; place-items: center; flex: none; width: clamp(96px, min(9vw, 17vh), 132px); aspect-ratio: 1; border-radius: 50%; background: color-mix(in srgb, var(--hc) 12%, #ffffff); color: var(--hc); box-shadow: 0 0 0 clamp(4px, 1vw, 12px) var(--hero-ring); }
 :root[data-theme="dark"] .wiz-sum-icon { background: color-mix(in srgb, var(--hc) 35%, #12161c); color: color-mix(in srgb, var(--hc) 45%, #ffffff); }
 .wiz-sum-icon svg { width: 58%; height: 58%; fill: currentColor; --shade-position: 100; --fpos: 100%; }
 .wiz-sum-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -3150,7 +3150,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .wiz-step-text small { display: none; }
     .wiz-step-text b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .wiz-sum { flex-direction: row; gap: 16px; padding: 0 56px 0 0; border: 0; text-align: left; }
-    .wiz-sum-icon { width: 56px; box-shadow: 0 0 0 4px rgba(255, 255, 255, .18); }
+    .wiz-sum-icon { width: 56px; box-shadow: 0 0 0 4px var(--hero-ring); }
     .wiz-sum-text { gap: 2px; }
     .hero-skin .wiz-title { font-size: var(--fs-1); }
     .wiz-sum-text b { font-size: var(--fs-6); }
@@ -3198,7 +3198,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
        trois repères disparaissent, le bandeau dit déjà où l'on est. */
     .hero-skin .wiz-side-head { top: 12px; right: 12px; }
     .wiz-sum { gap: 14px; padding-right: 52px; }
-    .wiz-sum-icon { width: 46px; box-shadow: 0 0 0 3px rgba(255, 255, 255, .18); }
+    .wiz-sum-icon { width: 46px; box-shadow: 0 0 0 3px var(--hero-ring); }
     .wiz-sum-text span { display: none; }
     .wiz-sum-text b { overflow: hidden; font-size: var(--fs-5); text-overflow: ellipsis; white-space: nowrap; }
     .wiz-now { display: block; }
