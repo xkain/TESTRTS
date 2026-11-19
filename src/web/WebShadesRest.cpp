@@ -103,7 +103,7 @@ namespace WebShadesRest {
       // checkAuth(request, false) passe sans clé -- servirait le couple qui permet de forger une
       // trame RTS à n'importe qui sur le réseau local, le même risque que sur /discovery (cf.
       // ci-dessous). Même modèle que le fork actif du projet.
-      st->secrets = webServer.isAuthenticated(request, true);
+      st->secrets = webServer.checkAuth(request, true);
       // Même filtre de sentinelle que SomfyShadeController::toJSONShades.
       for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++)
         if(somfy.shades[i].getShadeId() != 255) st->shades[st->nShades++] = i;
@@ -138,7 +138,7 @@ namespace WebShadesRest {
       JsonAsyncResponse resp;
       resp.beginResponse(request);
       resp.beginArray();
-      somfy.toJSONGroups(resp, webServer.isAuthenticated(request, true)); // cf. /shades
+      somfy.toJSONGroups(resp, webServer.checkAuth(request, true)); // cf. /shades
       resp.endArray();
       resp.endResponse();
     }

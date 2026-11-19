@@ -178,11 +178,13 @@ namespace WebRadioCommands {
     uint8_t groupId = 255;
     uint8_t stepSize = 0;
     int8_t repeat = -1;
+    uint8_t target = 255;
     somfy_commands command = somfy_commands::My;
     if (method == AsyncHttp::GET || method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       if (request->hasArg("groupId")) {
         groupId = atoi(request->arg("groupId").c_str());
         if (request->hasArg("command")) command = translateSomfyCommand(request->arg("command"));
+        else if (request->hasArg("target")) target = atoi(request->arg("target").c_str());
         if(request->hasArg("repeat")) repeat = atoi(request->arg("repeat").c_str());
         if(request->hasArg("stepSize")) stepSize = atoi(request->arg("stepSize").c_str());
       }
@@ -205,6 +207,7 @@ namespace WebRadioCommands {
             String scmd = obj["command"];
             command = translateSomfyCommand(scmd);
           }
+          else if (obj.containsKey("target")) target = obj["target"].as<uint8_t>();
           jget(obj, "repeat", repeat);
           jget(obj, "stepSize", stepSize);
         }
@@ -220,7 +223,8 @@ namespace WebRadioCommands {
           Serial.println(asyncGetBody(request));
         }
         // Send the command to the group.
-        group->sendCommand(command, repeat >= 0 ? repeat : group->repeats, stepSize);
+        if (target <= 100) group->moveToTarget((float)target, -1.0f);
+        else group->sendCommand(command, repeat >= 0 ? repeat : group->repeats, stepSize);
         JsonAsyncResponse resp;
         resp.beginResponse(request);
         resp.beginObject();

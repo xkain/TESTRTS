@@ -302,7 +302,7 @@ namespace WebSystem {
       auto st = std::make_shared<ControllerChunkState>();
       // Adresse de télécommande et code tournant au niveau CONFIG seulement (cf. /shades).
       // L'accès à la route ne change pas ; seuls les secrets montent.
-      st->secrets = webServer.isAuthenticated(request, true);
+      st->secrets = webServer.checkAuth(request, true);
       // Instantané des index valides (cf. ControllerChunkState). Mêmes filtres de sentinelle que
       // les toJSON*() d'origine, pour produire exactement le même ensemble d'éléments.
       for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++)
@@ -392,6 +392,9 @@ namespace WebSystem {
         j->addElem("hostname", settings.hostname);
         j->addElem("authType", static_cast<uint8_t>(settings.Security.type));
         j->addElem("permissions", settings.Security.permissions);
+        // Un firmware plus ancien ignore `target` sur /groupCommand et envoie My : le client doit
+        // vérifier ce drapeau avant de s'en servir.
+        j->addElem("groupTarget", true);
         j->addElem("chipModel", settings.chipModel);
         j->addElem("connType", st->connType);
         j->addElem("checkForUpdate", settings.checkForUpdate);

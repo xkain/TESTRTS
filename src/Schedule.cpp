@@ -357,8 +357,16 @@ void ScheduleController::toJSONSchedules(JsonFormatter &json) {
   this->lock();
   for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
     if(this->schedules[i].getId() != 255) {
+      ScheduleRule &r = this->schedules[i];
+      uint8_t h = r.hour, m = r.minute;
       json.beginObject();
-      this->schedules[i].toJSON(json);
+      r.toJSON(json);
+      // Même calcul que l'événement scheduleState ; absent quand l'heure solaire est incalculable.
+      if(r.timeRef == schedule_time_ref_t::CLOCK || this->_getEffectiveTime(&r, h, m)) {
+        char eff[6];
+        snprintf(eff, sizeof(eff), "%02u:%02u", h, m);
+        json.addElem("nextTime", eff);
+      }
       json.endObject();
     }
   }
