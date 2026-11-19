@@ -353,20 +353,42 @@ uint8_t ScheduleController::deleteSchedulesForTarget(schedule_target_t targetTyp
   this->unlock();
   return removed;
 }
+// Date locale ISO 8601 avec décalage « +01:00 », format déjà publié sur MQTT. Vide si aucune.
+static void formatIsoLocal(uint32_t epoch, char *buf, size_t len) {
+  buf[0] = '\0';
+  if(epoch == 0) return;
+  time_t t = (time_t)epoch;
+  struct tm dt;
+  localtime_r(&t, &dt);
+  strftime(buf, len, "%Y-%m-%dT%H:%M:%S%z", &dt);
+  size_t n = strlen(buf);
+  if(n >= 5 && n + 1 < len && (buf[n - 5] == '+' || buf[n - 5] == '-')) {
+    buf[n + 1] = '\0';
+    buf[n] = buf[n - 1];
+    buf[n - 1] = buf[n - 2];
+    buf[n - 2] = ':';
+  }
+}
+void ScheduleController::toJSONSchedule(JsonFormatter &json, ScheduleRule &r) {
+  uint8_t h = r.hour, m = r.minute;
+  r.toJSON(json);
+  // Même calcul que l'événement scheduleState ; absent quand l'heure solaire est incalculable.
+  if(r.timeRef == schedule_time_ref_t::CLOCK || this->_getEffectiveTime(&r, h, m)) {
+    char eff[6];
+    snprintf(eff, sizeof(eff), "%02u:%02u", h, m);
+    json.addElem("nextTime", eff);
+  }
+  // Toujours présent (vide = pas encore déclenché) : sa présence dit au client que le firmware le fournit.
+  char last[32];
+  formatIsoLocal(r.lastRunEpoch, last, sizeof(last));
+  json.addElem("lastRun", last);
+}
 void ScheduleController::toJSONSchedules(JsonFormatter &json) {
   this->lock();
   for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
     if(this->schedules[i].getId() != 255) {
-      ScheduleRule &r = this->schedules[i];
-      uint8_t h = r.hour, m = r.minute;
       json.beginObject();
-      r.toJSON(json);
-      // Même calcul que l'événement scheduleState ; absent quand l'heure solaire est incalculable.
-      if(r.timeRef == schedule_time_ref_t::CLOCK || this->_getEffectiveTime(&r, h, m)) {
-        char eff[6];
-        snprintf(eff, sizeof(eff), "%02u:%02u", h, m);
-        json.addElem("nextTime", eff);
-      }
+      this->toJSONSchedule(json, this->schedules[i]);
       json.endObject();
     }
   }
@@ -434,6 +456,7 @@ bool ScheduleController::_snapshotRule(uint8_t id, mqtt_rule_t &snap) {
     snap.targetPos = rule->targetPos;
     snap.targetTilt = rule->targetTilt;
     snap.retries = rule->retries;
+    snap.lastRunEpoch = rule->lastRunEpoch;
     if(rule->timeRef == schedule_time_ref_t::CLOCK) {
       snap.hasEffective = true;
       snap.effHour = rule->hour;
@@ -493,6 +516,9 @@ void ScheduleController::_emitScheduleState(uint8_t id) {
       snprintf(eff, sizeof(eff), "%02u:%02u", snap.effHour, snap.effMinute);
       json->addElem("nextTime", eff);
     }
+    char last[32];
+    formatIsoLocal(snap.lastRunEpoch, last, sizeof(last));
+    json->addElem("lastRun", last);
     json->endObject();
     sockEmit.endEmit();
   }
@@ -612,19 +638,10 @@ void ScheduleController::unpublishDisco() {
     this->_unpublishRuleDisco(id);
   }
 }
-void ScheduleController::_publishLastRun(uint8_t id) {
-  if(!mqtt.connected()) return;
-  struct tm dt;
-  if(!getLocalTime(&dt, 50)) return;
+void ScheduleController::_publishLastRun(uint8_t id, uint32_t epoch) {
+  if(!mqtt.connected() || epoch == 0) return;
   char buf[32];
-  strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S%z", &dt);
-  size_t n = strlen(buf);
-  if(n >= 5 && (buf[n - 5] == '+' || buf[n - 5] == '-')) {
-    buf[n + 1] = '\0';
-    buf[n] = buf[n - 1];
-    buf[n - 1] = buf[n - 2];
-    buf[n - 2] = ':';
-  }
+  formatIsoLocal(epoch, buf, sizeof(buf));
   schedulePublish(id, "lastRun", buf);
 }
 void ScheduleController::_processMqtt() {
@@ -814,7 +831,14 @@ void ScheduleController::checkSchedules() {
 // capturé sous verrou : entre le relâchement et cet appel, /deleteShade ou /deleteGroup ont pu
 // libérer l'emplacement. Une cible disparue dans cet intervalle est simplement ignorée.
 void ScheduleController::executeAction(const pending_action_t &act) {
-  this->_publishLastRun(act.ruleId);
+  // Heure non synchronisée (avant NTP) : pas de date plutôt qu'une date en 1970.
+  time_t now = time(nullptr);
+  uint32_t epoch = now > 1700000000 ? (uint32_t)now : 0;
+  this->lock();
+  if(ScheduleRule *rule = this->getScheduleById(act.ruleId)) rule->lastRunEpoch = epoch;
+  this->unlock();
+  this->_publishLastRun(act.ruleId, epoch);
+  this->_emitScheduleState(act.ruleId);
   bool isMy = (act.positionMode == schedule_position_mode_t::MY);
   bool isTiltOnly = (act.positionMode == schedule_position_mode_t::TILT_ONLY);
   if(act.targetType == schedule_target_t::SHADE) {

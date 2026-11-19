@@ -178,7 +178,7 @@ namespace WebShadesRest {
           JsonAsyncResponse resp;
           resp.beginResponse(request);
           resp.beginObject();
-          rule->toJSON(resp);
+          schedule.toJSONSchedule(resp, *rule);
           resp.endObject();
           resp.endResponse();
           schedule.unlock();

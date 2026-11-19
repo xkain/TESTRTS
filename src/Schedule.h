@@ -64,6 +64,8 @@ class ScheduleRule {
     // où la règle a déclenché, pour ne pas la redéclencher plusieurs fois tant que l'horloge
     // reste dans cette même minute (la vérification tourne toutes les ~30s).
     int32_t lastTriggeredMinuteKey = -1;
+    // Heure (epoch) du dernier déclenchement, 0 = aucun depuis le démarrage. RAM seulement.
+    uint32_t lastRunEpoch = 0;
     // Etat RAM du cycle de renvois de fiabilité en cours (voir ScheduleController::checkVerifications).
     uint8_t verifyAttemptsLeft = 0;
     uint32_t verifyWindowStart = 0;
@@ -113,6 +115,7 @@ class ScheduleController {
       bool hasEffective;
       uint8_t effHour;
       uint8_t effMinute;
+      uint32_t lastRunEpoch;
     };
     uint32_t _mqttDirty = 0;
     uint32_t _mqttPublished = 0;
@@ -123,7 +126,7 @@ class ScheduleController {
     void _unpublishRule(uint8_t id);
     void _publishIndex();
     void _processMqtt();
-    void _publishLastRun(uint8_t id);
+    void _publishLastRun(uint8_t id, uint32_t epoch);
     void _publishRuleDisco(const mqtt_rule_t &snap);
     void _unpublishRuleDisco(uint8_t id);
     // Émission WebSocket ("scheduleState"/"scheduleRemoved"), indépendante de MQTT : contrairement
@@ -168,6 +171,8 @@ class ScheduleController {
     bool deleteSchedule(uint8_t id);
     uint8_t deleteSchedulesForTarget(schedule_target_t targetType, uint8_t targetId);
     void toJSONSchedules(JsonFormatter &json);
+    // Règle + nextTime + lastRun, verrou tenu par l'appelant.
+    void toJSONSchedule(JsonFormatter &json, ScheduleRule &rule);
     // Récursif : commit()/addSchedule() se re-verrouillent eux-mêmes, et un appelant externe (cf.
     // WebShadesRest::handleSaveSchedule, seul endroit qui mute un ScheduleRule* obtenu via
     // getScheduleById() sans passer par une méthode de ScheduleController) doit pouvoir englober
