@@ -2382,13 +2382,46 @@ label.gen-row {
         background: var(--color-accent);
     }
     .gen-tile {
-        padding: 18px;
+        padding: 14px;
+        border-radius: var(--r-4);
     }
     .gen-field-pair {
         grid-template-columns: minmax(0, 1fr);
     }
     .gen-row-text {
         flex-basis: 100%;
+    }
+    /* Oui/Non réduit et remonté à droite du titre, la description passe dessous. :not([hidden]) :
+       display:grid battrait l'attribut hidden hors des pages qui le forcent par id. */
+    .gen-row:has(> .gen-seg-bool):not([hidden]) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: 12px;
+        row-gap: 2px;
+    }
+    .gen-row:has(> .gen-seg-bool) > .gen-row-text {
+        display: contents;
+    }
+    .gen-row:has(> .gen-seg-bool) > .gen-row-text > b {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    .gen-row:has(> .gen-seg-bool) > .gen-row-text > :not(b) {
+        grid-column: 1 / -1;
+    }
+    .gen-row > .gen-seg-bool {
+        grid-column: 2;
+        grid-row: 1;
+    }
+    /* Tous les segments, Oui/Non comme choix multiples, à la même taille réduite. */
+    .gen-seg {
+        gap: 3px;
+        padding: 3px;
+    }
+    .gen-seg span {
+        padding: 5px 11px;
+        font-size: var(--fs-1);
     }
 }
 
