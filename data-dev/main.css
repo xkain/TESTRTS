@@ -5964,7 +5964,7 @@ input.gen-input.mqtt-mono {
 .gen-hero-note { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 340px; margin: 0; font-size: var(--fs-2); line-height: 1.45; color: var(--text-3); }
 .gen-hero-note .gen-btn { align-self: center; min-height: 36px; background: var(--surface); }
 .gen-tools { display: flex; align-items: center; gap: 10px; }
-.gen-tools .gen-search { min-width: 0; }
+.gen-tools .gen-search { min-width: 0; padding-left: 16px; border-radius: var(--r-pill); }
 /* Filtres : un ⋮ à droite du tri ; la pastille signale un filtre autre que « Tous ». */
 .tools-more { position: relative; flex: none; }
 .tools-more-btn, .tools-more-btn:hover { position: relative; display: grid; place-items: center; width: 44px; height: 44px; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: var(--r-pill); background: var(--surface); color: var(--text-2); }
