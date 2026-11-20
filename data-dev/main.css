@@ -1718,6 +1718,7 @@ body.is-home-welcome .container {
 #divListener.subtab-content,
 #divRepeater.subtab-content,
 #divFrameLog.subtab-content,
+#divScanFrequency.subtab-content,
 #divTransceiverSettings.subtab-content {
     max-width: none;
     margin: 0;
