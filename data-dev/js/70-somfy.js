@@ -1500,7 +1500,8 @@ class Somfy {
         const addr = Number(address);
         for (const shade of (this.shades || [])) {
             if (Number(shade.remoteAddress) === addr) return { name: shade.name, own: true };
-            if ((shade.linkedRemotes || []).some(r => Number(r.remoteAddress) === addr)) return { name: shade.name, own: false };
+            const r = (shade.linkedRemotes || []).find(x => Number(x.remoteAddress) === addr);
+            if (r) return { name: r.name ? `${r.name} · ${shade.name}` : shade.name, own: false };
         }
         const group = (this.groups || []).find(g => Number(g.remoteAddress) === addr);
         if (group) return { name: group.name, own: true };

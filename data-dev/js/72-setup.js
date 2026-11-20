@@ -756,7 +756,7 @@ class ShadeSetup {
         <div class="cfg-tiles"><button type="button" class="cfg-tile cfg-tile-add" onclick="shadeSetup.runTask(${id},'remote')"${list.length >= max ? ' disabled' : ''}><svg><use href="#svg-add"></use></svg><span>${tr('BT_LINK_REMOTE')}</span><small>${tr('DEVICE_REMOTE_ADD_DESC')}</small></button>`
             + list.map((r, i) => `<div class="cfg-tile" data-remoteaddress="${r.remoteAddress}">
             <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#svg-remote"></use></svg></span>${somfy.cfgTileMenu(`somfy.unlinkRemote(${id}, '${r.remoteAddress}')`, '', 'DEVICE_REMOTE_UNLINK')}</div>
-            <div class="cfg-tile-name"><span class="name-text">${tr('REMOTESLIST_LINKED')} ${i + 1}</span><span class="cfg-tile-sub">${tr('ADDR')} ${r.remoteAddress}</span></div>
+            <div class="cfg-tile-name">${this.remoteNameHtml(r, `${tr('REMOTESLIST_LINKED')} ${i + 1}`)}<span class="cfg-tile-sub">${tr('ADDR')} ${r.remoteAddress}</span></div>
             ${this.repeatRowHtml(r.remoteAddress, reps.includes(Number(r.remoteAddress)), reps.length >= repMax)}
             <div class="cfg-tile-foot">${somfy.remoteSignalHtml(r.lastRssi, r.remoteAddress)}<span class="cfg-tile-id">${tr('CODE')} ${r.lastRollingCode}</span></div>
             </div>`).join('') + '</div>';
@@ -767,6 +767,26 @@ class ShadeSetup {
         return `<div class="ed-rep-row${on ? ' is-on' : ''}"><b>${tr('DEVICE_REMOTE_REPEAT')}</b>
             <span class="gen-seg gen-seg-bool"><input type="checkbox"${on ? ' checked' : ''}${full && !on ? ' disabled' : ''} aria-label="${escAttr(tr('DEVICE_REMOTE_REPEAT'))}" oninput="event.stopPropagation();" onchange="event.stopPropagation(); shadeSetup.toggleRepeat(this, ${Number(address)});"><span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span>
             <small>${tr(on ? 'DEVICE_REMOTE_REPEAT_ON' : 'DEVICE_REMOTE_REPEAT_OFF')}</small></div>`;
+    }
+    // Même champ que les tuiles du Répéteur (rx-name), mais la fiche est suivie par watchDirty :
+    // le nom s'enregistre seul et ne doit pas compter comme une modification de la fiche.
+    remoteNameHtml(r, placeholder) {
+        return `<div class="gen-input-box rx-name">
+            <input class="gen-input" type="text" maxlength="20" value="${escAttr(r.name || '')}" placeholder="${escAttr(placeholder)}" aria-label="${escAttr(tr('NAME'))}" data-address="${Number(r.remoteAddress)}" oninput="event.stopPropagation();" onchange="event.stopPropagation(); shadeSetup.renameRemote(this);" onkeydown="if (event.key === 'Enter') this.blur();">
+            <svg class="rx-pen"><use href="#svg-edit"></use></svg></div>`;
+    }
+    renameRemote(fld) {
+        const addr = Number(fld.dataset.address), name = fld.value.trim();
+        const own = (this.editShade && this.editShade.linkedRemotes || []).find(x => Number(x.remoteAddress) === addr);
+        const old = own && own.name || '';
+        if (name === old) return;
+        putJSON('/renameRemote', { address: addr, name: name }, (err, data) => {
+            if (err) { ui.serviceError(err); fld.value = old; return; }
+            // Une même télécommande peut être liée à plusieurs équipements : un seul nom pour tous.
+            [this.editShade, ...(somfy.shades || [])].forEach(sh => (sh && sh.linkedRemotes || [])
+                .forEach(x => { if (Number(x.remoteAddress) === addr) x.name = data.name; }));
+            fld.value = data.name;
+        });
     }
     toggleRepeat(cb, address) {
         cb.disabled = true;

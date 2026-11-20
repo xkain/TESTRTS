@@ -26,6 +26,7 @@ static_assert(SOMFY_LEGACY_LINKED_REMOTES + SOMFY_EXTRA_LINKED_REMOTES == SOMFY_
 #define SOMFY_MAX_ROOMS 32
 #define SOMFY_MAX_REPEATERS 7
 #define SOMFY_MAX_LISTENERS 14
+#define SOMFY_MAX_REMOTE_NAMES 32
 
 #define SECS_TO_MILLIS(x) ((x) * 1000)
 #define MINS_TO_MILLIS(x) SECS_TO_MILLIS((x) * 60)
@@ -499,6 +500,10 @@ class SomfyGroup : public SomfyRemote {
 // SOMFY_MAX_LISTENERS (pas de réservation façon getNextXId()). Champs rangés du plus large au plus
 // étroit ; lastRssi fait passer de 32 à 36 octets (3 de remplissage en fin). Seuls address et name
 // sont persistés ; le reste est l'état de réception, tenu en RAM et remis à zéro à chaque redémarrage.
+struct somfy_remote_name_t {
+  uint32_t address = 0;
+  char name[21] = "";
+};
 struct somfy_listener_t {
   uint32_t address = 0;
   uint32_t lastRx = 0;      // millis() du dernier appui retenu, 0 = aucun depuis le démarrage.
@@ -571,6 +576,14 @@ class SomfyShadeController {
     bool linkRepeater(uint32_t address);
     bool unlinkRepeater(uint32_t address);
     bool renameRepeater(uint32_t address, const char *name);
+    // Noms des télécommandes liées, par ADRESSE (une même télécommande liée à deux équipements n'a
+    // qu'un nom) et non par place : 32 x 25 octets au lieu de 32 x 15 x 21. Écrits par async_tcp
+    // (/renameRemote) sans verrou, comme repeaterNames.
+    somfy_remote_name_t remoteNames[SOMFY_MAX_REMOTE_NAMES];
+    const char *remoteName(uint32_t address);
+    // Faux quand la table est pleine même après avoir oublié les adresses qui ne sont plus liées.
+    bool renameRemote(uint32_t address, const char *name);
+    bool isLinkedRemote(uint32_t address);
     somfy_listener_t listeners[SOMFY_MAX_LISTENERS];
     void compressListeners();
     // 0 si ajoutée (ou déjà présente : son nom est alors mis à jour), sinon un code de refus pris

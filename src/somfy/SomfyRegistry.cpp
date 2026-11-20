@@ -546,6 +546,39 @@ bool SomfyShadeController::renameRepeater(uint32_t address, const char *name) {
   }
   return false;
 }
+bool SomfyShadeController::isLinkedRemote(uint32_t address) {
+  for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
+    if(this->shades[i].getShadeId() == 255) continue;
+    for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++)
+      if(this->shades[i].linkedRemotes[j].getRemoteAddress() == address) return true;
+  }
+  return false;
+}
+const char *SomfyShadeController::remoteName(uint32_t address) {
+  for(uint8_t i = 0; address != 0 && i < SOMFY_MAX_REMOTE_NAMES; i++)
+    if(this->remoteNames[i].address == address) return this->remoteNames[i].name;
+  return "";
+}
+bool SomfyShadeController::renameRemote(uint32_t address, const char *name) {
+  if(address == 0) return false;
+  somfy_remote_name_t *slot = nullptr;
+  for(uint8_t i = 0; i < SOMFY_MAX_REMOTE_NAMES && !slot; i++)
+    if(this->remoteNames[i].address == address) slot = &this->remoteNames[i];
+  if(!name || !name[0]) {
+    if(slot) { *slot = somfy_remote_name_t(); this->isDirty = true; }
+    return true;
+  }
+  // Une place se libère quand son adresse n'est plus liée à aucun équipement.
+  for(uint8_t i = 0; i < SOMFY_MAX_REMOTE_NAMES && !slot; i++) {
+    uint32_t a = this->remoteNames[i].address;
+    if(a == 0 || !this->isLinkedRemote(a)) slot = &this->remoteNames[i];
+  }
+  if(!slot) return false;
+  slot->address = address;
+  setCfgName(slot->name, sizeof(slot->name), name);
+  this->isDirty = true;
+  return true;
+}
 void SomfyShadeController::compressListeners() {
   for(uint8_t i = 0, j = 0; i < SOMFY_MAX_LISTENERS; i++) {
     if(this->listeners[i].address != 0) {

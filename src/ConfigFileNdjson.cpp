@@ -233,6 +233,16 @@ bool ShadeConfigFile::backupNdjson(SomfyShadeController *s) {
     ok &= this->writeNdjsonLine(fmt, buff, "group");
   }
 
+  for(uint8_t i = 0; i < SOMFY_MAX_REMOTE_NAMES; i++) {
+    somfy_remote_name_t *r = &s->remoteNames[i];
+    if(r->address == 0 || !r->name[0] || !s->isLinkedRemote(r->address)) continue;
+    open();
+    fmt.addElem("rec", "remoteName");
+    fmt.addElem("address", (uint32_t)r->address);
+    fmt.addElem("name", r->name);
+    ok &= this->writeNdjsonLine(fmt, buff, "remoteName");
+  }
+
   for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++) {
     if(s->repeaters[i] == 0) continue;
     open();
@@ -491,6 +501,9 @@ bool ShadeConfigFile::restoreNdjson(SomfyShadeController *s, restore_options_t &
     for(uint8_t i = 0; i < SOMFY_MAX_LISTENERS; i++) s->listeners[i] = somfy_listener_t();
   }
   if(opts.shades) {
+    for(uint8_t i = 0; i < SOMFY_MAX_REMOTE_NAMES; i++) s->remoteNames[i] = somfy_remote_name_t();
+  }
+  if(opts.shades) {
     schedule.lock();
     for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) schedule.schedules[i].clear();
     schedule.unlock();
@@ -573,6 +586,9 @@ bool ShadeConfigFile::restoreNdjson(SomfyShadeController *s, restore_options_t &
         if(group->getGroupId() == 255) group->clear();
         else groupIdx++;
       }
+    }
+    else if(strcmp(rec, "remoteName") == 0) {
+      if(opts.shades) s->renameRemote(obj["address"] | (uint32_t)0, obj["name"] | "");
     }
     else if(strcmp(rec, "repeater") == 0) {
       if(opts.repeaters) {

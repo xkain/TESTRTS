@@ -576,4 +576,5 @@ void SomfyLinkedRemote::toJSON(JsonFormatter &json) {
   json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
   json.addElem("lastRssi", this->lastRssi);
   json.addElem("lastRxAgo", this->lastRxAgo());
+  json.addElem("name", somfy.remoteName(this->getRemoteAddress()));
 }

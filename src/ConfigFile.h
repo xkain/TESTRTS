@@ -127,6 +127,8 @@ class ShadeConfigFile : public ConfigFile {
     bool skipListenerBlock();
     bool writeRepeaterNameBlock(SomfyShadeController *s);
     bool readRepeaterNameBlock(SomfyShadeController *s);
+    bool writeRemoteNameBlock(SomfyShadeController *s);
+    bool readRemoteNameBlock(SomfyShadeController *s);
     // Sauvegarde NDJSON (ConfigFileNdjson.cpp) : backup() et restore() y basculent quand le premier
     // octet le demande ; le positionnel reste pour shades.cfg et les sauvegardes 25/26/27.
     bool writeNdjsonLine(JsonFormatter &fmt, char *buff, const char *what);

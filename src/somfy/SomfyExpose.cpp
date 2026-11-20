@@ -18,6 +18,7 @@
 #include <Preferences.h>
 
 extern MQTTClass mqtt;
+extern SomfyShadeController somfy;
 extern SocketEmitter sockEmit;
 extern ConfigSettings settings;
 
@@ -268,7 +269,10 @@ void SomfyShade::publishRemoteDisco(uint8_t slot, bool present) {
   snprintf(buf, sizeof(buf), "%s/shades/%u", settings.MQTT.rootTopic, this->shadeId);
   obj["~"] = buf;
   mqtt.discoDevice(obj);
-  if(this->name[0] != '\0') snprintf(buf, sizeof(buf), "%s telecommande %u", this->name, slot);
+  // Nommée : le nom s'affiche à la prochaine publication de la découverte, l'unique_id ne bouge pas.
+  const char *rname = somfy.remoteName(this->linkedRemotes[slot - 1].getRemoteAddress());
+  if(rname[0] && this->name[0] != '\0') snprintf(buf, sizeof(buf), "%s %s", this->name, rname);
+  else if(this->name[0] != '\0') snprintf(buf, sizeof(buf), "%s telecommande %u", this->name, slot);
   else snprintf(buf, sizeof(buf), "Equipement %u telecommande %u", this->shadeId, slot);
   obj["name"] = buf;
   snprintf(buf, sizeof(buf), "mqtt_%s_shade%u_remote%u", settings.serverId, this->shadeId, slot);

@@ -22,6 +22,8 @@
 #define LISTENER_REC_SIZE 32   // adresse (11) + nom (21)
 #define REPEATER_NAME_HDR_VER 1
 #define REPEATER_NAME_REC_SIZE 32   // adresse (11) + nom (21)
+#define REMOTE_NAME_HDR_VER 1
+#define REMOTE_NAME_REC_SIZE 32     // adresse (11) + nom (21)
 
 extern ConfigSettings settings;
 extern ScheduleController schedule;
@@ -439,6 +441,7 @@ bool ShadeConfigFile::save(SomfyShadeController *s) {
   this->writeRepeaterRecord(s);
   this->writeListenerBlock(s);
   this->writeRepeaterNameBlock(s);
+  this->writeRemoteNameBlock(s);
   return true;
 }
 // La sauvegarde s'écrit désormais en NDJSON (ConfigFileNdjson.cpp) ; save() -- shades.cfg -- ne
@@ -1123,6 +1126,7 @@ bool ShadeConfigFile::loadFile(SomfyShadeController *s, const char *filename) {
   }
   this->readListenerBlock(s, false);
   this->readRepeaterNameBlock(s);
+  this->readRemoteNameBlock(s);
   if(opened) {
     DBG_PRINTLN("Closing shade config file");
     this->end();
@@ -1444,6 +1448,49 @@ bool ShadeConfigFile::writeRepeaterNameBlock(SomfyShadeController *s) {
     this->writeUInt32(s->repeaters[i]);
     this->writeString(s->repeaterNames[i], sizeof(s->repeaterNames[i]), CFG_REC_END);
   }
+  return true;
+}
+// Noms des télécommandes liées : dernier bloc, même forme que celui des répéteurs. Un firmware
+// antérieur s'arrête avant et ne le lit pas. Pas relu par restoreFile() : les sauvegardes
+// positionnelles (générations 25 à 27) n'en ont pas, et un bloc précédent sauté le décalerait.
+bool ShadeConfigFile::writeRemoteNameBlock(SomfyShadeController *s) {
+  uint8_t count = 0;
+  for(uint8_t i = 0; i < SOMFY_MAX_REMOTE_NAMES; i++)
+    if(s->remoteNames[i].address != 0 && s->remoteNames[i].name[0] && s->isLinkedRemote(s->remoteNames[i].address)) count++;
+  this->writeUInt8(REMOTE_NAME_HDR_VER);
+  this->writeUInt16(REMOTE_NAME_REC_SIZE);
+  this->writeUInt8(count, CFG_REC_END);
+  for(uint8_t i = 0; i < SOMFY_MAX_REMOTE_NAMES; i++) {
+    somfy_remote_name_t *r = &s->remoteNames[i];
+    if(r->address == 0 || !r->name[0] || !s->isLinkedRemote(r->address)) continue;
+    this->writeUInt32(r->address);
+    this->writeString(r->name, sizeof(r->name), CFG_REC_END);
+  }
+  return true;
+}
+bool ShadeConfigFile::readRemoteNameBlock(SomfyShadeController *s) {
+  for(uint8_t i = 0; i < SOMFY_MAX_REMOTE_NAMES; i++) s->remoteNames[i] = somfy_remote_name_t();
+  uint32_t pos = this->file.position();
+  if(this->header.version < 27 || this->file.size() < pos + 14) return true;
+  uint8_t version = this->readUInt8(0);
+  uint16_t recSize = this->readUInt16(0);
+  uint8_t recCount = this->readUInt8(255);
+  if(version == 0 || version > REMOTE_NAME_HDR_VER || recSize == 0 || recSize > 255 || recCount > SOMFY_MAX_REMOTE_NAMES) {
+    Serial.printf("[CFG] bloc noms des telecommandes illisible (version %u, taille %u, nombre %u) -- ignore\n",
+      (unsigned)version, (unsigned)recSize, (unsigned)recCount);
+    this->file.seek(pos, SeekSet);
+    return false;
+  }
+  bool wasDirty = s->isDirty;
+  for(uint8_t i = 0; i < recCount; i++) {
+    uint32_t startPos = this->file.position();
+    uint32_t address = this->readUInt32(0);
+    char name[sizeof(s->remoteNames[0].name)];
+    this->readString(name, sizeof(name));
+    if(this->file.position() != startPos + recSize) this->seekChar(CFG_REC_END);
+    s->renameRemote(address, name);
+  }
+  s->isDirty = wasDirty;
   return true;
 }
 bool ShadeConfigFile::readRepeaterNameBlock(SomfyShadeController *s) {

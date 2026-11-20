@@ -720,6 +720,29 @@ namespace WebRadioCommands {
     }
     else webServer.rejectMethod(request);
   }
+  // Nom d'une télécommande liée, rattaché à son adresse ; un nom vide l'efface.
+  static void handleRenameRemote(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      uint32_t address;
+      char name[sizeof(somfy.remoteNames[0].name)];
+      if(!readListenerBody(request, address, name, sizeof(name))) return;
+      if(!somfy.isLinkedRemote(address)) webServer.sendError(request, 404, "Remote is not linked.");
+      else if(!somfy.renameRemote(address, name)) webServer.sendError(request, 409, "No room for another remote name.");
+      else {
+        JsonAsyncResponse resp;
+        resp.beginResponse(request);
+        resp.beginObject();
+        resp.addElem("address", address);
+        resp.addElem("name", somfy.remoteName(address));
+        resp.endObject();
+        resp.endResponse();
+      }
+    }
+    else webServer.rejectMethod(request);
+  }
   static void handleUnlinkRepeater(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
@@ -1139,6 +1162,7 @@ namespace WebRadioCommands {
     server.on("/linkRepeater", AsyncHttp::ANY, handleLinkRepeater, nullptr, asyncBodyHandler);
     server.on("/unlinkRepeater", AsyncHttp::ANY, handleUnlinkRepeater, nullptr, asyncBodyHandler);
     server.on("/renameRepeater", AsyncHttp::ANY, handleRenameRepeater, nullptr, asyncBodyHandler);
+    server.on("/renameRemote", AsyncHttp::ANY, handleRenameRemote, nullptr, asyncBodyHandler);
     server.on("/linkListener", AsyncHttp::ANY, handleLinkListener, nullptr, asyncBodyHandler);
     server.on("/renameListener", AsyncHttp::ANY, handleRenameListener, nullptr, asyncBodyHandler);
     server.on("/unlinkListener", AsyncHttp::ANY, handleUnlinkListener, nullptr, asyncBodyHandler);
