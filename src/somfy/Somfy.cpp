@@ -224,6 +224,7 @@ bool SomfyGroup::linkShade(uint8_t shadeId) {
     if(this->linkedShades[i] == 0) {
       this->linkedShades[i] = shadeId;
       somfy.commit();
+      this->emitState();
       return true;
     }
   }
@@ -317,6 +318,7 @@ bool SomfyGroup::unlinkShade(uint8_t shadeId) {
   if(removed) {
     this->compressLinkedShadeIds();
     somfy.commit();
+    this->emitState();
   }
   return removed;
 }
