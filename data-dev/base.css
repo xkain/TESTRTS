@@ -70,7 +70,6 @@
     --color-text-secondary:#4a4a4a;
     --color-border-hr:#e8e8e8;
     --color-border-hr-soft:rgba(2,2,2,0.1);
-    --color-border-switch: #c7c7c7;
     --color-switch-checked:#6a6a6a;
     --color-bg-radio-card:color-mix(in srgb, var(--color-accent) 3%, #fff);
     --color-icon-muted:#c7cad1;
@@ -150,7 +149,6 @@
     --color-text-secondary:#9a999e;
     --color-border-hr:#3a3a3c;
     --color-border-hr-soft:rgba(255,255,255,0.1);
-    --color-border-switch:#434243;
     --color-switch-checked:#505050;
     --color-bg-switch-channel:#ababab;
     --color-bg-radio-card:#131313;
@@ -356,7 +354,6 @@
     --color-border-alt: var(--border);
     --color-border-hr: var(--divider);
     --color-border-hr-soft: var(--divider);
-    --color-border-switch: var(--control-border);
     --color-text-main: var(--text);
     --color-text-secondary: var(--text-3);
     --color-text-subtitle: var(--text-3);
@@ -1380,7 +1377,7 @@ fieldset {
 .SwitchBig-2 input[type="radio"]:nth-of-type(2):checked ~ .nav-pill {
     transform: translateX(100%);
 }
-/* Même patron que .switch:has(input:disabled) et .slider-wrapper:has(.md3-range-input:disabled) :
+/* Même patron que .slider-wrapper:has(.md3-range-input:disabled) :
  * grise la bascule et bloque le clic dès que ses entrées sont désactivées. Utilisé pour un réglage
  * qui n'a de sens que si un interrupteur amont est actif (ex: le style des commandes quand le
  * retour visuel des commandes est coupé) -- le curseur reste
@@ -1391,66 +1388,6 @@ fieldset {
     cursor: not-allowed;
     pointer-events: none;
 }
-/* -----------------------------------------------------------------------
- *  Switch simple (toggle on/off à bascule ronde)
- * ----------------------------------------------------------------------- */
-
-.switch {
-    display:inline-block;
-    position:relative;
-    width:50px;
-    min-width:50px;
-    height:24px;
-    border-radius:9px;
-    border:1px solid var(--color-border-switch);
-    background:var(--color-bg-surface-0);
-}
-.switch input {
-    position:absolute;
-    opacity:0;
-    margin:2px 0;
-    cursor:pointer;
-    z-index:10;
-}
-.switch div {
-    width:25px;
-    height:24px;
-    background:var(--color-switch-checked);
-    border-radius: var(--radius-md);
-    position:absolute;
-    top:50%;
-    left:-1px;
-    transform:translateY(-50%);
-    transition:all 200ms cubic-bezier(0.4,0,0.2,1),filter 300ms ease-in-out;
-}
-.switch:hover div {
-    filter:brightness(var(--brightness-hover));
-}
-.switch input:checked + div {
-    width:25px;
-    height:22px;
-    background:var(--color-accent);
-    transform:translate(24px,-50%);
-}
-.switch input:checked + div::after {
-    content:'';
-    position:absolute;
-    top:4px;
-    left:7px;
-    width:4px;
-    height:8px;
-    border-width:0 2px 2px 0;
-    transform:rotate(45deg);
-}
-/* Même patron que .slider-wrapper:has(.md3-range-input:disabled) plus haut : grise le switch et
- * bloque le clic quand son input est désactivé (ex: interrupteur haptique sur un appareil sans
- * écran tactile, cf. general._renderFeedback()). */
-.switch:has(input:disabled) {
-    opacity:0.4;
-    cursor:not-allowed;
-    pointer-events:none;
-}
-
 /* -----------------------------------------------------------------------
  *  Boutons, conteneurs de boutons & variantes (line/red/accent/pop...)
  * ----------------------------------------------------------------------- */

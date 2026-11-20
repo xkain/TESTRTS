@@ -2083,7 +2083,7 @@ label.gen-row {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
 }
-/* Même patron que .switch:has(input:disabled) dans base.css : l'interrupteur haptique est
+/* Même patron que .SwitchBig:has(input:disabled) dans base.css : l'interrupteur haptique est
    désactivé sur un appareil sans écran tactile (general._renderFeedback). */
 .gen-seg-bool:has(input:disabled) {
     opacity: 0.4;
@@ -2988,21 +2988,6 @@ html[data-feedback-commands="off"] .rcpack [data-press] { display: none; }
     margin: 8px 0 0 0;
     color: var(--color-text-secondary);
     font-style: italic;
-}
-
-/* -----------------------------------------------------------------------
- *  Programmations rattachées à un équipement/groupe (bloc Plannings dédié) --
- *  le rendu carte pleine largeur vit dans overlays.css (.schedule-card...,
- *  cf. renderScheduleBadges(), 71-schedule.js). Ne reste ici que l'état vide,
- *  commun aux deux.
- * ----------------------------------------------------------------------- */
-
-.schedule-badge-empty {
-    display: block;
-    font-size: 0.85em;
-    color: var(--color-text-secondary);
-    font-style: italic;
-    margin: 10px 0;
 }
 
 /* =======================================================================

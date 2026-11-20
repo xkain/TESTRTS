@@ -897,7 +897,6 @@
     "SCHEDULE_HOUR_SUMMARY_POS": "Will move to {pos} % at {time}",
     "SCHEDULE_HOUR_SUMMARY_MY": "Will move to My position at {time}",
     "SCHEDULE_HOUR_SUMMARY_TILT": "Will tilt slats to {tilt} % at {time}",
-    "SCHEDULE_DAYS_ACTIVE": "Active days",
     "SCHEDULE_HOURS": "Triggers",
     "SCHEDULE_HOUR_CREATE_TITLE": "New trigger",
     "SCHEDULE_HOUR_EDIT_TITLE": "Edit trigger",

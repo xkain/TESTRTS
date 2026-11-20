@@ -897,7 +897,6 @@
     "SCHEDULE_HOUR_SUMMARY_POS": "Fährt um {time} auf {pos} %",
     "SCHEDULE_HOUR_SUMMARY_MY": "Fährt um {time} auf Meine Position",
     "SCHEDULE_HOUR_SUMMARY_TILT": "Neigt die Lamellen um {time} auf {tilt} %",
-    "SCHEDULE_DAYS_ACTIVE": "Aktive Tage",
     "SCHEDULE_HOURS": "Auslösezeiten",
     "SCHEDULE_HOUR_CREATE_TITLE": "Neue Auslösezeit",
     "SCHEDULE_HOUR_EDIT_TITLE": "Auslösezeit bearbeiten",

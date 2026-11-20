@@ -897,7 +897,6 @@
     "SCHEDULE_HOUR_SUMMARY_POS": "Se posicionará al {pos} % a las {time}",
     "SCHEDULE_HOUR_SUMMARY_MY": "Se posicionará en Mi posición a las {time}",
     "SCHEDULE_HOUR_SUMMARY_TILT": "Inclinará las lamas al {tilt} % a las {time}",
-    "SCHEDULE_DAYS_ACTIVE": "Días activos",
     "SCHEDULE_HOURS": "Horas de activación",
     "SCHEDULE_HOUR_CREATE_TITLE": "Nueva hora",
     "SCHEDULE_HOUR_EDIT_TITLE": "Editar la hora",

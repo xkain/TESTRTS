@@ -3326,142 +3326,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     }
 }
 
-/* Fiche de planning : trois zones empilées -- en-tête d'identité, une ligne par horaire, jours en
- * pied. L'en-tête reprend le gabarit commun aux cartes équipement/groupe/pièce (.shade-icon-wrapper,
- * .name-text, .cfg-room, poubelle), pour qu'une programmation se lise comme le reste de l'appli.
- * Fond en retrait (surface-0) : ce sont les lignes d'horaire qui portent le relief, posées dessus
- * comme des pastilles. */
-.schedule-card {
-    background-color: var(--color-bg-surface-0);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-row);
-    box-shadow: var(--shadow-card);
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    overflow: hidden;
-    cursor: pointer;
-    transition: border-color 0.15s ease, filter 0.15s ease;
-}
-.schedule-card:hover {
-    border-color: var(--color-accent);
-    filter: brightness(var(--brightness-hover));
-}
-.schedule-card.is-off {
-    opacity: 0.5;
-}
-.schedule-card-head {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-}
-.schedule-card-name {
-    flex: 1;
-    min-width: 0;
-}
-/* Interrupteur de la fiche : le .switch de l'application n'est cliquable qu'à travers un label
- * (son <input> est transparent et minuscule, cf. base.css), d'où ce label dédié -- qui arrête aussi
- * le clic, sans quoi il ouvrirait l'éditeur en même temps. */
-.schedule-card-switch {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    cursor: pointer;
-}
-.schedule-card-hour {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 40px;
-    padding: 6px 14px;
-    margin: 4px 14px;
-    background: var(--color-bg-surface-3);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-row);
-}
-/* Dernière ligne d'horaire, quelle que soit leur nombre : le pied des jours suit toujours, donc
- * c'est lui qui la désigne. Détache la pile du séparateur sans marquer les lignes en JS. */
-.schedule-card-hour:has(+ .schedule-card-days) {
-    margin-bottom: 8px;
-}
-/* Même panneau plein hauteur que .shade-icon-wrapper dans les lignes de liste (cf. Glisser-déposer
- * / cartes équipement plus haut) -- ici pas de poignée de drag à côté de laquelle se coller, donc
- * l'icône colle directement au bord gauche de la carte et reprend son rayon (côté gauche
- * seulement) plutôt qu'un 0 plat, pour suivre le coin arrondi de .schedule-card-hour. */
-.schedule-card-hour .uniblocSvg-F {
-    width: 30px;
-    height: auto;
-    align-self: stretch;
-    margin: -6px 0 -6px -14px;
-    border: none;
-    border-radius: var(--radius-row) 0 0 var(--radius-row);
-}
-.schedule-card-hour .uniblocSvg-F svg {
-    width: 18px;
-    height: 18px;
-}
-.schedule-hour-clock {
-    flex-shrink: 0;
-    min-width: 58px;
-    font-size: 1.05em;
-    font-weight: 700;
-    color: var(--color-text-main);
-    letter-spacing: -0.3px;
-}
-.schedule-hour-clock .ampm {
-    margin-left: 2px;
-    font-size: 0.65em;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-}
-.schedule-hour-action {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-    min-width: 0;
-    font-size: 0.85em;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.schedule-card-days {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-}
-.schedule-days-icon {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    color: var(--color-text-secondary);
-}
-.schedule-days-label {
-    flex: 1;
-    font-size: 0.75em;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-}
-.schedule-card-days .col-days-list {
-    flex-grow: 0;
-    justify-content: flex-end;
-    gap: 10px;
-    max-width: none;
-    padding-right: 0;
-}
-@media (max-width: 480px) {
-    .schedule-days-label {
-        display: none;
-    }
-    .schedule-card-days .col-days-list {
-        flex-grow: 1;
-        justify-content: space-between;
-    }
-}
 .schedule-badge-off {
     flex-shrink: 0;
     padding: 1px 6px;
@@ -3480,21 +3344,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     margin-right: 3px;
     flex-shrink: 0;
 }
-.col-days-list {
-    display: flex;
-    justify-content: space-between;
-    flex-grow: 1;
-    max-width: 320px;
-    font-size: 0.85em;
-    font-weight: 700;
-    padding-right: 4px;
-}
-.col-days-list span {
-    color: var(--color-text-secondary);
-}
-.col-days-list span.active {
-    color: var(--color-accent);
-}
 .schedule-hour-time {
     display: flex;
     align-items: center;
@@ -3504,7 +3353,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .schedule-hour-row {
     margin-bottom: 6px;
 }
-/* Même panneau plein hauteur que .schedule-card-hour/.shade-icon-wrapper -- .uniLeft doit aussi
+/* Même panneau plein hauteur que .shade-icon-wrapper -- .uniLeft doit aussi
  * s'étirer (il a sa propre ligne flex avec .uniText, pas la hauteur de .uniRow) pour que l'icône
  * atteigne réellement le haut/bas de la ligne, pas seulement la hauteur de .uniText. */
 .schedule-hour-row .uniLeft {
@@ -3521,10 +3370,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 @media (max-width: 480px) {
     .schedule-hour-trigger {
         flex-basis: 100%;
-    }
-    .schedule-hour-action {
-        flex-wrap: wrap;
-        white-space: normal;
     }
 }
 /* =======================================================================

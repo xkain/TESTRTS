@@ -103,70 +103,6 @@ class _SomfySchedule {
         const st = shade ? this.shadeTypes.find(x => x.type === shade.shadeType) : null;
         return `#${st ? st.indic : 'svg-indicShutter'}`;
     }
-    // Construit le HTML d'une fiche de planning (.schedule-card, cf. overlays.css) : un groupe =
-    // une cible + des jours + N horaires (cf. _groupSchedules). Trois zones -- en-tête d'identité
-    // (repris du gabarit commun à toutes les cartes de l'application : pastille, nom, sous-titre,
-    // poubelle), une ligne par horaire, et les jours en pied. Partagé par renderScheduleBadges
-    // (cible déjà connue : pas de sous-titre) et setScheduleList (page Plannings : sous-titre
-    // affiché), via editFn/showTarget.
-    _buildScheduleGroupCardHtml(group, { showTarget, editFn }) {
-        const first = group.steps[0];
-        if (!first) return '';
-        const openClick = `event.stopPropagation(); somfy.${editFn}('${group.key}');`;
-
-        const daysHtml = SCHEDULE_DAY_DEFS.map(d => {
-            const active = (group.dayMask & d.bit) !== 0;
-            return `<span${active ? ' class="active"' : ''}>${tr(d.key).charAt(0)}</span>`;
-        }).join('');
-
-        // Programmation entièrement éteinte : un seul badge, dans l'en-tête. Sinon, le badge suit
-        // l'horaire concerné -- dire "désactivée" en haut d'une fiche dont un seul horaire dort
-        // serait faux.
-        const offBadge = `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`;
-        const hoursHtml = group.steps.map(({ sc, effectiveMinutes }) => {
-            const t = formatMinutesOfDay(effectiveMinutes);
-            const isSolar = (sc.timeRef === 'sunrise' || sc.timeRef === 'sunset');
-            const trigger = isSolar ? `<span class="schedule-hour-trigger">${this._scheduleTriggerInfoHtml(sc)}</span>` : '';
-            const tilt = this._scheduleTiltSuffix(sc, true);
-            const tiltHtml = tilt ? `<span class="schedule-hour-tilt">· ${tilt}</span>` : '';
-            const rowBadge = (group.enabled && !makeBool(sc.enabled)) ? offBadge : '';
-            return `<div class="schedule-card-hour">
-            <div class="uniblocSvg-F"><svg><use href="${this._scheduleHourIcon(sc)}"></use></svg></div>
-            <span class="schedule-hour-clock">${t.main}${t.ampm ? `<span class="ampm">${t.ampm}</span>` : ''}</span>
-            <span class="schedule-hour-action"><span>${this._scheduleActionMain(sc)}</span>${tiltHtml}${trigger}</span>
-            ${rowBadge}
-            </div>`;
-        }).join('');
-
-        const title = (group.name && group.name.length > 0) ? group.name : formatMinutesOfDay(first.effectiveMinutes).main;
-        const subtitle = showTarget ? `<div class="cfg-room">${escHtml(this.scheduleTargetName(group))}</div>` : '';
-
-        return `<div class="schedule-card${group.enabled ? '' : ' is-off'}" data-groupkey="${group.key}" onclick="${openClick}">
-        <div class="schedule-card-head">
-        <div class="shade-icon-wrapper"><svg><use href="${this._scheduleTargetIcon(group)}"></use></svg></div>
-        <div class="schedule-card-name">
-        <div class="name-text">${escHtml(title)}</div>
-        ${subtitle}
-        </div>
-        ${group.enabled ? '' : offBadge}
-        <label class="schedule-card-switch" for="cbScheduleCard-${group.key}" onclick="event.stopPropagation();">
-        <span class="switch">
-        <input id="cbScheduleCard-${group.key}" type="checkbox"${group.enabled ? ' checked' : ''} onchange="somfy.toggleScheduleGroup('${group.key}', this.checked);">
-        <div></div>
-        </span>
-        </label>
-        <div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteScheduleGroup('${group.key}');">
-        <svg class="icon-svg" style="color: var(--color-danger);"><use href="#svg-trash"></use></svg>
-        </div>
-        </div>
-        ${hoursHtml}
-        <div class="schedule-card-days">
-        <svg class="schedule-days-icon"><use href="#svg-schedule"></use></svg>
-        <span class="schedule-days-label">${tr('SCHEDULE_DAYS_ACTIVE')}</span>
-        <div class="col-days-list">${daysHtml}</div>
-        </div>
-        </div>`;
-    }
     // Référence de déclenchement d'un créneau, en clair : "Heure fixe", ou l'icône lever/coucher
     // suivie de la phase et du décalage. Partagé par la ligne d'en-tête et les lignes de créneaux
     // supplémentaires d'une même fiche.
@@ -180,8 +116,7 @@ class _SomfySchedule {
         return `<svg class="schedule-trigger-icon"><use href="${iconHref}"></use></svg>${phaseLabel}${offsetSuffix}`;
     }
     // Texte d'action affiché pour un planning (badge de carte, résumé au survol de l'icône
-    // horloge...) -- extrait de _buildScheduleGroupCardHtml pour être partagé avec
-    // _buildScheduleTooltipHtml. Mêmes seuils Ouvrir/Fermer que les boutons de choix d'action de
+    // horloge...), partagé avec _buildScheduleTooltipHtml. Mêmes seuils Ouvrir/Fermer que les boutons de choix d'action de
     // ScheduleOverlay (cf. setPosChoice) : les deux doivent nommer une position à l'identique.
     _scheduleActionText(sc) {
         if (sc.positionMode === 'my') return 'MY';
@@ -248,20 +183,9 @@ class _SomfySchedule {
 
         const list = (this.schedules || []).filter(sc => sc.targetType === targetType && sc.targetId === targetId);
         // Fiches équipement et groupe : tuiles de la page Plannings, la tuile d'ajout en premier.
-        if (containerId === 'divGroupScheduleBadges' || containerId === 'divShadeScheduleBadges') {
-            const max = this.maxSchedules || 30, left = Math.max(0, max - (this.schedules || []).length);
-            container.innerHTML = `<button type="button" class="cfg-tile cfg-tile-add" onclick="somfy.openAddScheduleInline('${targetType}', ${targetId});"${left ? '' : ' disabled'}><svg><use href="#svg-add"></use></svg><span>${tr('SCHEDULE_ADD')}</span><small id="${targetType === 'group' ? 'spanScheduleSlotsGroup' : 'spanScheduleSlotsShade'}">${tr('SCHEDULE_SLOTS_REMAINING').replace('{n}', left)}</small></button>`
-                + this._groupSchedules(list).map(g => this.scheduleTileHtml(g, 'openEditScheduleGroupInline')).join('');
-            return;
-        }
-        if (list.length === 0) {
-            container.innerHTML = `<span class="schedule-badge-empty">${tr('EMPTY_SCHEDULE_TITLE')}</span>`;
-            return;
-        }
-
-        container.innerHTML = this._groupSchedules(list).map(group =>
-            this._buildScheduleGroupCardHtml(group, { showTarget: false, editFn: 'openEditScheduleGroupInline' })
-        ).join('');
+        const max = this.maxSchedules || 30, left = Math.max(0, max - (this.schedules || []).length);
+        container.innerHTML = `<button type="button" class="cfg-tile cfg-tile-add" onclick="somfy.openAddScheduleInline('${targetType}', ${targetId});"${left ? '' : ' disabled'}><svg><use href="#svg-add"></use></svg><span>${tr('SCHEDULE_ADD')}</span><small id="${targetType === 'group' ? 'spanScheduleSlotsGroup' : 'spanScheduleSlotsShade'}">${tr('SCHEDULE_SLOTS_REMAINING').replace('{n}', left)}</small></button>`
+            + this._groupSchedules(list).map(g => this.scheduleTileHtml(g, 'openEditScheduleGroupInline')).join('');
     }
     // Après un ajout/édition/suppression de planning, remet à jour les badges du formulaire
     // équipement/Groupe actuellement ouvert (le cas échéant), qu'il s'agisse de l'ouverture normale
