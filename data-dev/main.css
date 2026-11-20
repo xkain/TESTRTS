@@ -2423,6 +2423,10 @@ label.gen-row {
         padding: 5px 11px;
         font-size: var(--fs-1);
     }
+    /* Sous 16 px, Safari iPhone zoome toute la page au toucher d'un champ. */
+    :is(input.gen-input, select.gen-input, .gen-search-input) {
+        font-size: 16px;
+    }
 }
 
 /* --- Page Appareil (#divFirmware, maquette A2) : même gabarit que Général, rien à enregistrer --- */
