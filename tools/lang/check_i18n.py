@@ -63,6 +63,7 @@ ALLOWED_LITERALS = {s.lower() for s in {
 DYNAMIC_PREFIXES = (
     "BOARD_DEFAULT_", "CAL_BLIND_OPT_", "ROOM_PRESET_", "GENERAL_OPT_", "FW_RESET_",
     "GIT_RELEASE_TITLE_STEP", "WIZ_", "PAIR_", "UNPAIR_", "LINK_GROUP_", "UNLINK_GROUP_",
+    "DEVICE_TILT_FIRST_ON_",
 )
 
 JS_GLOB = os.path.join("data-dev", "js", "*.js")
