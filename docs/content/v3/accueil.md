@@ -45,7 +45,7 @@ de route**, **dans l'ordre où l'on s'en sert** :
 |---|---|---|
 | **Tableau de bord** | vos équipements et groupes, une fois créés : voir [Tableau de bord](tableau-de-bord.md) | l'écran principal |
 | **Réseau** | *Connexion*, *MQTT* | la première étape depuis le [point d'accès de secours](../aide/point-d-acces.md) |
-| **Radio** | *Configuration*, *Journaux* | L'appairage, les télécommandes liées, les répéteurs et les plannings passent tous par elle |
+| **Radio** | *Configuration* (dont l'onglet *Journal*) | L'appairage, les télécommandes liées, les répéteurs et les plannings passent tous par elle |
 | **Somfy** | *Équipements*, *Groupes*, *Pièces*, *Répéteur*, *Plannings* | la gestion de l'installation |
 | **Système** | *Général*, *Firmware* | en bas du menu, à côté du bouton de redémarrage |
 

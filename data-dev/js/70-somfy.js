@@ -1434,6 +1434,11 @@ class Somfy {
     isFrameLogVisible() {
         return this.frameLogVisible;
     }
+    // Le journal est l'onglet 3 de Radio : il ne se rend que page ET onglet affichés.
+    syncFrameLogVisible() {
+        if (currentLeafId === 'divTransceiverSettings' && this._radioTabs && this._radioTabs.current() === 3) this.showFrameLog();
+        else this.frameLogVisible = false;
+    }
     showFrameLog() {
         this.frameLogVisible = true;
         const lim = get('spanLogLimit');
@@ -2405,7 +2410,8 @@ class Somfy {
         const panneau = get('divTransceiverSettings');
         if (!panneau || this._radioEditWatched) return;
         this._radioEditWatched = true;
-        this._radioTabs = bindGenTabs(panneau, { tabs: 'rdcTabs', panels: 'rdcPanels', pager: 'rdcPager', prev: 'btnRdcPrev', next: 'btnRdcNext' });
+        this._radioTabs = bindGenTabs(panneau, { tabs: 'rdcTabs', panels: 'rdcPanels', pager: 'rdcPager', prev: 'btnRdcPrev', next: 'btnRdcNext', onShow: () => this.syncFrameLogVisible() });
+        this.syncFrameLogVisible();
         this._radioSaveBar = new SaveBar(panneau, { onSave: () => this.saveRadio(), onRevert: () => this.revertRadio() });
         const signaler = () => {
             const st = get('divRadioEnableStatus');
@@ -4893,8 +4899,13 @@ class Somfy {
     openCardRadioLog(shadeId) {
         const shade = (this.shades || []).find(x => x.shadeId === shadeId);
         this.closeCardSheet();
-        location.hash = _routeSlug('divFrameLog');
+        this.openRadioTab(3);
         if (shade) setTimeout(() => this.setFrameFilter(String(shade.remoteAddress)), 0);
+    }
+    // Onglets de Radio : 3 Journal, 4 Répéteur.
+    openRadioTab(i) {
+        if (this._radioTabs) this._radioTabs.show(i);
+        location.hash = _routeSlug('divTransceiverSettings');
     }
     // La liste des télécommandes liées vit dans la zone « Mise en service » de la fiche.
     setLinkedRemotesList(shade) {
@@ -5998,6 +6009,17 @@ class Somfy {
         this.repeaterNames = {};
         this.repeaters.forEach((a, i) => { this.repeaterNames[a] = names[i] || ''; });
         this._renderRepeaters();
+        if (typeof shadeSetup !== 'undefined' && shadeSetup.editShade) shadeSetup.renderRemoteTiles(shadeSetup.editShade);
+    }
+    // Interrupteur « Répéter » d'une télécommande liée (fiche) : son adresse est connue, pas de capture.
+    setRemoteRepeated(address, on, cb) {
+        const done = (err, data) => {
+            if (err) ui.serviceError(err);
+            else this.setRepeaterList(data);
+            if (cb) cb(!err);
+        };
+        if (on) putJSON('/linkRepeater', { address: address }, done);
+        else putJSONSync('/unlinkRepeater', { address: address }, done);
     }
     _renderRepeaters() {
         const seen = this._repeaterSeen || {}, list = this.repeaters || [], box = get('divRepeatList');
@@ -6007,7 +6029,7 @@ class Somfy {
         box.innerHTML = this._rxAddTileHtml('somfy.linkRepeatRemote()', 'REPEATER_CAPTURE', 'REPEATER_CAPTURE_DESC', list.length >= max)
             + list.map(r => this._repeaterCardHtml(r, seen[r], r === recent)).join('');
         keep();
-        this._rxHero('divRepeaterPage', 'spanRepeaterHero', 'REPEATER_HERO', list.length, max);
+        this._rxHero('divRepeaterPage', null, null, list.length, max);
         get('spanRepeaterFrames').innerText = this._repeaterFrames || 0;
         get('spanRepeaterLast').innerText = recent !== null ? this._listenerTime(seen[recent].at) : '—';
     }
@@ -6032,7 +6054,7 @@ class Somfy {
     _rxHero(rootId, titleId, key, n, max) {
         const root = get(rootId);
         root.classList.toggle('is-empty', n === 0);
-        get(titleId).innerText = tr(n > 1 ? `${key}_MANY` : `${key}_ONE`).replace('{N}', n);
+        if (titleId) get(titleId).innerText = tr(n > 1 ? `${key}_MANY` : `${key}_ONE`).replace('{N}', n);
         const left = Math.max(0, max - n);
         root.querySelector('.gen-cap-n').innerHTML = `${n} <small>${tr('LIST_CAP_OF').replace('{MAX}', max)}</small>`;
         root.querySelector('.gen-cap-left').textContent = tr(left === 1 ? 'LIST_CAP_FREE_ONE' : 'LIST_CAP_FREE_MANY').replace('{N}', left);

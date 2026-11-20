@@ -73,7 +73,7 @@ dérive un peu de la valeur nominale de 433,42 MHz — rien d'anormal, le standa
 
 ## 4. Réception OK, mais rien ne bouge
 
-Si le journal (**Radio → Journaux**) affiche bien les trames de votre télécommande d'origine,
+Si le journal (**Radio → onglet Journal**) affiche bien les trames de votre télécommande d'origine,
 le problème n'est plus la réception :
 
 * **Émission impossible (TX)** : le CC1101 ne peut émettre que via la broche **GDO0** — pas
@@ -90,7 +90,7 @@ le problème n'est plus la réception :
 
 ## 5. Lire le journal pour comprendre ce qui se passe
 
-**Radio → Journaux** affiche chaque trame décodée en temps réel, la plus récente en haut —
+L'onglet **Journal** de **Radio** affiche chaque trame décodée en temps réel, la plus récente en haut —
 voir [Journal Radio](journal.md) pour le détail complet de chaque colonne et des boutons.
 Pour un diagnostic rapide :
 

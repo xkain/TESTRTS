@@ -1,6 +1,6 @@
 # Configurer la radio
 
-L'onglet **Radio** (sous-onglets **Configuration** et **Journaux**) pilote le module CC1101 qui
+L'onglet **Radio** (dont le dernier onglet, **Journal**) pilote le module CC1101 qui
 parle à vos télécommandes et moteurs Somfy. La page suit **l'ordre dont les choses dépendent** :
 
 1. l'**assignation GPIO** (le câblage) ;
@@ -101,8 +101,8 @@ menu. Activez-la, puis **enregistrez**.
     tout nouvel équipement ajouté (sans toucher à ceux déjà enregistrés).
 * **Bit** : **56 bits** pour RTS classique, **80 bits** disponible selon vos équipements.
 
-Un bloc **Réception**, à côté, donne un signe de vie simple, sans ouvrir les
-[Journaux](journal.md) : le nombre de **trames reçues**, le **dernier signal** et la **dernière
+Un bloc **Réception**, à côté, donne un signe de vie simple, sans ouvrir l'onglet
+[Journal](journal.md) : le nombre de **trames reçues**, le **dernier signal** et la **dernière
 trame**.
 
 ## Vos télécommandes
@@ -183,7 +183,7 @@ télécommandes à la fois plutôt que de simplement recentrer sur une seule.
 
     N'importe quel écart entre la fréquence d'émission réelle d'une télécommande et la fenêtre
     de réception se traduit exactement de la même façon : le RSSI peut s'agiter dans les
-    [Journaux](#journaux) (du bruit est bien capté) sans qu'aucune trame ne se décode — la
+    [Journal](#journal) (du bruit est bien capté) sans qu'aucune trame ne se décode — la
     porteuse elle-même n'entre jamais dans le filtre.
 
 ### Pourquoi la Déviation de fréquence a disparu en v3.0.0
@@ -221,8 +221,8 @@ avant d'agir). **Enregistrer** valide l'ensemble de la page : broches, type de c
 et les trois réglages de fréquence. **Enregistrer de nouveaux réglages radio efface le résultat du
 test des télécommandes** et vous invite à le refaire.
 
-## Journaux
+## Journal
 
-Le second sous-onglet affiche en direct chaque trame radio décodée — voir
+Le dernier onglet de la page affiche en direct chaque trame radio décodée — voir
 [Journal radio](journal.md). Pour l'utiliser dans un diagnostic, voir [Dépannage
 radio](depannage.md#5-lire-le-journal-pour-comprendre-ce-qui-se-passe).

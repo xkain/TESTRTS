@@ -851,8 +851,6 @@ const ROUTE_LEAF_PARENT = {
     divSomfySchedules: 'divSomfySettings',
     divTransceiverSettings: 'divRadioSettings',
     divListener: 'divIntegrationSettings',
-    divRepeater: 'divRadioSettings',
-    divFrameLog: 'divRadioSettings',
     divScanFrequency: 'divRadioSettings',
 };
 const ROUTE_SLUGS = {
@@ -866,11 +864,9 @@ const ROUTE_SLUGS = {
     divSomfyRooms: 'rooms',
     divSomfyMotors: 'shades',
     divSomfyGroups: 'groups',
-    divRepeater: 'repeaters',
     divListener: 'listeners',
     divSomfySchedules: 'schedules',
     divTransceiverSettings: 'radio',
-    divFrameLog: 'radio-logs',
     divScanFrequency: 'radio-scan',
     divSettingsPnl: 'settings',
 };
@@ -1096,9 +1092,9 @@ const BREADCRUMB_PARENT = {
     divSomfyMotors: 'sec-habitation', divSomfyGroups: 'sec-habitation', divSomfyRooms: 'sec-habitation', divSomfySchedules: 'sec-habitation',
     divHomeAssistant: 'sec-domotique', divMQTT: 'sec-domotique', divListener: 'sec-domotique',
     divNetAdapter: 'sec-systeme', divTransceiverSettings: 'sec-systeme', divSecurity: 'sec-systeme', divSystemOptions: 'sec-systeme', divFirmware: 'sec-systeme',
-    divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings', divScanFrequency: 'divTransceiverSettings',
+    divScanFrequency: 'divTransceiverSettings',
 };
-const SIDEBAR_OWNER = { divRepeater: 'divTransceiverSettings', divFrameLog: 'divTransceiverSettings', divScanFrequency: 'divTransceiverSettings' };
+const SIDEBAR_OWNER = { divScanFrequency: 'divTransceiverSettings' };
 const DOC_PAGES = {
     divHomePnl: 'tableau-de-bord/',
     divSomfyMotors: 'somfy/equipements/',
@@ -1107,8 +1103,6 @@ const DOC_PAGES = {
     divSomfySchedules: 'somfy/equipements/plannification/',
     divTransceiverSettings: 'radio/',
     divListener: 'somfy/telecommandes-ecoutees/',
-    divRepeater: 'somfy/repeteurs/',
-    divFrameLog: 'radio/journal/',
     divScanFrequency: 'radio/',
     divNetAdapter: 'reseau/',
     divMQTT: 'reseau/parametres-mqtt/',
@@ -1307,8 +1301,7 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
         // edition abandonnee survivait a la sortie et l'ecran affirmait une valeur que la carte
         // n'executait pas (cf. refreshRadio dans 70-somfy.js).
         if (leafId === 'divTransceiverSettings') somfy.refreshRadio();
-        if (leafId === 'divFrameLog') somfy.showFrameLog();
-        else somfy.frameLogVisible = false;
+        somfy.syncFrameLogVisible();
         if (leafId === 'divScanFrequency') somfy.scanEnter();
         else somfy.scanLeave();
     }
@@ -1664,6 +1657,7 @@ function bindGenTabs(page, ids) {
         panels.querySelectorAll(':scope > [data-tab]').forEach(p => { p.hidden = parseInt(p.dataset.tab, 10) !== i; });
         genTabsSync(strip);
         update();
+        if (ids.onShow) ids.onShow(i);
         return true;
     };
     strip.addEventListener('click', (e) => {

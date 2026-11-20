@@ -1716,8 +1716,6 @@ body.is-home-welcome .container {
 #divHomeAssistant.subtab-content,
 #divMQTT.subtab-content,
 #divListener.subtab-content,
-#divRepeater.subtab-content,
-#divFrameLog.subtab-content,
 #divScanFrequency.subtab-content,
 #divTransceiverSettings.subtab-content {
     max-width: none;
@@ -1747,7 +1745,7 @@ body.is-home-welcome .container {
 .container:has(#divConfigPnl:not([style*="none"]) > #divSystemSettings:not([style*="none"]) > #divFirmware:not([style*="none"])),
 .container:has(#divConfigPnl:not([style*="none"]) > #divNetworkSettings:not([style*="none"]) > #divNetAdapter:not([style*="none"])),
 .container:has(#divConfigPnl:not([style*="none"]) > #divIntegrationSettings:not([style*="none"]) > :is(#divHomeAssistant, #divMQTT, #divListener):not([style*="none"])),
-.container:has(#divConfigPnl:not([style*="none"]) > #divRadioSettings:not([style*="none"]) > :is(#divRepeater, #divFrameLog, #divScanFrequency, #divTransceiverSettings):not([style*="none"])) {
+.container:has(#divConfigPnl:not([style*="none"]) > #divRadioSettings:not([style*="none"]) > :is(#divScanFrequency, #divTransceiverSettings):not([style*="none"])) {
     background: var(--bg);
 }
 .gen-layout {
@@ -3699,10 +3697,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
 }
-/* Répéteur, sur PC : la jauge des places juste sous la description. */
-@media (min-width: 1000px) {
-    #divRepeaterPage .hero-data > .gen-cap { order: -1; }
-}
 .lg-stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -3812,9 +3806,52 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     margin-top: auto;
 }
 
-/* --- Journaux (.lg-) : état d'écoute et émetteurs dans la colonne, tableau des trames --- */
-#divLogLiveState[data-state="paused"] { --hc: #c2410c; }
-#divLogLiveState[data-state="offline"] { --hc: #64748b; }
+/* --- Journal (.lg-), onglet 4 de Radio : trames, activité, émetteurs entendus --- */
+/* Trois tuiles dont la première couvre déjà la ligne : la règle du dernier bloc impair étiré
+   mettrait les émetteurs seuls sur la leur. */
+@container (max-width: 1051px) {
+    .gen-grid.rdc-log > div:last-child:nth-of-type(odd) { grid-column: auto; }
+}
+@container (min-width: 696px) {
+    .rdc-log > .rdc-log-frames { grid-column: span 2; }
+}
+@container (min-width: 1052px) {
+    .rdc-log > .rdc-log-frames { grid-column: span 3; }
+}
+.lg-live {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: var(--fs-3);
+    color: var(--ok);
+}
+.lg-live i {
+    width: 9px;
+    height: 9px;
+    flex: none;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 20%, transparent);
+}
+.lg-live[data-state="paused"] { color: var(--warn); }
+.lg-live[data-state="offline"] { color: var(--text-3); }
+/* Pastilles reprises de l'ancienne colonne : dans une tuile (--surface), elles passent en --surface-2. */
+:is(.rdc-log, .rdc-rep) .rx-stat,
+.rdc-log .lg-src-item,
+.rdc-log .lg-src-item:hover {
+    background: var(--surface-2);
+}
+
+/* --- Répéteur, onglet 5 de Radio : synthèse puis une tuile par télécommande répétée --- */
+.rdc-rep-list {
+    display: contents;
+}
+.rdc-rep .gen-cap {
+    max-width: none;
+    padding: 0;
+    background: none;
+}
 .lg-stats .sig-good { color: var(--color-signal-good); }
 .lg-stats .sig-medium { color: var(--color-signal-medium); }
 .lg-stats .sig-bad { color: var(--color-signal-bad); }
@@ -4228,8 +4265,7 @@ div.frame-pulses {
     .lg-src > .gen-tile-desc {
         display: none;
     }
-    .rx-page .gen-body,
-    .lg-page .gen-body {
+    .rx-page .gen-body {
         gap: 12px;
     }
     .rx-tile {
@@ -5898,6 +5934,14 @@ input.gen-input.mqtt-mono {
 .ed-section { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 14px; }
 .ed-tip { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 14px 16px; border-radius: var(--r-4); background: var(--surface); font-size: var(--fs-3); line-height: 1.45; color: var(--text-2); }
 .ed-tip svg { flex: none; width: 20px; height: 20px; fill: currentColor; color: var(--color-accent); }
+.ed-tip-link { color: var(--color-accent); font-weight: 600; white-space: nowrap; cursor: pointer; }
+/* Interrupteur « Répéter » d'une télécommande liée : passe sous le libellé dans une tuile étroite. */
+.ed-rep-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; margin-top: 10px; padding: 10px 12px; border-radius: var(--r-3); background: var(--surface-2); }
+.ed-rep-row b { font-size: var(--fs-3); }
+.ed-rep-row .gen-seg { flex: none; white-space: nowrap; }
+.ed-rep-row small { flex-basis: 100%; font-size: var(--fs-1); color: var(--text-3); }
+.ed-rep-row.is-on { background: var(--ok-bg); }
+.ed-rep-row.is-on small { color: var(--ok); }
 .grp-paired { padding: 4px 10px; border-radius: var(--r-pill); background: var(--ok-bg); color: var(--ok); font-size: var(--fs-1); font-weight: 700; }
 @media (max-width: 999px) {
     .ed-cmds { max-width: none; }
@@ -6035,7 +6079,7 @@ input.gen-input.mqtt-mono {
     .cfg-list .gen-cap { grid-column: 3; grid-row: 1; flex-direction: row; align-items: center; gap: 14px; max-width: none; padding: 0; background: none; }
     .cfg-list .gen-cap-line { flex: none; gap: 12px; }
     .cfg-list .gen-cap-n { font-size: var(--fs-5); }
-    .gen-meter { flex: 1; }
+    :is(.cfg-list, .rx-page) .gen-meter { flex: 1; }
     .cfg-list .gen-hero-note { grid-column: 1 / -1; max-width: none; }
     .cfg-list:not([data-kind="schedule"]) .gen-hero-note { display: none; }
     .gen-hero-note { flex-direction: row; justify-content: space-between; text-align: left; }

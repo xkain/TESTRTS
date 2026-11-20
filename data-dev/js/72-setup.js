@@ -750,13 +750,31 @@ class ShadeSetup {
         const box = get('divShadeRemotes');
         if (!box) return;
         const id = shade.shadeId, list = shade.linkedRemotes || [], max = somfy.maxLinkedRemotes || 15;
-        box.innerHTML = `<p class="ed-tip"><svg><use href="#svg-info"></use></svg><span>${tr('DEVICE_REMOTES_TIP')} <b>${list.length}/${max}</b></span></p>
+        const reps = (somfy.repeaters || []).map(Number), repMax = somfy.maxRepeaters || 7;
+        const repTip = list.length ? `<p class="ed-tip"><svg><use href="#svg-repeater"></use></svg><span>${tr('DEVICE_REPEAT_TIP').replace('{N}', reps.length).replace('{MAX}', repMax)} <a class="ed-tip-link" onclick="somfy.openRadioTab(4);">${tr('DEVICE_REPEAT_SEE_ALL')}</a></span></p>` : '';
+        box.innerHTML = `<p class="ed-tip"><svg><use href="#svg-info"></use></svg><span>${tr('DEVICE_REMOTES_TIP')} <b>${list.length}/${max}</b></span></p>${repTip}
         <div class="cfg-tiles"><button type="button" class="cfg-tile cfg-tile-add" onclick="shadeSetup.runTask(${id},'remote')"${list.length >= max ? ' disabled' : ''}><svg><use href="#svg-add"></use></svg><span>${tr('BT_LINK_REMOTE')}</span><small>${tr('DEVICE_REMOTE_ADD_DESC')}</small></button>`
             + list.map((r, i) => `<div class="cfg-tile" data-remoteaddress="${r.remoteAddress}">
             <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#svg-remote"></use></svg></span>${somfy.cfgTileMenu(`somfy.unlinkRemote(${id}, '${r.remoteAddress}')`, '', 'DEVICE_REMOTE_UNLINK')}</div>
             <div class="cfg-tile-name"><span class="name-text">${tr('REMOTESLIST_LINKED')} ${i + 1}</span><span class="cfg-tile-sub">${tr('ADDR')} ${r.remoteAddress}</span></div>
+            ${this.repeatRowHtml(r.remoteAddress, reps.includes(Number(r.remoteAddress)), reps.length >= repMax)}
             <div class="cfg-tile-foot">${somfy.remoteSignalHtml(r.lastRssi, r.remoteAddress)}<span class="cfg-tile-id">${tr('CODE')} ${r.lastRollingCode}</span></div>
             </div>`).join('') + '</div>';
+    }
+    // La fiche est suivie par watchDirty : l'interrupteur s'applique tout de suite, il arrête
+    // input/change pour ne pas passer pour une modification à enregistrer.
+    repeatRowHtml(address, on, full) {
+        return `<div class="ed-rep-row${on ? ' is-on' : ''}"><b>${tr('DEVICE_REMOTE_REPEAT')}</b>
+            <span class="gen-seg gen-seg-bool"><input type="checkbox"${on ? ' checked' : ''}${full && !on ? ' disabled' : ''} aria-label="${escAttr(tr('DEVICE_REMOTE_REPEAT'))}" oninput="event.stopPropagation();" onchange="event.stopPropagation(); shadeSetup.toggleRepeat(this, ${Number(address)});"><span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span>
+            <small>${tr(on ? 'DEVICE_REMOTE_REPEAT_ON' : 'DEVICE_REMOTE_REPEAT_OFF')}</small></div>`;
+    }
+    toggleRepeat(cb, address) {
+        cb.disabled = true;
+        somfy.setRemoteRepeated(address, cb.checked, (ok) => {
+            if (ok) return;
+            cb.checked = !cb.checked;
+            cb.disabled = false;
+        });
     }
     renderActivity(shade) {
         const box = get('divShadeActivity');
