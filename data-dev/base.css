@@ -1275,17 +1275,12 @@ input[type="number"] {
     display:flex;
     align-items:center;
     gap:12px;
-    cursor:pointer;
 }
 .safety-text {
     color:var(--color-text-secondary);
     font-size:12px;
     transition:color 0.2s ease,opacity 0.2s ease;
     opacity:0.85;
-}
-.safety-label:hover .safety-text {
-    color:var(--color-text-main);
-    opacity:1;
 }
 fieldset {
     display:block;

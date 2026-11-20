@@ -5828,7 +5828,6 @@ input.gen-input.mqtt-mono {
 #divHomePnl .card-sheet .sheet-opt-txt { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 #divHomePnl .card-sheet .sheet-opt-txt span { font-size: 0.9em; color: var(--color-text-main); }
 #divHomePnl .card-sheet .sheet-opt-txt em { font-size: 0.76em; font-style: normal; line-height: 1.35; color: var(--color-text-secondary); }
-#divHomePnl .card-sheet .sheet-opt .switch { flex: none; }
 #divHomePnl .card-sheet .sheet-links { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 #divHomePnl .card-sheet .sheet-link-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-width: 0; height: 42px; margin: 0; padding: 0 10px; border-radius: var(--radius-btn); border: 1px solid var(--color-control-border); background: var(--color-control-bg); color: var(--color-text-main); font-size: 0.85em; font-weight: 600; text-transform: none; letter-spacing: normal; cursor: pointer; }
 #divHomePnl .card-sheet .sheet-link-btn:hover { background: var(--color-control-bg-hover); }

@@ -1369,8 +1369,8 @@ class ShadeSetup {
     bodyOrder(T) {
         const s = this.s, open = T.sub === 'open', verb = open ? s.W.up : s.W.down;
         if (T.sub === 'view') {
-            const sw = (key, lbl) => `<label class="uniRow"><div class="uniLeft"><div class="uniText"><div class="uniLabel">${tr(lbl)}</div><div class="uniStatus">${tr(lbl + '_DESC')}</div></div></div>
-                <div class="uniRight"><span class="switch"><input type="checkbox"${s[key] ? ' checked' : ''} onchange="shadeSetup.s.${key} = this.checked"><div></div></span></div></label>`;
+            const sw = (key, lbl) => `<div class="uniRow"><div class="uniLeft"><div class="uniText"><div class="uniLabel">${tr(lbl)}</div><div class="uniStatus">${tr(lbl + '_DESC')}</div></div></div>
+                <div class="uniRight"><span class="gen-seg gen-seg-bool"><input type="checkbox" aria-label="${escAttr(tr(lbl))}"${s[key] ? ' checked' : ''} onchange="shadeSetup.s.${key} = this.checked"><span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span></div></div>`;
             return `${sw('orderOpen', 'DEVICE_TILT_FIRST_ON_OPEN')}${sw('orderClose', 'DEVICE_TILT_FIRST_ON_CLOSE')}
             <div class="setup-actions"><button type="button" line onclick="shadeSetup.go('open')">${tr('SETUP_RETEST')}</button><button type="button" onclick="shadeSetup.orderSave()">${tr('BT_SAVE')}</button></div>`;
         }

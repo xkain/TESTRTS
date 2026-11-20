@@ -4606,11 +4606,11 @@ class Somfy {
         return `<div class="sheet-opt"><div class="sheet-opt-txt"><span>${tr(label)}</span><em>${tr(desc)}</em></div>${control}</div>`;
     }
     sheetSwitch(attr, on) {
-        return `<label class="switch"><input type="checkbox" ${attr} ${on ? 'checked' : ''}><div></div></label>`;
+        return `<span class="gen-seg gen-seg-bool"><input type="checkbox" ${attr}${on ? ' checked' : ''}><span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span>`;
     }
     cardSheetPrefsHtml(kind, id, extra) {
         const prefs = this.cardUIPrefs(kind, id);
-        const sw = (key, label, desc) => this.sheetOptRow(label, desc, this.sheetSwitch(`data-cardpref="${key}"`, prefs[key]));
+        const sw = (key, label, desc) => this.sheetOptRow(label, desc, this.sheetSwitch(`data-cardpref="${key}" aria-label="${escAttr(tr(label))}"`, prefs[key]));
         return `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_DISPLAY')}</span></div>${extra}${sw('confirm', 'CARD_OPT_CONFIRM', 'CARD_OPT_CONFIRM_DESC')}${sw('hidden', 'CARD_OPT_HIDE', 'CARD_OPT_HIDE_DESC')}</div>`;
     }
     bindCardSheetPrefs(pane, kind, id) {

@@ -246,7 +246,7 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     position: relative;
 }
 .ui-pulse::before,
-.manual-safety-block .switch:has(input:not(:checked))::before {
+.manual-safety-block .gen-seg-bool:has(input:not(:checked))::before {
     content: '';
     position: absolute;
     inset: -2px;

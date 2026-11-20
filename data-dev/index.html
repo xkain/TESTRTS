@@ -2284,13 +2284,14 @@
                                                     </div>
                                                 </div>
                                                 <div id="divManualSafety" class="manual-safety-block" style="display: none;">
-                                                    <label class="safety-label" for="cbManualSafety">
-                                                        <span class="switch">
-                                                            <input id="cbManualSafety" name="enableRadio" type="checkbox">
-                                                            <div></div>
+                                                    <div class="safety-label">
+                                                        <span class="gen-seg gen-seg-bool">
+                                                            <input id="cbManualSafety" name="enableRadio" type="checkbox" aria-labelledby="txtManualSafety">
+                                                            <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                            <span class="gen-seg-no" tr="BT_NO"></span>
                                                         </span>
-                                                        <span class="safety-text" tr="RADIO_SAFETY_TEXT"></span>
-                                                    </label>
+                                                        <span id="txtManualSafety" class="safety-text" tr="RADIO_SAFETY_TEXT"></span>
+                                                    </div>
                                                     <p class="rd-safety-hint" tr="RADIO_SAFETY_HINT"></p>
                                                 </div>
                                             </div>
