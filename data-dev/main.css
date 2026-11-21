@@ -718,11 +718,6 @@ body.onboarding-active .toast[data-toast-id="langPrompt"] {
     display: flex;
     flex-direction: column;
 }
-.nav-sub {
-    display: flex;
-    flex-direction: column;
-    padding-left: 14px;
-}
 .nav-section-title {
     display: flex;
     align-items: center;
@@ -1571,17 +1566,6 @@ body.is-home-welcome .container {
     }
 }
 
-/* general.reverseDashboardColumns (cf. DashboardPrefsOverlay(), 40-general.js) :
-   .reverse-columns est posée sur #divHomePnl, ancêtre commun aux onglets ET au
-   conteneur, pour piloter les deux d'un seul réglage. Enfermée dans son propre
-   @media (min-width) : sans cette borne, #divHomePnl.reverse-columns
-   .dashboard-split-container (1 id + 1 classe) l'emporterait sur la règle
-   mobile ci-dessous (1 classe) et inverserait aussi la pile mono-colonne. */
-@media (min-width: 1001px) {
-    #divHomePnl.reverse-columns .dashboard-split-container {
-        flex-direction: row-reverse;
-    }
-}
 
 @media (max-width: 1000px) {
     .mobile-tabs {
@@ -1648,60 +1632,6 @@ body.is-home-welcome .container {
         height: calc(100vh - var(--mobile-header-height)) !important;
         max-height: calc(100vh - var(--mobile-header-height)) !important;
     }
-}
-
-/* -----------------------------------------------------------------------
- *  Titre principal de page (réutilisé en haut de chaque page de réglages)
- * ----------------------------------------------------------------------- */
-
-.main-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 25px 20px 15px 0px;
-    box-sizing: border-box;
-    overflow: hidden;
-}
-.main-headerBlock {
-    display: flex;
-    flex-direction: column;
-    width: 75%;
-}
-.main-headerTitle {
-    font-size: 1.65em;
-    font-weight: 600;
-    color: var(--color-text-main);
-    margin: 0 0 6px 0;
-    font-family: inherit;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    user-select: none;
-}
-.main-headerDesc {
-    font-size: 1.1em;
-    color: var(--color-text-secondary);
-    margin: 0;
-    opacity: 0.8;
-}
-.main-headerAmbient {
-    position: absolute;
-    top: 0;
-    right: 0;
-    pointer-events: none;
-    z-index: 0;
-    opacity: var(--opacity-logo-page);
-
-    -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 1) 50%);
-
-    mask-image: linear-gradient(to top, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 1) 50%);
-
-}
-.main-headerAmbient svg {
-    width: 195px;
-    height: 195px;
-    color: var(--color-text-main);
-    padding: 0px;
 }
 
 /* =======================================================================
@@ -2830,7 +2760,7 @@ button.fw-act:hover .fw-act-chev {
 .vr-side { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 /* Coque dessinée (76-remotes.js). Le pack n'apporte aucun CSS : tout est ici, repères du contrat v1. */
 .vr-coque { display: flex; justify-content: center; padding: 8px 0 14px; }
-.rcpack { --rc-bg: var(--color-bg-card); display: block; width: auto; max-height: 62vh; overflow: visible; filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.25)); touch-action: none; user-select: none; -webkit-user-select: none; }
+.rcpack { display: block; width: auto; max-height: 62vh; overflow: visible; filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.25)); touch-action: none; user-select: none; -webkit-user-select: none; }
 .rcpack.rc-wall { filter: drop-shadow(0 10px 13px rgba(0, 0, 0, 0.16)); }
 /* base.css coupe les pointeurs sur tout svg : seules les touches les reprennent. */
 .rcpack [data-key], .rcpack [data-key] * { pointer-events: auto; }
@@ -2892,7 +2822,6 @@ html[data-feedback-commands="off"] .rcpack [data-press] { display: none; }
 .vr-overlay[data-radio="off"] .side-panel-head .hero-media { --hc: #b3261e; }
 .vr-overlay .hero-media.pulse { animation: vrBadgePing 0.6s ease-out; }
 .vr-overlay[data-view="adv"] .vr-overlay-content { max-width: 480px; max-height: 92vh; max-height: 92dvh; text-align: left; }
-.vr-overlay[data-view="remote"] .rcpack { --rc-bg: var(--panel); }
 .vr-overlay .overlay-scroll-content { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px; }
 .vr-tabs { flex: none; display: flex; gap: 4px; padding: 4px 8px calc(4px + env(safe-area-inset-bottom)); border-top: 1px solid var(--color-border); }
 .vr-tab { flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 7px; width: auto; min-width: 0; min-height: 44px; margin: 0; padding: 0 10px; border: 0; border-radius: 999px; background: none; color: var(--color-text-secondary); font-size: 0.85em; font-weight: 600; text-transform: none; letter-spacing: normal; cursor: pointer; }
@@ -2912,7 +2841,6 @@ html[data-feedback-commands="off"] .rcpack [data-press] { display: none; }
     .vr-overlay[data-view="adv"] .vr-overlay-content { font-size: 16px; flex: 1; width: auto; max-width: none; max-height: none; height: auto; margin: calc(var(--topbar-height) + 16px) 16px 16px calc(var(--sidebar-width) + 16px); display: grid; grid-template-columns: minmax(280px, 32fr) minmax(0, 68fr); grid-template-rows: auto auto minmax(0, 1fr) auto; border: 0; border-radius: var(--r-5); box-shadow: var(--shadow-window); background: var(--panel); color: var(--text); }
     .vr-overlay[data-view="adv"] :is(.overlay-scroll-content, #divVRContent) { display: contents; }
     .vr-overlay[data-view="adv"] .vr-side { grid-column: 1; grid-row: 1 / -1; justify-content: center; min-height: 0; overflow: auto; padding: clamp(20px, 3vh, 40px) clamp(20px, 2.5vw, 40px); }
-    .vr-overlay[data-view="adv"] .rcpack { --rc-bg: var(--panel); }
     .vr-overlay[data-view="adv"] :is(.side-panel-head, .vr-tabs, .vr-adv, .vr-hold-hint) { grid-column: 2; background: var(--surface); }
     .vr-overlay[data-view="adv"] .side-panel-head { grid-row: 1; align-items: flex-start; padding: 18px 22px 10px 28px; border: 0; border-radius: 0 var(--r-5) 0 0; }
     .vr-overlay[data-view="adv"] .side-panel-head .hero-media { display: none; }
@@ -3877,12 +3805,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
 .lg-stats .sig-good { color: var(--color-signal-good); }
 .lg-stats .sig-medium { color: var(--color-signal-medium); }
 .lg-stats .sig-bad { color: var(--color-signal-bad); }
-.lg-src {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-height: 0;
-}
 .lg-src-list {
     display: flex;
     flex-direction: column;
@@ -4284,9 +4206,6 @@ div.frame-pulses {
     .rx-stat b {
         font-size: var(--fs-5);
     }
-    .lg-src > .gen-tile-desc {
-        display: none;
-    }
     .rx-page .gen-body {
         gap: 12px;
     }
@@ -4645,11 +4564,6 @@ body.fw-update .set-fw-new {
     height: 14px;
     fill: var(--text-3);
 }
-.settings-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
 .settings-row {
     position: relative;
     display: flex;
@@ -4667,40 +4581,6 @@ body.fw-update .set-fw-new {
 }
 .settings-row * {
     pointer-events: none;
-}
-.settings-row .uniblocSvg-F svg {
-    width: 20px;
-    height: 20px;
-    fill: currentColor;
-}
-.settings-row-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    min-width: 0;
-}
-.settings-row-text b {
-    font-size: 0.95rem;
-    font-weight: 600;
-}
-.settings-row-desc {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 0.78rem;
-    color: var(--color-text-secondary);
-}
-.settings-row-chev {
-    flex: none;
-    width: 16px;
-    height: 16px;
-    color: var(--color-text-secondary);
-}
-.page-related {
-    display: flex;
-    max-width: 720px;
-    margin: 0 clamp(20px, 3vw, 48px) 32px;
 }
 
 /* =======================================================================
@@ -4838,9 +4718,6 @@ body.fw-update .set-fw-new {
         width: 18px;
         height: 18px;
         fill: currentColor;
-    }
-    .page-related {
-        margin: 8px 14px 24px;
     }
     /* L'en-tête porte déjà « Maison ». */
     #divHomePnl .dash-rooms-title {
@@ -5027,9 +4904,6 @@ body.fw-update .set-fw-new {
     #divIntegrationSettings,
     #divRadioSettings {
         padding-bottom: 65px;
-    }
-    .main-header {
-        padding: 20px 15px 10px 15px;
     }
 }
 @media screen and (max-width: 550px) {

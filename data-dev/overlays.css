@@ -50,11 +50,6 @@
 .procFwStatusshow {
     animation: bounce-alert 20s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
 }
-@keyframes pulse-warning {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-}
 
 @keyframes slideDown {
     from { transform: translateY(0); }
@@ -105,21 +100,6 @@ div.wait-overlay.overlay-entered {
     opacity: 1;
     backdrop-filter: blur(5px);
     transform: scale(1);
-}
-/* Toujours utilisée par .step-title (titre d'étape d'assistant, plus bas) -- une simple animation
-   ponctuelle de texte, sans backdrop-filter plein écran, donc hors du périmètre du bug de rejeu
-   Firefox ci-dessus ; laissée telle quelle. */
-@keyframes fadeInBlur {
-    from {
-        opacity: 0;
-        backdrop-filter: blur(0px);
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        backdrop-filter: blur(5px);
-        transform: scale(1);
-    }
 }
 /* Plaque sombre dans les deux thèmes (JETONS A2) : une pastille sans texte, une fenêtre avec. */
 .wait-overlay-inner {
@@ -232,12 +212,6 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     }
 }
 
-@keyframes pulseGlow {
-    0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
-    70% { box-shadow: 0 0 0 8px rgba(234, 179, 8, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
-}
-
 @keyframes ui-pulse-breathe {
     0%, 100% { opacity: var(--ui-pulse-rest, 0.16); }
     50% { opacity: 1; }
@@ -261,15 +235,6 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
 @media (prefers-reduced-motion: reduce) {
     :root { --ui-pulse-speed: 0s; --ui-pulse-rest: 1; }
 }
-@keyframes remote-search-spin {
-    to { transform: rotate(360deg); }
-}
-@keyframes navNudgeLeft {
-    50% { transform: translateX(-5px) scale(0.9); }
-}
-@keyframes navNudgeRight {
-    50% { transform: translateX(5px) scale(0.9); }
-}
 @keyframes slideFromRight {
     0% {
         opacity: 0;
@@ -278,17 +243,6 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     100% {
         opacity: 1;
         transform: translateX(0);
-    }
-}
-@keyframes slideToRight {
-    0% {
-        opacity: 1;
-
-        transform: translateX(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateX(100%);
     }
 }
 /* Course en DEUX segments plutôt qu'une courbe unique, qui accélérerait du début
@@ -334,16 +288,6 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
 @keyframes radioActivityRadarPing {
     0% { opacity: 0.55; transform: scale(0.5); }
     100% { opacity: 0; transform: scale(2.2); }
-}
-@keyframes slideUpFade {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 @keyframes vrBadgePing {
     0%   { box-shadow: 0 0 0 0    color-mix(in srgb, var(--vr-radio-color), transparent 40%); }
@@ -886,9 +830,6 @@ button.is-busy::before {
  *  ASSISTANTS À ÉTAPES (wizard/stepper partagé : appairage, liaison groupe...)
  *  ======================================================================= */
 
-.instructions-content .empty-state {
-    padding:0;
-}
 .firmware-message {
     display: none;
     align-items: center;
@@ -910,9 +851,6 @@ button[line].fw-sidebar-button:hover {
 }
 #divSidebarUpdate.procFwStatusshow {display: flex !important;}
 
-.firmware-message svg{
-    --update-icon-color: #000;
-}
 /* =======================================================================
  *  ASSISTANTS MISE À JOUR (upload firmware & installation GitHub/HACS)
  *  ======================================================================= */
@@ -1040,26 +978,6 @@ button[line].fw-sidebar-button:hover {
  *  Led Overlay
  *  ======================================================================= */
 
-.cfg-room {
-    font-size:11px;
-    opacity: 0.5;
-    line-height: 1.1;
-}
-.shade-icon-wrapper {
-    height: 38px;
-    width: 38px;
-    border-radius: var(--radius-icon-badge);
-    background: var(--color-accent-transp-80);
-    color: var(--color-accent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.shade-icon-wrapper svg {
-    width: 20px;
-    height: 20px;
-}
 /* -----------------------------------------------------------------------
  *  Télécommandes liées : adresse et badge de signal (fiche, fenêtre de tâche)
  * ----------------------------------------------------------------------- */
@@ -1112,17 +1030,6 @@ button[line].fw-sidebar-button:hover {
     font-size: 0.95em;
     font-weight: bold;
 }
-.divEditDelete-svg {
-    flex-shrink: 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.2s;
-}
-.divEditDelete-svg:hover {
-    opacity: 0.7;
-}
 
 /* =======================================================================
  *  ASSISTANT RECHERCHE WI-FI (inst-wifiscan)
@@ -1135,19 +1042,6 @@ button[line].fw-sidebar-button:hover {
     margin-bottom:10px;
 }
 
-#cbLedEnabled:not(:checked) ~ .label-left,
-#cbLedEnabled:checked ~ .label-right {
-    color: #ffffff;
-}
-#cbLedEnabled:not(:checked) ~ .nav-pill {
-    transform: translateX(0);
-}
-#cbLedEnabled:checked ~ .nav-pill {
-    transform: translateX(100%);
-}
-#cbLedEnabled:not(:checked) ~ .nav-pill {
-    background-color: var(--color-danger);
-}
 /* =======================================================================
  *  PANNEAU (side-panel-) : feuille latérale de 440 px sur PC et tablette, feuille montante sur
  *  mobile. Deux hôtes, une seule apparence : .side-panel-overlay (openSidePanel) et
@@ -1837,139 +1731,6 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     }
 }
 
-/* -----------------------------------------------------------------------
- *  Popup positionnement équipement (openSetMyPosition)
- * ----------------------------------------------------------------------- */
-
-.shade-positioner {
-    position: absolute;
-    width: 100%;
-    background: var(--color-bg-card);
-    color: var(--color-text-secondary);
-    padding: 7px;
-    z-index: 100;
-    height: 100%;
-}
-.shade-positioner-popup {
-    animation: slideFromRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-    position: absolute;
-    left: 16px;
-    top: 0;
-    width: calc(100% - 16px);
-    height: 100%;
-    z-index: 100;
-    background: var(--color-bg-card);
-}
-.shade-positioner-inner {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    height: 100%;
-    width: 100%;
-    padding: 0 14px;
-    gap: 8px;
-}
-.shade-positioner-inner .slider-wrapper {
-    flex: 1;
-    min-width: 0;
-    width: auto;
-    height: 30px;
-    border-radius: var(--radius-md);
-}
-.shade-positioner-inner .slider-progress {
-    border-radius: var(--radius-md);
-}
-.positioner-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    min-width: 0;
-    min-height: 22px;
-}
-.positioner-head button {
-    flex-shrink: 0;
-}
-.positioner-title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    font-size: 0.9em;
-    font-weight: 500;
-    color: var(--color-text-main);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.positioner-title svg {
-    flex-shrink: 0;
-    width: 14px;
-    height: 14px;
-    fill: currentColor;
-}
-.positioner-sens {
-    font-size: 0.85em;
-    font-weight: 500;
-    line-height: 1.1;
-    color: var(--color-text-subtitle);
-}
-.positioner-rows {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 8px;
-}
-.shade-positioner-inner:has(.positioner-rows) {
-    justify-content: space-between;
-}
-.positioner-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-.positioner-axis {
-    flex: 0 0 auto;
-    font-size: 0.8em;
-    font-weight: 700;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-}
-.positioner-val {
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: center;
-    line-height: 1.15;
-    text-align: right;
-    font-size: 0.95em;
-    font-weight: 700;
-    color: var(--color-text-main);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-}
-.positioner-num {
-    display: inline-block;
-    min-width: 2.2em;
-    text-align: right;
-}
-.positioner-field {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 0;
-}
-.positioner-label {
-    font-size: 0.85em;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
 .positioner-seg {
     display: flex;
     gap: 4px;
@@ -2001,24 +1762,11 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     border-color: var(--color-accent);
     color: var(--color-text-on-accent);
 }
-.positioner-switch {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    min-width: 0;
-    cursor: pointer;
-}
 
 .popup-actions {
     display:flex;
     justify-content: flex-end;
     gap: 8px;
-}
-.shade-positioner input[type=range] {
-    width:100%;
-    margin-top:0px;
-    margin-bottom:0px;
 }
 
 /* =======================================================================
@@ -3306,9 +3054,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
         display: none !important;
     }
 
-    .release-notes-preview {
-        max-height: 50%;
-    }
     #divGitInstall .instructions-content {
         display: flex !important;
         flex-direction: column !important;
@@ -3358,13 +3103,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
  * atteigne réellement le haut/bas de la ligne, pas seulement la hauteur de .uniText. */
 .schedule-hour-row .uniLeft {
     align-self: stretch;
-}
-.schedule-hour-row .uniblocSvg-F {
-    height: auto;
-    align-self: stretch;
-    margin: -12px 0 -12px -10px;
-    border: none;
-    border-radius: var(--radius-row) 0 0 var(--radius-row);
 }
 
 @media (max-width: 480px) {
