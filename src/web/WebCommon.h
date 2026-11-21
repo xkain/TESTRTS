@@ -121,5 +121,10 @@ bool fsLockTake();
 void fsLockGive();
 bool asyncHasBody(AsyncWebServerRequest *request);
 String asyncGetBody(AsyncWebServerRequest *request);
+// Corps capturé par asyncBodyHandler, pour deserializeJson(doc, ptr, len) : parse en place, zéro
+// copie, et la même instanciation du désérialiseur que le NDJSON au lieu de deux de plus pour String.
+// Le tampon est MODIFIÉ par le parse : toute trace du corps passe avant.
+char *asyncBodyPtr(AsyncWebServerRequest *request);
+size_t asyncBodyLen(AsyncWebServerRequest *request);
 
 #endif

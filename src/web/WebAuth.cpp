@@ -184,7 +184,7 @@ namespace WebAuth {
     // pas reproduire par erreur ailleurs lors de la suite de la migration.
     if(asyncHasBody(request)) {
       DynamicJsonDocument docin(512);
-      DeserializationError err = deserializeJson(docin, asyncGetBody(request));
+      DeserializationError err = deserializeJson(docin, asyncBodyPtr(request), asyncBodyLen(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -408,7 +408,7 @@ namespace WebAuth {
     if(!webServer.isAuthenticated(request, true)) return;
 
     StaticJsonDocument<768> doc;
-    if (deserializeJson(doc, asyncGetBody(request))) { request->send(400, "text/plain", "J-Err"); return; }
+    if (deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request))) { request->send(400, "text/plain", "J-Err"); return; }
 
     if (request->method() == AsyncHttp::POST || request->method() == AsyncHttp::PUT) {
       JsonObject obj = doc.as<JsonObject>();

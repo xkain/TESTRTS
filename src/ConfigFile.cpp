@@ -410,10 +410,25 @@ uint32_t ConfigFile::readUInt32(const uint32_t defVal) {
     return static_cast<uint32_t>(strtoul(buff, nullptr, 10));
   return defVal;
 }
+// Décimal à largeur fixe tel qu'écrit par writeFloat ("%.*f", signe, pas d'exposant) : atof tirait
+// strtod et son analyseur hexadécimal, 7,2 Ko de libc pour ce seul appel.
+static float parseFixedFloat(const char *s) {
+  while(*s == ' ') s++;
+  bool neg = false;
+  if(*s == '-' || *s == '+') { neg = (*s == '-'); s++; }
+  float v = 0.0f;
+  while(*s >= '0' && *s <= '9') { v = v * 10.0f + (float)(*s - '0'); s++; }
+  if(*s == '.') {
+    s++;
+    float scale = 0.1f;
+    while(*s >= '0' && *s <= '9') { v += (float)(*s - '0') * scale; scale *= 0.1f; s++; }
+  }
+  return neg ? -v : v;
+}
 float ConfigFile::readFloat(const float defVal) {
   char buff[25];
   if(this->readString(buff, sizeof(buff)))
-    return atof(buff);
+    return parseFixedFloat(buff);
   return defVal;
 }
 bool ConfigFile::readBool(const bool defVal) {

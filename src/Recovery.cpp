@@ -248,7 +248,7 @@ void Recovery::_registerRoutes() {
 
   srv->on("/recoveryApply", AsyncHttp::POST, [this](AsyncWebServerRequest *request) {
     StaticJsonDocument<512> doc;
-    if(!asyncHasBody(request) || deserializeJson(doc, asyncGetBody(request))) {
+    if(!asyncHasBody(request) || deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request))) {
       request->send(400, "application/json", "{\"status\":\"ERROR\"}");
       return;
     }

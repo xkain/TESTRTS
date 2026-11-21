@@ -37,8 +37,9 @@ namespace WebRadioCommands {
       }
       else if (asyncHasBody(request)) {
         DBG_PRINTLN("Sending Shade Command");
+        if(settings.enableDebugLogs) { Serial.print("Received:"); Serial.println(asyncBodyPtr(request)); }
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -51,7 +52,7 @@ namespace WebRadioCommands {
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
           if (obj.containsKey("command")) {
-              String scmd = obj["command"];
+              const char *scmd = obj["command"] | "";
               command = translateSomfyCommand(scmd);
           }
           else if (obj.containsKey("target")) {
@@ -67,10 +68,6 @@ namespace WebRadioCommands {
       }
       SomfyShade* shade = somfy.getShadeById(shadeId);
       if (shade) {
-        if(settings.enableDebugLogs) {
-          Serial.print("Received:");
-          Serial.println(asyncGetBody(request));
-        }
         // Send the command to the shade.
         if (target <= 100)
             shade->moveToTarget(shade->transformPosition(target));
@@ -110,7 +107,7 @@ namespace WebRadioCommands {
       if(request->hasArg("stepSize")) stepSize = atoi(request->arg("stepSize").c_str());
       if(shadeId == 255 && groupId == 255 && asyncHasBody(request)) {
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -121,7 +118,7 @@ namespace WebRadioCommands {
           jget(obj, "groupId", groupId);
           jget(obj, "stepSize", stepSize);
           if (obj.containsKey("command")) {
-              String scmd = obj["command"];
+              const char *scmd = obj["command"] | "";
               command = translateSomfyCommand(scmd);
           }
           jget(obj, "repeat", repeat);
@@ -192,8 +189,9 @@ namespace WebRadioCommands {
       }
       else if (asyncHasBody(request)) {
         DBG_PRINTLN("Sending Group Command");
+        if(settings.enableDebugLogs) { Serial.print("Received:"); Serial.println(asyncBodyPtr(request)); }
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -206,7 +204,7 @@ namespace WebRadioCommands {
             return;
           }
           if (obj.containsKey("command")) {
-            String scmd = obj["command"];
+            const char *scmd = obj["command"] | "";
             command = translateSomfyCommand(scmd);
           }
           else if (obj.containsKey("target")) target = obj["target"].as<uint8_t>();
@@ -220,10 +218,6 @@ namespace WebRadioCommands {
       }
       SomfyGroup * group = somfy.getGroupById(groupId);
       if (group) {
-        if(settings.enableDebugLogs) {
-          Serial.print("Received:");
-          Serial.println(asyncGetBody(request));
-        }
         // Send the command to the group.
         if (target <= 100) group->moveToTarget((float)target, -1.0f);
         else group->sendCommand(command, repeat >= 0 ? repeat : group->repeats, stepSize);
@@ -257,8 +251,9 @@ namespace WebRadioCommands {
       }
       else if (asyncHasBody(request)) {
         DBG_PRINTLN("Sending Shade Tilt Command");
+        if(settings.enableDebugLogs) { Serial.print("Received:"); Serial.println(asyncBodyPtr(request)); }
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -271,7 +266,7 @@ namespace WebRadioCommands {
             return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
           if (obj.containsKey("command")) {
-            String scmd = obj["command"];
+            const char *scmd = obj["command"] | "";
             command = translateSomfyCommand(scmd);
           }
           else if(obj.containsKey("target")) {
@@ -285,10 +280,6 @@ namespace WebRadioCommands {
       }
       SomfyShade* shade = somfy.getShadeById(shadeId);
       if (shade) {
-        if(settings.enableDebugLogs) {
-          Serial.print("Received:");
-          Serial.println(asyncGetBody(request));
-        }
         // Send the command to the shade.
         if(target <= 100)
           shade->moveToTiltTarget(shade->transformPosition(target));
@@ -317,7 +308,7 @@ namespace WebRadioCommands {
     int8_t tiltPos = (request->hasArg("tiltPosition")) ? atoi(request->arg("tiltPosition").c_str()) : -1;
     if(asyncHasBody(request)) {
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+      DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -360,7 +351,7 @@ namespace WebRadioCommands {
     int8_t repeat = (request->hasArg("repeat")) ? atoi(request->arg("repeat").c_str()) : -1;
     if(asyncHasBody(request)) {
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+      DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -437,7 +428,7 @@ namespace WebRadioCommands {
       }
       else if (asyncHasBody(request)) {
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -528,7 +519,7 @@ namespace WebRadioCommands {
       if (asyncHasBody(request)) {
         // Its coming in the body.
         StaticJsonDocument<129> doc;
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -589,7 +580,7 @@ namespace WebRadioCommands {
     bool paired = false;
     if(asyncHasBody(request)) {
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+      DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
       if(err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -630,7 +621,7 @@ namespace WebRadioCommands {
       if (asyncHasBody(request)) {
         // Its coming in the body.
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -767,7 +758,7 @@ namespace WebRadioCommands {
     name[0] = '\0';
     if (asyncHasBody(request)) {
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+      DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return false;
@@ -860,7 +851,7 @@ namespace WebRadioCommands {
       // We are updating an existing shade by adding a linked remote.
       if (asyncHasBody(request)) {
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -911,7 +902,7 @@ namespace WebRadioCommands {
       if (asyncHasBody(request)) {
         DBG_PRINTLN("Linking a remote");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1044,7 +1035,7 @@ namespace WebRadioCommands {
     if(!webServer.isAuthenticated(request, true)) return;
 
     StaticJsonDocument<512> doc;
-    if (deserializeJson(doc, asyncGetBody(request))) { request->send(400, "text/plain", "J-Err"); return; }
+    if (deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request))) { request->send(400, "text/plain", "J-Err"); return; }
 
     if (request->method() == AsyncHttp::POST || request->method() == AsyncHttp::PUT) {
       JsonObject obj = doc.as<JsonObject>();
@@ -1091,7 +1082,7 @@ namespace WebRadioCommands {
       }
       else if (asyncHasBody(request)) {
         StaticJsonDocument<128> doc;
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;

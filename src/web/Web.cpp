@@ -221,6 +221,13 @@ bool asyncHasBody(AsyncWebServerRequest *request) {
 String asyncGetBody(AsyncWebServerRequest *request) {
   return request->_tempObject ? String((char*)request->_tempObject) : String();
 }
+static char g_noBody[1] = "";
+char *asyncBodyPtr(AsyncWebServerRequest *request) {
+  return request->_tempObject ? (char *)request->_tempObject : g_noBody;
+}
+size_t asyncBodyLen(AsyncWebServerRequest *request) {
+  return request->_tempObject ? strlen((char *)request->_tempObject) : 0;
+}
 
 // Posé par build_data_image.py::_set_build_cache_flag (CPPDEFINES, pas un fichier LittleFS -- décidé
 // une fois pour toutes à la compilation) : 1 sur une release propre (?v= sans suffixe "-dev-"),
@@ -455,22 +462,22 @@ void Web::begin() {
   // Pas d'équivalent à collectHeaders() nécessaire ICI : AsyncWebServerRequest expose tous les
   // en-têtes via hasHeader()/header() sans opt-in. Ne vaut PAS pour le serveur synchrone du port
   // 8082, qui doit les déclarer (cf. WebGitSync::begin).
-  apiServer.on("/discovery", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleDiscovery(request); });
-  apiServer.on("/rooms", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetRooms(request); });
-  apiServer.on("/shades", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetShades(request); });
-  apiServer.on("/groups", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetGroups(request); });
-  apiServer.on("/schedules", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetSchedules(request); });
-  apiServer.on("/login", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebAuth::handleLogin(request); }, nullptr, asyncBodyHandler);
+  apiServer.on("/discovery", AsyncHttp::ANY, WebSystem::handleDiscovery);
+  apiServer.on("/rooms", AsyncHttp::ANY, WebShadesRest::handleGetRooms);
+  apiServer.on("/shades", AsyncHttp::ANY, WebShadesRest::handleGetShades);
+  apiServer.on("/groups", AsyncHttp::ANY, WebShadesRest::handleGetGroups);
+  apiServer.on("/schedules", AsyncHttp::ANY, WebShadesRest::handleGetSchedules);
+  apiServer.on("/login", AsyncHttp::ANY, WebAuth::handleLogin, nullptr, asyncBodyHandler);
   apiServer.onNotFound([](AsyncWebServerRequest *request) { webServer.handleNotFound(request); });
-  apiServer.on("/controller", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleController(request); });
-  apiServer.on("/shadeCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleShadeCommand(request); }, nullptr, asyncBodyHandler);
-  apiServer.on("/groupCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleGroupCommand(request); }, nullptr, asyncBodyHandler);
-  apiServer.on("/tiltCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleTiltCommand(request); }, nullptr, asyncBodyHandler);
-  apiServer.on("/repeatCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleRepeatCommand(request); }, nullptr, asyncBodyHandler);
-  apiServer.on("/room", AsyncHttp::GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleRoom(request); });
-  apiServer.on("/shade", AsyncHttp::GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleShade(request); });
-  apiServer.on("/group", AsyncHttp::GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleGroup(request); });
-  apiServer.on("/schedule", AsyncHttp::GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleSchedule(request); });
+  apiServer.on("/controller", AsyncHttp::ANY, WebSystem::handleController);
+  apiServer.on("/shadeCommand", AsyncHttp::ANY, WebRadioCommands::handleShadeCommand, nullptr, asyncBodyHandler);
+  apiServer.on("/groupCommand", AsyncHttp::ANY, WebRadioCommands::handleGroupCommand, nullptr, asyncBodyHandler);
+  apiServer.on("/tiltCommand", AsyncHttp::ANY, WebRadioCommands::handleTiltCommand, nullptr, asyncBodyHandler);
+  apiServer.on("/repeatCommand", AsyncHttp::ANY, WebRadioCommands::handleRepeatCommand, nullptr, asyncBodyHandler);
+  apiServer.on("/room", AsyncHttp::GET, WebShadesRest::handleRoom);
+  apiServer.on("/shade", AsyncHttp::GET, WebShadesRest::handleShade);
+  apiServer.on("/group", AsyncHttp::GET, WebShadesRest::handleGroup);
+  apiServer.on("/schedule", AsyncHttp::GET, WebShadesRest::handleSchedule);
   // handleSchedule() est un lecteur GET seul par construction (cf. son propre "else: Invalid Http
   // method") -- l'écriture est une fonction ET une route à part, handleSaveSchedule() sur
   // "/saveSchedule" (WebShadesRest.cpp, comme ses jumelles /saveRoom, /saveShade, /saveGroup),
@@ -478,11 +485,11 @@ void Web::begin() {
   // l'intégration Home Assistant, notamment -- qui ne parle qu'au port 8081 ne pouvait donc jamais
   // activer/désactiver un planning : la route qu'il faut atteindre n'existait simplement pas de ce
   // côté, peu importe la méthode HTTP essayée.
-  apiServer.on("/saveSchedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleSaveSchedule(request); }, nullptr, asyncBodyHandler);
-  apiServer.on("/setPositions", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleSetPositions(request); }, nullptr, asyncBodyHandler);
-  apiServer.on("/setSensor", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleSetSensor(request); }, nullptr, asyncBodyHandler);
+  apiServer.on("/saveSchedule", AsyncHttp::ANY, WebShadesRest::handleSaveSchedule, nullptr, asyncBodyHandler);
+  apiServer.on("/setPositions", AsyncHttp::ANY, WebRadioCommands::handleSetPositions, nullptr, asyncBodyHandler);
+  apiServer.on("/setSensor", AsyncHttp::ANY, WebRadioCommands::handleSetSensor, nullptr, asyncBodyHandler);
   apiServer.on("/backup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleBackup(request); });
-  apiServer.on("/reboot", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleReboot(request); });
+  apiServer.on("/reboot", AsyncHttp::ANY, WebSystem::handleReboot);
 
   WebI18n::registerRoutes(server);
   WebIcons::registerRoutes(server);

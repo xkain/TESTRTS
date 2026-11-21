@@ -309,7 +309,7 @@ namespace WebShadesRest {
       if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a room");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -392,7 +392,7 @@ namespace WebShadesRest {
       if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a shade");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -471,7 +471,7 @@ namespace WebShadesRest {
       if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a group");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -578,7 +578,7 @@ namespace WebShadesRest {
     if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
       DBG_PRINTLN("Adding a room");
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+      DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -621,7 +621,7 @@ namespace WebShadesRest {
     if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
       DBG_PRINTLN("Adding a shade");
       DynamicJsonDocument doc(1024);
-      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+      DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -671,7 +671,7 @@ namespace WebShadesRest {
     if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
       DBG_PRINTLN("Adding a group");
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+      DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -720,7 +720,7 @@ namespace WebShadesRest {
     if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
       DBG_PRINTLN("Adding a schedule");
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+      DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -807,7 +807,7 @@ namespace WebShadesRest {
       if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a room");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -852,7 +852,7 @@ namespace WebShadesRest {
       if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a shade");
         DynamicJsonDocument doc(1024);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -903,7 +903,7 @@ namespace WebShadesRest {
       if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a group");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -955,7 +955,7 @@ namespace WebShadesRest {
       if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a schedule");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1016,7 +1016,7 @@ namespace WebShadesRest {
       if (asyncHasBody(request)) {
         DBG_PRINTLN("Linking a shade to a group");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1067,7 +1067,7 @@ namespace WebShadesRest {
       if (asyncHasBody(request)) {
         DBG_PRINTLN("Unlinking a shade from a group");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
         }
@@ -1121,7 +1121,7 @@ namespace WebShadesRest {
       else if (asyncHasBody(request)) {
         DBG_PRINTLN("Deleting a Room");
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1160,7 +1160,7 @@ namespace WebShadesRest {
       else if (asyncHasBody(request)) {
         DBG_PRINTLN("Deleting a shade");
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1202,7 +1202,7 @@ namespace WebShadesRest {
       else if (asyncHasBody(request)) {
         DBG_PRINTLN("Deleting a group");
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1241,7 +1241,7 @@ namespace WebShadesRest {
       else if (asyncHasBody(request)) {
         DBG_PRINTLN("Deleting a schedule");
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+        DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1276,7 +1276,7 @@ namespace WebShadesRest {
       Serial.print(request->method());
       Serial.println(asyncGetBody(request));
     }
-    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+    DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;
@@ -1315,7 +1315,7 @@ namespace WebShadesRest {
       Serial.print(request->method());
       Serial.println(asyncGetBody(request));
     }
-    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+    DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;
@@ -1350,7 +1350,7 @@ namespace WebShadesRest {
       Serial.print(request->method());
       Serial.println(asyncGetBody(request));
     }
-    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+    DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;

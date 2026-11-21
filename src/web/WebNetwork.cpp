@@ -130,7 +130,7 @@ namespace WebNetwork {
     bool started = statusLed.test((int8_t)LED_PROFILE_PIN, LED_PROFILE_ACTIVE_LOW, false, "#ffffff", 0);
     #else
     DynamicJsonDocument doc(512);
-    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+    DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
     if (err) { webServer.handleDeserializationError(request, err); return; }
     JsonObject obj = doc.as<JsonObject>();
     int pin = obj["ledPin"] | -1;
@@ -168,7 +168,7 @@ namespace WebNetwork {
       Serial.print(request->method());
       Serial.println(asyncGetBody(request));
     }
-    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+    DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;
@@ -311,7 +311,7 @@ namespace WebNetwork {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     DynamicJsonDocument doc(1024);
-    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+    DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
     if (err) {
       Serial.print("Error parsing JSON ");
       Serial.println(err.c_str());
@@ -403,7 +403,7 @@ namespace WebNetwork {
     if(!webServer.isAuthenticated(request, true)) return;
     DBG_PRINTLN("Setting IP...");
     DynamicJsonDocument doc(1024);
-    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+    DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;
@@ -427,7 +427,7 @@ namespace WebNetwork {
     if(!webServer.isAuthenticated(request, true)) return;
     DBG_PRINTLN("Settings WIFI connection...");
     DynamicJsonDocument doc(512);
-    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+    DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;
@@ -515,7 +515,7 @@ namespace WebNetwork {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     DynamicJsonDocument doc(1024);
-    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+    DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;

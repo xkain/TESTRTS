@@ -732,7 +732,8 @@ namespace WebSystem {
     if(request->hasArg("data")) {
       if(settings.enableDebugLogs) Serial.println(request->arg("data"));
       StaticJsonDocument<256> doc;
-      DeserializationError err = deserializeJson(doc, request->arg("data"));
+      String data = request->arg("data");
+      DeserializationError err = deserializeJson(doc, data.begin(), data.length());
       if(err) {
         webServer.handleDeserializationError(request, err);
         return;
