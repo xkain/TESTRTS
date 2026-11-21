@@ -75,6 +75,7 @@ class ScheduleRule {
     void setId(uint8_t v) { this->id = v; }
     uint8_t getId() { return this->id; }
     void clear();
+    void sanitize();   // bornes d'un enregistrement relu d'un fichier
     int8_t validateJSON(JsonObject &obj);
     int8_t fromJSON(JsonObject &obj);
     void toJSON(JsonFormatter &json);

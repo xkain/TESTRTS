@@ -112,8 +112,9 @@ time_t Timestamp::getUTC(time_t t) {
 }
 char * Timestamp::getISOTime() { return this->getISOTime(this->getUTC()); }
 char * Timestamp::getISOTime(time_t epoch) {
-  struct tm *dt = localtime((time_t *)&epoch);
-  return this->formatISO(dt, this->tzOffset());
+  struct tm dt;
+  localtime_r(&epoch, &dt);
+  return this->formatISO(&dt, this->tzOffset());
 }
 char * Timestamp::formatISO(struct tm *dt, int tz) {
   int tzHrs = floor(tz/100);

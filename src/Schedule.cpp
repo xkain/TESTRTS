@@ -79,6 +79,20 @@ void ScheduleRule::clear() {
   this->lastVerifyAt = 0;
   this->verifyInterval = 0;
 }
+// validateJSON() ne voit que l'API : relu d'un fichier, targetPos = 250 laissait l'équipement « en
+// mouvement » jusqu'au prochain ordre (currentPos plafonne à 100, la cible n'est jamais atteinte).
+void ScheduleRule::sanitize() {
+  this->dayMask &= 0x7F;
+  if(this->hour > 23) this->hour = 23;
+  if(this->minute > 59) this->minute = 59;
+  if(this->targetPos > 100) this->targetPos = 100;
+  if(this->targetTilt > 100 || this->targetTilt < -1) this->targetTilt = -1;
+  if(this->targetType > schedule_target_t::GROUP) this->targetType = schedule_target_t::SHADE;
+  if(this->positionMode > schedule_position_mode_t::TILT_ONLY) this->positionMode = schedule_position_mode_t::POSITION;
+  if(this->timeRef > schedule_time_ref_t::SUNSET) this->timeRef = schedule_time_ref_t::CLOCK;
+  if(this->sunOffset > 720) this->sunOffset = 720;
+  if(this->sunOffset < -720) this->sunOffset = -720;
+}
 int8_t ScheduleRule::validateJSON(JsonObject &obj) {
   if(obj.containsKey("hour") && obj["hour"].as<uint8_t>() > 23) return -1;
   if(obj.containsKey("minute") && obj["minute"].as<uint8_t>() > 59) return -1;
@@ -126,7 +140,7 @@ int8_t ScheduleRule::validateJSON(JsonObject &obj) {
 int8_t ScheduleRule::fromJSON(JsonObject &obj) {
   int8_t rc = this->validateJSON(obj);
   if(rc != 0) return rc;
-  if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
+  jgetStr(obj, "name", this->name, sizeof(this->name));
   jget(obj, "dayMask", this->dayMask);
   jget(obj, "hour", this->hour);
   jget(obj, "minute", this->minute);

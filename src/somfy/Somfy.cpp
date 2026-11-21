@@ -83,85 +83,43 @@ const char *translateSomfyCommand(const somfy_commands cmd) {
     case somfy_commands::Toggle: return "Toggle";
     case somfy_commands::Favorite: return "Favorite";
     case somfy_commands::Stop: return "Stop";
-    default: {
-        static char unknown[16];
-        snprintf(unknown, sizeof(unknown), "Unknown(%u)", (uint8_t)cmd);
-        return unknown;
-    }
+    default: return "Unknown";   // plus de tampon statique partagé entre loopTask et async_tcp
     }
 }
 void SomfyShadeController::end() { this->transceiver.disableReceive(); }
 void SomfyShade::clear() {
-  this->setShadeId(255);
-  this->setRemoteAddress(0);
-  this->moveStart = 0;
-  this->tiltStart = 0;
-  this->noSunStart = 0;
-  this->sunStart = 0;
-  this->windStart = 0;
-  this->windLast = 0;
-  this->noWindStart = 0;
-  this->noSunDone = true;
-  this->sunDone = true;
-  this->windDone = true;
-  this->noWindDone = true;
-  this->startPos = 0.0f;
-  this->startTiltPos = 0.0f;
-  this->settingMyPos = false;
-  this->settingPos = false;
-  this->settingTiltPos = false;
-  this->awaitMy = 0;
-  this->flipPosition = false;
-  this->flipCommands = false;
-  this->ledFeedback = false;
-  this->remoteModel[0] = '\0';
-  this->setupSteps = 0;
-  this->lastRollingCode = 0;
-  this->shadeType = shade_types::roller;
-  this->tiltType = tilt_types::none;
-  //this->txQueue.clear();
-  this->currentPos = 0.0f;
-  this->currentTiltPos = 0.0f;
-  this->direction = 0;
-  this->tiltDirection = 0;  
-  this->target = 0.0f;
-  this->tiltTarget = 0.0f;
-  this->myPos = -1.0f;
-  this->myTiltPos = -1.0f;
+  // Tout l'emplacement repart des valeurs par défaut : champ par champ, pièce, drapeaux, broches,
+  // mode impulsion et caches MQTT survivaient à la suppression et passaient à l'équipement suivant.
+  *this = SomfyShade();
   this->bitLength = somfy.transceiver.config.type;
   this->proto = somfy.transceiver.config.proto;
-  for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++)
-    this->linkedRemotes[i].setRemoteAddress(0);
-  this->paired = false;
-  this->name[0] = 0x00;
-  this->upTime = 10000;
-  this->downTime = 10000;
-  this->tiltTimeUp = 7000;
-  this->tiltTimeDown = 7000;
-  // Zone morte (issue #40) : 0 = pas de compensation, comportement d'avant l'issue.
-  this->slackUp = 0;
-  this->slackDown = 0;
-  this->upMidTime = 0;
-  this->downMidTime = 0;
-  this->tiltFirstOnOpen = true;
-  this->tiltFirstOnClose = true;
-  this->stepSize = 100;
-  this->repeats = 1;
+  this->gpioUp = this->gpioDown = this->gpioMy = 255;
   this->sortOrder = 255;
+}
+void SomfyShade::applyGpioModes() {
+  if(this->proto != radio_proto::GP_Relay && this->proto != radio_proto::GP_Remote) return;
+  uint8_t *pins[3] = { &this->gpioUp, &this->gpioDown, &this->gpioMy };
+  for(uint8_t i = 0; i < 3; i++) {
+    if(*pins[i] == 255) continue;
+    if(i == 2 && this->proto != radio_proto::GP_Remote) continue;
+    if(!isUsableOutputPin(*pins[i])) {
+      Serial.printf("[CFG] equipement %u : broche %u inutilisable, ecartee\n", this->getShadeId(), *pins[i]);
+      *pins[i] = 255;
+      continue;
+    }
+    pinMode(*pins[i], OUTPUT);
+  }
 }
 void SomfyRoom::clear() {
   this->roomId = 0;
   strcpy(this->name, "");
 }
 void SomfyGroup::clear() {
-  this->setGroupId(255);
-  this->setRemoteAddress(0);
-  this->repeats = 1;
-  this->roomId = 0;
-  this->ledFeedback = false;
-  this->remoteModel[0] = '\0';
-  this->name[0] = 0x00;
-  memset(&this->linkedShades, 0x00, sizeof(this->linkedShades));
+  // Même remise à zéro complète que SomfyShade::clear() : flags, flipCommands, bitLength, proto,
+  // sortOrder et groupType restaient ceux du groupe supprimé.
+  *this = SomfyGroup();
+  this->bitLength = somfy.transceiver.config.type;
+  this->proto = somfy.transceiver.config.proto;
 }
 // Même règle que l'identifiant d'un pack d'icônes : [a-z0-9-], 32 au plus, vide accepté. Tout le
 // reste est refusé sans rien changer : la valeur repart telle quelle dans shades.cfg et le JSON.

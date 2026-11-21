@@ -68,6 +68,9 @@ static const uint32_t tempo_if_gap = 30415;  // Gap between frames
 static int16_t  bitMin = SYMBOL * TOLERANCE_MIN;
 static somfy_rx_t somfy_rx;
 static somfy_rx_queue_t rx_queue;
+// length et index[] sont lus-modifiés-écrits par l'ISR (handleReceive) ET par loopTask (pop) : sans
+// section critique, length restait > 0 avec tous les index à 255 et pop() rendait un tampon non lu.
+static portMUX_TYPE g_rxQueueMux = portMUX_INITIALIZER_UNLOCKED;
 static somfy_tx_queue_t tx_queue;
 bool somfy_tx_queue_t::pop(somfy_tx_t *tx) {
   // Read the oldest index.
@@ -123,19 +126,20 @@ void somfy_rx_queue_t::init() {
   this->length = 0;
 }
 bool somfy_rx_queue_t::pop(somfy_rx_t *rx) {
-  // Read off the data from the oldest index.
-  //Serial.println("Popping RX Queue");
-  for(int8_t i = MAX_RX_BUFFER - 1; i >= 0; i--) {
+  bool found = false;
+  portENTER_CRITICAL(&g_rxQueueMux);
+  for(int8_t i = MAX_RX_BUFFER - 1; i >= 0 && !found; i--) {
     if(this->index[i] < MAX_RX_BUFFER) {
       uint8_t ndx = this->index[i];
-      memcpy(rx, &this->items[this->index[i]], sizeof(somfy_rx_t));
+      memcpy(rx, &this->items[ndx], sizeof(somfy_rx_t));
       this->items[ndx].clear();
       if(this->length > 0) this->length--;
       this->index[i] = 255;
-      return true;
+      found = true;
     }
   }
-  return false;
+  portEXIT_CRITICAL(&g_rxQueueMux);
+  return found;
 }
 
 #define TX_FRAME_SILENCE_US 27434
@@ -320,6 +324,7 @@ void RECEIVE_ATTR Transceiver::handleReceive() {
         // 3 total frames.  Althought it may not matter considering the length of a packet
         // will likely not push over the loop timing.  For now lets assume that there
         // may be some pressure on the loop for features.
+        portENTER_CRITICAL_ISR(&g_rxQueueMux);
         if(rx_queue.length >= MAX_RX_BUFFER) {
           // We have overflowed the buffer simply empty the last item
           // in this instance we will simply throw it away.
@@ -346,6 +351,7 @@ void RECEIVE_ATTR Transceiver::handleReceive() {
         }
         rx_queue.length++;
         rx_queue.index[0] = first;
+        portEXIT_CRITICAL_ISR(&g_rxQueueMux);
         memset(&somfy_rx.payload, 0x00, sizeof(somfy_rx.payload));
         somfy_rx.cpt_synchro_hw = 0;
         somfy_rx.previous_bit = 0x00;
@@ -433,7 +439,7 @@ bool Transceiver::receive(somfy_rx_t *rx) {
     // Check to see if there is anything in the buffer
     if(rx_queue.length > 0) {
       //Serial.printf("Processing receive %d\n", rx_queue.length);
-      rx_queue.pop(rx);
+      if(!rx_queue.pop(rx)) return false;   // rx resterait la pile non initialisée de l'appelant
       this->frame.decodeFrame(rx);
       this->emitFrame(&this->frame, rx);
       return this->frame.valid;

@@ -451,7 +451,7 @@ void SomfyShade::checkMovement() {
     // Set this position before sending the command.  If you don't the processFrame function
     // will send the shade back to its original My position.
     if(this->tiltType != tilt_types::none) {
-      if(this->myTiltPos == this->currentTiltPos && this->myPos == this->currentPos) this->myPos = this->myTiltPos = -1;
+      if(this->myTiltPos == this->currentTiltPos && this->myPos == this->currentPos) { this->p_myPos(-1); this->p_myTiltPos(-1); }
       else {
         this->p_myPos(this->currentPos);
         this->p_myTiltPos(this->currentTiltPos);
@@ -904,8 +904,9 @@ void SomfyShade::moveToTiltTarget(float target) {
       // will occur on its own when the tilt target is set.
     }
     this->p_tiltTarget(target);
+    // Sous la garde : hors [0,100] rien n'a été posé, le drapeau aurait envoyé un My non voulu.
+    if(cmd != somfy_commands::My) this->settingTiltPos = true;
   }
-  if(cmd != somfy_commands::My) this->settingTiltPos = true;
 }
 void SomfyShade::moveToTarget(float pos, float tilt) {
   somfy_commands cmd = somfy_commands::My;

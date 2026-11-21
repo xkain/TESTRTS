@@ -409,15 +409,23 @@ bool SomfyShadeController::isRemoteAddressInUse(uint32_t address, uint8_t except
 }
 SomfyShade *SomfyShadeController::addShade(JsonObject &obj, int8_t &err) {
   err = 0;
-  SomfyShade *shade = this->addShade();
+  uint8_t shadeId = this->getNextShadeId();
+  if(shadeId == 255) return nullptr;
+  SomfyShade *shade = nullptr;
+  for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
+    if(this->shades[i].getShadeId() == 255) { shade = &this->shades[i]; break; }
+  }
   if(shade) {
+    // Rempli tant que l'emplacement est encore à 255 : loopTask (checkMovement, setGPIOs) l'ignore
+    // et ne voit jamais un équipement à moitié rempli. L'identifiant vient en dernier.
     err = shade->fromJSON(obj);
     if(err != 0) {
-      // Le slot avait déjà son id : le rendre, sinon un refus laisse un équipement à demi rempli.
       shade->clear();
-      this->isDirty = true;
       return nullptr;
     }
+    shade->sortOrder = this->getMaxShadeOrder() + 1;
+    shade->setShadeId(shadeId);
+    this->isDirty = true;
     shade->save();
     shade->emitState("shadeAdded");
   // Index MQTT rafraîchi ici : sans cela, un ajout ou une suppression faits pendant que le

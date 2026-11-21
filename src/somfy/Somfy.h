@@ -79,6 +79,15 @@ enum class tilt_types : byte {
   tiltonly = 0x03,
   euromode = 0x04
 };
+// Valeurs reçues du réseau ou relues d'un fichier : hors domaine -> défaut, jamais un cast aveugle.
+inline shade_types toShadeType(uint8_t v) { return v <= static_cast<uint8_t>(shade_types::rgate1) ? static_cast<shade_types>(v) : shade_types::roller; }
+inline tilt_types toTiltType(uint8_t v) { return v <= static_cast<uint8_t>(tilt_types::euromode) ? static_cast<tilt_types>(v) : tilt_types::none; }
+inline radio_proto toRadioProto(uint8_t v) {
+  switch(v) {
+    case 0x00: case 0x01: case 0x02: case 0x08: case 0x09: return static_cast<radio_proto>(v);
+    default: return radio_proto::RTS;
+  }
+}
 enum class somfy_flags_t : byte {
     SunFlag = 0x01,
     SunSensor = 0x02,
@@ -418,6 +427,9 @@ class SomfyShade : public SomfyRemote {
     void clear();
     int8_t transformPosition(float fpos);
     void setGPIOs();
+    // Pose les broches de sortie d'un équipement relais ; une broche inutilisable relue d'un fichier
+    // est écartée (255) au lieu de planter l'appareil au démarrage.
+    void applyGpioModes();
     void triggerGPIOs(somfy_frame_t &frame);
     bool usesPin(uint8_t pin);
     // State Setters

@@ -300,13 +300,13 @@ bool ShadeConfigFile::backupNdjson(SomfyShadeController *s) {
 // clés et les bornes sont exactement celles du contrat.
 
 static void ndjsonApplyShade(JsonObject &obj, SomfyShade *shade) {
-  shade->setShadeId(obj["shadeId"] | (uint8_t)255);
+  uint8_t shadeId = obj["shadeId"] | (uint8_t)255;
   jget(obj, "paired", shade->paired);
-  if(obj.containsKey("shadeType")) shade->shadeType = static_cast<shade_types>(obj["shadeType"].as<uint8_t>());
+  if(obj.containsKey("shadeType")) shade->shadeType = toShadeType(obj["shadeType"].as<uint8_t>());
   if(obj.containsKey("remoteAddress")) shade->setRemoteAddress(obj["remoteAddress"].as<uint32_t>());
   if(obj.containsKey("name")) strlcpyUtf8(shade->name, obj["name"] | "", sizeof(shade->name));
-  if(obj.containsKey("tiltType")) shade->tiltType = static_cast<tilt_types>(obj["tiltType"].as<uint8_t>());
-  if(obj.containsKey("proto")) shade->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
+  if(obj.containsKey("tiltType")) shade->tiltType = toTiltType(obj["tiltType"].as<uint8_t>());
+  if(obj.containsKey("proto")) shade->proto = toRadioProto(obj["proto"].as<uint8_t>());
   if(obj.containsKey("bitLength")) {
     // Le fichier est désormais du texte éditable : mêmes seules valeurs que l'API (0 = hériter du
     // transceiver), toute autre ferait lire sendFrame() hors de son tampon de trame.
@@ -331,7 +331,7 @@ static void ndjsonApplyShade(JsonObject &obj, SomfyShade *shade) {
   jget(obj, "flipCommands", shade->flipCommands);
   jget(obj, "flipPosition", shade->flipPosition);
   if(obj.containsKey("repeats")) shade->repeats = max(obj["repeats"].as<uint8_t>(), (uint8_t)1);
-  shade->sortOrder = obj["sortOrder"] | (uint8_t)(shade->getShadeId() - 1);
+  shade->sortOrder = obj["sortOrder"] | (uint8_t)(shadeId - 1);
   jget(obj, "gpioUp", shade->gpioUp);
   jget(obj, "gpioDown", shade->gpioDown);
   jget(obj, "gpioMy", shade->gpioMy);
@@ -396,11 +396,10 @@ static void ndjsonApplyShade(JsonObject &obj, SomfyShade *shade) {
   shade->currentTiltPos = curTiltPos;
   shade->target = floor(curPos);
   shade->currentPos = curPos;
-  if(shade->proto == radio_proto::GP_Relay || shade->proto == radio_proto::GP_Remote) {
-    pinMode(shade->gpioUp, OUTPUT);
-    pinMode(shade->gpioDown, OUTPUT);
-  }
-  if(shade->proto == radio_proto::GP_Remote) pinMode(shade->gpioMy, OUTPUT);
+  shade->applyGpioModes();
+  // Identifiant en DERNIER : loopTask ignore un emplacement à 255 et ne voit jamais l'équipement à
+  // moitié rempli (positions, broches, protocole), 30 fois d'affilée pendant une restauration.
+  shade->setShadeId(shadeId);
 }
 
 static void ndjsonApplyGroup(JsonObject &obj, SomfyGroup *group) {
@@ -408,7 +407,7 @@ static void ndjsonApplyGroup(JsonObject &obj, SomfyGroup *group) {
   if(obj.containsKey("groupType")) group->groupType = static_cast<group_types>(obj["groupType"].as<uint8_t>());
   if(obj.containsKey("remoteAddress")) group->setRemoteAddress(obj["remoteAddress"].as<uint32_t>());
   if(obj.containsKey("name")) strlcpyUtf8(group->name, obj["name"] | "", sizeof(group->name));
-  if(obj.containsKey("proto")) group->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
+  if(obj.containsKey("proto")) group->proto = toRadioProto(obj["proto"].as<uint8_t>());
   if(obj.containsKey("bitLength")) {
     uint8_t bl = obj["bitLength"].as<uint8_t>();
     if(bl == 0 || bl == 56 || bl == 80) group->bitLength = bl;
@@ -456,6 +455,7 @@ static void ndjsonApplySchedule(JsonObject &obj, ScheduleRule *rule) {
   if(obj.containsKey("positionMode")) rule->positionMode = static_cast<schedule_position_mode_t>(obj["positionMode"].as<uint8_t>());
   if(obj.containsKey("timeRef")) rule->timeRef = static_cast<schedule_time_ref_t>(obj["timeRef"].as<uint8_t>());
   jget(obj, "sunOffset", rule->sunOffset);
+  rule->sanitize();
 }
 
 static void ndjsonApplySettings(JsonObject &obj) {
@@ -542,7 +542,7 @@ bool ShadeConfigFile::restoreNdjson(SomfyShadeController *s, restore_options_t &
     }
     else if(strcmp(rec, "net") == 0) {
       if(opts.network) {
-        if(obj.containsKey("connType")) settings.connType = static_cast<conn_types_t>(obj["connType"].as<uint8_t>());
+        if(obj.containsKey("connType") && obj["connType"].as<uint8_t>() <= static_cast<uint8_t>(conn_types_t::ap)) settings.connType = static_cast<conn_types_t>(obj["connType"].as<uint8_t>());
         settings.IP.fromJSON(obj);
         // Même règle que le lecteur positionnel : la configuration Ethernet ne se restaure que sur
         // l'appareil d'origine -- des broches PHY d'une autre carte rendraient le réseau muet.

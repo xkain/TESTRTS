@@ -951,7 +951,7 @@ bool ShadeConfigFile::readGroupRecord(SomfyGroup *group) {
   group->groupType = static_cast<group_types>(this->readUInt8(0));
   group->setRemoteAddress(this->readUInt32(0));
   this->readString(group->name, sizeof(group->name));
-  group->proto = static_cast<radio_proto>(this->readUInt8(0));
+  group->proto = toRadioProto(this->readUInt8(0));
   group->bitLength = this->readUInt8(56);
   if(this->header.version == 23) group->lastRollingCode = this->readUInt16(0);
   uint8_t lsd = 0;
@@ -1015,14 +1015,14 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   uint32_t startPos = this->file.position();
   shade->setShadeId(this->readUInt8(255));
   shade->paired = this->readBool(false);
-  shade->shadeType = static_cast<shade_types>(this->readUInt8(0));
+  shade->shadeType = toShadeType(this->readUInt8(0));
   shade->setRemoteAddress(this->readUInt32(0));
   this->readString(shade->name, sizeof(shade->name));
   if(this->header.version < 3)
     shade->tiltType = this->readBool(false) ? tilt_types::none : tilt_types::tiltmotor;
   else
-    shade->tiltType = static_cast<tilt_types>(this->readUInt8(0));
-  if(this->header.version > 6) shade->proto = static_cast<radio_proto>(this->readUInt8(0));
+    shade->tiltType = toTiltType(this->readUInt8(0));
+  if(this->header.version > 6) shade->proto = toRadioProto(this->readUInt8(0));
   if(this->header.version > 1) shade->bitLength = this->readUInt8(56);
   shade->upTime = this->readUInt32(shade->upTime);
   shade->downTime = this->readUInt32(shade->downTime);
@@ -1082,12 +1082,7 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
     shade->myPos = shade->currentPos = shade->target = 100.0f;
   }
   pref.end();
-  if(shade->proto == radio_proto::GP_Relay || shade->proto == radio_proto::GP_Remote) {
-    pinMode(shade->gpioUp, OUTPUT);
-    pinMode(shade->gpioDown, OUTPUT);
-  }
-  if(shade->proto == radio_proto::GP_Remote)
-    pinMode(shade->gpioMy, OUTPUT);
+  shade->applyGpioModes();
   if(this->header.version >= 19) shade->roomId = this->readUInt8(0);
   if(this->header.version >= 27) {
     shade->ledFeedback = this->readBool(false);
@@ -1331,6 +1326,7 @@ bool ConfigFile::readScheduleRecord(ScheduleRule *rule) {
   rule->positionMode = static_cast<schedule_position_mode_t>(this->readUInt8(0));
   rule->timeRef = static_cast<schedule_time_ref_t>(this->readUInt8(0));
   rule->sunOffset = this->readInt16(0);
+  rule->sanitize();
   if(this->file.position() != startPos + SCHEDULE_REC_SIZE) {
     DBG_PRINTLN("Reading to end of schedule record");
     this->seekChar(CFG_REC_END);

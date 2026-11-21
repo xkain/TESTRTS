@@ -142,7 +142,7 @@ bool BaseSettings::parseValueString(JsonObject &obj, const char *prop, char *pde
   // champs de taille fixe qui sont ensuite sérialisés. Une troncature au milieu d'un caractère
   // UTF-8 y laisserait un octet orphelin, rendant la réponse indécodable pour tout consommateur
   // strict.
-  if(obj.containsKey(prop)) strlcpyUtf8(pdest, obj[prop], size);
+  jgetStr(obj, prop, pdest, size);
   return true;
 }
 bool BaseSettings::parseSecretString(JsonObject &obj, const char *prop, char *pdest, size_t size) {
@@ -155,7 +155,7 @@ bool BaseSettings::parseSecretString(JsonObject &obj, const char *prop, char *pd
 bool BaseSettings::parseIPAddress(JsonObject &obj, const char *prop, IPAddress *pdest) {
   if(obj.containsKey(prop)) {
     char buff[16];
-    strlcpy(buff, obj[prop], sizeof(buff));
+    strlcpy(buff, obj[prop] | "", sizeof(buff));
     pdest->fromString(buff);
   }
   return true;
@@ -391,7 +391,7 @@ bool ConfigSettings::requiresAuth() { return this->Security.type != security_typ
 bool ConfigSettings::fromJSON(JsonObject &obj) {
     jget(obj, "ssdpBroadcast", this->ssdpBroadcast);
     if(obj.containsKey("hostname")) this->parseValueString(obj, "hostname", this->hostname, sizeof(this->hostname));
-    if(obj.containsKey("connType")) this->connType = static_cast<conn_types_t>(obj["connType"].as<uint8_t>());
+    if(obj.containsKey("connType") && obj["connType"].as<uint8_t>() <= static_cast<uint8_t>(conn_types_t::ap)) this->connType = static_cast<conn_types_t>(obj["connType"].as<uint8_t>());
     if(obj.containsKey("language")) this->parseValueString(obj, "language", this->language, sizeof(this->language));
     jget(obj, "checkForUpdate", this->checkForUpdate);
     if(obj.containsKey("accentColor")) this->parseValueString(obj, "accentColor",this->accentColor, sizeof(this->accentColor));

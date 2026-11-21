@@ -27,6 +27,8 @@ int8_t SomfyShade::validateJSON(JsonObject &obj) {
   // Toggle/Stop/drycontact2 posent p_target() sans la garde `!internal` -- relais fantôme.
   if(obj.containsKey("remoteAddress")) {
     uint32_t addr = obj["remoteAddress"].as<uint32_t>();
+    // 24 bits sur l'air (encodeFrame masque) : 0x1123456 passait l'unicité et émettait 0x123456.
+    if(addr == 0 || addr > 0xFFFFFF) return -15;
     if(somfy.isRemoteAddressInUse(addr, this->getShadeId(), 255)) ret = -14;
   }
   if(ret != 0) return ret;
@@ -56,15 +58,13 @@ int8_t SomfyShade::validateJSON(JsonObject &obj) {
         type = shade_types::drycontact;
     }
     else {
-      this->shadeType = static_cast<shade_types>(obj["shadeType"].as<uint8_t>());
+      this->shadeType = toShadeType(obj["shadeType"].as<uint8_t>());
     }
   }
-  if(obj.containsKey("proto")) {
-    // `obj["proto"]`, et non `this->proto` : la valeur COURANTE est encore l'ancienne sur la requête
-    // qui fait justement passer un équipement de RTS à GP_Relay/GP_Remote. Toute la validation de broches
-    // ci-dessous était donc court-circuitée exactement quand elle sert, et ne s'appliquait qu'aux
-    // modifications ultérieures d'un équipement déjà relais.
-    radio_proto proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
+  {
+    // Le proto EFFECTIF après la requête, clé présente ou non : sans « proto », un /saveShade qui ne
+    // changeait que gpioUp sur un équipement déjà relais appliquait la broche sans aucun contrôle.
+    radio_proto proto = obj.containsKey("proto") ? toRadioProto(obj["proto"].as<uint8_t>()) : this->proto;
     if(proto == radio_proto::GP_Relay || proto == radio_proto::GP_Remote) {
       // Check to see if we are using the up and or down
       // GPIOs anywhere else.
@@ -122,7 +122,7 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
   shade_types oldType = this->shadeType;
   int8_t err = this->validateJSON(obj);
   if(err == 0) {
-    if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
+    jgetStr(obj, "name", this->name, sizeof(this->name));
     jget(obj, "roomId", this->roomId);
     jget(obj, "upTime", this->upTime);
     jget(obj, "downTime", this->downTime);
@@ -166,7 +166,6 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
       uint8_t bl = obj["bitLength"].as<uint8_t>();
       if(bl == 0 || bl == 56 || bl == 80) this->bitLength = bl;
     }
-    if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
     if(obj.containsKey("sunSensor")) this->setSunSensor(obj["sunSensor"]);
     if(obj.containsKey("simMy")) this->setSimMy(obj["simMy"]);
     jget(obj, "gpioFlags", this->gpioFlags);
@@ -203,7 +202,7 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
           this->shadeType = shade_types::drycontact;
       }
       else {
-        this->shadeType = static_cast<shade_types>(obj["shadeType"].as<uint8_t>());
+        this->shadeType = toShadeType(obj["shadeType"].as<uint8_t>());
       }
     }
     // Un changement de type d'équipement change ses capacités (lift/tilt) -- les temps mesurés
@@ -251,7 +250,7 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
           this->tiltType = tilt_types::tiltonly;
       }
       else {
-        this->tiltType = static_cast<tilt_types>(obj["tiltType"].as<uint8_t>());
+        this->tiltType = toTiltType(obj["tiltType"].as<uint8_t>());
       }
     }
     if(obj.containsKey("linkedAddresses")) {
@@ -272,16 +271,16 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
       }
     }
     jget(obj, "flags", this->flags);
-    if(this->proto == radio_proto::GP_Remote || this->proto == radio_proto::GP_Relay) {
+    // Broches AVANT le protocole : setGPIOs() (loopTask) ne doit jamais voir GP avec les broches de
+    // l'ancien occupant de l'emplacement. Validées par validateJSON() ci-dessus.
+    radio_proto proto = obj.containsKey("proto") ? toRadioProto(obj["proto"].as<uint8_t>()) : this->proto;
+    if(proto == radio_proto::GP_Remote || proto == radio_proto::GP_Relay) {
       jget(obj, "gpioUp", this->gpioUp);
       jget(obj, "gpioDown", this->gpioDown);
-      pinMode(this->gpioUp, OUTPUT);
-      pinMode(this->gpioDown, OUTPUT);
+      if(proto == radio_proto::GP_Remote) jget(obj, "gpioMy", this->gpioMy);
     }
-    if(this->proto == radio_proto::GP_Remote) {
-      jget(obj, "gpioMy", this->gpioMy);
-      pinMode(this->gpioMy, OUTPUT);
-    }
+    this->proto = proto;
+    this->applyGpioModes();
   }
   return err;
 }
@@ -380,7 +379,7 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
 }
 
 bool SomfyRoom::fromJSON(JsonObject &obj) {
-  if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
+  jgetStr(obj, "name", this->name, sizeof(this->name));
   jget(obj, "sortOrder", this->sortOrder);
   return true;
 }
@@ -395,6 +394,7 @@ int8_t SomfyGroup::validateJSON(JsonObject &obj) {
   // groupe prend chacune de ses commandes, en double s'il en est membre.
   if(obj.containsKey("remoteAddress")) {
     uint32_t addr = obj["remoteAddress"].as<uint32_t>();
+    if(addr == 0 || addr > 0xFFFFFF) return -15;
     if(somfy.isRemoteAddressInUse(addr, 255, this->getGroupId())) return -14;
   }
   return 0;
@@ -402,7 +402,7 @@ int8_t SomfyGroup::validateJSON(JsonObject &obj) {
 int8_t SomfyGroup::fromJSON(JsonObject &obj) {
   int8_t err = this->validateJSON(obj);
   if(err != 0) return err;
-  if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
+  jgetStr(obj, "name", this->name, sizeof(this->name));
   jget(obj, "roomId", this->roomId);
   if(obj.containsKey("remoteAddress")) this->setRemoteAddress(obj["remoteAddress"]);
   // Même validation que SomfyShade::fromJSON plus haut, nécessaire ici aussi : `bitLength` finit en
@@ -415,7 +415,7 @@ int8_t SomfyGroup::fromJSON(JsonObject &obj) {
     uint8_t bl = obj["bitLength"].as<uint8_t>();
     if(bl == 0 || bl == 56 || bl == 80) this->bitLength = bl;
   }
-  if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
+  if(obj.containsKey("proto")) this->proto = toRadioProto(obj["proto"].as<uint8_t>());
   jget(obj, "flipCommands", this->flipCommands);
   jget(obj, "ledFeedback", this->ledFeedback);
   if(obj.containsKey("remoteModel")) this->setRemoteModel(obj["remoteModel"] | "");
