@@ -531,17 +531,6 @@ void SomfyShadeController::toJSONShades(JsonFormatter &json) {
   }
 }
 
-void SomfyShadeController::toJSONGroups(JsonFormatter &json) { this->toJSONGroups(json, true); }
-void SomfyShadeController::toJSONGroups(JsonFormatter &json, bool secrets) {
-  for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
-    SomfyGroup &group = this->groups[i];
-    if(group.getGroupId() != 255) {
-      json.beginObject();
-      group.toJSON(json, secrets);
-      json.endObject();
-    }
-  }
-}
 void SomfyShadeController::toJSONRepeaters(JsonFormatter &json) {
   for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++) {
     if(somfy.repeaters[i] != 0) json.addElem((uint32_t)somfy.repeaters[i]);

@@ -130,17 +130,99 @@ namespace WebShadesRest {
     }
   }
 
+  // --- Sérialisation chunked de /groups ---
+  // Un groupe plein ne tient pas dans le tampon d'élément (~6,9 Ko, cf. WebChunkedJson.h) : en-tête
+  // puis une référence d'équipement par élément, comme CTL_GROUPS dans WebSystem.cpp. Bufferisée,
+  // cette route faisait redémarrer l'appareil par TASK_WDT à 14 groupes de 30 liés (banc, 21/11/2026).
+  enum groups_phase_t : uint8_t { GR_OPEN = 0, GR_HEAD, GR_SHADES, GR_CLOSE, GR_END, GR_DONE };
+  struct GroupsChunkState {
+    ChunkedJsonEmitter em;
+    uint8_t phase = GR_OPEN;
+    uint8_t idx = 0;      // groupe courant dans groups[]
+    uint8_t gshade = 0;   // emplacement courant de linkedShades[]
+    bool firstItem = true;
+    bool firstShade = true;
+    bool secrets = true;  // figé à la réception, comme pour /shades
+    uint8_t groups[SOMFY_MAX_GROUPS]; uint8_t nGroups = 0;
+  };
+
+  static bool groupsProduceNext(GroupsChunkState *st) {
+    switch(st->phase) {
+      case GR_OPEN:
+        st->em.emitRaw("[");
+        st->phase = st->nGroups ? GR_HEAD : GR_END;
+        return true;
+      case GR_HEAD: {
+        SomfyGroup &group = somfy.groups[st->groups[st->idx]];
+        JsonFormatter *j = st->em.beginItem(!st->firstItem);
+        j->beginObject();
+        group.toJSONHead(*j, st->secrets);
+        // L'objet du groupe et son tableau restent ouverts jusqu'à GR_CLOSE.
+        st->em.appendRaw(",\"linkedShades\":[");
+        st->phase = GR_SHADES; st->gshade = 0; st->firstShade = true;
+        break;
+      }
+      case GR_SHADES: {
+        SomfyGroup &group = somfy.groups[st->groups[st->idx]];
+        if(st->gshade >= SOMFY_MAX_GROUPED_SHADES) { st->phase = GR_CLOSE; return true; }
+        // Emplacement vide ou orphelin : rien à émettre, on rend la main sans passer par endItem().
+        uint8_t shadeId = group.linkedShades[st->gshade++];
+        SomfyShade *shade = (shadeId > 0 && shadeId < 255) ? somfy.getShadeById(shadeId) : nullptr;
+        if(!shade) return true;
+        JsonFormatter *j = st->em.beginItem(!st->firstShade);
+        j->beginObject();
+        shade->toJSONRef(*j, st->secrets);
+        j->endObject();
+        st->firstShade = false;
+        break;
+      }
+      case GR_CLOSE:
+        st->em.emitRaw("]}");
+        st->idx++; st->firstItem = false;
+        st->phase = (st->idx < st->nGroups) ? GR_HEAD : GR_END;
+        return true;
+      case GR_END:
+        st->em.emitRaw("]");
+        st->phase = GR_DONE;
+        return true;
+      default:
+        return false;
+    }
+    // Même filet que /shades : un élément tronqué n'est pas expédié et la réponse s'arrête là.
+    if(!st->em.endItem()) {
+      Serial.printf("[CHUNKED] /groups: element tronque (tampon de %u octets depasse), reponse interrompue\n",
+        (unsigned)CHUNKED_ITEM_BUF);
+      st->em.discardItem();
+      st->phase = GR_DONE;
+    }
+    return true;
+  }
+
   void handleGetGroups(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
     if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
-      JsonAsyncResponse resp;
-      resp.beginResponse(request);
-      resp.beginArray();
-      somfy.toJSONGroups(resp, webServer.checkAuth(request, true)); // cf. /shades
-      resp.endArray();
-      resp.endResponse();
+      auto st = std::make_shared<GroupsChunkState>();
+      st->secrets = webServer.checkAuth(request, true); // cf. /shades
+      for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++)
+        if(somfy.groups[i].getGroupId() != 255) st->groups[st->nGroups++] = i;
+
+      request->send(request->beginChunkedResponse(_encoding_json,
+        [st](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+          size_t written = 0;
+          while(written < maxLen) {
+            if(st->em.pending()) {
+              written += st->em.flush(buffer + written, maxLen - written);
+              continue;
+            }
+            if(!groupsProduceNext(st.get())) {
+              ConfigSettings::reportAsyncTcpStackLow("/groups (serialisation chunked)");
+              break;
+            }
+          }
+          return written;
+        }));
     }
     else {
       request->send(404, _encoding_text, _response_404);

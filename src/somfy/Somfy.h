@@ -615,8 +615,6 @@ class SomfyShadeController {
     SomfyShade *findShadeByLinkedRemote(uint32_t address);
     void toJSONShades(JsonFormatter &json);
     void toJSONRooms(JsonFormatter &json);
-    void toJSONGroups(JsonFormatter &json);
-    void toJSONGroups(JsonFormatter &json, bool secrets);
     void toJSONRepeaters(JsonFormatter &json);
     void toJSONRepeaterNames(JsonFormatter &json);
     void toJSONListener(JsonFormatter &json, somfy_listener_t *l, bool secrets);
