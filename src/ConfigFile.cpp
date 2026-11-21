@@ -44,8 +44,9 @@ bool CfgStore::begin() {
 }
 bool CfgStore::mounted() { return cfgMounted; }
 bool CfgStore::isConfigPath(const char *path) {
-  return path && (strcmp(path, "/shades.cfg") == 0 || strcmp(path, "/shades.cfg.bak") == 0 ||
-                  strcmp(path, "/schedules.cfg") == 0);
+  // Par préfixe : les .bak et .tmp de ConfigFile::end() doivent rester sur le même filesystem que
+  // l'original, rename() ne traverse pas les partitions.
+  return path && (strncmp(path, "/shades.cfg", 11) == 0 || strncmp(path, "/schedules.cfg", 14) == 0);
 }
 fs::FS &CfgStore::fsFor(const char *path) {
   if(cfgMounted && isConfigPath(path)) return cfgFS;
@@ -53,16 +54,58 @@ fs::FS &CfgStore::fsFor(const char *path) {
 }
 
 bool ConfigFile::begin(const char* filename, bool readOnly) {
-  this->file = CfgStore::fsFor(filename).open(filename, readOnly ? "r" : "w");
-  this->_opened = true;
-  return true;
+  this->readOnly = readOnly;
+  this->failed = false;
+  this->path[0] = '\0';
+  fs::FS &fs = CfgStore::fsFor(filename);
+  if(readOnly) this->file = fs.open(filename, "r");
+  else {
+    // Jamais le fichier lui-même en "w" : une coupure en cours d'écriture laissait un fichier
+    // tronqué que validate() refusait en bloc, et le commit suivant repartait d'un modèle vide.
+    strlcpy(this->path, filename, sizeof(this->path));
+    snprintf(this->tmpPath, sizeof(this->tmpPath), "%s.tmp", filename);
+    this->file = fs.open(this->tmpPath, "w");
+  }
+  this->_opened = (bool)this->file;
+  if(!this->_opened) {
+    this->failed = true;
+    Serial.printf("[CFG] ouverture de %s refusee\n", filename);
+  }
+  return this->_opened;
 }
-void ConfigFile::end() {
+bool ConfigFile::end() {
+  bool ok = this->_opened && !this->failed;
   if(this->isOpen()) {
     if(!this->readOnly) this->file.flush();
     this->file.close();
   }
   this->_opened = false;
+  if(this->readOnly || this->path[0] == '\0') return ok;
+  fs::FS &fs = CfgStore::fsFor(this->path);
+  if(!ok) {
+    fs.remove(this->tmpPath);
+    this->path[0] = '\0';
+    return false;
+  }
+  // Pour shades.cfg et schedules.cfg l'exemplaire précédent devient .bak (renommage = métadonnées
+  // seules) avant que le temporaire prenne la place : entre les deux renommages il existe toujours
+  // un fichier lisible, et le chargeur essaie l'un puis l'autre.
+  if(CfgStore::isConfigPath(this->path)) {
+    char bak[36];
+    snprintf(bak, sizeof(bak), "%s.bak", this->path);
+    if(fs.exists(this->path)) {
+      fs.remove(bak);
+      fs.rename(this->path, bak);
+    }
+  }
+  else if(fs.exists(this->path)) fs.remove(this->path);
+  if(!fs.rename(this->tmpPath, this->path)) {
+    Serial.printf("[CFG] renommage de %s refuse\n", this->path);
+    fs.remove(this->tmpPath);
+    ok = false;
+  }
+  this->path[0] = '\0';
+  return ok;
 }
 bool ConfigFile::isOpen() { return this->_opened; }
 bool ConfigFile::seekChar(const char val) {
@@ -272,10 +315,12 @@ bool ConfigFile::writeString(const char *val, size_t len, const char tok) {
   // sans fin. Aucun appelant ne passe 0 aujourd'hui ; la boucle ne doit pas en dépendre.
   if(len == 0) return false;
   int slen = strlen(val);
+  // Tronqué à la largeur du champ : une valeur plus longue décalerait tout l'enregistrement.
+  if(slen > (int)len - 1) slen = (int)len - 1;
   if(slen > 0)
-    if(this->file.write((uint8_t *)val, slen) != slen) return false;
-  while(slen < len - 1) {
-    this->file.write(' ');
+    if(this->file.write((uint8_t *)val, slen) != slen) { this->failed = true; return false; }
+  while(slen < (int)len - 1) {
+    if(this->file.write(' ') != 1) { this->failed = true; return false; }
     slen++;
   }
   if(tok != CFG_TOK_NONE)
@@ -286,7 +331,7 @@ bool ConfigFile::writeVarString(const char *val, const char tok) {
   if(!this->isOpen()) return false;
   int slen = strlen(val);
   this->writeChar(CFG_TOK_QUOTE);
-  if(slen > 0) if(this->file.write((uint8_t *)val, slen) != slen) return false;
+  if(slen > 0) if(this->file.write((uint8_t *)val, slen) != slen) { this->failed = true; return false; }
   this->writeChar(CFG_TOK_QUOTE);
   if(tok != CFG_TOK_NONE) return this->writeChar(tok);
   return true;
@@ -294,6 +339,7 @@ bool ConfigFile::writeVarString(const char *val, const char tok) {
 bool ConfigFile::writeChar(const char val) {
   if(!this->isOpen()) return false;
   if(this->file.write(static_cast<uint8_t>(val)) == 1) return true;
+  this->failed = true;
   return false;
 }
 bool ConfigFile::writeInt8(const int8_t val, const char tok) {
@@ -361,7 +407,7 @@ uint16_t ConfigFile::readUInt16(const uint16_t defVal) {
 uint32_t ConfigFile::readUInt32(const uint32_t defVal) {
   char buff[11];
   if(this->readString(buff, sizeof(buff)))
-    return static_cast<uint32_t>(atoi(buff));
+    return static_cast<uint32_t>(strtoul(buff, nullptr, 10));
   return defVal;
 }
 float ConfigFile::readFloat(const float defVal) {
@@ -407,7 +453,7 @@ uint16_t ShadeConfigFile::reconcileRollingCode(Preferences &pref, const char *pr
 }
 bool ShadeConfigFile::begin(bool readOnly) { return this->begin("/shades.cfg", readOnly); }
 bool ShadeConfigFile::begin(const char *filename, bool readOnly) { return ConfigFile::begin(filename, readOnly); }
-void ShadeConfigFile::end() { ConfigFile::end(); }
+bool ShadeConfigFile::end() { return ConfigFile::end(); }
 bool ShadeConfigFile::save(SomfyShadeController *s) {
   this->header.version = SHADE_HDR_VER;
   this->header.roomRecordSize = ROOM_REC_SIZE;
@@ -450,7 +496,7 @@ bool ShadeConfigFile::backup(SomfyShadeController *s) {
   return this->backupNdjson(s);
 }
 bool ShadeConfigFile::validate() {
-  this->readHeader();
+  if(!this->readHeader()) return false;
   if(this->header.version < 1) {
     TRACEF("Invalid Header Version:%u\n", (unsigned)this->header.version);
     return false;
@@ -566,12 +612,17 @@ bool ShadeConfigFile::validate() {
 }
 bool ShadeConfigFile::load(SomfyShadeController *s, const char *filename) {
   ShadeConfigFile file;
-  if(file.begin(filename, true)) {
-    bool success = file.loadFile(s, filename);
-    file.end();
-    return success;
-  }
-  return false;
+  bool success = file.begin(filename, true) && file.loadFile(s, filename);
+  file.end();
+  if(success || strcmp(filename, "/shades.cfg") != 0) return success;
+  // Fichier absent ou refusé : l'exemplaire précédent (cf. ConfigFile::end) le remplace, et
+  // isDirty fait réécrire un shades.cfg sain au tour suivant.
+  Serial.println("[CFG] shades.cfg illisible, repli sur shades.cfg.bak");
+  ShadeConfigFile bak;
+  success = bak.begin("/shades.cfg.bak", true) && bak.loadFile(s, "/shades.cfg.bak");
+  bak.end();
+  if(success) s->isDirty = true;
+  return success;
 }
 bool ShadeConfigFile::restore(SomfyShadeController *s, const char *filename, restore_options_t &opts) {
   ShadeConfigFile file;
@@ -1000,8 +1051,8 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   }
   if(shade->myPos > 100 || shade->myPos < 0) shade->myPos = -1;
   if(shade->myTiltPos > 100 || shade->myTiltPos < 0) shade->myTiltPos = -1;
-  shade->currentPos = this->readFloat(0);
-  shade->currentTiltPos = this->readFloat(0);
+  shade->currentPos = cfgClampPos(this->readFloat(0));
+  shade->currentTiltPos = cfgClampPos(this->readFloat(0));
   if(shade->tiltType == tilt_types::none || shade->shadeType != shade_types::blind) {
     shade->myTiltPos = -1;
     shade->currentTiltPos = 0;
@@ -1232,14 +1283,20 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeUInt32(shade->downMidTime, CFG_REC_END);
   return true;
 }
-bool ShadeConfigFile::exists() { return CfgStore::fsFor("/shades.cfg").exists("/shades.cfg"); }
+bool ShadeConfigFile::exists() {
+  fs::FS &fs = CfgStore::fsFor("/shades.cfg");
+  return fs.exists("/shades.cfg") || fs.exists("/shades.cfg.bak");
+}
 
 
 
 bool ScheduleConfigFile::begin(bool readOnly) { return this->begin("/schedules.cfg", readOnly); }
 bool ScheduleConfigFile::begin(const char *filename, bool readOnly) { return ConfigFile::begin(filename, readOnly); }
-void ScheduleConfigFile::end() { ConfigFile::end(); }
-bool ScheduleConfigFile::exists() { return CfgStore::fsFor("/schedules.cfg").exists("/schedules.cfg"); }
+bool ScheduleConfigFile::end() { return ConfigFile::end(); }
+bool ScheduleConfigFile::exists() {
+  fs::FS &fs = CfgStore::fsFor("/schedules.cfg");
+  return fs.exists("/schedules.cfg") || fs.exists("/schedules.cfg.bak");
+}
 
 bool ConfigFile::writeScheduleRecord(ScheduleRule *rule) {
   this->writeUInt8(rule->getId());
@@ -1292,11 +1349,11 @@ bool ScheduleConfigFile::save(ScheduleController *s) {
 }
 bool ScheduleConfigFile::loadFile(ScheduleController *s, const char *filename) {
   if(!this->begin(filename, true)) return false;
-  uint8_t version = this->readUInt8(SCHEDULE_HDR_VER);
-  uint16_t recSize = this->readUInt16(SCHEDULE_REC_SIZE);
+  uint8_t version = this->readUInt8(0);
+  uint16_t recSize = this->readUInt16(0);
   uint8_t recCount = this->readUInt8(0);
-  (void)version;
-  (void)recSize;
+  // 60 = taille du premier format (dayMask..enabled) : en dessous, l'en-tête n'est pas le nôtre.
+  if(version < 1 || recSize < 60) { this->end(); return false; }
   for(uint8_t i = 0; i < recCount && i < SOMFY_MAX_SCHEDULES; i++) {
     this->readScheduleRecord(&s->schedules[i]);
   }
@@ -1305,7 +1362,12 @@ bool ScheduleConfigFile::loadFile(ScheduleController *s, const char *filename) {
 }
 bool ScheduleConfigFile::load(ScheduleController *s, const char *filename) {
   ScheduleConfigFile file;
-  return file.loadFile(s, filename);
+  if(file.loadFile(s, filename) || strcmp(filename, "/schedules.cfg") != 0) return true;
+  Serial.println("[CFG] schedules.cfg illisible, repli sur schedules.cfg.bak");
+  ScheduleConfigFile bak;
+  bool success = bak.loadFile(s, "/schedules.cfg.bak");
+  if(success) s->isDirty = true;
+  return success;
 }
 
 bool ShadeConfigFile::readScheduleBlock() {

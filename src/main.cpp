@@ -142,6 +142,9 @@ void loop() {
     // Un redémarrage VOLONTAIRE n'est pas une coupure d'alimentation : la fenêtre est refermée avant
     // de partir, sinon le compteur de cycles resterait incrémenté (cf. closeDetection()).
     recovery.closeDetection();
+    // Les commits sont différés sur loopTask : ce qui est encore en attente part avant de couper.
+    if(somfy.isDirty) somfy.commit();
+    schedule.commit();
     net.end();
     ESP.restart();
     return;
@@ -219,6 +222,8 @@ void loop() {
 
   if (rebootDelay.reboot && (int32_t)(millis() - rebootDelay.rebootTime) >= 0) {
     recovery.closeDetection();   // même raison qu'en tête de boucle
+    if(somfy.isDirty) somfy.commit();
+    schedule.commit();
     net.end();
     ESP.restart();
   }

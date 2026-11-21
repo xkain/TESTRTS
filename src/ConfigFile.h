@@ -33,6 +33,10 @@ namespace CfgStore {
 }
 
 
+// Position relue d'un fichier : [0,100], NaN → 0. Hors bornes, elle déborderait la largeur fixe
+// de writeFloat au prochain commit et validate() refuserait tout le fichier.
+static inline float cfgClampPos(float v) { if(!(v >= 0.0f)) return 0.0f; return v > 100.0f ? 100.0f : v; }
+
 struct config_header_t {
   uint8_t version = 1;
   uint8_t repeaterRecords = 0;
@@ -56,6 +60,10 @@ class ConfigFile {
     bool begin(const char *filename, bool readOnly = false);
     uint32_t startRecPos = 0;
     bool _opened = false;
+    // Écriture dans <chemin>.tmp puis rename() dans end() ; `failed` retient toute écriture courte.
+    char path[32] = "";
+    char tmpPath[36] = "";
+    bool failed = false;
     // Consomme le flux jusqu'au séparateur de champ (inclus), pour les lecteurs qui s'arrêtent
     // AVANT lui (tampon plein ou borne épuisée) -- sans ça, le champ suivant démarre sur le
     // séparateur et tout l'enregistrement se décale. Émetteur unique, pour que les trois lecteurs
@@ -69,7 +77,8 @@ class ConfigFile {
     bool readScheduleRecord(ScheduleRule *rule);
   public:
     config_header_t header;
-    void end();
+    // Vrai si tout a été écrit et, en écriture, si le temporaire a pris la place du fichier.
+    bool end();
     bool isOpen();
     bool readHeader();
     bool seekChar(const char val);
@@ -148,7 +157,7 @@ class ShadeConfigFile : public ConfigFile {
     bool backup(SomfyShadeController *somfy);
     bool loadFile(SomfyShadeController *somfy, const char *filename = "/shades.cfg");
     bool restoreFile(SomfyShadeController *somfy, const char *filename, restore_options_t &opts);
-    void end();
+    bool end();
     bool validate();
 };
 // Fichier dédié aux plannings (/schedules.cfg), séparé de shades.cfg pour ne pas
@@ -163,6 +172,6 @@ class ScheduleConfigFile : public ConfigFile {
     bool begin(bool readOnly = false);
     bool save(ScheduleController *schedule);
     bool loadFile(ScheduleController *schedule, const char *filename = "/schedules.cfg");
-    void end();
+    bool end();
 };
 #endif

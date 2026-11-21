@@ -210,6 +210,11 @@ void fsUploadLockRelease() {
   if(g_fsUploadFile) g_fsUploadFile.close();
   fsLocked = false;
 }
+bool fsLockTake() {
+  bool expected = false;
+  return fsLocked.compare_exchange_strong(expected, true);
+}
+void fsLockGive() { fsLocked = false; }
 bool asyncHasBody(AsyncWebServerRequest *request) {
   return request->_tempObject != nullptr;
 }

@@ -181,10 +181,6 @@ namespace WebI18n {
   static void handleDeleteLang(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
-    if(fsLocked) {
-      webServer.sendError(request, 500, "Filesystem update in progress");
-      return;
-    }
     if(!request->hasArg("code")) {
       request->send(400, _encoding_json, "{\"error\":\"missing code\"}");
       return;
@@ -208,7 +204,12 @@ namespace WebI18n {
       request->send(404, _encoding_json, "{\"error\":\"not installed\"}");
       return;
     }
+    if(!fsLockTake()) {
+      webServer.sendError(request, 500, "Filesystem update in progress");
+      return;
+    }
     LittleFS.remove(path);
+    fsLockGive();
     request->send(200, _encoding_json, "{\"status\":\"ok\"}");
   }
 
@@ -333,7 +334,8 @@ namespace WebI18n {
     UploadState *state = (UploadState *)request->_tempObject;
     if(state && state->full) { sendLangLimit(request); return; }
     if(!state || !state->success) {
-      LittleFS.remove(tempPath);
+      // Refusé = jamais écrit : le temporaire appartient alors à un autre téléversement en cours.
+      if(state && !state->rejected) LittleFS.remove(tempPath);
       webServer.sendError(request, 500, "Upload failed");
       return;
     }
@@ -348,8 +350,7 @@ namespace WebI18n {
       request->send(400, _encoding_json, "{\"error\":\"invalid code\"}");
       return;
     }
-    if(fsLocked) {
-      LittleFS.remove(tempPath);
+    if(!fsLockTake()) {
       webServer.sendError(request, 500, "Filesystem update in progress");
       return;
     }
@@ -374,6 +375,7 @@ namespace WebI18n {
     if(!validGzip) {
       Serial.println("uploadLang: contenu rejete -- ce n'est pas un flux gzip valide (en-tete ou taille)");
       LittleFS.remove(tempPath);
+      fsLockGive();
       request->send(400, _encoding_json, "{\"error\":\"invalid gzip content\"}");
       return;
     }
@@ -381,7 +383,9 @@ namespace WebI18n {
     char finalPath[32];
     snprintf(finalPath, sizeof(finalPath), "/locale/%s.json.gz", code.c_str());
     if(LittleFS.exists(finalPath)) LittleFS.remove(finalPath);
-    if(!LittleFS.rename(tempPath, finalPath)) {
+    bool renamed = LittleFS.rename(tempPath, finalPath);
+    fsLockGive();
+    if(!renamed) {
       Serial.printf("uploadLang: renommage vers %s refuse par LittleFS\n", finalPath);
       request->send(500, _encoding_json, "{\"error\":\"rename failed\"}");
       return;

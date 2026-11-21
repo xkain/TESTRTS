@@ -554,25 +554,36 @@ namespace WebSystem {
       request->send(500, _encoding_text, "Invalid http method");
   }
 
+  // Le File reste ouvert pendant tout le transfert : un second /backup qui réécrirait
+  // /controller.backup sous ce lecteur lui livrerait un mélange des deux fichiers. Compté pour le
+  // refuser le temps du téléchargement.
+  static std::atomic<uint8_t> g_backupReaders{0};
+  class BackupFileResponse : public AsyncFileResponse {
+    public:
+      BackupFileResponse(fs::FS &fs, const String &path, const char *contentType)
+        : AsyncFileResponse(fs, path, contentType) { g_backupReaders++; }
+      ~BackupFileResponse() { g_backupReaders--; }
+  };
+
   void handleBackup(AsyncWebServerRequest *request, bool attach) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     if(request->hasArg("attach")) attach = toBoolean(request->arg("attach").c_str(), attach);
 
     DBG_PRINTLN(F("Backup..."));
-    // La valeur de retour était ignorée : quand writeBackup() renonçait (filesystem verrouillé par
-    // une OTA), l'ancien /controller.backup restant sur le disque partait quand même, présenté au
-    // client comme une sauvegarde fraîche.
-    if(!somfy.writeBackup()) {
+    // Écrivain LittleFS sur async_tcp : il pose le verrou lui-même, et renonce si un transfert ou
+    // un autre écrivain est en cours plutôt que de servir un fichier mêlé.
+    if(g_backupReaders > 0 || !fsLockTake()) {
       webServer.sendError(request, 503, "Filesystem busy, please retry.");
       return;
     }
-
-    if(!LittleFS.exists("/controller.backup")) {
-      request->send(500, _encoding_text, "Err: File");
+    bool ok = somfy.writeBackup();
+    fsLockGive();
+    if(!ok || !LittleFS.exists("/controller.backup")) {
+      webServer.sendError(request, 500, "Backup could not be written.");
       return;
     }
-    AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/controller.backup", _encoding_text);
+    AsyncWebServerResponse *response = new BackupFileResponse(LittleFS, "/controller.backup", _encoding_text);
     if(attach) {
       Timestamp ts;
       char * iso = ts.getISOTime();
@@ -710,39 +721,36 @@ namespace WebSystem {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     UploadState *state = (UploadState *)request->_tempObject;
-    if(state && state->success) {
-      request->send(200, _encoding_json, "{\"status\":\"Success\",\"desc\":\"Restoring Shade settings\"}");
-      restore_options_t opts;
-      if(request->hasArg("data")) {
-        if(settings.enableDebugLogs) Serial.println(request->arg("data"));
-        StaticJsonDocument<256> doc;
-        DeserializationError err = deserializeJson(doc, request->arg("data"));
-        if (err) {
-          webServer.handleDeserializationError(request, err);
-          return;
-        }
-        else {
-          JsonObject obj = doc.as<JsonObject>();
-          opts.fromJSON(obj);
-        }
+    if(!state || !state->success) {
+      webServer.sendError(request, 500, "Upload failed");
+      return;
+    }
+    // Options validées AVANT de répondre : la réponse partait d'abord, et un JSON invalide en
+    // produisait une seconde qui remplaçait la première en sautant la restauration.
+    restore_options_t opts;
+    if(request->hasArg("data")) {
+      if(settings.enableDebugLogs) Serial.println(request->arg("data"));
+      StaticJsonDocument<256> doc;
+      DeserializationError err = deserializeJson(doc, request->arg("data"));
+      if(err) {
+        webServer.handleDeserializationError(request, err);
+        return;
       }
-      else {
-        DBG_PRINTLN("No restore options sent.  Using defaults...");
-        opts.shades = true;
-      }
-      ShadeConfigFile::restore(&somfy, "/shades.tmp", opts);
-      DBG_PRINTLN("Rebooting ESP for restored settings...");
-      rebootDelay.rebootTime = millis() + 1000;
-      rebootDelay.reboot = true;
+      JsonObject obj = doc.as<JsonObject>();
+      opts.fromJSON(obj);
     }
     else {
-      // Comportement corrigé par rapport à la version WebServer& d'origine : celle-ci ne renvoyait
-      // RIEN du tout dans ce cas (aucune branche else), laissant la requête sans réponse jusqu'au
-      // timeout du client -- bug latent, plus risqué encore sous ESPAsyncWebServer (connexion
-      // potentiellement conservée en attente). Toutes les autres routes d'upload répondent déjà
-      // explicitement en cas d'échec ; alignement sur ce comportement.
-      webServer.sendError(request, 500, "Upload failed");
+      DBG_PRINTLN("No restore options sent.  Using defaults...");
+      opts.shades = true;
     }
+    if(somfy.restorePending) {
+      webServer.sendError(request, 503, "A restore is already in progress.");
+      return;
+    }
+    // La restauration réécrit tout le modèle : elle s'exécute sur loopTask (SomfyShadeController::loop),
+    // qui commit puis redémarre.
+    somfy.requestRestore(opts);
+    request->send(200, _encoding_json, "{\"status\":\"Success\",\"desc\":\"Restoring Shade settings\"}");
   }
 
   static void handleRestoreBody(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {

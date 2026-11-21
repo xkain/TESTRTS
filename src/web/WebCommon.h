@@ -115,6 +115,10 @@ void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len,
 bool fsUploadLockAcquire(const char *path);
 bool fsUploadWrite(const uint8_t *data, size_t len);
 void fsUploadLockRelease();
+// Verrou court pour une écriture LittleFS ponctuelle (remove, rename, sauvegarde) depuis async_tcp :
+// faux si un autre écrivain le tient, à rendre par fsLockGive() sitôt l'opération faite.
+bool fsLockTake();
+void fsLockGive();
 bool asyncHasBody(AsyncWebServerRequest *request);
 String asyncGetBody(AsyncWebServerRequest *request);
 

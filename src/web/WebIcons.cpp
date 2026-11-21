@@ -53,11 +53,12 @@ namespace WebIcons {
   static void handleDeleteIcons(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
-    if(fsLocked) {
+    if(!fsLockTake()) {
       webServer.sendError(request, 500, "Filesystem update in progress");
       return;
     }
     if(LittleFS.exists(ICON_PACK_FILE)) LittleFS.remove(ICON_PACK_FILE);
+    fsLockGive();
     rememberPack("");
     request->send(200, _encoding_json, "{\"status\":\"ok\"}");
   }
@@ -67,14 +68,15 @@ namespace WebIcons {
     if(!webServer.isAuthenticated(request, true)) return;
     UploadState *state = (UploadState *)request->_tempObject;
     if(state && state->tooBig) {
-      LittleFS.remove(ICON_PACK_TMP);
+      // Refusé = jamais écrit : le temporaire appartient alors à un autre téléversement en cours.
+      if(!state->rejected) LittleFS.remove(ICON_PACK_TMP);
       char buf[64];
       snprintf(buf, sizeof(buf), "{\"error\":\"icon pack too large\",\"max\":%d}", MAX_ICON_PACK_SIZE);
       request->send(413, _encoding_json, buf);
       return;
     }
     if(!state || !state->success) {
-      LittleFS.remove(ICON_PACK_TMP);
+      if(state && !state->rejected) LittleFS.remove(ICON_PACK_TMP);
       webServer.sendError(request, 500, "Upload failed");
       return;
     }
@@ -83,8 +85,7 @@ namespace WebIcons {
       request->send(400, _encoding_json, "{\"error\":\"invalid id\"}");
       return;
     }
-    if(fsLocked) {
-      LittleFS.remove(ICON_PACK_TMP);
+    if(!fsLockTake()) {
       webServer.sendError(request, 500, "Filesystem update in progress");
       return;
     }
@@ -98,11 +99,14 @@ namespace WebIcons {
     if(!validGzip) {
       Serial.println("uploadIcons: contenu rejete -- ce n'est pas un flux gzip valide");
       LittleFS.remove(ICON_PACK_TMP);
+      fsLockGive();
       request->send(400, _encoding_json, "{\"error\":\"invalid gzip content\"}");
       return;
     }
     if(LittleFS.exists(ICON_PACK_FILE)) LittleFS.remove(ICON_PACK_FILE);
-    if(!LittleFS.rename(ICON_PACK_TMP, ICON_PACK_FILE)) {
+    bool renamed = LittleFS.rename(ICON_PACK_TMP, ICON_PACK_FILE);
+    fsLockGive();
+    if(!renamed) {
       Serial.println("uploadIcons: renommage refuse par LittleFS");
       request->send(500, _encoding_json, "{\"error\":\"rename failed\"}");
       return;

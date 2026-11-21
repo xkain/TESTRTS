@@ -22,6 +22,7 @@
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
 extern ScheduleController schedule;
+extern rebootDelay_t rebootDelay;
 
 SomfyShadeController::SomfyShadeController() {
   memset(this->m_shadeIds, 255, sizeof(this->m_shadeIds));
@@ -124,6 +125,7 @@ bool SomfyShadeController::begin() {
   // se paie en silence quand le framework change, et lire un registre matériel avant setup() n'a
   // de toute façon aucune raison d'être. La valeur est identique : mêmes 20 bits de la même MAC.
   this->startingAddress = ESP.getEfuseMac() & 0x0FFFFF;
+  this->ownerTask = xTaskGetCurrentTaskHandle();
   // Load up all the configuration data.
   //ShadeConfigFile::getAppVersion(this->appVersion);
   Serial.printf("App Version:%u.%u.%u\n", settings.appVersion.major, settings.appVersion.minor, settings.appVersion.build);
@@ -181,29 +183,29 @@ bool SomfyShadeController::begin() {
   return true;
 }
 void SomfyShadeController::commit() {
-  // isDirty réarmé plutôt qu'un simple return : SomfyShade::save() appelle commit() sans jamais
-  // poser le drapeau lui-même, si bien qu'un enregistrement tombant pendant une OTA ou une
-  // installation de langue était PERDU sans que rien ne le reprogramme -- loop() ne commit que sur
-  // isDirty. Avec le drapeau, l'écriture repart d'elle-même dès que le verrou retombe.
-  if(fsLocked) { this->isDirty = true; return; }
+  // Un seul écrivain de shades.cfg : loopTask. Depuis toute autre tâche (routes HTTP sur async_tcp)
+  // on ne fait que poser le drapeau ; loop() écrit au tour suivant et le redémarrage attend ce flush
+  // (main.cpp). Même chose quand un téléversement tient le filesystem.
+  if(xTaskGetCurrentTaskHandle() != this->ownerTask || fsLocked) { this->isDirty = true; return; }
   wdtReset(); // Make sure we don't reset inadvertently.
   ShadeConfigFile file;
-  file.begin();
-  file.save(this);
-  file.end();
-  this->isDirty = false;
+  bool ok = file.begin() && file.save(this);
+  ok = file.end() && ok;
+  // Sur échec le drapeau reste levé : nouvel essai au tour suivant plutôt qu'une perte silencieuse.
+  this->isDirty = !ok;
   this->lastCommit = millis();
+  if(!ok) Serial.println("[CFG] shades.cfg non ecrit, nouvel essai au prochain tour");
 }
 bool SomfyShadeController::writeBackup() {
-  // Renvoie désormais l'issue au lieu de sortir en silence : /backup servait alors le PRÉCÉDENT
-  // /controller.backup en le présentant comme frais.
-  if(fsLocked) return false;
+  // Le verrou du filesystem est tenu par l'appelant (handleBackup), qui est l'écrivain async.
   wdtReset(); // Make sure we don't reset inadvertently.
   ShadeConfigFile file;
-  file.begin("/controller.backup", false);
-  bool ok = file.backup(this);
-  file.end();
-  return ok;
+  bool ok = file.begin("/controller.backup", false) && file.backup(this);
+  return file.end() && ok;
+}
+void SomfyShadeController::requestRestore(const restore_options_t &opts) {
+  this->restoreOpts = opts;
+  this->restorePending = true;
 }
 // Ces trois recherches doivent exclure les emplacements LIBRES, pas seulement comparer
 // l'identifiant demandé au contenu de CHAQUE emplacement : un emplacement libre porte justement
@@ -827,6 +829,20 @@ bool SomfyShadeController::deleteGroup(uint8_t groupId) {
 
 bool SomfyShadeController::loadShadesFile(const char *filename) { return ShadeConfigFile::load(this, filename); }
 void SomfyShadeController::loop() {
+  if(this->restorePending) {
+    // Le verrou tenu le temps de relire /shades.tmp : un téléversement qui le réécrirait pendant la
+    // lecture attend, et un verrou déjà pris reporte simplement l'essai au tour suivant.
+    bool expected = false;
+    if(fsLocked.compare_exchange_strong(expected, true)) {
+      this->restorePending = false;
+      bool ok = ShadeConfigFile::restore(this, "/shades.tmp", this->restoreOpts);
+      fsLocked = false;
+      Serial.printf("[CFG] restauration %s\n", ok ? "appliquee" : "refusee");
+      this->commit();
+      rebootDelay.rebootTime = millis() + 1000;
+      rebootDelay.reboot = true;
+    }
+  }
   this->transceiver.loop();
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
     if(this->shades[i].getShadeId() != 255) {

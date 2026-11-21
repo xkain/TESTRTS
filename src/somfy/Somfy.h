@@ -6,6 +6,7 @@
 #define SOMFY_H
 #include "ConfigSettings.h"
 #include "web/WResp.h"
+#include <atomic>
 // Couche radio (protocole RTS bas niveau + pilote CC1101), extraite dans ses propres en-têtes ;
 // ce fichier ne garde que le modèle de domaine (Room/Remote/Shade/Group/ShadeController) qui en
 // dépend (radio_proto/somfy_commands/somfy_frame_t comme types de champs, Transceiver comme
@@ -518,6 +519,7 @@ class SomfyShadeController {
   protected:
     uint8_t m_shadeIds[SOMFY_MAX_SHADES];
     uint32_t lastCommit = 0;
+    TaskHandle_t ownerTask = nullptr;   // loopTask, seul écrivain de shades.cfg (cf. commit())
   public:
     bool useNVS();
     bool isDirty = false;
@@ -562,6 +564,11 @@ class SomfyShadeController {
     bool begin();
     void loop();
     void end();
+    // Restauration demandée par /restore (async_tcp) et exécutée au tour suivant de loop() : le
+    // modèle ne se réécrit que sur loopTask, et le redémarrage suit le commit.
+    std::atomic<bool> restorePending{false};
+    restore_options_t restoreOpts;
+    void requestRestore(const restore_options_t &opts);
     // Vrai si au moins un équipement est actuellement en mouvement (SomfyShade::isIdle() == false).
     // Sert de garde avant un appel réseau bloquant (fetch GitHub synchrone dans le handler HTTP,
     // cf. GitOTA/WebSystem) : le laisser s'exécuter pendant un mouvement retarderait le STOP et

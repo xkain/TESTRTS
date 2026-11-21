@@ -382,6 +382,8 @@ static void ndjsonApplyShade(JsonObject &obj, SomfyShade *shade) {
   // deux, il recale sur la cible restaurée, pas sur un reliquat.
   if(myPos > 100 || myPos < 0) myPos = -1;
   if(myTiltPos > 100 || myTiltPos < 0) myTiltPos = -1;
+  curPos = cfgClampPos(curPos);
+  curTiltPos = cfgClampPos(curTiltPos);
   if(shade->tiltType == tilt_types::none || shade->shadeType != shade_types::blind) {
     myTiltPos = -1;
     curTiltPos = 0;
@@ -646,8 +648,5 @@ bool ShadeConfigFile::restoreNdjson(SomfyShadeController *s, restore_options_t &
   if(opts.mqtt) settings.MQTT.save();
   free(line);
   delete doc;
-  // Transforme l'estimation de pile de la spec (§5) en relevé : silencieux tant qu'aucun nouveau
-  // point bas n'est atteint.
-  ConfigSettings::reportAsyncTcpStackLow("restore");
   return true;
 }
