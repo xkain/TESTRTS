@@ -79,7 +79,9 @@ namespace WebRadioCommands {
         JsonAsyncResponse resp;
         resp.beginResponse(request);
         resp.beginObject();
-        shade->toJSONRef(resp);
+        // Route au niveau `false`, secrets au niveau CONFIG, comme /shades : en mode « config seule »
+        // la réponse sortait l'adresse et le code tournant sans clé (idem les 8 routes qui suivent).
+        shade->toJSONRef(resp, webServer.checkAuth(request, true));
         resp.endObject();
         resp.endResponse();
       }
@@ -142,7 +144,7 @@ namespace WebRadioCommands {
         JsonAsyncResponse resp;
         resp.beginResponse(request);
         resp.beginObject();
-        shade->toJSONRef(resp);
+        shade->toJSONRef(resp, webServer.checkAuth(request, true));
         resp.endObject();
         resp.endResponse();
       }
@@ -161,7 +163,7 @@ namespace WebRadioCommands {
         JsonAsyncResponse resp;
         resp.beginResponse(request);
         resp.beginObject();
-        group->toJSONRef(resp);
+        group->toJSONRef(resp, webServer.checkAuth(request, true));
         resp.endObject();
         resp.endResponse();
       }
@@ -228,7 +230,7 @@ namespace WebRadioCommands {
         JsonAsyncResponse resp;
         resp.beginResponse(request);
         resp.beginObject();
-        group->toJSONRef(resp);
+        group->toJSONRef(resp, webServer.checkAuth(request, true));
         resp.endObject();
         resp.endResponse();
       }
@@ -295,7 +297,7 @@ namespace WebRadioCommands {
         JsonAsyncResponse resp;
         resp.beginResponse(request);
         resp.beginObject();
-        shade->toJSONRef(resp);
+        shade->toJSONRef(resp, webServer.checkAuth(request, true));
         resp.endObject();
         resp.endResponse();
       }
@@ -336,7 +338,7 @@ namespace WebRadioCommands {
         JsonAsyncResponse resp;
         resp.beginResponse(request);
         resp.beginObject();
-        shade->toJSON(resp);
+        shade->toJSON(resp, webServer.checkAuth(request, true));
         resp.endObject();
         resp.endResponse();
       }
@@ -390,7 +392,7 @@ namespace WebRadioCommands {
         JsonAsyncResponse resp;
         resp.beginResponse(request);
         resp.beginObject();
-        shade->toJSON(resp);
+        shade->toJSON(resp, webServer.checkAuth(request, true));
         resp.endObject();
         resp.endResponse();
       }
@@ -406,7 +408,7 @@ namespace WebRadioCommands {
         JsonAsyncResponse resp;
         resp.beginResponse(request);
         resp.beginObject();
-        group->toJSON(resp);
+        group->toJSON(resp, webServer.checkAuth(request, true));
         resp.endObject();
         resp.endResponse();
       }

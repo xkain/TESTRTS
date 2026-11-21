@@ -1012,6 +1012,8 @@ namespace WebSystem {
     // l'implémente : on redirige donc vers un flux de réponse Async plutôt que vers le client TCP
     // brut, sans toucher à SSDPClass::schema() elle-même.
     server.on("/upnp.xml", AsyncHttp::ANY, [](AsyncWebServerRequest *request) {
+      // Même frontière que /loginContext : version, hôte et série ne sortent sans clé que pour SSDP.
+      if(!settings.ssdpBroadcast) { request->send(404, _encoding_text, _response_404); return; }
       AsyncResponseStream *stream = request->beginResponseStream("text/xml");
       SSDP.schema(*stream);
       request->send(stream);

@@ -293,7 +293,7 @@ namespace WebShadesRest {
           JsonAsyncResponse resp;
           resp.beginResponse(request);
           resp.beginObject();
-          shade->toJSON(resp);
+          shade->toJSON(resp, webServer.checkAuth(request, true));
           resp.endObject();
           resp.endResponse();
         }
@@ -372,7 +372,7 @@ namespace WebShadesRest {
           JsonAsyncResponse resp;
           resp.beginResponse(request);
           resp.beginObject();
-          group->toJSON(resp);
+          group->toJSON(resp, webServer.checkAuth(request, true));
           resp.endObject();
           resp.endResponse();
         }

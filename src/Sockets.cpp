@@ -154,7 +154,7 @@ static bool socketHandshakeAuthorized(uint8_t num, const uint8_t *payload, size_
   // c'est précisément le canal qu'il ne faut pas ouvrir par défaut de mémoire.
   if(!webServer.createAPIToken(sockServer.remoteIP(num), expected)) return false;
   if(expected[0] == '\0') return false;
-  return key.length() == strlen(expected) && key.equals(expected);
+  return secureEquals(key.c_str(), expected);
 }
 
 static sock_defer_slot_t *acquireDeferSlot() {

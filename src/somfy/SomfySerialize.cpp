@@ -489,13 +489,14 @@ void SomfyGroup::toJSON(JsonFormatter &json, bool secrets) {
   }
   json.endArray();
 }
-void SomfyGroup::toJSONRef(JsonFormatter &json) {
+void SomfyGroup::toJSONRef(JsonFormatter &json) { this->toJSONRef(json, true); }
+void SomfyGroup::toJSONRef(JsonFormatter &json, bool secrets) {
   this->updateFlags();
   json.addElem("groupId", this->getGroupId());
   json.addElem("roomId", this->roomId);
   json.addElem("name", this->name);
-  json.addElem("remoteAddress", (uint32_t)this->m_remoteAddress);
-  json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
+  json.addElem("remoteAddress", secrets ? (uint32_t)this->m_remoteAddress : (uint32_t)0);
+  json.addElem("lastRollingCode", secrets ? (uint32_t)this->lastRollingCode : (uint32_t)0);
   json.addElem("bitLength", this->bitLength);
   json.addElem("proto", static_cast<uint8_t>(this->proto));
   json.addElem("sunSensor", this->hasSunSensor());

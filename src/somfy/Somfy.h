@@ -466,6 +466,7 @@ class SomfyGroup : public SomfyRemote {
     // WebChunkedJson.h.
     void toJSONHead(JsonFormatter &json, bool secrets);
     void toJSONRef(JsonFormatter &json);
+    void toJSONRef(JsonFormatter &json, bool secrets);
     
     bool linkShade(uint8_t shadeId);
     bool unlinkShade(uint8_t shadeId);

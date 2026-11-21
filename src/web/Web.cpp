@@ -11,6 +11,11 @@
 #include "ConfigSettings.h"
 #include "ConfigFile.h"
 #include "Utils.h"
+// ENABLE_DEV_CORS neutralise l'anti-CSRF et ouvre l'API à toute page du réseau local : réservé à
+// esp32_dev, le seul environnement à poser FW_TRACE. Un binaire box_eth a déjà été publié avec.
+#if defined(ENABLE_DEV_CORS) && !FW_TRACE
+#error "ENABLE_DEV_CORS est reserve a l'environnement esp32_dev (cf. platformio.ini)"
+#endif
 #include "somfy/Somfy.h"
 #include "WResp.h"
 #include "Web.h"
@@ -414,7 +419,7 @@ bool Web::checkAuth(AsyncWebServerRequest *request, bool cfg) {
   // plus fragile.
   if(!this->createAPIToken(request->client()->remoteIP(), token)) return false;
   if(token[0] == '\0') return false;
-  return String(token) == request->header("apikey");
+  return secureEquals(token, request->header("apikey").c_str());
 }
 bool Web::isAuthenticated(AsyncWebServerRequest *request, bool cfg) {
   DBG_PRINTLN("Checking authentication");

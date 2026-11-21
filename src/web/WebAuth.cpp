@@ -15,6 +15,7 @@
 #include "SysDiag.h"
 #include "WebCommon.h"
 #include "WebAuth.h"
+#include "Utils.h"       // secureEquals()
 
 extern ConfigSettings settings;
 extern Web webServer;
@@ -131,9 +132,20 @@ static uint32_t loginLockoutSeconds(uint16_t fails) {
   return (secs > LOGIN_LOCKOUT_MAX_SECONDS) ? LOGIN_LOCKOUT_MAX_SECONDS : secs;
 }
 
+// Faux si l'identifiant reçu dépasse le champ : /login tronquait et acceptait « 12345 » pour « 1234 »,
+// ou un mot de passe de 40 caractères juste sur ses 32 premiers.
+static bool copyCredential(char *dst, size_t size, const char *src) {
+  if(!src) return true;
+  if(strlen(src) >= size) return false;
+  strlcpy(dst, src, size);
+  return true;
+}
+
 namespace WebAuth {
   void handleLogin(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    // Identifiants dans une URL = historique du navigateur et journaux : le corps seulement.
+    if(request->method() == AsyncHttp::GET) { webServer.sendError(request, 405, "Log in with POST or PUT."); return; }
     StaticJsonDocument<256> doc;
     JsonObject obj = doc.to<JsonObject>();
     char token[65];
@@ -163,6 +175,7 @@ namespace WebAuth {
     memset(username, 0x00, sizeof(username));
     memset(password, 0x00, sizeof(password));
     memset(pin, 0x00, sizeof(pin));
+    bool fits = true;
     // asyncHasBody()/asyncGetBody() (WebCommon.h), pas request->hasArg("body") directement : un
     // corps JSON n'est PAS auto-capturé par ESPAsyncWebServer (seuls x-www-form-urlencoded et
     // text/plain "clef=valeur" le sont) -- il faut un callback onBody explicite, enregistré sur la
@@ -178,15 +191,16 @@ namespace WebAuth {
       }
       else {
           JsonObject objin = docin.as<JsonObject>();
-          if(objin.containsKey("username") && objin["username"]) strlcpy(username, objin["username"], sizeof(username));
-          if(objin.containsKey("password") && objin["password"]) strlcpy(password, objin["password"], sizeof(password));
-          if(objin.containsKey("pin") && objin["pin"]) strlcpy(pin, objin["pin"], sizeof(pin));
+          // `| nullptr` : une valeur non chaîne (nombre, null) donnerait un nullptr à strlcpy.
+          fits &= copyCredential(username, sizeof(username), objin["username"] | (const char *)nullptr);
+          fits &= copyCredential(password, sizeof(password), objin["password"] | (const char *)nullptr);
+          fits &= copyCredential(pin, sizeof(pin), objin["pin"] | (const char *)nullptr);
       }
     }
     else {
-      if(request->hasArg("username")) strlcpy(username, request->arg("username").c_str(), sizeof(username));
-      if(request->hasArg("password")) strlcpy(password, request->arg("password").c_str(), sizeof(password));
-      if(request->hasArg("pin")) strlcpy(pin, request->arg("pin").c_str(), sizeof(pin));
+      if(request->hasArg("username")) fits &= copyCredential(username, sizeof(username), request->arg("username").c_str());
+      if(request->hasArg("password")) fits &= copyCredential(password, sizeof(password), request->arg("password").c_str());
+      if(request->hasArg("pin")) fits &= copyCredential(pin, sizeof(pin), request->arg("pin").c_str());
     }
     // Anti brute-force : verrouillage actif POUR CETTE ADRESSE, on refuse sans même comparer les
     // identifiants. L'emplacement est résolu ici, une seule fois, et réutilisé plus bas.
@@ -203,7 +217,7 @@ namespace WebAuth {
     // At this point we should have all the data we need to login.
     if(settings.Security.type == security_types::PinEntry) {
       DBG_PRINTLN("Validating pin");
-      if(strlen(pin) == 0 || strcmp(pin, settings.Security.pin) != 0) {
+      if(!fits || strlen(pin) == 0 || !secureEquals(pin, settings.Security.pin)) {
         obj["success"] = false;
         obj["msg"] = "Invalid Pin Entry";
       }
@@ -214,7 +228,7 @@ namespace WebAuth {
       }
     }
     else if(settings.Security.type == security_types::Password) {
-      if(strlen(username) == 0 || strlen(password) == 0 || strcmp(username, settings.Security.username) != 0 || strcmp(password, settings.Security.password) != 0) {
+      if(!fits || strlen(username) == 0 || strlen(password) == 0 || !secureEquals(username, settings.Security.username) || !secureEquals(password, settings.Security.password)) {
         obj["success"] = false;
         obj["msg"] = "Invalid username or password";
       }

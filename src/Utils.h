@@ -162,6 +162,8 @@ static void _rtrim(char *str) {
   // Nombre d'octets réellement présents pour cette séquence, terminateur exclu.
   if((len - (i - 1)) < need) str[i - 1] = '\0';
 }
+// Égalité de secrets (PIN, mot de passe, jeton) sans court-circuit sur le premier octet différent.
+bool secureEquals(const char *a, const char *b);
 // À utiliser partout où une chaîne saisie par l'utilisateur est recopiée dans un champ de taille
 // fixe qui sera ensuite sérialisé (noms d'équipement/pièce/groupe/planification, hostname, topics MQTT,
 // identifiants). Même signature que strlcpy() pour rester substituable.

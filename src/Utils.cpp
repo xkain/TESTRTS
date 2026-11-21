@@ -6,6 +6,12 @@
 #include <time.h>
 #include "Utils.h"
 
+bool secureEquals(const char *a, const char *b) {
+  size_t la = strlen(a), lb = strlen(b);
+  unsigned char diff = (unsigned char)(la != lb);
+  for(size_t i = 0; i < la; i++) diff |= (unsigned char)(a[i] ^ b[i < lb ? i : 0]);
+  return diff == 0;
+}
 
 /*********************************************************************
  * Timestamp class members
