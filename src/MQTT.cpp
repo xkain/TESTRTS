@@ -387,8 +387,13 @@ void MQTTClass::discoDevice(JsonObject &obj) {
 }
 bool MQTTClass::publishDisco(const char *topic, JsonObject &obj, bool retain) {
   MqttLockGuard lock;
-  serializeJson(obj, g_content, sizeof(g_content));
-  bool ok = this->publishBuffer(topic, (uint8_t *)g_content, strlen(g_content), retain, true);
+  size_t n = serializeJson(obj, g_content, sizeof(g_content));
+  // Tronquée, la fiche serait un JSON invalide chez le courtier : mieux vaut ne rien publier.
+  if(n >= sizeof(g_content) - 1) {
+    Serial.printf("[MQTT] fiche %s trop grande (%u octets), non publiee\n", topic, (unsigned)n);
+    return false;
+  }
+  bool ok = this->publishBuffer(topic, (uint8_t *)g_content, n, retain, true);
   // Purge de l'ancienne forme préfixée du MÊME topic. unpublishDisco() ne couvre que les fiches
   // qu'on efface -- l'autre famille, un volet supprimé -- jamais celle qu'on vient de publier :
   // la fiche héritée de la famille courante resterait donc chez le courtier pour toujours, et

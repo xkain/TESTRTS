@@ -556,7 +556,7 @@ bool Transceiver::usesPin(uint8_t pin) {
 }
 bool Transceiver::save() {
     this->config.save();
-    this->config.apply();
+    this->applyRequested = true;
     return true;
 }
 bool Transceiver::end() {
@@ -975,6 +975,7 @@ void Transceiver::loop() {
   // principale, la seule qui doive toucher le CC1101 et ses interruptions. `exchange` rend la
   // valeur ET remet la sentinelle en une opération : une seconde demande arrivant d'async_tcp
   // pendant ce tour ne peut pas être perdue silencieusement, elle sera vue au tour suivant.
+  if(this->applyRequested.exchange(false)) this->config.apply();
   const uint8_t demande = this->scanRequest.exchange(SCAN_REQ_NONE);
   if(demande == SCAN_REQ_BEGIN) this->beginFrequencyScan();
   else if(demande == SCAN_REQ_END) this->endFrequencyScan();

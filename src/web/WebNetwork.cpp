@@ -302,7 +302,7 @@ namespace WebNetwork {
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set General Settings\"}");
       }
       else {
-        webServer.sendError(request, 201, "Invalid HTTP Method: ");
+        webServer.sendError(request, 405, "Invalid HTTP Method: ");
       }
     }
   }
@@ -393,7 +393,7 @@ namespace WebNetwork {
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set Network Settings\"}");
       }
       else {
-        webServer.sendError(request, 201, "Invalid HTTP Method: ");
+        webServer.sendError(request, 405, "Invalid HTTP Method: ");
       }
     }
   }
@@ -417,7 +417,7 @@ namespace WebNetwork {
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set Network Settings\"}");
       }
       else {
-        webServer.sendError(request, 201, "Invalid HTTP Method: ");
+        webServer.sendError(request, 405, "Invalid HTTP Method: ");
       }
     }
   }
@@ -466,7 +466,7 @@ namespace WebNetwork {
         }
       }
       else {
-        webServer.sendError(request, 201, "Invalid HTTP Method: ");
+        webServer.sendError(request, 405, "Invalid HTTP Method: ");
       }
     }
   }
@@ -567,7 +567,7 @@ namespace WebNetwork {
         resp.endResponse();
       }
       else {
-        webServer.sendError(request, 201, "Invalid HTTP Method: ");
+        webServer.sendError(request, 405, "Invalid HTTP Method: ");
       }
     }
   }

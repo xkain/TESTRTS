@@ -1301,7 +1301,7 @@ namespace WebShadesRest {
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set room order\"}");
       }
       else {
-        webServer.sendError(request, 201, "Invalid HTTP Method: ");
+        webServer.sendError(request, 405, "Invalid HTTP Method: ");
       }
     }
   }
@@ -1336,7 +1336,7 @@ namespace WebShadesRest {
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set shade order\"}");
       }
       else {
-        webServer.sendError(request, 201, "Invalid HTTP Method: ");
+        webServer.sendError(request, 405, "Invalid HTTP Method: ");
       }
     }
   }
@@ -1371,7 +1371,7 @@ namespace WebShadesRest {
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set group order\"}");
       }
       else {
-        webServer.sendError(request, 201, "Invalid HTTP Method: ");
+        webServer.sendError(request, 405, "Invalid HTTP Method: ");
       }
     }
   }

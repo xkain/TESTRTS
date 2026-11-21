@@ -874,7 +874,8 @@ namespace WebRadioCommands {
                 shade->unlinkRemote(obj["remoteAddress"]);
               }
               else {
-                webServer.sendError(request, 500, "Remote address not provided.");
+                webServer.sendError(request, 400, "Remote address not provided.");
+                return;   // sans lui, la fiche partait en 200 juste derrière et remplaçait le refus
               }
               JsonAsyncResponse resp;
               resp.beginResponse(request);

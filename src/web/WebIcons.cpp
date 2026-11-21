@@ -42,8 +42,8 @@ namespace WebIcons {
     // 404 = pas de pack : la page garde le défaut. « wanted » nomme le pack d'une sauvegarde
     // restaurée dont le fichier manque encore, que la page va chercher dans le catalogue.
     if(!LittleFS.exists(ICON_PACK_FILE)) {
-      char buf[96];
-      snprintf(buf, sizeof(buf), "{\"error\":\"no icon pack\",\"wanted\":\"%s\"}", settings.iconPack);
+      char buf[128];
+      snprintf(buf, sizeof(buf), "{\"error\":\"no icon pack\",\"wanted\":\"%s\"}", jsonEscape(settings.iconPack).c_str());
       request->send(404, _encoding_json, buf);
       return;
     }

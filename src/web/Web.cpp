@@ -373,17 +373,17 @@ void Web::sendError(AsyncWebServerRequest *request, int httpCode, const char *de
   else snprintf(buf, sizeof(buf), "{\"status\":\"ERROR\",\"desc\":\"%s\"}", desc);
   request->send(httpCode, _encoding_json, buf);
 }
-void Web::rejectMethod(AsyncWebServerRequest *request) { this->sendError(request, 500, "Invalid Http method"); }
+void Web::rejectMethod(AsyncWebServerRequest *request) { this->sendError(request, 405, "Invalid Http method"); }
 void Web::handleDeserializationError(AsyncWebServerRequest *request, DeserializationError &err) {
     switch (err.code()) {
     case DeserializationError::InvalidInput:
-      webServer.sendError(request, 500, "Invalid JSON payload");
+      webServer.sendError(request, 400, "Invalid JSON payload");
       break;
     case DeserializationError::NoMemory:
       webServer.sendError(request, 500, "Out of memory parsing JSON");
       break;
     default:
-      webServer.sendError(request, 500, "General JSON Deserialization failed");
+      webServer.sendError(request, 400, "General JSON Deserialization failed");
       break;
     }
 }

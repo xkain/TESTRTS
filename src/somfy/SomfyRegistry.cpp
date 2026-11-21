@@ -851,6 +851,16 @@ void SomfyShadeController::loop() {
       rebootDelay.reboot = true;
     }
   }
+  if(this->loadPending) {
+    bool expected = false;
+    if(fsLocked.compare_exchange_strong(expected, true)) {
+      this->loadPending = false;
+      bool ok = ShadeConfigFile::load(this, "/shades.tmp");
+      fsLocked = false;
+      Serial.printf("[CFG] shades.tmp %s\n", ok ? "charge" : "refuse");
+      if(ok) this->commit();
+    }
+  }
   this->transceiver.loop();
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
     if(this->shades[i].getShadeId() != 255) {

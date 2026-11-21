@@ -581,6 +581,9 @@ class SomfyShadeController {
     std::atomic<bool> restorePending{false};
     restore_options_t restoreOpts;
     void requestRestore(const restore_options_t &opts);
+    // Même mécanisme pour /updateShadeConfig : relecture de /shades.tmp par loop(), sans redémarrage.
+    std::atomic<bool> loadPending{false};
+    void requestLoadShadesFile() { this->loadPending = true; }
     // Vrai si au moins un équipement est actuellement en mouvement (SomfyShade::isIdle() == false).
     // Sert de garde avant un appel réseau bloquant (fetch GitHub synchrone dans le handler HTTP,
     // cf. GitOTA/WebSystem) : le laisser s'exécuter pendant un mouvement retarderait le STOP et

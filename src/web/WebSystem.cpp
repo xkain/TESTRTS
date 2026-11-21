@@ -609,7 +609,7 @@ namespace WebSystem {
       request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully started reboot\"}");
     }
     else {
-      webServer.sendError(request, 201, "Invalid HTTP Method: ");
+      webServer.sendError(request, 405, "Invalid HTTP Method: ");
     }
   }
 
@@ -645,6 +645,7 @@ namespace WebSystem {
     bool rejected = false;
     bool hasDigest = false;
     bool digestMismatch = false;
+    bool badHeader = false;   // magie, puce ou taille de flash de l'en-tête d'image refusés
     uint8_t expected[32];
     mbedtls_sha256_context sha;
     uint8_t tailLen = 0;
@@ -818,6 +819,10 @@ namespace WebSystem {
       webServer.sendError(request, 400, "Malformed " FW_DIGEST_HEADER " header.", "FW_DIGEST_MISMATCH");
       return;
     }
+    if(scan && scan->badHeader) {
+      webServer.sendError(request, 400, "This image is not a firmware for this chip or its flash size.", "FW_IMAGE_INCOMPATIBLE");
+      return;
+    }
     if(!scan || scan->rejected) {
       webServer.sendError(request, 503, "Firmware update could not be started, please retry.");
       return;
@@ -874,13 +879,29 @@ namespace WebSystem {
         mbedtls_sha256_init(&scan->sha);
         FW_SHA_STARTS(&scan->sha, 0);
       }
-      if (!Update.begin(UPDATE_SIZE_UNKNOWN)) { //start with max available size
+      // En-tête d'image (esp_image_header_t) : magie 0xE9, puce (CONFIG_IDF_FIRMWARE_CHIP_ID) et
+      // taille de flash déclarée (octet 3, quartet haut : 0 = 1 Mo, 1 = 2, 2 = 4, 3 = 8...). Une image
+      // d'une autre puce ou déclarant plus de flash que le chargeur n'en voit = bootloop puis retour
+      // arrière, sans que rien ne le dise au client.
+      if(len >= 16) {
+        uint16_t chipId = data[12] | ((uint16_t)data[13] << 8);
+        uint32_t declared = 1UL << (20 + (data[3] >> 4));
+        if(data[0] != 0xE9 || chipId != CONFIG_IDF_FIRMWARE_CHIP_ID || declared > ESP.getFlashChipSize()) {
+          Serial.printf("Firmware upload rejected: image header (magic %02X, chip %u, flash %u MB)\n", data[0], chipId, (unsigned)(declared >> 20));
+          scan->badHeader = true;
+          scan->rejected = true;
+          return;
+        }
+      }
+      // Un second téléversement pendant le premier partagerait le singleton Update : refusé AVANT
+      // d'armer onDisconnect, sinon la déconnexion du second abortait le premier.
+      if (Update.isRunning() || !Update.begin(UPDATE_SIZE_UNKNOWN)) {
         Update.printError(Serial);
+        scan->rejected = true;
+        return;
       }
-      else {
-        somfy.transceiver.end(); // Shut down the radio so we do not get any interrupts during this process.
-        mqtt.end();
-      }
+      somfy.transceiver.end(); // Shut down the radio so we do not get any interrupts during this process.
+      mqtt.end();
       // Équivalent de UPLOAD_FILE_ABORTED (WebServer&) : ESPAsyncWebServer ne signale pas
       // l'abandon via le callback d'upload lui-même, mais via un callback de déconnexion séparé.
       request->onDisconnect([]() {
@@ -961,11 +982,10 @@ namespace WebSystem {
     // encore répondre. Tant qu'il vivait dans le callback, son booléen de retour était jeté et un
     // fichier illisible passait pour un succès. L'ordre reste celui que documentait déjà le
     // callback -- verrou relâché au chunk final, PUIS relecture, le filesystem devant être libre.
-    if(!somfy.loadShadesFile("/shades.tmp")) {
-      webServer.sendError(request, 500, "Invalid shade configuration file");
-      return;
-    }
-    request->send(200, _encoding_json, "{\"status\":\"Success\",\"desc\":\"Shade configuration updated\"}");
+    // Relu par loop() (SomfyShadeController::loop) et non ici : le modèle ne se réécrit que sur
+    // loopTask. Le verdict sur le fichier part donc sur la série, plus dans cette réponse.
+    somfy.requestLoadShadesFile();
+    request->send(200, _encoding_json, "{\"status\":\"Success\",\"desc\":\"Shade configuration queued\"}");
   }
 
   static void handleUpdateShadeConfigBody(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {

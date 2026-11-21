@@ -263,7 +263,7 @@ void SomfyShade::publishRemoteDisco(uint8_t slot, bool present) {
   snprintf(topic, sizeof(topic), "%s/sensor/%ur%u/config", settings.MQTT.discoTopic, this->shadeId, slot);
   if(!present) { mqtt.unpublishDisco(topic); return; }
   if(!settings.MQTT.pubDisco) return;
-  char buf[64];
+  char buf[96];   // rootTopic (64) + "/listeners/" + adresse
   DynamicJsonDocument doc(1024);
   JsonObject obj = doc.to<JsonObject>();
   snprintf(buf, sizeof(buf), "%s/shades/%u", settings.MQTT.rootTopic, this->shadeId);
@@ -827,7 +827,7 @@ void SomfyShadeController::publishListenerEvent(somfy_listener_t *l, int rssi) {
 void SomfyShadeController::publishListenerDisco(somfy_listener_t *l) {
   if(!mqtt.connected() || !settings.MQTT.pubDisco) return;
   char topic[128];
-  char buf[64];
+  char buf[96];   // rootTopic (64) + "/listeners/" + adresse
   DynamicJsonDocument doc(1536);
   JsonObject obj = doc.to<JsonObject>();
   snprintf(buf, sizeof(buf), "%s/listeners/%u", settings.MQTT.rootTopic, (unsigned)l->address);

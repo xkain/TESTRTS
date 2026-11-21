@@ -144,6 +144,8 @@ class Transceiver {
     // Pour ces commandes, la piste est un verrou étroit begin/endTransmit, pas un différé.
     enum scan_request_t : uint8_t { SCAN_REQ_NONE = 0, SCAN_REQ_BEGIN, SCAN_REQ_END };
     std::atomic<uint8_t> scanRequest{SCAN_REQ_NONE};
+    // save() (handler HTTP, async_tcp) ne touche plus le CC1101 : apply() part de loop().
+    std::atomic<bool> applyRequested{false};
     void requestFrequencyScan(bool begin) { this->scanRequest.store(begin ? SCAN_REQ_BEGIN : SCAN_REQ_END); }
     void beginFrequencyScan();
     void endFrequencyScan();
