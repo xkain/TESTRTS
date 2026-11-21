@@ -319,9 +319,10 @@ class UIBinder {
         if (err && (err.noResponse || err instanceof TypeError)) return '';
         let msg = '';
         if (typeof err === 'string' && err.startsWith('{')) {
-            let e = JSON.parse(err);
-            if (typeof e !== 'undefined' && typeof e.desc === 'string') msg = e.desc;
-            else msg = err;
+            // Un corps coupé en route n'est pas du JSON : le texte brut vaut mieux qu'une exception ici.
+            let e = null;
+            try { e = JSON.parse(err); } catch (ex) { e = null; }
+            msg = (e && typeof e.desc === 'string') ? e.desc : err;
         }
         else if (typeof err === 'string') msg = err;
         else if (typeof err === 'number') {

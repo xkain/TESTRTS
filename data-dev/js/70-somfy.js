@@ -4806,8 +4806,6 @@ class Somfy {
                 document.querySelectorAll(`.somfyShadeCtl[data-shadeid="${shadeId}"]`).forEach(d => {
                     d.dataset.mypos = response.myPos;
                     d.dataset.mytiltpos = response.myTiltPos ?? -1;
-                    const myBadge = d.querySelector('.myShade-badge');
-                    if (myBadge && idx >= 0) myBadge.textContent = this.myBadgeText(this.shades[idx]);
                 });
                 this.refreshCardSheet('shade', shadeId);
             }
@@ -5030,12 +5028,6 @@ class Somfy {
             d.querySelectorAll('.val-pos-pct').forEach(el => { el.textContent = `${state.position} %`; });
             if (state.tiltType !== 0) d.querySelectorAll('.val-tilt-pct').forEach(el => { el.textContent = `${state.tiltPosition} %`; });
             if (state.tiltType !== 0) d.querySelectorAll('.val-tilt-pos').forEach(tiltEl => { tiltEl.innerText = `${state.tiltPosition}%`; });
-
-            // Badge "My" du pied de carte : un seul élément combiné (position + tilt séparés par
-            // "·"), pas deux éléments distincts -- on reconstruit tout le contenu à chaque mise à
-            // jour plutôt que de cibler des sous-éléments qui n'existent pas dans le template.
-            const myBadge = d.querySelector('.myShade-badge');
-            if (myBadge) myBadge.textContent = this.myBadgeText(cached || state);
             if (d.classList.contains('dcard')) this.syncDashCard(d, cached || state);
 
             // Slider(s) du carrousel de contrôles : reflète un mouvement déclenché ailleurs (planning,

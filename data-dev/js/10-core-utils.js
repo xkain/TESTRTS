@@ -653,46 +653,6 @@ Date.prototype.addMinutes = function (minutes) {
     this.setMinutes(this.getMinutes() + minutes);
     return this;
 };
-Date.prototype.toJSON = function () {
-    const tz = this.getTimezoneOffset();
-    const sign = tz > 0 ? '-' : '+';
-    const absTz = Math.abs(tz);
-    const f = (n, c) => n.toString().padStart(c, '0');
-
-    return `${this.getFullYear()}-${f(this.getMonth() + 1, 2)}-${f(this.getDate(), 2)}T${f(this.getHours(), 2)}:${f(this.getMinutes(), 2)}:${f(this.getSeconds(), 2)}.${f(this.getMilliseconds(), 3)}${sign}${f(Math.floor(absTz / 60), 2)}${f(absTz % 60, 2)}`;
-};
-Date.prototype.fmt = function (fmtMask, emptyMask) {
-    const mask = fmtMask || 'MM-dd-yyyy HH:mm:ss';
-
-    const d = this;
-    const y = d.getFullYear();
-    const H = d.getHours();
-    const m = d.getMonth();
-    const map = {
-        yyyy: y,
-        yy: String(y).slice(-2),
-        MMMM: formatType.MONTHS[m],
-        MMM: formatType.MONTHS[m]?.substring(0, 3),
-        MM: String(m + 1).padStart(2, '0'),
-        M: m + 1,
-        dddd: formatType.DAYS[d.getDay()],
-        ddd: formatType.DAYS[d.getDay()]?.substring(0, 3),
-        dd: String(d.getDate()).padStart(2, '0'),
-        d: d.getDate(),
-        HH: String(H).padStart(2, '0'),
-        H: H,
-        hh: String(H % 12 || 12).padStart(2, '0'),
-        h: (H % 12 || 12),
-        mm: String(d.getMinutes()).padStart(2, '0'),
-        m: d.getMinutes(),
-        ss: String(d.getSeconds()).padStart(2, '0'),
-        s: d.getSeconds(),
-        tt: H < 12 ? 'am' : 'pm',
-        t: H < 12 ? 'a' : 'p'
-    };
-
-    return mask.replace(/yyyy|yy|MMMM|MMM|MM|M|dddd|ddd|dd|d|HH|H|hh|h|mm|m|ss|s|tt|t/g, t => map[t]);
-};
 Number.prototype.round = function (dec) { return Number(Math.round(this + 'e' + dec) + 'e-' + dec); };
 Number.prototype.fmt = function (format, empty) {
     if (isNaN(this)) return empty || '';

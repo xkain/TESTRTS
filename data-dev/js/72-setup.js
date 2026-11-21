@@ -180,6 +180,7 @@ class ShadeSetup {
     // Un chrono en cours veut dire un moteur peut-être en mouvement : on l'arrête avant de partir.
     onClose() {
         this.stopListen();
+        if (this.actTimer) { clearInterval(this.actTimer); this.actTimer = null; }
         if (this.s && this.s.timer) { this.stopTimer(); this.sendCmd('My'); }
         if (this.s && this.s.rtimer) clearTimeout(this.s.rtimer);
         if (this.s) somfy.updateShadeList();

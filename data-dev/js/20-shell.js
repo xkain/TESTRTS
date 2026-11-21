@@ -7,12 +7,6 @@ var sockIsOpen = false;
 var connecting = false;
 var connects = 0;
 var connectFailed = 0;
-// Compilées une seule fois plutôt qu'à chaque message socket.onmessage (JSON.parse reviver
-// ci-dessous) : sans état (pas de flag g/y, donc pas de .lastIndex à réinitialiser entre appels),
-// leur réutilisation est sûre. Sensible en pratique pendant un scan RF actif, qui pousse des
-// messages fréquents (frequencyScan).
-const RE_ISO_DATE = /^(\d{4}|\+010000)-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/;
-const RE_MSAJAX_DATE = /^\/Date\((d|-|.*)\)[\/|\\]$/;
 async function initSockets() {
     if (connecting) return;
     logger.debug('Connecting to socket...');
@@ -42,18 +36,7 @@ async function initSockets() {
                 let eventName = evt.data.substring(3, ndx);
                 let data = evt.data.substring(ndx + 1, evt.data.length - 1);
                 try {
-                    var msg = JSON.parse(data, (key, value) => {
-                        if (typeof value === 'string') {
-                            var a = RE_ISO_DATE.exec(value);
-                            if (a) return new Date(value);
-                            a = RE_MSAJAX_DATE.exec(value);
-                            if (a) {
-                                var b = a[1].split(/[-+,.]/);
-                                return new Date(b[0] ? +b[0] : 0 - +b[1]);
-                            }
-                        }
-                        return value;
-                    });
+                    var msg = JSON.parse(data);
                     switch (eventName) {
                         case 'memStatus':
                             firmware.procMemoryStatus(msg);
@@ -1202,8 +1185,6 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
     }
 
     clearOverlays();
-    get('btnMobileHome')?.classList.toggle('is-active', isDashboard);
-    get('btnMobileSettings')?.classList.toggle('is-active', !isDashboard);
 
     if (isDashboard) {
         if (typeof security !== 'undefined' && security.type !== 0 && !security.authenticated) {
@@ -1317,22 +1298,6 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
         whenSomfyDataReady(() => { if (currentLeafId === leafId) cfg.open(activeEditor, { silentError: true }); }, () => routeSetEditor(leafId, null, { replace: true }));
     }
     return slug;
-}
-
-// Le tooltip d'uptime s'ouvre au :hover en CSS, ce qui suffit sur desktop. Sur tactile, :hover est
-// à la fois imprévisible et collant (il reste actif après le toucher), d'où cette bascule explicite
-// au clic sur la version mobile -- le CSS desktop reste inchangé.
-function bindMobileUptimeTooltip() {
-    const chip = get('mobileUptime');
-    if (!chip) return;
-    chip.addEventListener('click', (e) => {
-        // Un clic DANS le tooltip (sélection de texte) ne doit pas le refermer.
-        if (e.target.closest('.uptime-tooltip')) return;
-        chip.classList.toggle('uptime-open');
-    });
-    document.addEventListener('click', (e) => {
-        if (!chip.contains(e.target)) chip.classList.remove('uptime-open');
-    });
 }
 
 function bindNavigation() {
@@ -1964,7 +1929,6 @@ async function init() {
 
 
     bindNavigation();
-    bindMobileUptimeTooltip();
     bindAppTooltips();
     // Restaure la route depuis le hash de l'URL au chargement (deep-link direct ou F5) ; par
     // défaut le Dashboard si absent/inconnu. replaceState (réécriture manuelle ci-dessous) pour
