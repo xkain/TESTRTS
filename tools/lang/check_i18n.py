@@ -16,6 +16,7 @@ Chaque contrôle correspond à quelque chose qui s'est effectivement affiché à
   - jetons de substitution divergents        -> {LANG}, {MAX}, %1 absents d'une traduction
   - repli mort après tr()                    -> tr(x) || x, impossible à atteindre
   - clé au format non conforme               -> "PAGE MODAL LED", espaces au lieu de _
+  - code d'erreur du firmware sans clé ERR_  -> FW_DIGEST_MISMATCH, LED_COLOR_INVALID (desc anglais affiché)
 
 Pourquoi au build plutôt qu'en revue
 ------------------------------------
@@ -76,6 +77,10 @@ TOKEN = re.compile(r"\{[A-Za-z_]+\}|%[0-9]|%[a-z]+%")
 # grâce au [,)] final. Le contenu est délibérément permissif (espaces et accents compris) :
 # c'est précisément ce qui permet d'attraper tr("Position MY") ou tr("Fermer"), des phrases
 # françaises passées à tr() comme s'il s'agissait de clés.
+# Web::sendError(request, code, desc, "CODE") : le client affiche tr('ERR_' + CODE) et ne retombe sur
+# le `desc` anglais que faute de clé. Les codes volontairement muets côté client sont listés à part.
+SEND_ERROR_CODE = re.compile(r'sendError\([^;]*?,\s*"([A-Z0-9_]+)"\s*\)')
+SILENT_ERR_CODES = ("LED_TEST_BUSY",)   # 40-general.js : le test LED occupé n'affiche rien
 TR_LITERAL = re.compile(r"""\b(?:tr|trOr)\s*\(\s*(['"])([^'"\n]+)\1\s*[,)]""")
 TR_ATTR = re.compile(r"""(?<![-\w])tr="([^"]+)\"""")
 # tr(...) suivi de || : impossible à atteindre, tr() ne renvoyant jamais de valeur fausse.
@@ -192,6 +197,20 @@ def check(root, full=False):
                           "      repli est réellement nécessaire." % (name, line_of(src, m.start())))
         if path.endswith(".js"):
             errors += hardcoded_text(name, src, loc[REF][0])
+
+    # --- 3b. codes d'erreur émis par le firmware ----------------------------------------------
+    for path in glob.glob(os.path.join(root, "src", "**", "*.cpp"), recursive=True):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                src = f.read()
+        except OSError:
+            continue
+        for m in SEND_ERROR_CODE.finditer(src):
+            code = m.group(1)
+            if code in SILENT_ERR_CODES or ("ERR_" + code) in ref_keys:
+                continue
+            errors.append("%s:%d : sendError(..., %r) -- aucune clé ERR_%s dans %s.json, le client afficherait le desc anglais"
+                          % (rel(root, path), line_of(src, m.start()), code, code, REF))
 
     # --- 4. audit non bloquant ----------------------------------------------------------------
     if full:

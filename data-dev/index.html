@@ -26,7 +26,7 @@
     window.__buildVersion = '{{VERSION}}';
     window.__isDevServer = (window.__buildVersion === '{{' + 'VERSION}}');
 
-    // index.css/index.js n'existent que fusionnés (base+main+overlays / 12 chunks js/), générés par
+    // index.css/index.js n'existent que fusionnés (base+main+overlays / les chunks js/ de JS_CHUNKS), générés par
     // build_data_image.py dans data/ au moment du build PlatformIO -- jamais dans data-dev/. Les replis
     // ci-dessous chargent les sources séparées à la place, dans le même ordre que CSS_CHUNKS et
     // JS_CHUNKS.

@@ -193,14 +193,14 @@ def resolve_build_version():
 # ──────────────────────────────────────────────
 
 def minify_html(text: str) -> str:
-    # Les blocs <script>/<pre>/<textarea> sont mis de côté avant les passes de compactage
+    # Les blocs <script>/<style>/<pre>/<textarea> sont mis de côté avant les passes de compactage
     # ci-dessous : leur contenu a des espaces significatifs (un template JS multi-lignes,
     # une chaîne avec 2+ espaces...) que la passe \s{2,} -> " " altérerait sinon.
     protected = []
     def _stash(m):
         protected.append(m.group(0))
         return f"\x00{len(protected) - 1}\x00"
-    text = re.sub(r"<(script|pre|textarea)\b[^>]*>.*?</\1>", _stash, text,
+    text = re.sub(r"<(script|style|pre|textarea)\b[^>]*>.*?</\1>", _stash, text,
                   flags=re.DOTALL | re.IGNORECASE)
 
     # Suppression des commentaires HTML. L'ancien pattern `r""` (chaîne vide) ne matchait
@@ -385,11 +385,13 @@ def minify_js(text: str) -> str:
     return "".join(out)
 
 def minify_json(text: str) -> str:
+    # Pas de repli sur le texte brut : un manifest.json invalide partait tel quel dans l'image, et c'est
+    # ArduinoJson qui échouait sur l'appareil (catalogue des langues vide, sans un mot au build).
     try:
         data = json.loads(text)
-        return json.dumps(data, separators=(",", ":"), ensure_ascii=False)
-    except:
-        return text
+    except json.JSONDecodeError as e:
+        raise SystemExit(f"[data] JSON invalide, build interrompu : {e}")
+    return json.dumps(data, separators=(",", ":"), ensure_ascii=False)
 
 def minify_svg(text: str) -> str:
     # Suppression des commentaires SVG/XML : même bug que minify_html, l'ancien pattern vide
