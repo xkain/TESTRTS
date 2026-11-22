@@ -815,7 +815,7 @@
                                             <button id="btnNetEthDetail" type="button" class="gen-btn" onclick="wifi.toggleEthDetail();"><span></span></button>
                                         </div>
                                         <div id="netEthManualTile" class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="CONNEXION_ETH_MANUAL"></h3>
+                                            <h3 class="gen-tile-title" tr="SETTINGS_MANUAL"></h3>
                                             <div id="divEthernetMode">
                                                 <div id="divETHSettings">
                                                     <div class="gpio-main-wrapper">
@@ -1941,14 +1941,15 @@
                                             <h3 class="gen-tile-title" tr="RADIO_ASSIST_TITLE"></h3>
                                             <p class="gen-tile-desc" tr="RADIO_ASSIST_DESC"></p>
                                             <div id="divRadioFleet" class="rd-fleet"></div>
+                                            <button type="button" class="rd-manual-btn" aria-expanded="false" onclick="somfy.toggleRadioManual(this);"><svg><use href="#svg-tabSettings"></use></svg><span tr="SETTINGS_MANUAL"></span><svg class="rd-manual-chev"><use href="#svg-arrowDown"></use></svg></button>
                                         </div>
-                                        <div class="gen-tile">
+                                        <div class="gen-tile rdc-manual" hidden>
                                             <h3 class="gen-tile-title" tr="RADIO_SCAN_TITLE"></h3>
                                             <p class="gen-tile-desc" tr="RADIO_SCAN_HINT_DESC"></p>
                                             <p class="gen-tile-desc is-info" tr="RADIO_SCAN_RX_ONLY"></p>
                                             <button id="btnScanFrequency" type="button" class="gen-btn" onclick="somfy.scanFrequency(true);"><svg><use href="#svg-scan"></use></svg><span tr="RADIO_SCAN_BTN"></span></button>
                                         </div>
-                                        <div class="gen-tile rdc-sliders">
+                                        <div class="gen-tile rdc-sliders rdc-manual" hidden>
                                             <h3 class="gen-tile-title" tr="RADIO_GROUP_RX"></h3>
                                             <div class="blocradio dirty-target">
                                                 <div class="blocRadioHeader">
@@ -2031,6 +2032,7 @@
                                             <dl class="rdc-help-list">
                                                 <div><dt tr="RADIO_RX_FREQUENCY"></dt><dd tr="RADIO_HELP_RX_FREQUENCY"></dd></div>
                                                 <div><dt tr="RADIO_RX_BANDWIDTH"></dt><dd tr="RADIO_HELP_RX_BANDWIDTH"></dd></div>
+                                                <div><dt tr="RADIO_DECODE_TITLE"></dt><dd tr="RADIO_HELP_RX_DECODE"></dd></div>
                                             </dl>
                                         </div>
                                         <div class="gen-tile">

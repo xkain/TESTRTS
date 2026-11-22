@@ -3616,6 +3616,38 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     justify-content: flex-end;
     margin-top: auto;
 }
+/* Lien « Réglages manuels » sous le résultat du test : déplie le balayage et les curseurs. */
+.rd-manual-btn,
+.rd-manual-btn:hover {
+    display: flex;
+    align-items: center;
+    align-self: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px 4px;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--fs-3);
+    font-weight: 600;
+    text-transform: none;
+    cursor: pointer;
+}
+.rd-manual-btn svg {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+.rd-manual-btn .rd-manual-chev {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+.rd-manual-btn[aria-expanded="true"] .rd-manual-chev {
+    transform: rotate(180deg);
+}
 
 /* =======================================================================
  *  PAGES RADIO - DÉCLENCHEURS, RÉPÉTEUR, JOURNAUX (maquette A2, gabarit de Général)

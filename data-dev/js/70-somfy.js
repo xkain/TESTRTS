@@ -2405,6 +2405,13 @@ class Somfy {
     }
     // Profil BOX : la carte est connue et figée, l'onglet Matériel la montre en lecture seule (le
     // sélecteur de carte est caché par main.css), sauf en mode expert.
+    // Balayage et curseurs de réception, repliés sous l'assistant : rien n'est retenu, la page se rouvre repliée.
+    toggleRadioManual(btn) {
+        const open = btn.getAttribute('aria-expanded') !== 'true';
+        btn.setAttribute('aria-expanded', open);
+        document.querySelectorAll('#rdcPanels .rdc-manual').forEach(t => { t.hidden = !open; });
+        if (this._radioTabs) this._radioTabs.update();
+    }
     syncRadioHardwareTab() {
         if (!this._radioTabs) return;
         const profile = get('divContainer').getAttribute('data-hardwareprofile') || '';
