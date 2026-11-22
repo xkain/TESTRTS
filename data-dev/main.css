@@ -5145,9 +5145,11 @@ body:has(.inst-overlay, .modal-overlay) #divSettingsPnl > .button-container-foot
     display: flex;
     flex-direction: column;
 }
+/* Valeur plafonnée à 60 % de la ligne : au-delà elle passe à la ligne au lieu d'écraser le
+   libellé (« Définir manuellement (utilisateur avancé) » recouvrait « Carte Ethernet »). */
 .net-sum-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) fit-content(60%) auto;
     align-items: center;
     gap: 12px;
     width: 100%;
