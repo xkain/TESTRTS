@@ -147,14 +147,17 @@ class Security {
                     if (ctx.flashSize) {
                         get('info-flash').innerHTML = `<span>${tr('FW_TOTAL')}: </span><span class="status-detail">${ctx.flashSize}</span> ${tr('UNIT_MO')} (<span class="hide550">${tr('FW_SPEED')}: </span><span class="status-detail">${ctx.flashSpeed}</span> ${tr('UNIT_MHZ')})`;
                     }
-                    if (ctx.fsTotal) {
-                        const free = ctx.fsTotal - ctx.fsUsed, pct = Math.round((ctx.fsUsed / ctx.fsTotal) * 100);
-                        const el = get('info-fs-status');
-                        if (el) el.innerHTML = `<span class="status-detail">${free}</span> ${tr('UNIT_KO')} ${tr('FW_FREE_SUFFIX')}<span class="hide550"> ${tr('FW_ON')} <span class="status-detail">${ctx.fsTotal}</span></span>`;
-                        const pctEl = get('spanFsPct');
+                    const meter = (bar, pctId, txtId, total, used) => {
+                        if (!total) return;
+                        const pct = Math.round((used / total) * 100);
+                        const el = get(txtId);
+                        if (el) el.innerHTML = `<span class="status-detail">${total - used}</span> ${tr('UNIT_KO')} ${tr('FW_FREE_SUFFIX')}<span class="hide550"> ${tr('FW_ON')} <span class="status-detail">${total}</span></span>`;
+                        const pctEl = get(pctId);
                         if (pctEl) pctEl.textContent = `${pct} %`;
-                        get('fwFsBar')?.style.setProperty('--progress', `${pct}%`);
-                    }
+                        get(bar)?.style.setProperty('--progress', `${pct}%`);
+                    };
+                    meter('fwFsBar', 'spanFsPct', 'info-fs-status', ctx.fsTotal, ctx.fsUsed);
+                    meter('fwAppBar', 'spanAppPct', 'info-app-status', ctx.appTotal, ctx.appUsed);
                     if (ctx.mac) document.querySelectorAll('.spanMacAddress').forEach(el => el.textContent = ctx.mac);
 
                     this.type = ctx.type;

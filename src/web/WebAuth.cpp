@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include <ETH.h>          // ETH.macAddress() -- n'arrive plus par ConfigSettings.h
 #include <LittleFS.h>
+#include <esp_ota_ops.h>
 #include "ConfigSettings.h"
 #include "somfy/Somfy.h"
 #include "WResp.h"
@@ -397,6 +398,13 @@ namespace WebAuth {
     size_t used = LittleFS.usedBytes();
     resp.addElem("fsTotal", (uint32_t)(total / 1024));
     resp.addElem("fsUsed", (uint32_t)(used / 1024));
+    // getSketchSize() refait le SHA-256 de toute l'image : calculé une seule fois, l'image en
+    // cours ne change pas avant le redémarrage (l'OTA écrit l'autre emplacement).
+    static uint32_t appUsed = 0;
+    if(!appUsed) appUsed = ESP.getSketchSize();
+    const esp_partition_t *app = esp_ota_get_running_partition();
+    resp.addElem("appTotal", (uint32_t)((app ? app->size : 0) / 1024));
+    resp.addElem("appUsed", appUsed / 1024);
     resp.addElem("flashSpeed", (uint32_t)(ESP.getFlashChipSpeed() / 1000000));
     resp.addElem("resetReason", SysDiag::resetReason());
     resp.endObject();
