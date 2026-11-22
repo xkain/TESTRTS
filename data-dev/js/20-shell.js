@@ -841,7 +841,7 @@ const ROUTE_SLUGS = {
     divSystemOptions: 'preferences',
     divSecurity: 'security',
     divFirmware: 'firmware',
-    divNetAdapter: 'connection',
+    divNetAdapter: 'network',
     divHomeAssistant: 'home-assistant',
     divMQTT: 'mqtt',
     divSomfyRooms: 'rooms',
