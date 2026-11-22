@@ -14,12 +14,13 @@ Bien plus qu'une minification -- data/ est reconstruit de zéro à chaque build,
     empreinte du contenu, injecté à la place de {{VERSION}} dans l'HTML ;
   - injection du define C++ BUILD_ASSET_CACHE_IMMUTABLE dans la compilation du firmware -- ce
     script influe donc aussi sur le code natif, pas seulement sur les assets ;
-  - sélection de la langue embarquée d'usine selon les build_flags de l'environnement
-    (BOX -> fr, tout le reste -> en) depuis locales/, les autres langues restant téléchargeables ;
-  - embarquement de manifest.json (minifié mais NON gzippé : lu directement par le backend C++).
+  - sélection de la langue d'usine selon les build_flags de l'environnement (BOX -> fr, tout le
+    reste -> en) depuis locales/, compilée dans l'application avec manifest.json (cf.
+    _write_web_assets_header), les autres langues restant téléchargeables.
 
 L'image binaire LittleFS elle-même est ensuite produite par PlatformIO (mklittlefs) à partir de
-data/ : ce script en prépare le contenu, il ne fabrique pas le système de fichiers.
+data/ : vide d'ordinaire, elle ne reçoit une langue que pour les images par langue
+(ESPSOMFY_EXTRA_LANG, cf. build.yaml).
 """
 
 import gzip
@@ -40,8 +41,8 @@ SRC_DIR_NAME = "data-dev"
 DST_DIR_NAME = "data"
 # Répertoire UNIQUE regroupant toutes les langues du projet (en, fr, de, es, ... + manifest.json),
 # à la racine du dépôt -- plus de scission entre data-dev/locale/ (embarquées) et locales/
-# (téléchargeables) : une seule langue en est extraite et embarquée par build (cf.
-# _embed_default_language), les autres restent des fichiers sources ordinaires, toutes publiées
+# (téléchargeables) : une seule langue en est extraite et compilée dans l'application par build (cf.
+# _write_web_assets_header), les autres restent des fichiers sources ordinaires, toutes publiées
 # individuellement par package_langs.py quelle que soit la plateforme.
 LOCALES_DIR_NAME = "locales"
 
@@ -68,8 +69,8 @@ def _locales_dir():
 # src/web/WebAssets.h et servie depuis la flash de l'application. Une mise à jour n'écrit ainsi
 # plus que l'emplacement d'app inactif -- interface et firmware ne peuvent plus diverger, et le
 # filesystem (packs de langue, sauvegarde) comme la partition cfg (shades.cfg, schedules.cfg) ne
-# sont plus jamais réécrits.
-# data/ ne garde que ce que le firmware lit comme un fichier : la langue d'usine et manifest.json.
+# sont plus jamais réécrits. La langue d'usine et manifest.json suivent la même voie : une mise à
+# jour par fichier n'écrit que l'application, ils doivent donc en faire partie.
 # ──────────────────────────────────────────────
 UI_DIR_NAME = os.path.join(".pio", "webui")
 ASSETS_HEADER = os.path.join("src", "web", "WebAssets.h")
@@ -583,35 +584,19 @@ def _embed_language(dst_dir, build_version, lang, label):
     pct = (saved / old_sz * 100) if old_sz > 0 else 0
     print(f"  {rel_path:<30} {old_sz:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [{action}] ({label})")
 
-def _embed_default_language(dst_dir, build_version):
-    """Copie (minifiée + gzippée) la langue embarquée par défaut pour cet environnement de build,
-    depuis locales/<code>.json vers data/locale/<code>.json.gz -- même format que les autres
-    fichiers de langue, lu tel quel par handleLang() (Content-Encoding: gzip).
-    ESPSOMFY_EXTRA_LANG=<code> ajoute un second pack à côté (images de système de fichiers par
-    langue, cf. build.yaml et l'épreuve sur banc) ; absente, rien ne change."""
-    _embed_language(dst_dir, build_version, _embedded_lang_for_env(), "embarquée d'usine")
+def _embed_extra_language(dst_dir, build_version):
+    """ESPSOMFY_EXTRA_LANG=<code> : seul contenu de data/, pour les images de système de fichiers
+    par langue écrites par l'installateur web (cf. build.yaml). Absente, data/ reste vide."""
     extra = os.environ.get("ESPSOMFY_EXTRA_LANG", "").strip().lower()
     if extra and extra != _embedded_lang_for_env():
         _embed_language(dst_dir, build_version, extra, "ESPSOMFY_EXTRA_LANG")
 
-def _embed_manifest(dst_dir):
-    """Copie locales/manifest.json -- minifié mais SANS gzip, contrairement aux fichiers de
-    langue -- vers data/manifest.json. Lu directement par le backend C++ (handleGetAvailableLangs,
-    ArduinoJson) qui n'a pas de capacité de décompression gzip ; permet au catalogue des langues
-    de rester utilisable hors-ligne (mode AP/hotspot), sans dépendre d'une requête GitHub."""
-    src_path = os.path.join(_locales_dir(), "manifest.json")
-    if not os.path.isfile(src_path):
-        print(f"[data-image] ATTENTION : manifest.json introuvable dans {LOCALES_DIR_NAME}/")
-        return
-    old_sz = os.path.getsize(src_path)
-    with open(src_path, "r", encoding="utf-8") as f:
-        content = minify_json(f.read())
-    dst_path = os.path.join(dst_dir, "manifest.json")
-    with open(dst_path, "w", encoding="utf-8") as f:
-        f.write(content)
-    new_sz = os.path.getsize(dst_path)
-    pct = ((old_sz - new_sz) / old_sz * 100) if old_sz > 0 else 0
-    print(f"  {'manifest.json':<30} {old_sz:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [minify, no gzip]")
+def _read_locale_json(name):
+    path = os.path.join(_locales_dir(), name)
+    if not os.path.isfile(path):
+        raise RuntimeError(f"web-assets : {name} introuvable dans {LOCALES_DIR_NAME}/")
+    with open(path, "r", encoding="utf-8") as f:
+        return minify_json(f.read()).encode("utf-8")
 
 # ──────────────────────────────────────────────
 # Génération de src/web/WebAssets.h
@@ -708,6 +693,16 @@ def _write_web_assets_header(ui_dir, build_version):
     lines.extend(table)
     lines.append("};")
     lines.append("static const size_t WEB_ASSET_COUNT = sizeof(WEB_ASSETS) / sizeof(WEB_ASSETS[0]);")
+    # Langue d'usine gzippée comme l'interface ; manifeste en clair, ArduinoJson le lit tel quel.
+    lang = _embedded_lang_for_env()
+    lang_gz = _gzip_best(_read_locale_json(f"{lang}.json"))
+    manifest = _read_locale_json("manifest.json")
+    total += len(lang_gz) + len(manifest)
+    lines.append("")
+    lines.append(f"static const uint8_t WEB_LANG_DEFAULT_GZ[{len(lang_gz)}] = {{{','.join(str(b) for b in lang_gz)}}};")
+    lines.append(f"static const uint8_t WEB_LANG_MANIFEST[{len(manifest)}] = {{{','.join(str(b) for b in manifest)}}};")
+    print(f"  {'locale ' + lang:<30} {'':>7} -> {len(lang_gz):>7} B [embarqué]")
+    print(f"  {'manifest.json':<30} {'':>7} -> {len(manifest):>7} B [embarqué, en clair]")
     content = "\n".join(lines) + "\n"
     header = os.path.join(_project_dir(), ASSETS_HEADER)
     # Réécrit seulement si le contenu change : sinon chaque build recompilerait WebStatic.cpp.
@@ -797,9 +792,8 @@ def build_data_image():
             pct = (saved / old_sz * 100) if old_sz > 0 else 0
             print(f"  {rel_path:<30} {old_sz:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [{action}]")
 
-    print(f"[data-image] Langue embarquée par défaut pour cet environnement : {_embedded_lang_for_env()}")
-    _embed_default_language(dst_dir, build_version)
-    _embed_manifest(dst_dir)
+    print(f"[data-image] Langue d'usine pour cet environnement : {_embedded_lang_for_env()}")
+    _embed_extra_language(dst_dir, build_version)
     _write_web_assets_header(ui_dir, build_version)
     _write_recovery_header()
 

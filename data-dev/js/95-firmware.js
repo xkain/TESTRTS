@@ -636,11 +636,10 @@ class Firmware {
         const ok = pending.tag === 'dev' || got === pending.tag || `v${got}` === pending.tag;
         if (!ok) return this.failInstall(div, `${tr('ERR_UNSPECIFIED')} (${got})`);
         this._pendingInstall = null;
-        // Toujours l'étape 3 : les packs de langue du filesystem datent de l'ancienne version, et
-        // leurs clés ne correspondent plus forcément. On renvoie celui de la langue active et celui
-        // de repli, pris au tag du NOUVEAU firmware (cf. fetchGithubRawContent).
+        // Le pack de la langue active date de l'ancienne version : on le renvoie, pris au tag du
+        // NOUVEAU firmware (cf. fetchGithubRawContent). La langue d'usine arrive avec l'image.
         window.__fwVersionTag = got;
-        const codes = [...new Set([window.__activeLangCode, window.__defaultLangCode].filter(Boolean))];
+        const codes = [window.__activeLangCode].filter(c => c && c !== window.__defaultLangCode);
         let langFailed = false;
         for (let i = 0; i < codes.length; i++) {
             this.setInstallStatus(tr('GIT_LANG_RESTORE_IN_PROGRESS').replace('%1', codes[i]));

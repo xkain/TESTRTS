@@ -30,7 +30,7 @@ concurrency:
 
 jobs:
   # =======================================================================
-  # JOB 1 : Génération des images LittleFS (générique "en" + BOX "fr" dédiées)
+  # JOB 1 : Génération des images LittleFS (générique 4 Mo + C6, vides ; images par langue)
   # =======================================================================
   littlefs:
     permissions: write-all
@@ -119,10 +119,8 @@ jobs:
         run: pio run -e esp32 -t buildfs
 
       # Renommé selon la convention stricte [PROJET]_v[VERSION]_[TYPE]_[VARIANT].[ext] (TYPE=
-      # "filesystem", ex-"littlefs") : Un seul unique filesystem pour tout le monde... SAUF les
-      # boîtiers BOX (cf. blocs suivants). build_data_image.py (_embedded_lang_for_env) choisit la
-      # langue embarquée d'après les build_flags de L'ENVIRONNEMENT EN COURS DE BUILD : esp32
-      # n'a ni HARDWARE_BOX_WIFI ni HARDWARE_BOX_ETH, donc ce filesystem-ci n'embarque que "en".
+      # "filesystem", ex-"littlefs"). Image vide, commune à toutes les cartes 4 Mo, BOX comprises :
+      # la langue d'usine est compilée dans l'application (cf. build_data_image.py).
       - name: Rename filesystem to Standard Name
         run: cp .pio/build/esp32/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
 
@@ -138,19 +136,8 @@ jobs:
               "ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_4mb.bin"
           done
 
-      # Filesystem dédié aux boîtiers BOX (langue "fr" embarquée, cf. commentaire ci-dessus), fusionné
-      # dans les images factory des deux BOX (cf. matrix.fsname). BOX-wifi et BOX-eth partagent le
-      # même (build_data_image.py::_embedded_lang_for_env donne "fr" pour les deux). Sans lui, un BOX
-      # (language="fr" par défaut) démarrerait sans /locale/fr.json.gz et n'afficherait que les
-      # clés brutes dès le premier flash.
-      - name: Build filesystem image (BOX, fr)
-        run: pio run -e box_wifi -t buildfs
-
-      - name: Rename filesystem to BOX Name
-        run: cp .pio/build/box_wifi/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
-
-      # Image LittleFS propre au C6 -- NON pas une question de contenu (elle embarque "en" comme la
-      # générique, le C6 n'ayant ni HARDWARE_BOX_WIFI ni HARDWARE_BOX_ETH) mais de TAILLE : une image
+      # Image LittleFS propre au C6 -- NON pas une question de contenu (vide comme la générique)
+      # mais de TAILLE : une image
       # LittleFS fait exactement la taille de la partition spiffs pour laquelle elle est fabriquée, et
       # la table 8 Mo dédiée au C6 lui donne 1 835 008 octets là où la table commune en donne 262 144.
       # L'image générique n'y entrerait donc pas -- et l'inverse non plus : ni par OTA
@@ -223,7 +210,7 @@ jobs:
       # ATTENTION si un filesystem doit un jour être retiré de la liste ci-dessous : `path:` est une
       # chaîne multi-ligne, pas du YAML. Un "#" n'y commente rien et serait transmis tel quel comme
       # chemin à chercher par actions/upload-artifact. Retirer la ligne, ne pas la commenter.
-      # Sauvegarde temporaire des trois filesystems pour le job suivant (firmwares) -- un seul
+      # Sauvegarde temporaire des deux filesystems pour le job suivant (firmwares) -- un seul
       # artefact, actions/download-artifact restitue les fichiers tels quels (noms distincts) dans
       # le CWD du job "arduino", qui choisit celui qui lui revient via matrix.fsname.
       - name: Upload filesystem Artifact
@@ -232,7 +219,6 @@ jobs:
           name: Filesystem
           path: |
             ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
-            ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
             ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
           retention-days: 5
 
@@ -363,11 +349,8 @@ jobs:
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c6.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_c6.bin
 
-          # ---  LES DEUX BOX VENTE (4 Mo) --- fsname pointe sur le même filesystem dédié (langue
-          # "fr" embarquée) construit par le job "littlefs" via l'env box_wifi -- PAS le générique
-          # (esp32 / "en") utilisé par tous les autres boards ci-dessus. BOX-wifi et BOX-eth
-          # partagent ce même "..._filesystem_BOX.bin". Cf. commentaire détaillé sur le job
-          # "littlefs" (step "Build filesystem image (BOX, fr)").
+          # ---  LES DEUX BOX VENTE (4 Mo) --- même filesystem vide que les autres cartes 4 Mo : leur
+          # "fr" d'usine est compilé dans l'application.
           - env: box_wifi
             name: BOX-Wifi
             chip: ESP32
@@ -376,7 +359,7 @@ jobs:
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_ota_esp32_BOX_wifi.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_wifi.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_wifi.zip
-            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_BOX.bin
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
           - env: box_eth
             name: BOX-Ethernet
             chip: ESP32
@@ -385,7 +368,7 @@ jobs:
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_ota_esp32_BOX_eth.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_eth.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_eth.zip
-            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_BOX.bin
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
 
     steps:
       - name: Get Release info
@@ -398,7 +381,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      # Récupère les images filesystem générées au Job 1 (générique + BOX-wifi + BOX-eth)
+      # Récupère les images filesystem générées au Job 1 (générique 4 Mo + C6)
       - name: Get filesystem
         uses: actions/download-artifact@v4
         with:
@@ -443,8 +426,7 @@ jobs:
         run: pio run -e ${{ matrix.env }}
 
       # Création de l'image de fusion factory (utilise l'offset filesystem propre à chaque carte,
-      # et le filesystem propre à chaque carte via matrix.fsname -- générique partout SAUF les
-      # deux BOX, qui embarquent leur propre filesystem "fr" dédié, cf. matrix.fsname plus haut)
+      # et le filesystem propre à chaque carte via matrix.fsname -- générique partout SAUF le C6)
       - name: ${{ matrix.name }} Image
         run: |
           python -m esptool --chip ${{ matrix.chip }} \

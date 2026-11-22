@@ -48,10 +48,10 @@
  *
  * LANGUE DE L'APPAREIL : les releases qui publient un descriptif de langues (bloc "langues"
  * d'index.json, cf. mirror_releases.py) offrent un sélecteur. L'image factory est alors suivie
- * d'une SECONDE part : l'image du système de fichiers « en + langue choisie », écrite à l'offset
- * de la partition spiffs PAR-DESSUS celle, en anglais seul, que l'image fusionnée vient de poser
- * -- l'ordre des parts est porteur. Sans descriptif (anciennes versions) et pour les BOX (fr
- * embarqué), le sélecteur reste masqué et rien ne change.
+ * d'une SECONDE part : l'image du système de fichiers portant la langue choisie, écrite à
+ * l'offset de la partition spiffs PAR-DESSUS celle, vide, que l'image fusionnée vient de poser
+ * -- l'ordre des parts est porteur. La langue d'usine (en, fr sur BOX) est dans l'application.
+ * Sans descriptif (anciennes versions) et pour les BOX, le sélecteur reste masqué.
  *
  * L'effacement complet avant écriture est demandé explicitement (dernier argument de flash(),
  * cf. startFlash()) plutôt que piloté par le champ "new_install_prompt_erase" du manifeste (celui-

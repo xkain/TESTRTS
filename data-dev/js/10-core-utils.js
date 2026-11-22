@@ -291,8 +291,8 @@ function loadLangManifest() {
 }
 // Libellé affichable d'un code langue, SANS jamais retomber sur un nom de clé de traduction
 // (tr() renverrait sinon la clé brute, ex: "GENERAL_OPT_DE" au lieu de "Deutsch").
-// Le manifeste porte déjà le nom natif de chaque langue et vient du LittleFS (toujours présent,
-// cf. build_data_image.py::_embed_manifest), avec repli GitHub et mise en cache : on lit ce cache de
+// Le manifeste porte déjà le nom natif de chaque langue et vient de l'application (toujours
+// présent, cf. build_data_image.py), avec repli GitHub et mise en cache : on lit ce cache de
 // façon synchrone, et à défaut on affiche le code en majuscules -- dégradé lisible ("DE"), jamais
 // un nom de clé.
 window.langLabel = function(code) {
@@ -376,7 +376,7 @@ function checkBrowserLangSuggestion(activeLang) {
     })
     .catch(err => logger.error('Failed to check browser language suggestion:', err));
 }
-// Phase 6 i18n : langue choisie au flash (installateur web, image fs « en + langue choisie »).
+// Phase 6 i18n : langue choisie au flash (installateur web, image fs de la langue choisie).
 // Sur un appareil neuf (assistant jamais terminé, langue active = langue d'usine), une unique
 // autre langue installée ne peut venir que de là : on l'active — elle prime sur la langue du
 // navigateur, qui peut différer de celle du PC qui a flashé.

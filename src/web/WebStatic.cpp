@@ -29,13 +29,20 @@ namespace WebStatic {
     webServer.handleEmbeddedAsset(request, a->data, a->len, a->contentType, isRootDocument, a->versioned);
   }
 
+  const uint8_t *defaultLangGz(size_t &len) { len = sizeof(WEB_LANG_DEFAULT_GZ); return WEB_LANG_DEFAULT_GZ; }
+  const uint8_t *langManifest(size_t &len) { len = sizeof(WEB_LANG_MANIFEST); return WEB_LANG_MANIFEST; }
+
   void registerRoutes(AsyncWebServer &server) {
     server.on("/", [](AsyncWebServerRequest *request) { serveAsset(request, "/index.html", true); });
     server.on("/index.js", [](AsyncWebServerRequest *request) { serveAsset(request, "/index.js", false); });
     server.on("/index.css", [](AsyncWebServerRequest *request) { serveAsset(request, "/index.css", false); });
     server.on("/favicon.svg", [](AsyncWebServerRequest *request) { serveAsset(request, "/favicon.svg", false); });
-    // Fichiers du filesystem : shades.cfg/tmp (diagnostic, jamais gzippés) et manifest.json (lu
-    // tel quel par le backend C++, cf. build_data_image.py::_embed_manifest).
+    server.on("/manifest.json", [](AsyncWebServerRequest *request) {
+      AsyncWebServerResponse *response = request->beginResponse(200, _encoding_json, WEB_LANG_MANIFEST, sizeof(WEB_LANG_MANIFEST));
+      webServer.applyAssetHeaders(response, false, false);
+      request->send(response);
+    });
+    // Fichiers du filesystem : shades.cfg/tmp (diagnostic, jamais gzippés).
     server.on("/shades.cfg", [](AsyncWebServerRequest *request) {
       if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
       if(!webServer.isAuthenticated(request, true)) return;
@@ -46,7 +53,6 @@ namespace WebStatic {
       if(!webServer.isAuthenticated(request, true)) return;
       webServer.handleStreamFile(request, "/shades.tmp", _encoding_text);
     });
-    server.on("/manifest.json", [](AsyncWebServerRequest *request) { webServer.handleStreamFile(request, "/manifest.json", _encoding_json); });
     // Aucune route d'image bitmap : l'interface n'utilise que des SVG, tous inline dans le sprite
     // d'index.html. S'il fallait un jour introduire une image, l'ajouter à EMBEDDED_ROUTES
     // (build_data_image.py) plutôt qu'au filesystem.

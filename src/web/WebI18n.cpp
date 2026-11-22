@@ -11,13 +11,14 @@
 #include "FwInfo.h"
 #include "WebCommon.h"
 #include "WebI18n.h"
+#include "WebStatic.h"
 
 extern ConfigSettings settings;
 extern Web webServer;
 
 #define MAX_LANG_CATALOG_ENTRIES 24
-// Langue d'usine comprise. La partition spiffs (256 Ko) porte aussi la sauvegarde et le pack
-// d'icônes, et une mise à jour de langue y fait coexister l'ancienne et la nouvelle version.
+// Langue d'usine comprise, bien qu'elle vive dans l'application : deux packs au plus sur la
+// partition spiffs (256 Ko), où un remplacement fait coexister l'ancienne et la nouvelle version.
 #define MAX_INSTALLED_LANGS 3
 
 namespace WebI18n {
@@ -35,24 +36,41 @@ namespace WebI18n {
     return true;
   }
 
+  static bool isFactoryLang(const String &code) { return code == DEFAULT_EMBEDDED_LANG; }
+
+  // Nom de fichier d'un pack (« de.json.gz ») vers son code, chaîne vide si ce n'en est pas un.
+  // Un fichier au nom de la langue d'usine est ignoré : c'est toujours la copie de l'application
+  // qui est servie.
+  static String packCode(File &entry) {
+    if(entry.isDirectory()) return String();
+    String name = entry.name();
+    int slash = name.lastIndexOf('/');
+    if(slash >= 0) name = name.substring(slash + 1);
+    if(!name.endsWith(".json.gz")) return String();
+    String code = name.substring(0, name.length() - strlen(".json.gz"));
+    return isFactoryLang(code) ? String() : code;
+  }
+
+  static void sendFactoryLang(AsyncWebServerRequest *request) {
+    size_t len;
+    const uint8_t *data = WebStatic::defaultLangGz(len);
+    webServer.handleEmbeddedAsset(request, data, len, _encoding_json, false, false);
+  }
+
   // Une langue déjà installée peut toujours être remplacée. Un seul parcours du dossier, sans
   // LittleFS.exists() : il journalise une erreur pour tout fichier absent.
   static bool langSlotAvailable(const String &code) {
-    String target = code + ".json.gz";
-    uint8_t count = 0;
+    if(isFactoryLang(code)) return true;
+    uint8_t count = 1;
     bool present = false;
     File dir = LittleFS.open("/locale");
     if(dir && dir.isDirectory()) {
       File entry = dir.openNextFile();
       while(entry) {
-        if(!entry.isDirectory()) {
-          String name = entry.name();
-          int slash = name.lastIndexOf('/');
-          if(slash >= 0) name = name.substring(slash + 1);
-          if(name.endsWith(".json.gz")) {
-            count++;
-            if(name == target) present = true;
-          }
+        String c = packCode(entry);
+        if(c.length()) {
+          count++;
+          if(c == code) present = true;
         }
         entry.close();
         entry = dir.openNextFile();
@@ -70,38 +88,23 @@ namespace WebI18n {
 
   static void handleLang(AsyncWebServerRequest *request) {
     if (request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
-    char filename[48];
-    snprintf(filename, sizeof(filename), "/locale/%s.json", settings.language);
-    char gzFilename[56];
-    snprintf(gzFilename, sizeof(gzFilename), "%s.gz", filename);
-    // Variante .gz testée EN PREMIER : c'est le cas courant et, en pratique, le seul --
-    // downloadLangFile() comme handleUploadLang() écrivent tous deux en /locale/<code>.json.gz.
-    // L'ordre inverse coûterait TROIS recherches perdues à chaque chargement de page (le exists()
-    // nu ici, celui de handleStreamFile(), puis la tentative d'AsyncFileResponse avant son repli
-    // .gz), chacune journalisant une ligne d'erreur : LittleFS.exists() passe par VFSImpl::open(),
-    // qui journalise en niveau E tout fichier absent, faisant passer un fonctionnement nominal pour
-    // une panne.
-    bool gzipped = LittleFS.exists(gzFilename);
-    if (!gzipped && !LittleFS.exists(filename)) {
-        // Langue absente du filesystem (jamais téléchargée, ou code obsolète après un reset) : repli
-        // sur la langue embarquée d'usine plutôt qu'une erreur. Elle est TOUJOURS gzippée (cf.
-        // build_data_image.py::_embed_default_language), d'où alwaysGzipped=true sans nouveau test.
-        strlcpy(filename, "/locale/" DEFAULT_EMBEDDED_LANG ".json", sizeof(filename));
-        gzipped = true;
+    // Pack absent (jamais téléchargé, ou effacé par un reset) : repli sur la langue d'usine plutôt
+    // qu'une erreur. handleStreamFile() prend le chemin sans .gz et ajoute le suffixe lui-même.
+    if(strcmp(settings.language, DEFAULT_EMBEDDED_LANG) != 0) {
+      char filename[32];
+      snprintf(filename, sizeof(filename), "/locale/%s.json", settings.language);
+      if(LittleFS.exists(String(filename) + ".gz")) {
+        webServer.handleStreamFile(request, filename, _encoding_json, false, true);
+        return;
+      }
     }
-    // alwaysGzipped renseigné plutôt que laissé à false : handleStreamFile() interroge alors
-    // directement la bonne variante, en un seul lookup toujours gagnant.
-    webServer.handleStreamFile(request, filename, "application/json", false, gzipped);
+    sendFactoryLang(request);
   }
 
   static void handleLangDefault(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(strcmp(settings.language, DEFAULT_EMBEDDED_LANG) == 0) { request->send(204); return; }
-    // Contrairement à handleLang() ci-dessus (settings.language, potentiellement une langue
-    // téléchargée à l'exécution donc jamais gzippée), DEFAULT_EMBEDDED_LANG est TOUJOURS la langue
-    // embarquée par le build (cf. build_data_image.py::_embed_default_language, toujours gzippée) --
-    // alwaysGzipped=true est donc sûr ici.
-    webServer.handleStreamFile(request, "/locale/" DEFAULT_EMBEDDED_LANG ".json", _encoding_json, false, true);
+    sendFactoryLang(request);
   }
 
   static void handleSetLang(AsyncWebServerRequest *request) {
@@ -190,7 +193,7 @@ namespace WebI18n {
       request->send(400, _encoding_json, "{\"error\":\"invalid code\"}");
       return;
     }
-    if(code == DEFAULT_EMBEDDED_LANG) {
+    if(isFactoryLang(code)) {
       request->send(400, _encoding_json, "{\"error\":\"cannot delete default fallback language\"}");
       return;
     }
@@ -218,19 +221,13 @@ namespace WebI18n {
     JsonAsyncResponse resp;
     resp.beginResponse(request);
     resp.beginArray();
+    resp.addElem(DEFAULT_EMBEDDED_LANG);
     File dir = LittleFS.open("/locale");
     if (dir && dir.isDirectory()) {
         File entry = dir.openNextFile();
         while (entry) {
-            if (!entry.isDirectory()) {
-                String name = entry.name();
-                int slash = name.lastIndexOf('/');
-                if (slash >= 0) name = name.substring(slash + 1);
-                if (name.endsWith(".json.gz")) {
-                    String code = name.substring(0, name.length() - strlen(".json.gz"));
-                    resp.addElem(code.c_str());
-                }
-            }
+            String code = packCode(entry);
+            if (code.length()) resp.addElem(code.c_str());
             entry.close();
             entry = dir.openNextFile();
         }
@@ -246,23 +243,21 @@ namespace WebI18n {
 
     struct LangCatalogEntry { char code[8]; bool installed; bool downloadable; };
     LangCatalogEntry entries[MAX_LANG_CATALOG_ENTRIES];
-    uint8_t count = 0;
+    strlcpy(entries[0].code, DEFAULT_EMBEDDED_LANG, sizeof(entries[0].code));
+    entries[0].installed = true;
+    entries[0].downloadable = false;
+    uint8_t count = 1;
 
     File dir = LittleFS.open("/locale");
     if (dir && dir.isDirectory()) {
         File entry = dir.openNextFile();
         while (entry) {
-            if (!entry.isDirectory()) {
-                String name = entry.name();
-                int slash = name.lastIndexOf('/');
-                if (slash >= 0) name = name.substring(slash + 1);
-                if (name.endsWith(".json.gz") && count < MAX_LANG_CATALOG_ENTRIES) {
-                    String code = name.substring(0, name.length() - strlen(".json.gz"));
-                    strlcpy(entries[count].code, code.c_str(), sizeof(entries[count].code));
-                    entries[count].installed = true;
-                    entries[count].downloadable = false;
-                    count++;
-                }
+            String code = packCode(entry);
+            if (code.length() && count < MAX_LANG_CATALOG_ENTRIES) {
+                strlcpy(entries[count].code, code.c_str(), sizeof(entries[count].code));
+                entries[count].installed = true;
+                entries[count].downloadable = false;
+                count++;
             }
             entry.close();
             entry = dir.openNextFile();
@@ -270,11 +265,11 @@ namespace WebI18n {
         dir.close();
     }
 
-    if (LittleFS.exists("/manifest.json")) {
-        File mf = LittleFS.open("/manifest.json", "r");
+    {
+        size_t mlen;
+        const uint8_t *mdata = WebStatic::langManifest(mlen);
         DynamicJsonDocument doc(2048);
-        DeserializationError err = deserializeJson(doc, mf);
-        mf.close();
+        DeserializationError err = deserializeJson(doc, (const char *)mdata, mlen);
         if (!err && doc.containsKey("langs")) {
             JsonObject langs = doc["langs"].as<JsonObject>();
             for (JsonPair kv : langs) {
@@ -319,7 +314,7 @@ namespace WebI18n {
   // sans que rien ne le remarque, `success` passant quand même à true au dernier paquet. Pour une
   // langue, cela donnerait un .json.gz coupé, renommé, puis servi par /lang avec
   // `Content-Encoding: gzip` : le navigateur répond « Erreur d'encodage de contenu ».
-  struct UploadState { bool success = false; bool rejected = false; bool writeFailed = false; bool full = false; uint32_t written = 0; };
+  struct UploadState { bool success = false; bool rejected = false; bool writeFailed = false; bool full = false; bool factory = false; uint32_t written = 0; };
 
   static void handleUploadLang(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -333,6 +328,10 @@ namespace WebI18n {
     const char *tempPath = "/locale/upload.json.gz.tmp";
     UploadState *state = (UploadState *)request->_tempObject;
     if(state && state->full) { sendLangLimit(request); return; }
+    if(state && state->factory) {
+      request->send(400, _encoding_json, "{\"error\":\"factory language is built in\"}");
+      return;
+    }
     if(!state || !state->success) {
       // Refusé = jamais écrit : le temporaire appartient alors à un autre téléversement en cours.
       if(state && !state->rejected) LittleFS.remove(tempPath);
@@ -405,6 +404,7 @@ namespace WebI18n {
       state->success = false;
       state->writeFailed = false;
       state->full = false;
+      state->factory = false;
       state->written = 0;
       // Refus AVANT toute écriture. Sous ESPAsyncWebServer ce callback s'exécute pendant l'analyse
       // de la requête, donc AVANT handleUploadLang() et son isAuthenticated() : sans ce test, un
@@ -414,12 +414,15 @@ namespace WebI18n {
       // la réception ; on réutilise le drapeau `rejected` déjà prévu pour le cas "GitOTA occupé",
       // qui fait retomber handleUploadLang() sur son "Upload failed" sans qu'un octet soit écrit.
       state->rejected = fsLocked || !webServer.checkAuth(request, true);
-      // Plafond vérifié avant d'ouvrir le temporaire : refusé, l'envoi n'écrit pas un octet.
-      if(!state->rejected && isValidLangCode(request->arg("code")) && !langSlotAvailable(request->arg("code")))
+      // Plafond et langue d'usine vérifiés avant d'ouvrir le temporaire : refusé, l'envoi n'écrit
+      // pas un octet. Un pack au nom de la langue d'usine ne serait jamais servi.
+      if(!state->rejected && isFactoryLang(request->arg("code")))
+        state->rejected = state->factory = true;
+      else if(!state->rejected && isValidLangCode(request->arg("code")) && !langSlotAvailable(request->arg("code")))
         state->rejected = state->full = true;
       request->_tempObject = state;
       if(state->rejected)
-        Serial.printf("uploadLang: refuse (%s)\n", state->full ? "plafond de langues atteint" : fsLocked ? "filesystem occupe" : "non authentifie");
+        Serial.printf("uploadLang: refuse (%s)\n", state->full ? "plafond de langues atteint" : state->factory ? "langue d'usine" : fsLocked ? "filesystem occupe" : "non authentifie");
       else
         Serial.println("uploadLang: debut de reception");
       // GitOTA a déjà la main sur le filesystem (firmware/langue en cours) : on n'écrit rien,
@@ -444,6 +447,8 @@ namespace WebI18n {
       // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
       // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
       // L'acquisition ouvre aussi le fichier : plus d'open/append/close par paquet reçu.
+      // Le filesystem d'usine est vide : /locale n'existe qu'après le premier pack.
+      LittleFS.mkdir("/locale");
       if(!fsUploadLockAcquire("/locale/upload.json.gz.tmp")) {
         Serial.println("uploadLang: impossible d'ouvrir le fichier temporaire (filesystem occupe ou plein)");
         state->rejected = true;

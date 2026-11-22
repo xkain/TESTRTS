@@ -22,14 +22,6 @@ extern SomfyShadeController somfy;
 
 Recovery recovery;
 
-// Doit rester aligné sur Web.cpp : c'est la langue livrée avec le bundle, la seule qu'on ne
-// supprime jamais quand on efface les packs téléchargés.
-#if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
-#define RECOVERY_DEFAULT_LANG "fr"
-#else
-#define RECOVERY_DEFAULT_LANG "en"
-#endif
-
 // Effacements ciblés faits DIRECTEMENT sur les namespaces NVS et les fichiers, sans passer par
 // ConfigSettings : on répare précisément les cas où la configuration peut être illisible, dépendre
 // de son chargement réintroduirait le point de panne qu'on cherche à contourner.
@@ -359,17 +351,14 @@ void Recovery::_apply(const RecoveryTargets &t) {
   }
   if(t.schedules) removeFile("/schedules.cfg");
   if(t.langs) {
-    // Les packs téléchargés sont supprimés, la langue embarquée est conservée : sans elle, plus
-    // aucun libellé ne s'afficherait après redémarrage.
+    // Tous les packs téléchargés partent : la langue d'usine vit dans l'application.
     File dir = LittleFS.open("/locale");
     if(dir && dir.isDirectory()) {
-      String keep = String("/locale/") + RECOVERY_DEFAULT_LANG + ".json.gz";
       String victims[8];
       int n = 0;
       File f = dir.openNextFile();
       while(f && n < 8) {
-        String path = String("/locale/") + String(f.name()).substring(String(f.name()).lastIndexOf('/') + 1);
-        if(!path.equals(keep)) victims[n++] = path;
+        victims[n++] = String("/locale/") + String(f.name()).substring(String(f.name()).lastIndexOf('/') + 1);
         f = dir.openNextFile();
       }
       dir.close();
