@@ -195,6 +195,9 @@ class Recovery {
     // Démarre l'AP de secours, le portail captif et le serveur web dédié.
     void begin();
     void loop();
+    // Remise à zéro demandée depuis l'interface normale (/factoryReset), juste avant ESP.restart().
+    // keepNetwork garde de quoi rejoindre l'appareil à la même adresse, et la radio.
+    void factoryReset(bool keepNetwork);
   private:
     bool _requested = false;
     bool _active = false;

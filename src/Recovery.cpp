@@ -349,7 +349,12 @@ void Recovery::_apply(const RecoveryTargets &t) {
     removeFile("/shades.tmp");
     removeFile("/controller.backup");
   }
-  if(t.schedules) removeFile("/schedules.cfg");
+  // Le .bak aussi : ScheduleConfigFile::load() se rabat dessus quand schedules.cfg manque, et les
+  // plannings effacés reviendraient au démarrage suivant.
+  if(t.schedules) {
+    removeFile("/schedules.cfg");
+    removeFile("/schedules.cfg.bak");
+  }
   if(t.langs) {
     // Tous les packs téléchargés partent : la langue d'usine vit dans l'application.
     File dir = LittleFS.open("/locale");
@@ -376,6 +381,7 @@ void Recovery::_apply(const RecoveryTargets &t) {
     removeFile("/shades.tmp");
     removeFile("/controller.backup");
     removeFile("/schedules.cfg");
+    removeFile("/schedules.cfg.bak");
   }
   // Écrit en DERNIER : un effacement d'usine ou un formatage antérieur emporterait sinon la valeur
   // que l'utilisateur vient de demander.
@@ -391,6 +397,30 @@ void Recovery::_apply(const RecoveryTargets &t) {
     p.end();
   }
   Serial.println(F("[RECOVERY] Done."));
+}
+
+void Recovery::factoryReset(bool keepNetwork) {
+  RecoveryTargets t;
+  t.langs = true;
+  if(!keepNetwork) t.factory = true;
+  else {
+    t.security = t.shades = t.schedules = t.rollingCodes = true;
+    clearNamespace("MQTT");
+    clearNamespace("NTP");
+    // "mqttpub" reste : c'est la liste de ce que le courtier retient, nettoyée à la prochaine
+    // connexion MQTT. CFG est vidé en entier (la case « système » n'en retire qu'une liste).
+    Preferences p;
+    if(p.begin("CFG", false)) {
+      int8_t conn = p.getChar("connType", 0);
+      char host[sizeof(settings.hostname)] = "";
+      p.getString("hostname", host, sizeof(host));
+      p.clear();
+      if(conn) p.putChar("connType", conn);
+      if(host[0]) p.putString("hostname", host);
+      p.end();
+    }
+  }
+  this->_apply(t);
 }
 
 void Recovery::_rebootSoon() {

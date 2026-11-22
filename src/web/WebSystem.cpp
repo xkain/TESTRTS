@@ -613,6 +613,24 @@ namespace WebSystem {
     }
   }
 
+  // Le mot de confirmation est exigé : un appel sans corps (script, intégration) n'efface rien.
+  void handleFactoryReset(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    if(request->method() != AsyncHttp::POST && request->method() != AsyncHttp::PUT) { webServer.rejectMethod(request); return; }
+    StaticJsonDocument<64> doc;
+    if(!asyncHasBody(request) || deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request))
+       || strcmp(doc["confirm"] | "", "factory") != 0) {
+      webServer.sendError(request, 400, "Confirmation missing");
+      return;
+    }
+    if(fsLocked) { webServer.sendError(request, 409, "File system busy"); return; }
+    rebootDelay.wipe = (doc["keepNetwork"] | false) ? 1 : 2;
+    rebootDelay.rebootTime = millis() + 500;
+    rebootDelay.reboot = true;
+    request->send(200, "application/json", "{\"status\":\"OK\"}");
+  }
+
   // /restore est le SEUL des 4 flux d'upload de ce module dont le handler principal lit
   // effectivement un flag de succès (les 3 autres s'appuient sur Update.hasError() ou renvoient
   // un message fixe) -- state->success est donc alloué via request->_tempObject (libéré
@@ -1059,5 +1077,6 @@ namespace WebSystem {
     server.on("/updateShadeConfig", AsyncHttp::POST, handleUpdateShadeConfig,
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateShadeConfigBody(request, filename, index, data, len, final); });
     server.on("/reboot", AsyncHttp::ANY, handleReboot);
+    server.on("/factoryReset", AsyncHttp::ANY, handleFactoryReset, nullptr, asyncBodyHandler);
   }
 }

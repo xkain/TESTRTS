@@ -179,6 +179,9 @@ bool secureEquals(const char *a, const char *b);
 struct rebootDelay_t {
   std::atomic<bool> reboot{false};
   uint32_t rebootTime = 0;
+  // Effacement à faire avant de redémarrer : 0 aucun, 1 tout sauf réseau et radio, 2 usine.
+  // Écrit avant reboot=true, comme rebootTime.
+  uint8_t wipe = 0;
   bool closed = false;
 };
 [[maybe_unused]] static bool toBoolean(const char *str, bool def) {

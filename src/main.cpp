@@ -121,6 +121,25 @@ void setup() {
   esp_task_wdt_add(NULL);      // add current thread to WDT watch
 }
 
+// Un redémarrage VOLONTAIRE n'est pas une coupure d'alimentation : la fenêtre est refermée avant
+// de partir, sinon le compteur de cycles resterait incrémenté (cf. closeDetection()).
+static void rebootNow() {
+  recovery.closeDetection();
+  if(rebootDelay.wipe) {
+    // Aucun commit : il réécrirait ce qu'on efface. fsLocked écarte les envois de fichiers.
+    fsLocked = true;
+    net.end();
+    recovery.factoryReset(rebootDelay.wipe == 1);
+  }
+  else {
+    // Les commits sont différés sur loopTask : ce qui est encore en attente part avant de couper.
+    if(somfy.isDirty) somfy.commit();
+    schedule.commit();
+    net.end();
+  }
+  ESP.restart();
+}
+
 void loop() {
   // En mode Récupération, rien du fonctionnement nominal ne doit tourner : le watchdog n'a pas été
   // armé (setup() sort avant) et aucun sous-système n'a été démarré.
@@ -139,14 +158,7 @@ void loop() {
       Serial.print(rebootDelay.rebootTime);
       Serial.println("ms");
     }
-    // Un redémarrage VOLONTAIRE n'est pas une coupure d'alimentation : la fenêtre est refermée avant
-    // de partir, sinon le compteur de cycles resterait incrémenté (cf. closeDetection()).
-    recovery.closeDetection();
-    // Les commits sont différés sur loopTask : ce qui est encore en attente part avant de couper.
-    if(somfy.isDirty) somfy.commit();
-    schedule.commit();
-    net.end();
-    ESP.restart();
+    rebootNow();
     return;
   }
   uint32_t timing = millis();
@@ -220,12 +232,6 @@ void loop() {
     timing = millis();
   }
 
-  if (rebootDelay.reboot && (int32_t)(millis() - rebootDelay.rebootTime) >= 0) {
-    recovery.closeDetection();   // même raison qu'en tête de boucle
-    if(somfy.isDirty) somfy.commit();
-    schedule.commit();
-    net.end();
-    ESP.restart();
-  }
+  if (rebootDelay.reboot && (int32_t)(millis() - rebootDelay.rebootTime) >= 0) rebootNow();
   wdtReset();
 }

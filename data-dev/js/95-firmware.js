@@ -296,13 +296,51 @@ class Firmware {
         el.style.fontSize = Math.max(8, Math.floor(base * (avail - 1) / natural * 10) / 10) + 'px';
     }
 
-    // Ligne de sauvegarde : pied de la fenêtre GitHub, 3e étape du téléversement.
-    backupRow() {
+    // Ligne de sauvegarde : pied de la fenêtre GitHub, 3e étape du téléversement, remise à zéro.
+    backupRow(descKey) {
         return `<button type="button" id="btnBackupCfg" class="genmod-backup backup-row" onclick="firmware.backup()">
         <span class="genmod-backup-ico"><svg><use href="#svg-save"></use></svg></span>
-        <span class="gen-row-text"><b>${tr('FIRMWARE_MT_SAVE_BACKUP')}</b><span>${tr(this.isMobile() ? 'FIRMWARE_MT_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_MT_SAVE_BACKUP_DESC')}</span></span>
+        <span class="gen-row-text"><b>${tr('FIRMWARE_MT_SAVE_BACKUP')}</b><span>${tr(descKey || (this.isMobile() ? 'FIRMWARE_MT_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_MT_SAVE_BACKUP_DESC'))}</span></span>
         <svg class="genmod-backup-go"><use href="#svg-download"></use></svg>
         </button>`;
+    }
+    factoryReset() {
+        const div = document.createElement('div');
+        div.className = 'side-panel-overlay';
+        const btn = (id, key, kind = '') => `<button type="button" class="gen-btn${kind}" data-id="${id}" disabled>${tr(key)}</button>`;
+        div.innerHTML = `
+        <aside class="side-panel is-danger" role="alertdialog" aria-modal="true" aria-labelledby="factoryPanelTitle">
+        ${panelHead({ icon: 'svg-trash', tone: 'bad', id: 'factoryPanelTitle', title: tr('PROMPT_FACTORY_TITLE'), close: true, center: true })}
+        <div class="side-panel-body">
+        <div class="genmod-note is-danger"><svg><use href="#svg-warning"></use></svg><div>${tr('PROMPT_FACTORY_SUB')}</div></div>
+        <ul class="msg-cons">${['DEVICES', 'SETTINGS', 'LANGS', 'MOTORS'].map(k => `<li>${tr('PROMPT_FACTORY_CONS_' + k)}</li>`).join('')}</ul>
+        ${this.backupRow('FIRMWARE_MT_SAVE_BACKUP_DESC')}
+        <label class="msg-check"><input type="checkbox"><span>${tr('PROMPT_FACTORY_CHECK')}</span></label>
+        </div>
+        <div class="side-panel-foot"><div class="genmod-foot-btns">
+        ${btn('net', 'BT_FACTORY_KEEP_NET')}${btn('all', 'BT_FACTORY_ALL', ' gen-btn-danger')}
+        </div></div>
+        </aside>`;
+        const acts = div.querySelectorAll('[data-id]');
+        div.querySelector('.msg-check input').onchange = (e) => acts.forEach(b => { b.disabled = !e.target.checked; });
+        const close = openSidePanel(div);
+        div.querySelector('.genmod-close').focus();
+        acts.forEach(b => b.onclick = () => {
+            const keepNetwork = b.dataset.id === 'net';
+            close();
+            putJSON('/factoryReset', { confirm: 'factory', keepNetwork }, (err) => {
+                if (err) return ui.serviceError(get('divContainer'), err);
+                general.reloadApp = keepNetwork;
+                document.querySelectorAll('.socket-wait').forEach(w => w.remove());
+                ui.waitMessage(get('divContainer'), 'WAIT_MSG_FACTORY', {
+                    steps: keepNetwork
+                        ? [['WAIT_STEP_ERASE', 'cur'], ['WAIT_STEP_REBOOT', 'todo'], ['WAIT_STEP_RECONNECT', 'todo']]
+                        : [['WAIT_STEP_ERASE', 'cur'], ['WAIT_STEP_REBOOT', 'todo']],
+                    note: keepNetwork ? 'WAIT_MSG_DONT_UNPLUG' : 'WAIT_MSG_FACTORY_AP'
+                }).classList.add('socket-wait');
+                if (typeof socket !== 'undefined') socket.close(3000, 'reboot');
+            });
+        });
     }
     // Fenêtre de tâche (GitHub, téléversement, restauration) : la coque genmod- de la page
     // migrée, mais plein écran sur mobile comme l'ancien .inst-overlay (genmod-task, overlays.css).
