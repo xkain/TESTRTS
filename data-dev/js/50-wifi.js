@@ -735,7 +735,8 @@ class Wifi {
         get('netHeroSignal').textContent = `${this._wifiChannel} · ${this._wifiRssi} ${tr('UNIT_DBM')}`;
         get('netHeroSpeedRow').hidden = !eth;
         get('netHeroSpeed').textContent = isNaN(this._ethSpeed) ? '--' : `${this._ethSpeed} Mbit/s${this._ethDuplex ? ' · full duplex' : ''}`;
-        get('netHeroSum').textContent = [get('spanCurrentIP').textContent, get('netHeroAddr').textContent, eth ? '' : `${tr('CHANNEL')} ${this._wifiChannel}`].filter(Boolean).join(' · ');
+        get('netHeroSum').textContent = [get('spanCurrentIP').textContent, get('netHeroAddr').textContent, eth ? '' : `${tr('CHANNEL')} ${this._wifiChannel}`,
+            kind === 'wifi' && this._wifiLinkUp ? `${this._wifiRssi} ${tr('UNIT_DBM')}` : ''].filter(Boolean).join(' · ');
     }
     // Un réseau par nom, au signal le plus fort, du plus fort au plus faible.
     groupAPs(aps) {
