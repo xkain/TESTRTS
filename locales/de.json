@@ -1335,7 +1335,7 @@
     "SECURITY_PASSWORD_STORED": "Auf dem Gerät ist bereits ein Passwort gespeichert.",
     "SECURITY_SECURE_CONFIG_ONLY": "Nur sichere Konfiguration",
     "SECURITY_SECURE_CONFIG_DESC": "Ermöglicht den freien Zugriff auf das Dashboard (Steuerung von Geräten/Gruppen), erfordert jedoch eine Authentifizierung zum Ändern der Einstellungen.",
-    "SECURITY_HA_NOTE": "Home Assistant verwendet denselben Code für den Zugriff auf das Gerät.",
+    "SECURITY_HA_NOTE": "Home Assistant verwendet dieselben Zugangsdaten, um sich mit dem Gerät zu verbinden.",
 
 "INDEX_PAGE_GENERAL": "PAGE GENERAL",
     "GENERAL_DESC": "Sprache und Erscheinungsbild Ihres Geräts",

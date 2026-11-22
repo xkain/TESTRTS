@@ -2099,7 +2099,7 @@ label.gen-row {
     height: 56px;
     font-size: 2.4em;
 }
-/* Page Sécurité, tuile Portée : inerte quand la protection est désactivée ; note Home Assistant. */
+/* Page Sécurité : tuile Portée inerte quand la protection est désactivée ; note Home Assistant du mode. */
 #secScopeTile.is-off .gen-row { opacity: 0.55; }
 .sec-ha-note {
     display: flex;

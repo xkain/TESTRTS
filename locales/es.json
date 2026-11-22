@@ -1335,7 +1335,7 @@
     "SECURITY_PASSWORD_STORED": "Ya hay una contraseña guardada en el dispositivo.",
     "SECURITY_SECURE_CONFIG_ONLY": "Solo configuración segura",
     "SECURITY_SECURE_CONFIG_DESC": "Permite el acceso libre al panel de control (control de dispositivos/grupos), pero requiere autenticación para modificar la configuración.",
-    "SECURITY_HA_NOTE": "Home Assistant usa este mismo código para acceder al dispositivo.",
+    "SECURITY_HA_NOTE": "Home Assistant usa estas mismas credenciales para conectarse al dispositivo.",
 
 "INDEX_PAGE_GENERAL": "PAGE GENERAL",
     "GENERAL_DESC": "Idioma y apariencia de su dispositivo",

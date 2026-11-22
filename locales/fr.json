@@ -1335,7 +1335,7 @@
     "SECURITY_PASSWORD_STORED": "Un mot de passe est déjà enregistré sur l'appareil.",
     "SECURITY_SECURE_CONFIG_ONLY": "Configuration sécurisée uniquement",
     "SECURITY_SECURE_CONFIG_DESC": "Autorise l'accès libre au dashboard (contrôle des équipements/groupes), mais exige une authentification pour modifier les paramètres.",
-    "SECURITY_HA_NOTE": "Home Assistant utilise ce même code pour accéder à l'appareil.",
+    "SECURITY_HA_NOTE": "Home Assistant utilise ces mêmes accès pour se connecter à l'appareil.",
 
 "INDEX_PAGE_GENERAL": "PAGE GENERAL",
     "GENERAL_DESC": "Langue et apparence de votre appareil",
