@@ -942,7 +942,7 @@ class Firmware {
             };
         });
     }
-    // Les versions en tuiles (gabarit des packs d'icônes) ; le <select> caché reste la source
+    // Les versions en tuiles (gabarit icon-pack-*) ; le <select> caché reste la source
     // de vérité pour gitReleaseSelected(), confirmInstallGitRelease() et ui.fromElement().
     renderGitTiles(div) {
         const sel = div.querySelector('#selVersion'), cur = div.getAttribute('data-currentvernum');

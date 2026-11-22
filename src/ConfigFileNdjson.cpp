@@ -83,7 +83,6 @@ bool ShadeConfigFile::backupNdjson(SomfyShadeController *s) {
   fmt.addElem("ledColorOrder", settings.ledColorOrder);
   fmt.addElem("ledColorActivity", settings.ledColorActivity);
   fmt.addElem("ledRfBlink", settings.ledRfBlink);
-  fmt.addElem("iconPack", settings.iconPack);
   fmt.addElem("dashCompact", settings.dashCompact);
   fmt.addElem("geoLat", settings.geoLat);
   fmt.addElem("geoLon", settings.geoLon);
@@ -474,12 +473,6 @@ static void ndjsonApplySettings(JsonObject &obj) {
   }
   settings.fromJSON(obj);
   settings.NTP.fromJSON(obj);
-  if(obj.containsKey("iconPack")) {
-    const char *p = obj["iconPack"] | "";
-    bool okPack = true;
-    for(const char *c = p; okPack && *c; c++) okPack = islower((unsigned char)*c) || isdigit((unsigned char)*c) || *c == '-';
-    if(okPack) strlcpy(settings.iconPack, p, sizeof(settings.iconPack));
-  }
 }
 
 bool ShadeConfigFile::restoreNdjson(SomfyShadeController *s, restore_options_t &opts) {

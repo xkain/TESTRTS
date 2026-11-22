@@ -288,7 +288,6 @@ bool ConfigSettings::load() {
   // Comme hostname/accentColor ci-dessus : si la clé est absente (première exécution), le buffer
   // garde son initialiseur de champ ("groups", cf. ConfigSettings.h) au lieu d'être vidé.
   pref.getString("defMobileTab", this->defaultMobileTab, sizeof(this->defaultMobileTab));
-  pref.getString("iconPack", this->iconPack, sizeof(this->iconPack));
   this->showRadioActivity = pref.getBool("showRadioAct", false);
   this->showMovementIndicator = pref.getBool("showMoveInd", true);
   this->dashCompact = pref.getUChar("dashCompact", 0) & 0x03;
@@ -347,7 +346,6 @@ bool ConfigSettings::save() {
   ok &= nvsPutOk(pref.putUChar("hdrMobileDisp", this->headerMobileDisplay));
   ok &= nvsPutOk(pref.putBool("revDashCols", this->reverseDashboardColumns));
   ok &= nvsPutOk(pref.putString("defMobileTab", this->defaultMobileTab), this->defaultMobileTab);
-  ok &= nvsPutOk(pref.putString("iconPack", this->iconPack), this->iconPack);
   ok &= nvsPutOk(pref.putBool("showRadioAct", this->showRadioActivity));
   ok &= nvsPutOk(pref.putBool("showMoveInd", this->showMovementIndicator));
   ok &= nvsPutOk(pref.putUChar("dashCompact", this->dashCompact));

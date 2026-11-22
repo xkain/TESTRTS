@@ -65,7 +65,7 @@
     window.__loadJsFallback = function(){
       if (window.__jsFallbackLoaded) return;
       window.__jsFallbackLoaded = true;
-      var files = ['js/00-bootstrap.js', 'js/10-core-utils.js', 'js/15-icons.js', 'js/20-shell.js', 'js/30-ui-binder.js',
+      var files = ['js/00-bootstrap.js', 'js/10-core-utils.js', 'js/20-shell.js', 'js/30-ui-binder.js',
        'js/35-security.js', 'js/40-general.js', 'js/50-wifi.js', 'js/60-onboarding.js',
        'js/70-somfy.js', 'js/71-schedule.js', 'js/72-setup.js', 'js/73-group-setup.js', 'js/74-dash-scene.js', 'js/76-remotes.js', 'js/90-mqtt.js', 'js/95-firmware.js'];
       var remaining = files.length;
@@ -406,12 +406,6 @@
                                                 <label class="gen-btn gen-swatch-other"><span tr="GENERAL_COLOR_OTHER"></span><input id="fldAccentColor" class="general-accent-color" name="accentColor" type="color" data-bind="general.accentColor"></label>
                                             </div>
                                             <p class="gen-tile-desc" tr="GENERAL_COLOR_DESC"></p>
-                                        </div>
-                                        <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="ICONS_TITLE"></h3>
-                                            <div id="currentIconPackDisplay" class="gen-tile-value" tr="ICONS_DEFAULT"></div>
-                                            <p class="gen-tile-desc" tr="ICONS_TILE_DESC"></p>
-                                            <button type="button" class="gen-btn" onclick="iconPacks.openManager()"><svg><use href="#svg-indicShutter"></use></svg><span tr="ICONS_BROWSE"></span></button>
                                         </div>
                                         <div id="genFeedbackTile" class="gen-tile">
                                             <h3 class="gen-tile-title" tr="GENERAL_FEEDBACK"></h3>

@@ -1384,8 +1384,8 @@ class General {
     // --- Catalogue des langues : téléchargement à la demande depuis GitHub, suppression d'une
     // langue installée, avec progression via les évènements socket
     // langDownloadProgress/langDownloadComplete (cf. procLangDownloadProgress/Complete).
-    // Même mise en page que le gestionnaire de packs d'icônes (classes icon-pack-*) : toucher une
-    // tuile la sélectionne, seul le pied de la modale agit sur la langue choisie. ---
+    // Tuiles icon-pack-* (partagées avec les versions du firmware) : toucher une tuile la
+    // sélectionne, seul le pied de la modale agit sur la langue choisie. ---
     openLangManager() {
         if (get('divLangManagerOverlay')) return;
         this._manualImportPending.clear();

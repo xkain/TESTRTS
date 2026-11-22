@@ -24,7 +24,6 @@
 #include "WebStatic.h"
 #include "WebAuth.h"
 #include "WebI18n.h"
-#include "WebIcons.h"
 #include "WebNetwork.h"
 #include "WebSystem.h"
 #include "WebShadesRest.h"
@@ -492,7 +491,6 @@ void Web::begin() {
   apiServer.on("/reboot", AsyncHttp::ANY, WebSystem::handleReboot);
 
   WebI18n::registerRoutes(server);
-  WebIcons::registerRoutes(server);
 
   WebStatic::registerRoutes(server);
   WebAuth::registerRoutes(server);

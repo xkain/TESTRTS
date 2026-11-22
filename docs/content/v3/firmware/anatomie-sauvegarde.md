@@ -41,7 +41,7 @@ faite sur une v2.x.x se restaure telle quelle. Sa description est conservée plu
 
 ```json
 {"rec":"meta","fmt":1,"fw":"v3.0.0","serverId":"A1B2C3","chip":"ESP32-D0WD-V3","profile":"GENERIC","created":"2026-11-17T21:14:45.492+0000"}
-{"rec":"settings","hostname":"ESPSomfyRTS","ntpServer":"pool.ntp.org","posixZone":"CET-1CEST,M3.5.0,M10.5.0/3","accentColor":"#2563eb","ssdpBroadcast":true,"checkForUpdate":true,"language":"fr","headerMobileDisplay":0,"reverseDashboardColumns":false,"defaultMobileTab":"groups","showRadioActivity":false,"themeMode":0,"showMovementIndicator":true,"ledPin":2,"ledActiveLow":false,"ledAddressable":false,"ledColorOrder":0,"ledColorActivity":"#ffffff","ledRfBlink":true,"iconPack":"","dashCompact":0,"geoLat":48.85,"geoLon":2.35}
+{"rec":"settings","hostname":"ESPSomfyRTS","ntpServer":"pool.ntp.org","posixZone":"CET-1CEST,M3.5.0,M10.5.0/3","accentColor":"#2563eb","ssdpBroadcast":true,"checkForUpdate":true,"language":"fr","headerMobileDisplay":0,"reverseDashboardColumns":false,"defaultMobileTab":"groups","showRadioActivity":false,"themeMode":0,"showMovementIndicator":true,"ledPin":2,"ledActiveLow":false,"ledAddressable":false,"ledColorOrder":0,"ledColorActivity":"#ffffff","ledRfBlink":true,"dashCompact":0,"geoLat":48.85,"geoLon":2.35}
 {"rec":"room","roomId":1,"name":"Salon","sortOrder":0}
 {"rec":"shade","shadeId":1,"paired":true,"shadeType":4,"remoteAddress":100101,"name":"Volet Salon","tiltType":0,"proto":0,"bitLength":56,"upTime":30000,"downTime":26300,"tiltTimeUp":7000,"tiltTimeDown":7000,"stepSize":100,"flags":0,"myPos":-1,"myTiltPos":-1,"currentPos":0,"currentTiltPos":0,"flipCommands":false,"flipPosition":false,"repeats":1,"sortOrder":0,"gpioUp":0,"gpioDown":0,"gpioMy":0,"gpioFlags":0,"roomId":1,"ledFeedback":true,"tiltFirstOnOpen":true,"tiltFirstOnClose":true,"slackUp":400,"slackDown":250,"upMidTime":17200,"downMidTime":11000,"outputMode":0,"pulseTime":200,"stateVocab":0,"setupSteps":7,"lastRollingCode":247,"linkedRemotes":[200301]}
 {"rec":"group","groupId":1,"groupType":0,"remoteAddress":100201,"name":"Rez-de-chaussée","proto":0,"bitLength":56,"repeats":1,"sortOrder":0,"flipCommands":false,"roomId":0,"ledFeedback":false,"lastRollingCode":18,"linkedShades":[1]}
@@ -89,7 +89,7 @@ fichier ? ».
 
 | `rec` | Clés |
 | --- | --- |
-| `settings` | `hostname`, `ntpServer`, `posixZone`, `accentColor`, `ssdpBroadcast`, `checkForUpdate`, `language`, `headerMobileDisplay`, `reverseDashboardColumns`, `defaultMobileTab`, `showRadioActivity`, `themeMode`, `showMovementIndicator`, `ledPin`, `ledActiveLow`, `ledAddressable`, `ledColorOrder`, `ledColorActivity`, `ledRfBlink`, `iconPack`, `dashCompact`, `geoLat`, `geoLon` |
+| `settings` | `hostname`, `ntpServer`, `posixZone`, `accentColor`, `ssdpBroadcast`, `checkForUpdate`, `language`, `headerMobileDisplay`, `reverseDashboardColumns`, `defaultMobileTab`, `showRadioActivity`, `themeMode`, `showMovementIndicator`, `ledPin`, `ledActiveLow`, `ledAddressable`, `ledColorOrder`, `ledColorActivity`, `ledRfBlink`, `dashCompact`, `geoLat`, `geoLon` |
 | `net` | `connType`, `dhcp`, `ip`, `gateway`, `subnet`, `dns1`, `dns2`, `ethBoardType`, `ethPhyType`, `ethCLKMode`, `ethPhyAddress`, `ethPWRPin`, `ethMDCPin`, `ethMDIOPin` |
 | `mqtt` | `enabled`, `hostname`, `port`, `pubDisco`, `rootTopic`, `discoTopic`, `clientId` |
 | `radio` | `enabled`, `proto`, `type`, `radioBoardType`, `SCKPin`, `CSNPin`, `MOSIPin`, `MISOPin`, `TXPin`, `RXPin`, `frequency`, `rxFrequency`, `rxBandwidth`, `txPower` |

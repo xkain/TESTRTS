@@ -4,10 +4,16 @@
 // Télécommandes virtuelles dessinées : moteur de rendu des packs (contrat ../audit/CONTRAT-TELECOMMANDES-v1.md).
 // Les packs intégrés passent par la même validation que ceux qui seront téléchargés.
 
-// Liste blanche des icônes, resserrée : class et style n'ont aucun emploi sur une coque.
-const RC_TAGS = new Set([...ICON_PACK_TAGS].filter(t => t !== 'symbol'));
-const RC_ATTRS = new Set([...ICON_PACK_ATTRS].filter(a => !['class', 'style', 'data-my', 'xmlns:xlink', 'xlink:href'].includes(a))
-    .concat(['color', 'data-key', 'data-press', 'data-led', 'data-knob', 'data-travel', 'data-ribs']));
+// Liste blanche du SVG d'une coque : ni class ni style, aucun emploi sur une coque.
+const RC_TAGS = new Set(['svg', 'defs', 'g', 'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon',
+    'linearGradient', 'radialGradient', 'stop', 'pattern', 'clipPath', 'mask', 'use']);
+const RC_ATTRS = new Set(['id', 'href', 'viewBox', 'preserveAspectRatio', 'transform', 'd',
+    'x', 'y', 'x1', 'y1', 'x2', 'y2', 'cx', 'cy', 'r', 'rx', 'ry', 'fx', 'fy', 'width', 'height', 'points',
+    'fill', 'fill-opacity', 'fill-rule', 'stroke', 'stroke-width', 'stroke-opacity', 'stroke-linecap',
+    'stroke-linejoin', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-miterlimit', 'opacity', 'clip-path',
+    'clip-rule', 'mask', 'offset', 'stop-color', 'stop-opacity', 'gradientUnits', 'gradientTransform',
+    'spreadMethod', 'patternUnits', 'patternContentUnits', 'patternTransform', 'clipPathUnits', 'maskUnits',
+    'maskContentUnits', 'xmlns', 'color', 'data-key', 'data-press', 'data-led', 'data-knob', 'data-travel', 'data-ribs']);
 const RC_CMDS = new Set(['up', 'down', 'my', 'toggle', 'stop', 'favorite', 'Prog']);
 const RC_LABELS = { up: 'BT_OPEN', down: 'BT_CLOSE', my: 'BT_MY', toggle: 'VR_TOGGLE', stop: 'BT_STOP', favorite: 'VR_FAVORITE', Prog: 'BT_PROG' };
 const RC_PROG_ARM_MS = 1000;

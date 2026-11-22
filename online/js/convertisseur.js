@@ -282,10 +282,8 @@ function readSettings(r, h) {
       if (/^#[0-9a-fA-F]{6}$/.test(c)) s.ledColorActivity = c;
     }
     if (!r.atRecordEnd()) s.ledRfBlink = r.bool(false);
-    if (!r.atRecordEnd()) {
-      const p = r.varField() ?? '';
-      if (/^[a-z0-9-]*$/.test(p)) s.iconPack = p;
-    }
+    // Ancien identifiant de pack d'icônes, fonction retirée : lu pour garder l'alignement.
+    if (!r.atRecordEnd()) r.varField();
     if (!r.atRecordEnd()) s.dashCompact = r.u8(0) & 0x03;
   }
   if (!r.atRecordEnd()) r.seekEnd();

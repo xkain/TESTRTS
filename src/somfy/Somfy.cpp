@@ -121,7 +121,7 @@ void SomfyGroup::clear() {
   this->bitLength = somfy.transceiver.config.type;
   this->proto = somfy.transceiver.config.proto;
 }
-// Même règle que l'identifiant d'un pack d'icônes : [a-z0-9-], 32 au plus, vide accepté. Tout le
+// Identifiant [a-z0-9-], 32 au plus, vide accepté. Tout le
 // reste est refusé sans rien changer : la valeur repart telle quelle dans shades.cfg et le JSON.
 bool SomfyRemote::setRemoteModel(const char *id) {
   if(!id) return false;

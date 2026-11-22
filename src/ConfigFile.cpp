@@ -940,13 +940,8 @@ bool ShadeConfigFile::readSettingsRecord() {
         if(hex) strlcpy(settings.ledColorActivity, color, sizeof(settings.ledColorActivity));
       }
       if(!this->atRecordEnd()) settings.ledRfBlink = this->readBool(false);
-      if(!this->atRecordEnd()) {
-        char pack[sizeof(settings.iconPack)];
-        this->readVarString(pack, sizeof(pack));
-        bool ok = true;
-        for(const char *c = pack; ok && *c; c++) ok = islower((unsigned char)*c) || isdigit((unsigned char)*c) || *c == '-';
-        if(ok) strlcpy(settings.iconPack, pack, sizeof(settings.iconPack));
-      }
+      // Ancien identifiant de pack d'icônes, fonction retirée : lu pour garder l'alignement.
+      if(!this->atRecordEnd()) { char skip[33]; this->readVarString(skip, sizeof(skip)); }
       if(!this->atRecordEnd()) settings.dashCompact = this->readUInt8(0) & 0x03;
     }
     // Taille annoncée trop courte de v2.5.1 à v2.6.1 : ne drainer que si la fin de ligne n'est

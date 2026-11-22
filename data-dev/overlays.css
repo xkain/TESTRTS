@@ -1770,14 +1770,13 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
 }
 
 /* =======================================================================
- *  FENÊTRES LANGUES ET PACKS D'ICÔNES (page Système › Général)
- *
- *  Déplacé de base.css : ce sont deux modales injectées en JS, leur place est ici.
+ *  FENÊTRE LANGUES (page Système › Général)
  *
  *  Catalogue des langues (Phase 2 i18n) : grille construite par
  *  general.openLangManager() et peuplée par renderLangCatalog() (40-general.js). La mise en
- *  page reprend les classes icon-pack-* ; seuls le code de langue, les badges, la progression
- *  et l'import manuel sont propres ici.
+ *  page reprend les classes icon-pack-*, héritées de l'ancien catalogue d'icônes et partagées
+ *  avec les versions du firmware ; seuls le code de langue, les badges, la progression et
+ *  l'import manuel sont propres ici.
  *  ======================================================================= */
 /* --- Coque commune aux deux fenêtres (genmod-) -------------------------------
    La fenêtre est cadrée sur .gen-layout et reprend le MÊME gabarit de colonnes que la
@@ -1972,7 +1971,6 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
         border-radius: var(--r-5);
     }
     /* L'aperçu prend la place libre au lieu d'un rapport fixe : il grandit avec la tuile. */
-    .genmod-body .icon-pack-thumb { aspect-ratio: auto; flex: 1 1 auto; min-height: 0; }
     .genmod-body .icon-pack-name { margin-top: auto; font-size: 1.0625em; font-weight: 800; }
     .genmod-body .icon-pack-meta { font-size: var(--fs-2); font-weight: 500; }
     /* Une langue n'a pas de vignette : son code tient lieu d'icône, dans la pastille d'A2
@@ -2434,29 +2432,17 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     color: var(--color-text-secondary);
 }
 
-/* Scène au repos à 75 % fermé ; à chaque tuile choisie, un seul cycle ouverture puis retour
-   (.is-animating). --icon-pos est déclarée par @property pour pouvoir être animée. */
-@property --icon-pos { syntax: '<number>'; inherits: true; initial-value: 75; }
-@keyframes icon-pack-demo { 0% { --icon-pos: 75; } 45% { --icon-pos: 0; } 100% { --icon-pos: 75; } }
-.icon-pack-scene { width: 100%; padding: 12px 14px; border-radius: var(--r-4); background: var(--surface); --icon-pos: 75; --shade-position: var(--icon-pos); --fpos: calc(var(--icon-pos) * 1%); --shade-tilt: 60; }
-.icon-pack-scene.is-animating { animation: icon-pack-demo 1.6s ease-in-out; }
-.icon-pack-scene.is-animating * { transition: none; }
-@media (prefers-reduced-motion: reduce) { .icon-pack-scene.is-animating { animation: none; } }
-.icon-pack-scene-icons { display: flex; justify-content: space-between; gap: 2px; }
-.icon-pack-scene-icons svg { width: 15%; max-width: 58px; aspect-ratio: 1; height: auto; }
 .icon-pack-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.75em; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-secondary); }
 .icon-pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); gap: 8px; }
 .icon-pack-tile { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 8px; border-radius: var(--radius-lg); border: 1.5px solid var(--color-border); background: var(--color-bg-card); cursor: pointer; }
 .icon-pack-tile:hover { border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border)); }
 .icon-pack-tile.selected { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent) inset; }
-.icon-pack-tile.is-broken, .icon-pack-tile.is-disabled { opacity: .5; }
+.icon-pack-tile.is-disabled { opacity: .5; }
 .icon-pack-tile.is-disabled { pointer-events: none; }
-.icon-pack-thumb { display: flex; justify-content: space-between; padding: 4px; border-radius: var(--radius-md); background: var(--color-bg-input); aspect-ratio: 3.2; --shade-position: 60; --fpos: 100%; --shade-tilt: 60; }
-.icon-pack-thumb svg { width: 32%; aspect-ratio: 1; height: auto; }
 .icon-pack-name { font-weight: 700; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .icon-pack-meta { font-size: 0.75em; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .icon-pack-tag { position: absolute; top: 6px; right: 6px; }
-/* Pointillés : la tuile par défaut des packs d'icônes, ou une langue pas encore sur le boîtier. */
+/* Pointillés : la version installée du firmware, ou une langue pas encore sur l'appareil. */
 .icon-pack-tile.is-default, .icon-pack-tile.is-remote { border-style: dashed; }
 .icon-pack-tile.is-default.selected, .icon-pack-tile.is-remote.selected { border-style: solid; }
 /* Sur écran tactile, aucun fichier ne peut être glissé dans la page : la grande zone de dépôt
@@ -2466,9 +2452,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 @media (hover: none) and (pointer: coarse) {
     .icon-pack-import { display: inline-flex; }
     .icon-pack-drop { display: none; }
-}
-@media (max-width: 520px) {
-    .icon-pack-scene-icons svg { width: 15%; max-width: 40px; }
 }
 
 /* --- Fenêtre pièce (#divEditRoomOverlay) : coque genmod- de Général, nom puis contenu à cocher.

@@ -1659,8 +1659,8 @@ function genGridSpan(grid) {
 
 // --- Coque des fenêtres de la page Général (classes genmod-, overlays.css) ---------------
 // Deux colonnes : à gauche ce que fait l'appareil (icône, titre, état courant), à droite ce
-// qu'on lui demande. Partagée par le gestionnaire de langues et celui des packs d'icônes :
-// un seul gabarit en mémoire plutôt que deux chaînes jumelles.
+// qu'on lui demande. Partagée par les fenêtres de la page : un seul gabarit en mémoire plutôt
+// que des chaînes jumelles.
 // `id` sert de préfixe aux parties que le JS réécrit ensuite : <id>State, <id>Chips, <id>Hint.
 function genModalState(keyLabel, value, note = '') {
     return `<span class="genmod-state-key">${keyLabel}</span>
@@ -1919,7 +1919,6 @@ async function reopenSocket() {
     await initSockets();
 }
 async function init() {
-    iconPacks.loadInstalled();
     await security.init();
     general.init();
     wifi.init();
