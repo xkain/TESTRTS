@@ -1313,7 +1313,6 @@
 
 "INDEX_PAGE_SECURITY": "PAGE SECURITY",
     "GENERAL_TITLE_SECURITY": "Sécurité",
-    "SECURITY_PAGE_DESC": "Qui peut ouvrir l'interface de cet appareil, et pour quoi faire.",
     "SECURITY_FACT_MODE": "Mode",
     "SECURITY_TILE_SCOPE": "Portée",
     "SECURITY_SCOPE_CONFIG": "Configuration seulement",
