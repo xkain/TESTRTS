@@ -54,8 +54,6 @@
     "SETTINGS_DESC_SECURITY": "PIN code, password, scope",
     "SETTINGS_DESC_GENERAL": "Language, appearance",
     "SETTINGS_DESC_FIRMWARE": "Updates, status, backup",
-    "SETTINGS_ADV_SHOW": "Show advanced options",
-    "SETTINGS_ADV_SHOW_DESC": "Troubleshooting",
 
 "INDEX_PAGE_LOGIN": "PAGE LOGIN",
     "LOGIN_KEY_BACK": "Delete the last digit",

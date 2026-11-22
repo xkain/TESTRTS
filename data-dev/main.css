@@ -4704,9 +4704,6 @@ body.fw-update .set-fw-new {
     #divHomePnl .dash-rooms-title {
         display: none;
     }
-    :root:not([data-ui-advanced]) .adv-only {
-        display: none !important;
-    }
 }
 .section-breadcrumb {
     display: flex;

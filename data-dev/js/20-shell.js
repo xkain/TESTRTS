@@ -1059,17 +1059,6 @@ const mobileNav = {
         shOverlay(div);
     },
 };
-// Options avancées : préférence du navigateur, pas de l'appareil (chaque téléphone choisit).
-const uiAdvanced = {
-    get() { try { return localStorage.getItem('uiAdvanced') === '1'; } catch (e) { return false; } },
-    set(on) { try { localStorage.setItem('uiAdvanced', on ? '1' : '0'); } catch (e) { /* stockage refusé */ } this.apply(); },
-    apply() {
-        const on = this.get();
-        document.documentElement.toggleAttribute('data-ui-advanced', on);
-        document.querySelectorAll('.ui-advanced-cb').forEach(cb => { cb.checked = on; });
-        document.querySelectorAll('.gen-tabs').forEach(genTabsSync);
-    },
-};
 // Parent affiché dans le fil d'Ariane et entrée de la barre latérale qui porte une page.
 const BREADCRUMB_PARENT = {
     divSomfyMotors: 'sec-habitation', divSomfyGroups: 'sec-habitation', divSomfyRooms: 'sec-habitation', divSomfySchedules: 'sec-habitation',
@@ -1308,7 +1297,6 @@ function bindNavigation() {
         <div class="dropdown-item" role="menuitem" onclick="this.parentElement.classList.remove('show'); openPageHelp();"><svg><use href="#svg-navHelp"></use></svg><span tr="HELP_THIS_PAGE"></span></div></div></div>`;
     document.querySelectorAll('.hero').forEach(h => h.insertAdjacentHTML('beforeend', h.querySelector('.hero-fold') ? more
         : `<button type="button" class="gen-hero-help" onclick="openPageHelp();" tr="HELP_THIS_PAGE" title=""><svg><use href="#svg-navHelp"></use></svg></button>`));
-    uiAdvanced.apply();
     document.querySelectorAll('.nav-item, .nav-dash, .sub-nav-item, .settings-row[data-grpid], .set-tile[data-grpid]').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1539,11 +1527,10 @@ function fillGenSecMini(sections) {
 // --- Onglets d'une page migrée (Général, Appareil, Connexion) -----------------------------
 // L'onglet précédent/suivant n'apparaît en pied de page que si l'onglet affiché dépasse de l'écran.
 // Mobile : tous les onglets s'écrivent sur une ligne qui défile, au-dessus d'une barre segmentée
-// qui reste seule collée sous l'en-tête pendant le défilement (.is-min). Les onglets masqués,
-// par leur attribut ou par les options avancées, sortent de la barre.
+// qui reste seule collée sous l'en-tête pendant le défilement (.is-min). Les onglets masqués
+// sortent de la barre.
 function genTabsVisible(strip) {
-    // Affichage réel : un onglet peut sortir par son attribut, une classe (type de connexion)
-    // ou les options avancées (.adv-only).
+    // Affichage réel : un onglet peut sortir par son attribut ou une classe (type de connexion).
     return [...strip.querySelectorAll('.gen-tab')].filter(t => !t.hidden && getComputedStyle(t).display !== 'none');
 }
 function genTabsSync(strip) {

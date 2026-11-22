@@ -54,8 +54,6 @@
     "SETTINGS_DESC_SECURITY": "Code PIN, mot de passe, portée",
     "SETTINGS_DESC_GENERAL": "Langue, apparence",
     "SETTINGS_DESC_FIRMWARE": "Mises à jour, état, sauvegarde",
-    "SETTINGS_ADV_SHOW": "Afficher les options avancées",
-    "SETTINGS_ADV_SHOW_DESC": "Dépannage",
 
 "INDEX_PAGE_LOGIN": "PAGE LOGIN",
     "LOGIN_KEY_BACK": "Effacer le dernier chiffre",

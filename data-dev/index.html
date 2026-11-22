@@ -443,17 +443,6 @@
                                                 </span>
                                             </div>
                                         </div>
-                                        <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="SETUP_ADVANCED"></h3>
-                                            <div class="gen-row">
-                                                <span class="gen-row-text"><b tr="SETTINGS_ADV_SHOW"></b><span tr="SETTINGS_ADV_SHOW_DESC"></span></span>
-                                                <span class="gen-seg gen-seg-bool">
-                                                    <input class="ui-advanced-cb" type="checkbox" oninput="event.stopPropagation();" onchange="event.stopPropagation(); uiAdvanced.set(this.checked);">
-                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
-                                                    <span class="gen-seg-no" tr="BT_NO"></span>
-                                                </span>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                                 <nav id="genPager" class="gen-pager" hidden>
@@ -534,7 +523,7 @@
                                     <button type="button" class="gen-tab selected" role="tab" data-tab="0" tr="FW_UPDATE_GIT"></button>
                                     <button type="button" class="gen-tab" role="tab" data-tab="1" tr="FW_TAB_STATUS"></button>
                                     <button type="button" class="gen-tab" role="tab" data-tab="2" tr="FW_TAB_BACKUP"></button>
-                                    <button type="button" class="gen-tab adv-only" role="tab" data-tab="3" tr="FW_TILE_TROUBLESHOOT"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="3" tr="FW_TILE_TROUBLESHOOT"></button>
                                     <button type="button" class="gen-tab" role="tab" data-tab="4" tr="FW_TAB_ABOUT"></button>
                                 </nav>
                                 <div id="fwPanels" class="gen-panels">
@@ -664,7 +653,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="gen-grid adv-only" role="tabpanel" data-tab="3" hidden>
+                                    <div class="gen-grid" role="tabpanel" data-tab="3" hidden>
                                         <header class="gen-sec-head"><h2 tr="FW_TILE_TROUBLESHOOT"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i><i></i></span></header>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="FW_TILE_DEBUG"></h3>
