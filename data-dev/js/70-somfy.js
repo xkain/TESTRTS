@@ -6082,10 +6082,11 @@ class Somfy {
     _rxAddTileHtml(onclick, label, desc, full) {
         return `<button type="button" class="cfg-tile cfg-tile-add" onclick="${onclick};"${full ? ' disabled' : ''}><svg><use href="#svg-add"></use></svg><span>${tr(label)}</span><small>${tr(desc)}</small></button>`;
     }
-    _rxHero(rootId, titleId, key, n, max) {
+    // keys = [singulier, pluriel] écrites en entier : construites, check_i18n --full les croyait mortes.
+    _rxHero(rootId, titleId, keys, n, max) {
         const root = get(rootId);
         root.classList.toggle('is-empty', n === 0);
-        if (titleId) get(titleId).innerText = tr(n > 1 ? `${key}_MANY` : `${key}_ONE`).replace('{N}', n);
+        if (titleId) get(titleId).innerText = tr(keys[n > 1 ? 1 : 0]).replace('{N}', n);
         const left = Math.max(0, max - n);
         root.querySelector('.gen-cap-n').innerHTML = `${n} <small>${tr('LIST_CAP_OF').replace('{MAX}', max)}</small>`;
         root.querySelector('.gen-cap-left').textContent = tr(left === 1 ? 'LIST_CAP_FREE_ONE' : 'LIST_CAP_FREE_MANY').replace('{N}', left);
@@ -6278,7 +6279,7 @@ class Somfy {
         box.innerHTML = this._rxAddTileHtml('somfy.linkListenRemote()', 'LISTENER_CAPTURE', 'LISTENER_CAPTURE_DESC', list.length >= max)
             + list.map(l => this._listenerCardHtml(l, l === recent)).join('');
         keep();
-        this._rxHero('divListenerPage', 'spanListenerHero', 'LISTENER_HERO', list.length, max);
+        this._rxHero('divListenerPage', 'spanListenerHero', ['LISTENER_HERO_ONE', 'LISTENER_HERO_MANY'], list.length, max);
         get('spanListenerPresses').innerText = this._listenerPresses || 0;
         get('spanListenerLast').innerText = recent ? this._listenerTime(recent.lastRxAt) : '—';
     }

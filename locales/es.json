@@ -1292,6 +1292,8 @@
 
 "INDEX_PAGE_LISTENER": "PAGE LISTENER",
     "LISTENER_PAGE_TITLE": "Mandos escuchados",
+    "LISTENER_HERO_ONE": "{N} escuchado",
+    "LISTENER_HERO_MANY": "{N} escuchados",
     "LISTENER_PAGE_DESC": "Capte las pulsaciones de sus mandos físicos para usarlas como disparadores",
     "LISTENER_PRESSES": "Pulsaciones desde que se abrió la página",
     "LISTENER_LAST_PRESS": "Última pulsación",

@@ -1292,6 +1292,8 @@
 
 "INDEX_PAGE_LISTENER": "PAGE LISTENER",
     "LISTENER_PAGE_TITLE": "Télécommandes écoutées",
+    "LISTENER_HERO_ONE": "{N} écoutée",
+    "LISTENER_HERO_MANY": "{N} écoutées",
     "LISTENER_PAGE_DESC": "Captez les appuis de vos télécommandes physiques pour les utiliser comme déclencheurs",
     "LISTENER_PRESSES": "Appuis depuis l'ouverture de la page",
     "LISTENER_LAST_PRESS": "Dernier appui",

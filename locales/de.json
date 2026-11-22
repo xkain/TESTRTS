@@ -1292,6 +1292,8 @@
 
 "INDEX_PAGE_LISTENER": "PAGE LISTENER",
     "LISTENER_PAGE_TITLE": "Überwachte Fernbedienungen",
+    "LISTENER_HERO_ONE": "{N} abgehört",
+    "LISTENER_HERO_MANY": "{N} abgehört",
     "LISTENER_PAGE_DESC": "Erfassen Sie Tastendrücke Ihrer physischen Fernbedienungen, um sie als Auslöser zu nutzen",
     "LISTENER_PRESSES": "Tastendrücke seit Öffnen der Seite",
     "LISTENER_LAST_PRESS": "Letzter Tastendruck",
