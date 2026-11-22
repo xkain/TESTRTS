@@ -5073,39 +5073,25 @@ body:has(.inst-overlay, .modal-overlay) #divSettingsPnl > .button-container-foot
     background: var(--on-fill);
     color: var(--on-fill-text);
 }
-/* Trois cartes = trois tuiles de large au plus ; le résumé repart toujours sur la ligne suivante.
-   Seuils = 2 et 3 colonnes de .gen-grid (340 px + 16 px d'écart). */
-.gen-grid > .net-type-tile + .gen-tile {
-    grid-column-start: 1;
-}
-@container (min-width: 696px) {
-    .gen-grid > .net-type-tile {
-        grid-column: span 2;
-    }
-}
-@container (min-width: 1052px) {
-    .gen-grid > .net-type-tile {
-        grid-column: span 3;
-    }
-}
+/* Les trois types empilés, une ligne chacun : la tuile garde une largeur normale et le résumé
+   vient à côté. Fond --surface-2 (la tuile est en --surface) ; seule la carte choisie porte une
+   bordure, le badge dit ce qui tourne. */
 .net-type-list {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
 }
 .net-type-btn {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
     width: 100%;
-    min-height: 64px;
     margin: 0;
-    padding: 16px;
-    border: 2px solid var(--border);
+    padding: 12px 14px;
+    border: 2px solid transparent;
     border-radius: var(--r-3);
-    background: var(--surface);
+    background: var(--surface-2);
     color: var(--text);
     font: inherit;
     text-align: left;
@@ -5114,6 +5100,7 @@ body:has(.inst-overlay, .modal-overlay) #divSettingsPnl > .button-container-foot
 }
 .net-type-btn:hover,
 .net-type-btn:active {
+    border-color: var(--border);
     background: var(--surface-2);
     color: var(--text);
 }
@@ -5144,9 +5131,6 @@ body:has(.inst-overlay, .modal-overlay) #divSettingsPnl > .button-container-foot
     color: var(--text-3);
 }
 .net-type-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
     display: none;
     padding: 3px 10px;
     border-radius: var(--r-pill);
@@ -5157,22 +5141,6 @@ body:has(.inst-overlay, .modal-overlay) #divSettingsPnl > .button-container-foot
 }
 .net-type-btn.is-active .net-type-badge {
     display: inline-block;
-}
-/* Trop étroit pour trois cartes côte à côte : une par ligne, icône à gauche. */
-@container (max-width: 620px) {
-    .net-type-list {
-        grid-template-columns: minmax(0, 1fr);
-    }
-    .net-type-btn {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto;
-        align-items: center;
-        gap: 14px;
-        padding: 12px 14px;
-    }
-    .net-type-badge {
-        position: static;
-    }
 }
 .net-sum-list {
     display: flex;
