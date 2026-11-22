@@ -2067,10 +2067,11 @@
                                         </div>
                                     </div>
 
-                                    <div class="gen-grid" data-tab="1" hidden>
+                                    <div class="gen-grid js-span" data-tab="1" hidden>
                                         <header class="gen-sec-head"><h2 tr="RADIO_TAB_TX"></h2><span class="gen-sec-mini" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i><i></i></span></header>
-                                        <div class="gen-tile rdc-sliders">
+                                        <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="RADIO_GROUP_TX"></h3>
+                                            <p class="gen-tile-desc" tr="RADIO_TX_STD_DESC"></p>
                                             <div class="gen-field">
                                                 <span class="gen-field-label" tr="RADIO_TX_PRESETS"></span>
                                                 <div class="rdc-preset-list">
@@ -2078,6 +2079,10 @@
                                                     <button type="button" class="rdc-preset-btn" data-freq="433.92" onclick="somfy.setTxPreset(433.92);"><b>433.92 MHz</b><span tr="RTV"></span></button>
                                                 </div>
                                             </div>
+                                            <button type="button" class="rd-manual-btn" data-tx aria-expanded="false" onclick="somfy.toggleRadioManual(this);"><svg><use href="#svg-tabSettings"></use></svg><span tr="SETTINGS_MANUAL"></span><svg class="rd-manual-chev"><use href="#svg-arrowDown"></use></svg></button>
+                                        </div>
+                                        <div class="gen-tile rdc-sliders rdc-manual" hidden>
+                                            <h3 class="gen-tile-title" tr="RADIO_TX_MANUAL_TITLE"></h3>
                                             <div class="blocradio dirty-target">
                                                 <div class="blocRadioHeader">
                                                     <div class="blocRadioHeaderTitle">

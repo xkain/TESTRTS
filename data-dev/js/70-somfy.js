@@ -371,6 +371,7 @@ class Somfy {
                 // inutile de redemander a /getRadio dans la foulee.
                 if (somfy.transceiver && somfy.transceiver.config)
                     this._radioApplied = Object.assign({}, somfy.transceiver.config);
+                this.openTxManualIfCustom();
 
                 const selBoard = get('selRadioBoardType');
                 if (selBoard) {
@@ -2401,16 +2402,27 @@ class Somfy {
             this.renderRadioFleet();
             this.updateRadioGraph();
             this.syncRadioHardwareTab();
+            this.openTxManualIfCustom();
         });
     }
     // Profil BOX : la carte est connue et figée, l'onglet Matériel la montre en lecture seule (le
     // sélecteur de carte est caché par main.css), sauf en mode expert.
-    // Balayage et curseurs de réception, repliés sous l'assistant : rien n'est retenu, la page se rouvre repliée.
+    // Réglages repliés de l'onglet du bouton (Réception ou Émission) : rien n'est retenu, la page se rouvre repliée.
     toggleRadioManual(btn) {
         const open = btn.getAttribute('aria-expanded') !== 'true';
         btn.setAttribute('aria-expanded', open);
-        document.querySelectorAll('#rdcPanels .rdc-manual').forEach(t => { t.hidden = !open; });
+        const grid = btn.closest('.gen-grid');
+        grid.querySelectorAll('.rdc-manual').forEach(t => { t.hidden = !open; });
+        genGridSpan(grid);
         if (this._radioTabs) this._radioTabs.update();
+    }
+    // Émission enregistrée hors standard : aucun bouton n'est actif et l'écart serait caché dans la
+    // tuile repliée. Jugé sur la config appliquée, pas sur le curseur, encore provisoire au chargement.
+    openTxManualIfCustom() {
+        const f = this._radioApplied && this._radioApplied.frequency;
+        const btn = document.querySelector('#rdcPanels .rd-manual-btn[data-tx]');
+        if (typeof f !== 'number' || !btn || btn.getAttribute('aria-expanded') === 'true') return;
+        if (Math.round(f * 1000) !== Math.round(this.nearestTxStandard(f) * 1000)) this.toggleRadioManual(btn);
     }
     syncRadioHardwareTab() {
         if (!this._radioTabs) return;
