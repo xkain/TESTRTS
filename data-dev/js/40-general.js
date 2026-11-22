@@ -919,6 +919,7 @@ class General {
             sectionKey: 'LED_MODAL_SECTION', hintKey: 'LED_MODAL_HINT',
             bodyHtml: isGeneric ? `
             <p class="genmod-error" id="ledPinError" style="display:none"></p>
+            <p class="gen-tile-desc is-info">${tr('LED_MODAL_GENERIC_INFO')}</p>
             <section class="genmod-sect">
             <h3 class="gen-tile-title">${tr('LED_MODAL_LED')}</h3>
             ${row('ledEnableSwitch', 'LED_MODAL_ENABLE', 'LED_MODAL_ENABLE_DESC', seg('cbLedEnabled', enabled))}

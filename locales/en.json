@@ -1569,6 +1569,7 @@
     "LED_MODAL_STATE_BOARD": "Recognised board: %1",
     "LED_MODAL_SECTION": "LED settings",
     "LED_MODAL_BOARD_INFO": "Your board is recognised: the LED pin and type are already set.",
+    "LED_MODAL_GENERIC_INFO": "Many ESP32 boards have a built-in LED: pick your board model below to use it as an indicator. If yours has none, wire an LED (with its resistor) to a free GPIO and enter it manually.",
     "LED_MODAL_ENABLE": "Status LED",
     "LED_MODAL_ENABLE_DESC": "Turns the hardware status LED on.",
     "LED_MODAL_PIN_SECTION": "LED pin",

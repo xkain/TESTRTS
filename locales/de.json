@@ -1569,6 +1569,7 @@
     "LED_MODAL_STATE_BOARD": "Erkannte Platine: %1",
     "LED_MODAL_SECTION": "LED-Einstellungen",
     "LED_MODAL_BOARD_INFO": "Ihre Platine wurde erkannt: Pin und LED-Typ sind bereits eingestellt.",
+    "LED_MODAL_GENERIC_INFO": "Viele ESP32-Platinen haben eine eingebaute LED: Wählen Sie unten Ihr Platinenmodell, um sie als Anzeige zu nutzen. Hat Ihre Platine keine, schließen Sie eine LED (mit Vorwiderstand) an einen freien GPIO an und geben Sie ihn manuell ein.",
     "LED_MODAL_ENABLE": "Status-LED",
     "LED_MODAL_ENABLE_DESC": "Schaltet die Hardware-Status-LED ein.",
     "LED_MODAL_PIN_SECTION": "LED-Pin",

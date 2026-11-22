@@ -1569,6 +1569,7 @@
     "LED_MODAL_STATE_BOARD": "Placa reconocida: %1",
     "LED_MODAL_SECTION": "Ajustes del LED",
     "LED_MODAL_BOARD_INFO": "Su placa está reconocida: el pin y el tipo de LED ya están ajustados.",
+    "LED_MODAL_GENERIC_INFO": "Muchas placas ESP32 tienen un LED integrado: elija su modelo de placa abajo para usarlo como indicador. Si la suya no tiene, conecte un LED (con su resistencia) a un GPIO libre e indíquelo en modo manual.",
     "LED_MODAL_ENABLE": "LED de estado",
     "LED_MODAL_ENABLE_DESC": "Activa el LED de estado del hardware.",
     "LED_MODAL_PIN_SECTION": "Pin del LED",
