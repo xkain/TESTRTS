@@ -911,20 +911,19 @@ class Somfy {
         const netOk = !net.isHotspot;
         const eth = net._netType === 'lan' || net._netType === 'poe';
         const radioOn = this._isRadioOn();
+        const prefs = this._welcomePrefs();
         const stage = !netOk ? 'net' : (radioOn ? 'ready' : 'radio');
         root.dataset.stage = stage;
         const setKey = (el, key) => { if (el) { el.setAttribute('tr', key); el.textContent = tr(key); } };
-        const [kick, lead, cta] = {
-            net: ['WELCOME_KICK_NET', 'WELCOME_LEAD_NET', 'BT_SETUP_NETWORK'],
-            radio: ['WELCOME_KICK_RADIO', 'WELCOME_LEAD_RADIO', 'BT_SETUP_RADIO'],
-            ready: ['WELCOME_KICK_READY', 'WELCOME_LEAD_READY', 'BT_ADD_FIRST_DEVICE']
-        }[stage];
-        setKey(get('spanWelcomeKick'), kick);
-        setKey(get('pWelcomeLead'), lead);
-        setKey(get('btnWelcomeCta').firstElementChild, cta);
+        // Préférences conseillées, jamais bloquantes : sans internet l'appareil n'a pas l'heure,
+        // après le réseau elles passent devant la radio, qui reste accessible (état « next »).
+        const pref = !netOk ? 'waiting' : prefs.ok ? 'done' : (radioOn ? 'reco' : 'current');
+        setKey(get('btnWelcomeCta').firstElementChild, !netOk ? 'BT_SETUP_NETWORK'
+            : pref === 'current' ? 'WELCOME_PREF_TITLE' : radioOn ? 'BT_ADD_FIRST_DEVICE' : 'BT_SETUP_RADIO');
         const steps = {
             Net: [netOk ? 'done' : 'current', netOk ? (eth ? 'WELCOME_NET_DONE_ETH' : 'WELCOME_NET_DONE_WIFI') : 'WELCOME_NET_DESC'],
-            Radio: [radioOn ? 'done' : (netOk ? 'current' : 'waiting'), radioOn ? 'WELCOME_RAD_DONE' : 'WELCOME_RAD_DESC'],
+            Pref: [pref, pref === 'waiting' ? 'WELCOME_PREF_WAIT' : pref === 'done' ? 'WELCOME_PREF_DONE' : 'WELCOME_PREF_DESC'],
+            Radio: [radioOn ? 'done' : (!netOk ? 'waiting' : pref === 'current' ? 'next' : 'current'), radioOn ? 'WELCOME_RAD_DONE' : 'WELCOME_RAD_DESC'],
             Device: [stage === 'ready' ? 'current' : 'waiting', 'WELCOME_ADD_DEVICE_DESC']
         };
         for (const [id, [state, key]] of Object.entries(steps)) {
@@ -933,14 +932,34 @@ class Somfy {
             card.dataset.state = state;
             setKey(card.querySelector('.home-step-desc > span'), key);
         }
+        const prefDesc = root.querySelector('[data-step="Pref"] .home-step-desc > span');
+        if (prefDesc && pref === 'done') prefDesc.textContent = prefDesc.textContent.replace('{TZ}', prefs.zone);
         const ssid = root.querySelector('.home-step-ssid');
         if (ssid) ssid.textContent = netOk && !eth ? (net._wifiSsid || '') : '';
     }
+    // « Fait » = fuseau de l'appareil identique à celui du navigateur ET position renseignée
+    // (geoLat=99 : sentinelle « non configuré »). Rien n'est mémorisé en plus côté appareil.
+    _welcomePrefs() {
+        const g = typeof general !== 'undefined' ? general : {};
+        const zone = g._lastSettings?.posixZone || '', lat = g._geoSettings?.geoLat;
+        const zones = g.timeZones || [];
+        let iana = '';
+        try { iana = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { /* navigateur ancien */ }
+        const browser = zones.find(z => z.startsWith(iana + '|'));
+        const name = (browser && browser.endsWith('|' + zone) ? browser : zones.find(z => z.endsWith('|' + zone)) || '').split('|')[0];
+        const ok = !!zone && lat >= -90 && lat <= 90 && (!browser || browser.endsWith('|' + zone));
+        return { ok, zone: name || zone };
+    }
     // Lu au clic, pas depuis data-stage : la radio peut s'allumer après le dernier rendu de l'accueil.
     welcomeNextStep() {
+        const pref = get('divGetStarted')?.querySelector('[data-step="Pref"]')?.dataset.state;
         if (get('divGetStarted')?.dataset.stage === 'net') ui.showNetworkConfig();
+        else if (pref === 'current') this.welcomePrefs();
         else if (this._isRadioOn()) ui.showShadeConfig();
         else ui.showRadioConfig();
+    }
+    welcomePrefs() {
+        confirmDiscardChanges(() => { activateGrpid('divSystemOptions'); general.showGeneralTab(0); });
     }
     _isRadioOn() {
         return !!(this._radioApplied?.radioInit ?? this.transceiver?.config?.radioInit);

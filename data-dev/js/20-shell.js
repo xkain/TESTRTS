@@ -1094,8 +1094,8 @@ const DOC_PAGES = {
     divFirmware: 'firmware/',
     divSettingsPnl: '',
 };
-function openPageHelp() {
-    const url = DOC_BASE_URL + (DOC_PAGES[currentLeafId] || '');
+function openPageHelp(page) {
+    const url = DOC_BASE_URL + (page || DOC_PAGES[currentLeafId] || '');
     const open = () => window.open(url, '_blank', 'noopener');
     let skip = false;
     try { skip = localStorage.getItem('docPromptOff') === '1'; } catch (e) {}

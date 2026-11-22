@@ -767,7 +767,7 @@ body.fw-update .sub-nav-item[data-grpid="divFirmware"]::after {
     gap: 15px;
 }
 /* =======================================================================
- *  PAGE D'ACCUEIL - PREMIÈRE CONFIGURATION (#divGetStarted, maquette A2)
+ *  PAGE D'ACCUEIL - PREMIÈRE CONFIGURATION (#divGetStarted)
  *  ======================================================================= */
 
 body.is-home-welcome .top-bar {
@@ -776,24 +776,18 @@ body.is-home-welcome .top-bar {
 body.is-home-welcome .container {
     margin-top: 0;
 }
-/* Le ciel passe au sombre avec le thème, la maison reste claire (illustration non déclinée). */
 #divGetStarted {
-    --home-sky: linear-gradient(180deg, #cfe2f6 0%, #e6eef8 38%, #f6f1e9 64%, #efe9df 100%);
-    --home-ground: linear-gradient(180deg, #d9cfbf, #efe9df);
     --home-glass: color-mix(in srgb, var(--surface), transparent 25%);
     --home-shadow: 0 12px 30px rgba(40, 34, 24, .08);
-    position: relative;
     display: none;
     flex-direction: column;
     min-height: 100vh;
-    overflow: hidden;
-    background: var(--home-sky);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--color-accent) 20%, var(--bg)) 0%, var(--bg) 52%, color-mix(in srgb, var(--color-accent) 9%, var(--bg)) 100%);
     color: var(--text);
 }
 :root[data-theme="dark"] #divGetStarted {
-    --home-sky: linear-gradient(180deg, #16243a 0%, #131b27 45%, var(--bg) 100%);
-    --home-ground: linear-gradient(180deg, #2a2f38, var(--bg));
     --home-shadow: 0 12px 30px rgba(0, 0, 0, .35);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--color-accent) 26%, var(--bg)) 0%, var(--bg) 55%, color-mix(in srgb, var(--color-accent) 10%, var(--bg)) 100%);
 }
 .home-ico {
     width: 20px;
@@ -805,103 +799,52 @@ body.is-home-welcome .container {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-.home-sun {
-    position: absolute;
-    top: -120px;
-    right: 8%;
-    width: 420px;
-    height: 420px;
-    border-radius: var(--r-pill);
-    background: radial-gradient(circle, rgba(255, 224, 160, .9) 0%, rgba(255, 224, 160, .35) 38%, rgba(255, 224, 160, 0) 70%);
-    pointer-events: none;
-}
-:root[data-theme="dark"] .home-sun {
-    display: none;
-}
 .home-hero {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, .9fr) minmax(0, 1.2fr);
-    align-items: end;
-    gap: clamp(24px, 3vw, 56px);
-    flex: 1 0 auto;
-    min-height: 420px;
-    padding: clamp(28px, 5vh, 64px) clamp(28px, 5vw, 96px) 0;
-}
-.home-hero-text {
-    align-self: center;
-    max-width: 620px;
-    padding-bottom: 32px;
-}
-.home-kick-badge {
-    display: inline-flex;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 7px 14px 7px 10px;
-    border-radius: var(--r-pill);
-    background: var(--home-glass);
-    color: var(--ok);
-    font-size: 14px;
-    font-weight: 700;
-}
-.home-kick-badge i {
-    width: 10px;
-    height: 10px;
-    border-radius: var(--r-pill);
-    background: #2e7d32;
-    box-shadow: 0 0 0 4px rgba(46, 125, 50, .18);
-}
-#divGetStarted[data-stage="net"] .home-kick-badge {
-    color: var(--warn);
-}
-#divGetStarted[data-stage="net"] .home-kick-badge i {
-    background: #f69300;
-    box-shadow: 0 0 0 4px rgba(246, 147, 0, .18);
+    padding: clamp(28px, 4.5vh, 64px) clamp(28px, 5vw, 96px) 0;
+    text-align: center;
 }
 .home-title {
-    margin: 16px 0 0;
-    font-size: clamp(36px, 3.5vw, 60px);
+    margin: 0;
+    font-size: clamp(34px, 3.6vw, 58px);
     font-weight: 800;
     letter-spacing: -.035em;
     line-height: 1.02;
-    text-align: left;
     color: var(--text);
+}
+/* Une partie par ligne : sinon le titre se coupe au hasard (« Suivez le / guide. »). */
+.home-title > span {
+    display: block;
 }
 .home-title-accent {
     color: var(--accent);
 }
 .home-lead {
-    max-width: 540px;
+    max-width: 620px;
     margin: 18px 0 0;
     font-size: clamp(17px, 1.25vw, 20px);
     line-height: 1.55;
     color: var(--text-2);
 }
-.home-cta-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 30px;
-}
-.home-cta-btn,
-.home-guide-btn {
+.home-cta-btn {
     display: inline-flex;
     align-items: center;
     gap: 10px;
     width: auto;
     min-height: 56px;
+    margin-top: 30px;
+    padding: 0 28px;
     border: 0;
     border-radius: var(--r-pill);
-    font-family: inherit;
-    text-transform: none;
-    cursor: pointer;
-}
-.home-cta-btn {
-    padding: 0 28px;
     background: var(--color-accent);
     color: #fff;
+    font-family: inherit;
     font-size: 17px;
     font-weight: 800;
+    text-transform: none;
+    cursor: pointer;
     box-shadow: 0 10px 24px rgba(26, 95, 180, .32);
     transition: transform .15s, box-shadow .15s;
 }
@@ -909,21 +852,14 @@ body.is-home-welcome .container {
     transform: translateY(-1px);
     box-shadow: 0 14px 30px rgba(26, 95, 180, .38);
 }
-.home-cta-btn .home-ico,
-.home-guide-btn .home-ico {
+.home-cta-btn .home-ico {
     stroke-width: 2.2;
-}
-.home-guide-btn {
-    gap: 8px;
-    padding: 0 24px;
-    background: var(--home-glass);
-    color: var(--text);
-    font-size: 16px;
-    font-weight: 700;
 }
 .home-alt-text {
     margin: 22px 0 0;
+    padding: 0 28px;
     font-size: 14.5px;
+    text-align: center;
     color: var(--text-3);
 }
 .home-alt-text a {
@@ -934,56 +870,34 @@ body.is-home-welcome .container {
 .home-alt-text a:hover {
     text-decoration: underline;
 }
-.home-art {
-    position: relative;
-    align-self: end;
-    justify-self: center;
-    width: 100%;
-    max-width: 760px;
-}
-.home-house-svg {
-    display: block;
-    width: 100%;
-    height: auto;
-    overflow: visible;
-}
-.home-wave-group {
-    display: none;
-    fill: none;
-    stroke: var(--color-accent);
-    stroke-width: 5;
-    stroke-linecap: round;
-}
-#divGetStarted[data-stage="ready"] .home-wave-group {
-    display: inline;
-}
-.home-ground {
-    flex: none;
-    height: 20px;
-    background: var(--home-ground);
-}
 .home-steps {
-    position: relative;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 18px;
-    margin-top: -6px;
+    width: 100%;
+    max-width: 1180px;
+    box-sizing: border-box;
+    margin: 52px auto 0;
     padding: 0 clamp(28px, 5vw, 96px);
 }
+/* --hc : teinte d'objet des heros (base.css, [data-obj] de la carte). */
 .home-step-card {
     position: relative;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas: "icon . num" "title title title" "desc desc desc" "go go go";
+    align-items: center;
     gap: 10px;
     padding: 20px 22px;
-    border: 2px solid transparent;
+    border: 2px solid color-mix(in srgb, var(--hc) 30%, transparent);
     border-radius: var(--r-5);
     background: var(--surface);
     box-shadow: var(--home-shadow);
 }
 .home-step-card[data-state="current"] {
-    border-color: var(--color-accent);
-    box-shadow: 0 16px 40px color-mix(in srgb, var(--color-accent) 18%, transparent);
+    border-color: var(--hc);
+    box-shadow: 0 14px 34px color-mix(in srgb, var(--hc) 20%, transparent);
 }
 .home-step-card[data-state="waiting"] {
     background: color-mix(in srgb, var(--surface), transparent 40%);
@@ -992,20 +906,23 @@ body.is-home-welcome .container {
 .home-step-card[data-state="waiting"] :is(.home-step-icon, .home-step-title, .home-step-desc) {
     opacity: .55;
 }
-.home-step-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
 .home-step-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    grid-area: icon;
+    display: grid;
+    place-items: center;
     width: 52px;
     height: 52px;
-    border-radius: var(--r-4);
-    background: var(--warn-bg);
-    color: var(--warn);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--hc) 12%, #ffffff);
+    color: var(--hc);
+}
+:root[data-theme="dark"] .home-step-icon {
+    background: color-mix(in srgb, var(--hc) 35%, #12161c);
+    color: color-mix(in srgb, var(--hc) 45%, #ffffff);
+}
+.home-step-card[data-state="done"] .home-step-icon {
+    background: var(--ok-bg);
+    color: var(--ok);
 }
 .home-step-icon .home-ico,
 .home-step-svg {
@@ -1015,27 +932,27 @@ body.is-home-welcome .container {
 .home-step-icon .home-ico {
     stroke-width: 1.8;
 }
-.home-step-card--device .home-step-icon {
-    background: var(--info-bg);
-    color: var(--accent);
-}
-.home-step-card[data-state="done"] .home-step-icon {
-    background: var(--ok-bg);
-    color: var(--ok);
-}
-.home-step-num {
+.home-step-num,
+.home-step-reco,
+.home-step-done {
+    grid-area: num;
+    justify-self: end;
     font-size: 13px;
     font-weight: 800;
     letter-spacing: .04em;
     text-transform: uppercase;
-    color: var(--text-3);
+    white-space: nowrap;
+    color: var(--hc);
+}
+:root[data-theme="dark"] :is(.home-step-num, .home-step-reco) {
+    color: color-mix(in srgb, var(--hc) 45%, #ffffff);
 }
 .home-step-done {
     display: none;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
-    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: none;
     color: var(--ok);
 }
 .home-step-done .home-ico {
@@ -1043,13 +960,19 @@ body.is-home-welcome .container {
     height: 18px;
     stroke-width: 2.6;
 }
+.home-step-reco,
+.home-step-card[data-state="reco"] .home-step-num,
 .home-step-card[data-state="done"] .home-step-num {
     display: none;
+}
+.home-step-card[data-state="reco"] .home-step-reco {
+    display: inline;
 }
 .home-step-card[data-state="done"] .home-step-done {
     display: inline-flex;
 }
 .home-step-title {
+    grid-area: title;
     margin: 4px 0 0;
     font-size: 21px;
     font-weight: 800;
@@ -1058,6 +981,8 @@ body.is-home-welcome .container {
     color: var(--text);
 }
 .home-step-desc {
+    grid-area: desc;
+    align-self: start;
     margin: 0;
     font-size: 15px;
     line-height: 1.5;
@@ -1066,39 +991,60 @@ body.is-home-welcome .container {
 .home-step-ssid {
     color: var(--text-2);
 }
-.home-step-btn {
+/* Chevron : plein pour l'étape à faire maintenant, en contour pour une étape ouverte mais pas
+   prioritaire (next, reco). Son ::after couvre la carte, qui se clique tout entière. */
+.home-step-go {
+    grid-area: go;
     display: none;
-    align-items: center;
-    gap: 8px;
-    align-self: flex-start;
-    width: auto;
-    min-height: 44px;
-    margin-top: auto;
-    padding: 0 18px;
+    place-items: center;
+    justify-self: start;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+    padding: 0;
     border: 0;
-    border-radius: var(--r-pill);
-    background: var(--color-accent);
+    border-radius: 50%;
+    background: var(--hc);
     color: #fff;
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: 800;
-    text-transform: none;
     cursor: pointer;
 }
-.home-step-btn .home-ico {
+.home-step-go::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+}
+/* Pas de transform à l'appui (button:active, base.css) : il ferait du bouton le bloc
+   conteneur de ce ::after, qui se rétracterait sous le doigt et perdrait le clic. */
+.home-step-go:is(:hover, :active) {
+    transform: none;
+    opacity: 1;
+    background: var(--hc);
+}
+.home-step-go .home-ico {
     width: 18px;
     height: 18px;
-    stroke-width: 2.2;
+    stroke-width: 2.4;
 }
-.home-step-card[data-state="current"] .home-step-btn {
-    display: inline-flex;
+.home-step-card:is([data-state="current"], [data-state="next"], [data-state="reco"]) .home-step-go {
+    display: grid;
+}
+.home-step-card:is([data-state="next"], [data-state="reco"]) .home-step-go {
+    background: transparent;
+    color: var(--hc);
+    box-shadow: inset 0 0 0 2px var(--hc);
+}
+:root[data-theme="dark"] .home-step-card:is([data-state="next"], [data-state="reco"]) .home-step-go {
+    color: color-mix(in srgb, var(--hc) 45%, #ffffff);
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--hc) 45%, #ffffff);
 }
 .home-next {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     gap: 14px;
-    padding: 22px clamp(28px, 5vw, 96px) 26px;
+    padding: 18px clamp(28px, 5vw, 96px) 0;
 }
 .home-next-title {
     margin-right: 4px;
@@ -1132,113 +1078,147 @@ body.is-home-welcome .container {
 .home-idea-icon--sun { color: var(--warn); }
 .home-idea-icon--group { color: var(--accent); }
 .home-idea-icon--ha { color: var(--ok); }
+/* Collée en bas de l'écran : #divGetStarted fait au moins la hauteur de la fenêtre. */
+.home-note {
+    margin: auto 0 0;
+    padding: 18px clamp(28px, 5vw, 96px);
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.5;
+    text-align: center;
+    color: var(--text-3);
+}
 @media (max-width: 1199px) {
     .home-hero {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 8px;
-        min-height: 0;
-        padding: 30px 48px 0;
+        padding-top: 40px;
     }
-    .home-hero-text {
-        max-width: 640px;
-        padding-bottom: 0;
-    }
-    .home-lead {
-        max-width: 640px;
-    }
-    .home-cta-group {
-        margin-top: 24px;
-    }
-    .home-art {
-        max-width: 380px;
-    }
-    .home-sun {
-        top: -110px;
-        right: 2%;
-        width: 340px;
-        height: 340px;
-    }
+    /* Une colonne de lignes compactes : icône | titre | état | chevron, description dessous. */
     .home-steps {
-        gap: 14px;
-        padding: 0 48px;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+        max-width: 640px;
+        margin-top: 36px;
+    }
+    .home-step-card {
+        grid-template-columns: 40px minmax(0, 1fr) auto auto;
+        grid-template-rows: auto;
+        grid-template-areas: "icon title num go" "icon desc desc desc";
+        column-gap: 12px;
+        row-gap: 4px;
+        padding: 12px 14px;
+        border-radius: var(--r-4);
+    }
+    .home-step-icon {
+        align-self: start;
+        width: 40px;
+        height: 40px;
+    }
+    .home-step-icon .home-ico,
+    .home-step-svg {
+        width: 22px;
+        height: 22px;
+    }
+    .home-step-num,
+    .home-step-reco,
+    .home-step-done {
+        font-size: 12px;
+    }
+    .home-step-title {
+        margin: 0;
+        font-size: 17px;
+    }
+    .home-step-desc {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
+        font-size: 13.5px;
+        line-height: 1.35;
+    }
+    .home-step-card:not([data-state="current"]) .home-step-desc {
+        -webkit-line-clamp: 2;
+    }
+    .home-step-go {
+        width: 32px;
+        height: 32px;
     }
     .home-next {
         gap: 10px 12px;
-        padding: 20px 48px 28px;
     }
     .home-next-title {
         width: 100%;
+        text-align: center;
     }
 }
+/* Objectif : tout l'écran sans défiler sur un téléphone de 360 × 760. */
 @media (max-width: 767px) {
     #divGetStarted {
         min-height: calc(100vh - var(--mobile-header-height));
     }
-    .home-hero {
-        flex: none;
-        gap: 36px;
-        padding: 28px 16px 0;
+    body.is-home-welcome .mobile-title,
+    body.is-home-welcome :is(#btnMobileAdd, #mobileNav [data-tab-root="divHomePnl"]) {
+        display: none;
     }
-    .home-kick-badge {
-        font-size: 13px;
+    body.is-home-welcome .mobile-brand {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        gap: 10px;
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--text);
+    }
+    .mobile-brand svg {
+        width: 28px;
+        height: 28px;
+    }
+    .home-hero {
+        padding: 12px 16px 0;
     }
     .home-title {
-        margin-top: 14px;
-        font-size: 36px;
+        font-size: 30px;
+        line-height: 1.05;
     }
     .home-lead {
-        margin-top: 14px;
-        font-size: 16px;
+        margin-top: 10px;
+        font-size: 15px;
+        line-height: 1.4;
     }
-    .home-cta-group {
-        flex-direction: column;
-        gap: 10px;
-        margin-top: 22px;
-    }
+    /* Le chevron de l'étape courante suffit ; les liens passent sous les cartes. */
     .home-cta-btn,
-    .home-guide-btn {
-        justify-content: center;
-        width: 100%;
-        padding: 0 20px;
-        font-size: 16px;
-    }
-    .home-alt-text {
-        margin-top: 16px;
-        font-size: 14px;
-        line-height: 1.6;
-    }
-    .home-sun {
-        top: -100px;
-        right: -60px;
-        width: 260px;
-        height: 260px;
+    .home-next {
+        display: none;
     }
     .home-steps {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 12px;
+        order: 1;
+        gap: 7px;
+        margin-top: 26px;
         padding: 0 16px;
     }
+    .home-alt-text {
+        order: 2;
+        margin-top: 12px;
+        padding: 0 16px;
+        font-size: 13.5px;
+        line-height: 1.5;
+    }
+    .home-note {
+        order: 3;
+        padding: 10px 16px 8px;
+        font-size: 12.5px;
+    }
     .home-step-card {
-        padding: 18px;
+        padding: 10px 12px;
     }
     .home-step-title {
-        font-size: 19px;
+        font-size: 16px;
     }
-    .home-step-icon {
-        width: 46px;
-        height: 46px;
-        border-radius: var(--r-3);
+    .home-step-desc {
+        font-size: 13px;
     }
-    .home-step-btn {
-        align-self: stretch;
-        justify-content: center;
-        min-height: 48px;
-    }
-    .home-next {
-        padding: 22px 16px 32px;
-    }
-    .home-idea-chip {
-        width: 100%;
+    /* Sur la carte à chevron, l'étiquette ferait passer le titre sur deux lignes. */
+    .home-step-card:is([data-state="current"], [data-state="next"], [data-state="reco"]) :is(.home-step-num, .home-step-reco) {
+        display: none;
     }
 }
 
@@ -4587,6 +4567,7 @@ body.fw-update .set-fw-new {
  *  NAVIGATION MOBILE : en-tête (retour, titre, +, trois destinations) et micro-bandeau
  *  ======================================================================= */
 .mobile-title,
+.mobile-brand,
 .mobile-nav,
 .net-banner,
 .gen-hero-help {
@@ -4899,7 +4880,6 @@ body.fw-update .set-fw-new {
     #divSomfyGroups {
         padding-bottom: 95px;
     }
-    #divGetStarted,
     #divNetworkSettings,
     #divIntegrationSettings,
     #divRadioSettings {
