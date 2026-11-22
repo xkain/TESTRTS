@@ -817,89 +817,19 @@
                                         <div id="netEthManualTile" class="gen-tile">
                                             <h3 class="gen-tile-title" tr="SETTINGS_MANUAL"></h3>
                                             <div id="divEthernetMode">
-                                                <div id="divETHSettings">
-                                                    <div class="gpio-main-wrapper">
-                                                        <div class="gpio-group-block">
-                                                            <div class="gpio-flex-container">
-                                                                <div class="gpio-card">
-                                                                    <div class="input-number-custom" style="position: relative;">
-                                                                        <label class="input-label" for="selETHPhyType">PHY</label>
-                                                                        <select id="selETHPhyType" class="inputAndSelect" name="ethphytype" data-datatype="int" data-bind="ethernet.phyType"></select>
-                                                                        <div class="step-buttons-warp">
-                                                                            <div class="btn-none-shortcut step-select-arrow">
-                                                                                <svg class="icon-pwr icon-select-arrow"><use href="#svg-arrowDown" /></svg>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="gpio-card">
-                                                                    <div class="input-number-custom" style="position: relative;">
-                                                                        <label class="input-label" for="selETHClkMode">Clock</label>
-                                                                        <select id="selETHClkMode" class="inputAndSelect" name="clkmode" data-datatype="int" data-bind="ethernet.CLKMode"></select>
-                                                                        <div class="step-buttons-warp">
-                                                                            <div class="btn-none-shortcut step-select-arrow">
-                                                                                <svg class="icon-pwr icon-select-arrow"><use href="#svg-arrowDown" /></svg>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="gpio-card">
-                                                                    <div class="input-number-custom" style="position: relative;">
-                                                                        <label class="input-label" for="selETHAddress">Adresse</label>
-                                                                        <select id="selETHAddress" class="inputAndSelect" name="address" data-datatype="int" data-bind="ethernet.phyAddress"></select>
-                                                                        <div class="step-buttons-warp">
-                                                                            <div class="btn-none-shortcut step-select-arrow">
-                                                                                <svg class="icon-pwr icon-select-arrow"><use href="#svg-arrowDown" /></svg>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="gpio-group-block">
-                                                            <div class="gpio-flex-container">
-                                                                <div class="gpio-card">
-                                                                    <div class="input-number-custom">
-                                                                        <label class="input-label" for="inputETHPWRPin">Power</label>
-                                                                        <input id="inputETHPWRPin" type="text" class="inputAndSelect" name="pwr" data-datatype="int" data-bind="ethernet.PWRPin" autocomplete="new-password" style="text-align: center;">
-                                                                        <div class="step-buttons-warp">
-                                                                            <div class="step-buttons">
-                                                                                <button type="button" id="btnEthPwrShortcut" class="btn-none-shortcut" onclick="wifi.setPowerToNone()" title="Activer/Désactiver l'alimentation">
-                                                                                    <svg class="icon-pwr"><use href="#svg-powerOff" /></svg>
-                                                                                </button>
-                                                                                <button type="button" onclick="wifi.stepGpio('PWRPin', -1)">-</button>
-                                                                                <button type="button" onclick="wifi.stepGpio('PWRPin', 1)">+</button>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="gpio-card">
-                                                                    <div class="input-number-custom">
-                                                                        <label class="input-label" for="inputETHMDCPin">MDC</label>
-                                                                        <input id="inputETHMDCPin" type="number" class="inputAndSelect" name="mdc" min="0" max="39" data-datatype="int" autocomplete="new-password" data-bind="ethernet.MDCPin">
-                                                                        <div class="step-buttons-warp">
-                                                                            <div class="step-buttons">
-                                                                                <button type="button" onclick="wifi.stepGpio('MDCPin', -1)">-</button>
-                                                                                <button type="button" onclick="wifi.stepGpio('MDCPin', 1)">+</button>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="gpio-card">
-                                                                    <div class="input-number-custom">
-                                                                        <label class="input-label" for="inputETHMDIOPin">MDIO</label>
-                                                                        <input id="inputETHMDIOPin" type="number" class="inputAndSelect" name="mdio" min="0" max="39" data-datatype="int" autocomplete="new-password" data-bind="ethernet.MDIOPin">
-                                                                        <div class="step-buttons-warp">
-                                                                            <div class="step-buttons">
-                                                                                <button type="button" onclick="wifi.stepGpio('MDIOPin', -1)">-</button>
-                                                                                <button type="button" onclick="wifi.stepGpio('MDIOPin', 1)">+</button>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                <div id="divETHSettings" class="gen-pin-grid">
+                                                    <div class="gen-field"><label class="gen-field-label" for="selETHPhyType">PHY</label>
+                                                        <div class="gen-input-box dirty-target"><select id="selETHPhyType" class="gen-input" name="ethphytype" data-datatype="int" data-bind="ethernet.phyType"></select></div></div>
+                                                    <div class="gen-field"><label class="gen-field-label" for="selETHClkMode">Clock</label>
+                                                        <div class="gen-input-box dirty-target"><select id="selETHClkMode" class="gen-input" name="clkmode" data-datatype="int" data-bind="ethernet.CLKMode"></select></div></div>
+                                                    <div class="gen-field"><label class="gen-field-label" for="selETHAddress">Adresse</label>
+                                                        <div class="gen-input-box dirty-target"><select id="selETHAddress" class="gen-input" name="address" data-datatype="int" data-bind="ethernet.phyAddress"></select></div></div>
+                                                    <div class="gen-field"><span class="gen-pin-head"><label class="gen-field-label" for="inputETHPWRPin">Power</label><button type="button" id="btnEthPwrShortcut" class="gen-pin-none" onclick="wifi.setPowerToNone()" title="Activer/Désactiver l'alimentation"><svg><use href="#svg-powerOff"></use></svg></button></span>
+                                                        <div class="gen-input-box gen-pin-box dirty-target"><input id="inputETHPWRPin" type="text" class="gen-input" name="pwr" data-datatype="int" data-bind="ethernet.PWRPin" autocomplete="new-password"><span class="gen-pin-steps"><button type="button" onclick="wifi.stepGpio('PWRPin', -1)">−</button><button type="button" onclick="wifi.stepGpio('PWRPin', 1)">+</button></span></div></div>
+                                                    <div class="gen-field"><label class="gen-field-label" for="inputETHMDCPin">MDC</label>
+                                                        <div class="gen-input-box gen-pin-box dirty-target"><input id="inputETHMDCPin" type="number" class="gen-input" name="mdc" min="0" max="39" data-datatype="int" data-bind="ethernet.MDCPin" autocomplete="new-password"><span class="gen-pin-steps"><button type="button" onclick="wifi.stepGpio('MDCPin', -1)">−</button><button type="button" onclick="wifi.stepGpio('MDCPin', 1)">+</button></span></div></div>
+                                                    <div class="gen-field"><label class="gen-field-label" for="inputETHMDIOPin">MDIO</label>
+                                                        <div class="gen-input-box gen-pin-box dirty-target"><input id="inputETHMDIOPin" type="number" class="gen-input" name="mdio" min="0" max="39" data-datatype="int" data-bind="ethernet.MDIOPin" autocomplete="new-password"><span class="gen-pin-steps"><button type="button" onclick="wifi.stepGpio('MDIOPin', -1)">−</button><button type="button" onclick="wifi.stepGpio('MDIOPin', 1)">+</button></span></div></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -2192,93 +2122,19 @@
                                         <div id="divRadioPins" class="gen-tile rdc-pins" hidden>
                                             <h3 class="gen-tile-title" tr="RADIO_PINS_TITLE"></h3>
                                             <div id="divShowGpio">
-                                                <div class="gpio-main-wrapper">
-                                                    <div class="gpio-group-block">
-                                                        <div class="gpio-flex-container">
-                                                            <div class="gpio-card">
-                                                                <div class="input-number-custom">
-                                                                    <label class="input-label label-sclk" for="selTransSCKPin">SCLK</label>
-                                                                    <select id="selTransSCKPin" class="inputAndSelect" name="transSCK" data-bind="transceiver.config.SCKPin" data-datatype="int"></select>
-                                                                    <input type="number" id="inputTransSCKPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
-                                                                    <div class="step-buttons-warp">
-                                                                        <div class="step-buttons">
-                                                                            <button type="button" onclick="somfy.stepGpio('SCKPin', -1)">-</button>
-                                                                            <button type="button" onclick="somfy.stepGpio('SCKPin', 1)">+</button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="gpio-card">
-                                                                <div class="input-number-custom">
-                                                                    <label class="input-label label-mosi" for="selTransMOSIPin">MOSI</label>
-                                                                    <select id="selTransMOSIPin" class="inputAndSelect" name="transMOSI" data-bind="transceiver.config.MOSIPin" data-datatype="int"></select>
-                                                                    <input type="number" id="inputTransMOSIPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
-                                                                    <div class="step-buttons-warp">
-                                                                        <div class="step-buttons">
-                                                                            <button type="button" onclick="somfy.stepGpio('MOSIPin', -1)">-</button>
-                                                                            <button type="button" onclick="somfy.stepGpio('MOSIPin', 1)">+</button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="gpio-card">
-                                                                <div class="input-number-custom">
-                                                                    <label class="input-label label-miso" for="selTransMISOPin">MISO</label>
-                                                                    <select id="selTransMISOPin" class="inputAndSelect" name="transMISO" data-bind="transceiver.config.MISOPin" data-datatype="int"></select>
-                                                                    <input type="number" id="inputTransMISOPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
-                                                                    <div class="step-buttons-warp">
-                                                                        <div class="step-buttons">
-                                                                            <button type="button" onclick="somfy.stepGpio('MISOPin', -1)">-</button>
-                                                                            <button type="button" onclick="somfy.stepGpio('MISOPin', 1)">+</button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="gpio-group-block">
-                                                        <div class="gpio-flex-container">
-                                                            <div class="gpio-card">
-                                                                <div class="input-number-custom">
-                                                                    <label class="input-label label-csn" for="selTransCSNPin">CSN</label>
-                                                                    <select id="selTransCSNPin" class="inputAndSelect" name="transCSN" data-bind="transceiver.config.CSNPin" data-datatype="int"></select>
-                                                                    <input type="number" id="inputTransCSNPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
-                                                                    <div class="step-buttons-warp">
-                                                                        <div class="step-buttons">
-                                                                            <button type="button" onclick="somfy.stepGpio('CSNPin', -1)">-</button>
-                                                                            <button type="button" onclick="somfy.stepGpio('CSNPin', 1)">+</button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="gpio-card">
-                                                                <div class="input-number-custom">
-                                                                    <label class="input-label label-tx" for="selTransTXPin">TX</label>
-                                                                    <select id="selTransTXPin" class="inputAndSelect" name="transTX" data-bind="transceiver.config.TXPin" data-datatype="int"></select>
-                                                                    <input type="number" id="inputTransTXPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
-                                                                    <div class="step-buttons-warp">
-                                                                        <div class="step-buttons">
-                                                                            <button type="button" onclick="somfy.stepGpio('TXPin', -1)">-</button>
-                                                                            <button type="button" onclick="somfy.stepGpio('TXPin', 1)">+</button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="gpio-card">
-                                                                <div class="input-number-custom">
-                                                                    <label class="input-label label-rx" for="selTransRXPin">RX</label>
-                                                                    <select id="selTransRXPin" class="inputAndSelect" name="transRX" data-bind="transceiver.config.RXPin" data-datatype="int"></select>
-                                                                    <input type="number" id="inputTransRXPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
-                                                                    <div class="step-buttons-warp">
-                                                                        <div class="step-buttons">
-                                                                            <button type="button" onclick="somfy.stepGpio('RXPin', -1)">-</button>
-                                                                            <button type="button" onclick="somfy.stepGpio('RXPin', 1)">+</button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                <div class="gen-pin-grid">
+                                                <div class="gen-field"><label class="gen-field-label" for="selTransSCKPin">SCLK</label>
+                                                    <div class="gen-input-box gen-pin-box dirty-target"><select id="selTransSCKPin" class="gen-input" name="transSCK" data-bind="transceiver.config.SCKPin" data-datatype="int"></select><input type="number" id="inputTransSCKPin" class="gen-input" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--"><span class="gen-pin-steps"><button type="button" onclick="somfy.stepGpio('SCKPin', -1)">−</button><button type="button" onclick="somfy.stepGpio('SCKPin', 1)">+</button></span></div></div>
+                                                <div class="gen-field"><label class="gen-field-label" for="selTransMOSIPin">MOSI</label>
+                                                    <div class="gen-input-box gen-pin-box dirty-target"><select id="selTransMOSIPin" class="gen-input" name="transMOSI" data-bind="transceiver.config.MOSIPin" data-datatype="int"></select><input type="number" id="inputTransMOSIPin" class="gen-input" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--"><span class="gen-pin-steps"><button type="button" onclick="somfy.stepGpio('MOSIPin', -1)">−</button><button type="button" onclick="somfy.stepGpio('MOSIPin', 1)">+</button></span></div></div>
+                                                <div class="gen-field"><label class="gen-field-label" for="selTransMISOPin">MISO</label>
+                                                    <div class="gen-input-box gen-pin-box dirty-target"><select id="selTransMISOPin" class="gen-input" name="transMISO" data-bind="transceiver.config.MISOPin" data-datatype="int"></select><input type="number" id="inputTransMISOPin" class="gen-input" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--"><span class="gen-pin-steps"><button type="button" onclick="somfy.stepGpio('MISOPin', -1)">−</button><button type="button" onclick="somfy.stepGpio('MISOPin', 1)">+</button></span></div></div>
+                                                <div class="gen-field"><label class="gen-field-label" for="selTransCSNPin">CSN</label>
+                                                    <div class="gen-input-box gen-pin-box dirty-target"><select id="selTransCSNPin" class="gen-input" name="transCSN" data-bind="transceiver.config.CSNPin" data-datatype="int"></select><input type="number" id="inputTransCSNPin" class="gen-input" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--"><span class="gen-pin-steps"><button type="button" onclick="somfy.stepGpio('CSNPin', -1)">−</button><button type="button" onclick="somfy.stepGpio('CSNPin', 1)">+</button></span></div></div>
+                                                <div class="gen-field"><label class="gen-field-label" for="selTransTXPin">TX</label>
+                                                    <div class="gen-input-box gen-pin-box dirty-target"><select id="selTransTXPin" class="gen-input" name="transTX" data-bind="transceiver.config.TXPin" data-datatype="int"></select><input type="number" id="inputTransTXPin" class="gen-input" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--"><span class="gen-pin-steps"><button type="button" onclick="somfy.stepGpio('TXPin', -1)">−</button><button type="button" onclick="somfy.stepGpio('TXPin', 1)">+</button></span></div></div>
+                                                <div class="gen-field"><label class="gen-field-label" for="selTransRXPin">RX</label>
+                                                    <div class="gen-input-box gen-pin-box dirty-target"><select id="selTransRXPin" class="gen-input" name="transRX" data-bind="transceiver.config.RXPin" data-datatype="int"></select><input type="number" id="inputTransRXPin" class="gen-input" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--"><span class="gen-pin-steps"><button type="button" onclick="somfy.stepGpio('RXPin', -1)">−</button><button type="button" onclick="somfy.stepGpio('RXPin', 1)">+</button></span></div></div>
                                                 </div>
                                                 <div id="divManualSafety" class="manual-safety-block" style="display: none;">
                                                     <div class="safety-label">

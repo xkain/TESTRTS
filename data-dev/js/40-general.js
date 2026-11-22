@@ -934,12 +934,12 @@ class General {
             </select>
             </div>
             </div>
-            <div id="divLedManualBlock" class="led-manual" style="display:${presetVal === String(MANUAL) ? '' : 'none'};">
+            <div id="divLedManualBlock" class="gen-pin-grid" style="display:${presetVal === String(MANUAL) ? '' : 'none'};">
             <div class="gen-field">
             <label class="gen-field-label" for="inputLedPinManual">GPIO</label>
-            <div class="gen-input-box led-pin-box dirty-target" id="divLedPinCustom">
+            <div class="gen-input-box gen-pin-box dirty-target" id="divLedPinCustom">
             <input type="number" id="inputLedPinManual" class="gen-input" min="0" max="48" value="${this._lastValidLedPin}" autocomplete="new-password">
-            <span class="led-pin-steps">
+            <span class="gen-pin-steps">
             <button type="button" id="btnLedPinMinus" aria-label="-1">−</button>
             <button type="button" id="btnLedPinPlus" aria-label="+1">+</button>
             </span>
@@ -1090,7 +1090,7 @@ class General {
 
             const syncPreset = () => {
                 const val = parseInt(presetSel.value, 10);
-                manualBlock.style.display = (val === MANUAL) ? 'block' : 'none';
+                manualBlock.style.display = (val === MANUAL) ? '' : 'none';
                 // Le switch et le sélecteur décrivent la même chose : "aucune broche" ne peut pas
                 // coexister avec un témoin activé, dans un sens comme dans l'autre.
                 swEnabled.checked = (val !== NONE);

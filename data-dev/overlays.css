@@ -15,11 +15,10 @@
     background-color: var(--color-danger-tint-bg) !important;
     animation: shake 0.5s ease-in-out;
 }
-/* Même traitement pour le conteneur `.input-number-custom` (GPIO manuel de la LED de statut) :
- * la bordure rouge et la secousse portent sur le bloc entier (select/input + boutons +/-), pas
- * seulement sur le champ, pour que l'erreur saute aux yeux même sur un petit écran. */
-.input-number-custom.input-error,
-.led-pin-box.input-error {
+/* Même traitement pour la boîte d'un champ de broche (.gen-pin-box) : la bordure rouge et la
+ * secousse portent sur le bloc entier (champ + boutons +/-), pas seulement sur le champ, pour que
+ * l'erreur saute aux yeux même sur un petit écran. */
+.gen-pin-box.input-error {
     border-color: var(--color-danger) !important;
     animation: shake 0.5s ease-in-out;
 }
@@ -2340,20 +2339,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     color: var(--danger);
     font-size: var(--fs-3);
 }
-.led-manual { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: end; }
-.led-pin-steps { display: flex; gap: 6px; flex: none; }
-.led-pin-steps > button,
-.led-pin-steps > button:hover {
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: 0;
-    border-radius: var(--r-2);
-    background: var(--surface-2);
-    color: var(--text-2);
-    font-size: var(--fs-5);
-    font-weight: 700;
-}
 .led-safety { align-self: end; background: none; padding: 11px 0; }
 .led-pin-warn { grid-column: 1 / -1; }
 /* La moitié cochée doit suivre la case dans le HTML (.gen-seg input:checked + span) : GRB
@@ -2373,7 +2358,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     #divLedOverlay #btnLedTest { grid-column: 1 / -1; justify-self: start; }
 }
 @media (max-width: 767px) {
-    .led-manual { grid-template-columns: minmax(0, 1fr); }
     #divLedOverlay #btnLedTest { align-self: stretch; justify-content: center; }
 }
 .lang-catalog-code {

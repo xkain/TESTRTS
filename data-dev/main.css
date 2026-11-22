@@ -3345,8 +3345,7 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     text-transform: none;
     cursor: pointer;
 }
-.rdc-pins #divShowGpio,
-.rdc-pins .gpio-main-wrapper {
+.rdc-pins #divShowGpio {
     width: 100%;
 }
 .rdc-pins .manual-safety-block {

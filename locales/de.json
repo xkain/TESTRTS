@@ -1156,7 +1156,7 @@
     "CONNEXION_HIDDEN_SSID_DESC": "Ermöglicht die Verbindung zu einem Netzwerk, das seinen Namen nicht sendet",
     "CONNEXION_ROAMING": "Roaming",
     "CONNEXION_ROAMING_DESC": "Verbindet sich immer mit dem nächstgelegenen WLAN-Zugangspunkt",
-    "CONNEXION_HOSTNAME_TILE": "Name im Netzwerk",
+    "CONNEXION_HOSTNAME_TILE": "Name und Erkennung",
     "CONNEXION_HOSTNAME_PH": "Hostname eingeben",
     "CONNEXION_HOSTNAME_TIP": "Der Hostname bestimmt die lokale Adresse des Geräts. Eine Änderung gilt sofort im Netzwerk, die neue .local-Adresse antwortet jedoch erst nach einem Neustart.",
     "CONNEXION_UPNP": "uPnP-Übertragung (SSDP)",

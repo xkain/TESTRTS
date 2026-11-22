@@ -1156,7 +1156,7 @@
     "CONNEXION_HIDDEN_SSID_DESC": "Permet de se connecter à un réseau qui ne diffuse pas son nom",
     "CONNEXION_ROAMING": "Itinérance",
     "CONNEXION_ROAMING_DESC": "Cible toujours la borne Wi-Fi la plus proche",
-    "CONNEXION_HOSTNAME_TILE": "Nom sur le réseau",
+    "CONNEXION_HOSTNAME_TILE": "Nom et découverte",
     "CONNEXION_HOSTNAME_PH": "Entrer un nom d'hôte",
     "CONNEXION_HOSTNAME_TIP": "Le nom d'hôte donne l'adresse locale de l'appareil. Une modification s'applique tout de suite au réseau, mais la nouvelle adresse .local ne répond qu'après un redémarrage.",
     "CONNEXION_UPNP": "Diffusion uPnP (SSDP)",
