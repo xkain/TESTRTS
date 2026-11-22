@@ -838,7 +838,7 @@ const ROUTE_LEAF_PARENT = {
 };
 const ROUTE_SLUGS = {
     divHomePnl: 'dashboard',
-    divSystemOptions: 'general',
+    divSystemOptions: 'preferences',
     divSecurity: 'security',
     divFirmware: 'firmware',
     divNetAdapter: 'connection',

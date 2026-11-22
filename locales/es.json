@@ -1340,7 +1340,6 @@
     "SECURITY_HA_NOTE": "Home Assistant usa este mismo código para acceder al dispositivo.",
 
 "INDEX_PAGE_GENERAL": "PAGE GENERAL",
-    "GENERAL_TITLE": "Configuración General",
     "GENERAL_DESC": "Idioma y apariencia de su dispositivo",
     "GENERAL_THEME": "Tema",
     "GENERAL_TITLE_REGION": "Idioma y región",

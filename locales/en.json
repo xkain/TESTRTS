@@ -1340,7 +1340,6 @@
     "SECURITY_HA_NOTE": "Home Assistant uses this same code to reach the device.",
 
 "INDEX_PAGE_GENERAL": "PAGE GENERAL",
-    "GENERAL_TITLE": "General Settings",
     "GENERAL_DESC": "Language and appearance of your device",
     "GENERAL_THEME": "Theme",
     "GENERAL_TITLE_REGION": "Language & region",
