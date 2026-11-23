@@ -5213,7 +5213,7 @@ body:has(.inst-overlay, .modal-overlay) #divSettingsPnl > .button-container-foot
         grid-row: 1 / 3;
     }
 }
-/* --- Page Home Assistant (#divHomeAssistant) : l'intégration recommandée en tête, la découverte MQTT en retrait --- */
+/* --- Page Home Assistant (#divHomeAssistant) : l'intégration recommandée --- */
 .ha-cta {
     display: flex;
     flex-direction: column;
@@ -5430,24 +5430,6 @@ body:has(.inst-overlay, .modal-overlay) #divSettingsPnl > .button-container-foot
     font-weight: 700;
     text-decoration: none;
 }
-.ha-alt-head {
-    grid-column: 1 / -1;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 10px;
-    margin: 10px 2px -4px;
-}
-.ha-alt-head h3 {
-    margin: 0;
-    font-size: var(--fs-5);
-    font-weight: 800;
-}
-.ha-alt-head p {
-    margin: 0;
-    font-size: var(--fs-3);
-    color: var(--text-3);
-}
 @media (max-width: 999px) {
     .ha-cta {
         align-items: flex-start;
@@ -5461,15 +5443,6 @@ body:has(.inst-overlay, .modal-overlay) #divSettingsPnl > .button-container-foot
         gap: 16px;
     }
 }
-@media (max-width: 767px) {
-    /* Le titre de section mobile (.gen-sec-head) dit déjà « Découverte MQTT ». */
-    .ha-alt-head h3 {
-        display: none;
-    }
-    .ha-alt-head {
-        margin: 0 2px 12px;
-    }
-}
 /* --- Page MQTT (#divMQTT) sur le gabarit Général : sans onglets, sections sur mobile seulement --- */
 .mqtt-mono,
 input.gen-input.mqtt-mono {
@@ -5479,8 +5452,7 @@ input.gen-input.mqtt-mono {
     font-weight: 500;
     overflow-wrap: anywhere;
 }
-#divMQTT.mqtt-off .gen-tile,
-#divHomeAssistant.mqtt-off .ha-disco {
+#divMQTT.mqtt-off .gen-tile {
     opacity: .5;
 }
 .mqtt-addr {
@@ -5492,8 +5464,7 @@ input.gen-input.mqtt-mono {
     font-size: var(--fs-4);
     color: var(--text-3);
 }
-#divMQTT .gen-input-box:has(> input:disabled),
-#divHomeAssistant .gen-input-box:has(> input:disabled) {
+#divMQTT .gen-input-box:has(> input:disabled) {
     opacity: .5;
 }
 .mqtt-code {
@@ -5520,17 +5491,6 @@ input.gen-input.mqtt-mono {
     }
     #mqttOffNote {
         grid-column: 1 / -1;
-    }
-}
-@media (min-width: 768px) {
-    #divHomeAssistant .ha-tabs {
-        display: none;
-    }
-}
-@media (max-width: 767px) {
-    #divHomeAssistant:not([data-ha-tab="1"]) .gen-grid[data-ha="1"],
-    #divHomeAssistant[data-ha-tab="1"] .gen-grid[data-ha="0"] {
-        display: none;
     }
 }
 @media (max-width: 480px) {
