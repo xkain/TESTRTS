@@ -85,6 +85,7 @@ bool ShadeConfigFile::backupNdjson(SomfyShadeController *s) {
   fmt.addElem("ledColorActivity", settings.ledColorActivity);
   fmt.addElem("ledRfBlink", settings.ledRfBlink);
   fmt.addElem("dashCompact", settings.dashCompact);
+  fmt.addElem("dashOrder", settings.dashOrder);
   fmt.addElem("geoLat", settings.geoLat);
   fmt.addElem("geoLon", settings.geoLon);
   ok &= this->writeNdjsonLine(fmt, buff, "settings");

@@ -518,6 +518,11 @@ class General {
                 dashCompact: (parseInt(settings.dashCompact, 10) || 0) & 3
             };
             this.applyDashboardPrefs(this._dashboardPrefs);
+            const dashOrder = (parseInt(settings.dashOrder, 10) || 0) & 3;
+            if (dashOrder !== (this._dashOrder || 0)) {
+                this._dashOrder = dashOrder;
+                if (typeof somfy !== 'undefined' && somfy.shades) somfy._cfgRefresh('room');
+            }
             // L'onglet mobile par défaut ne s'applique qu'UNE SEULE fois, au tout premier rendu :
             // le rejouer à chaque loadGeneral() (ex. après Enregistrer dans DashboardPrefsOverlay())
             // arracherait l'utilisateur de l'onglet où il se trouve déjà.

@@ -293,6 +293,7 @@ bool ConfigSettings::load() {
   this->showRadioActivity = pref.getBool("showRadioAct", false);
   this->showMovementIndicator = pref.getBool("showMoveInd", true);
   this->dashCompact = pref.getUChar("dashCompact", 0) & 0x03;
+  this->dashOrder = pref.getUChar("dashOrder", 0) & 0x03;
   this->geoLat = pref.getFloat("geoLat", 99.0f);
   this->geoLon = pref.getFloat("geoLon", 0.0f);
   this->connType = static_cast<conn_types_t>(pref.getChar("connType", 0x00));
@@ -352,6 +353,7 @@ bool ConfigSettings::save() {
   ok &= nvsPutOk(pref.putBool("showRadioAct", this->showRadioActivity));
   ok &= nvsPutOk(pref.putBool("showMoveInd", this->showMovementIndicator));
   ok &= nvsPutOk(pref.putUChar("dashCompact", this->dashCompact));
+  ok &= nvsPutOk(pref.putUChar("dashOrder", this->dashOrder));
   ok &= nvsPutOk(pref.putFloat("geoLat", this->geoLat));
   ok &= nvsPutOk(pref.putFloat("geoLon", this->geoLon));
   ok &= nvsPutOk(pref.putString("pendingLang", this->pendingLang), this->pendingLang);
@@ -385,6 +387,7 @@ void ConfigSettings::toJSON(JsonFormatter &json) {
   json.addElem("showRadioActivity", this->showRadioActivity);
   json.addElem("showMovementIndicator", this->showMovementIndicator);
   json.addElem("dashCompact", this->dashCompact);
+  json.addElem("dashOrder", this->dashOrder);
   json.addElem("geoLat", this->geoLat);
   json.addElem("geoLon", this->geoLon);
 }
@@ -419,6 +422,7 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     jget(obj, "showRadioActivity", this->showRadioActivity);
     jget(obj, "showMovementIndicator", this->showMovementIndicator);
     if(obj.containsKey("dashCompact")) this->dashCompact = obj["dashCompact"].as<uint8_t>() & 0x03;
+    if(obj.containsKey("dashOrder")) this->dashOrder = obj["dashOrder"].as<uint8_t>() & 0x03;
     // Validation de plage (-90..90 / -180..180) en amont, dans /setgeneral. Arrondi à 2 décimales
     // ici quelle que soit la précision reçue : c'est la seule jamais persistée.
     if(obj.containsKey("geoLat")) this->geoLat = roundf(obj["geoLat"].as<float>() * 100.0f) / 100.0f;

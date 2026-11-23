@@ -5574,11 +5574,12 @@ input.gen-input.mqtt-mono {
 @media (max-width: 1000px) {
     #divHomePnl .dash-topbar { position: relative; padding: 10px 15px 8px; }
     #divHomePnl .dash-house { flex-direction: column; align-items: stretch; gap: 10px; }
-    #divHomePnl .dash-house-txt { padding-right: 175px; }
+    #divHomePnl .dash-house-txt { padding-right: 217px; }
     #divHomePnl .dash-house-bar { flex: none; min-width: 0; }
-    #divHomePnl .dash-edit-btn { position: absolute; top: 12px; right: 57px; }
-    #divHomePnl .dash-add-btn { right: 15px; width: 34px; padding: 0; justify-content: center; }
-    #divHomePnl .dash-add-btn span { display: none; }
+    #divHomePnl .dash-top-btns { position: absolute; top: 12px; right: 15px; }
+    #divHomePnl .dash-add-btn { order: 1; }
+    #divHomePnl :is(.dash-add-btn, .dash-sort-btn) { width: 34px; padding: 0; justify-content: center; }
+    #divHomePnl :is(.dash-add-btn, .dash-sort-btn) span { display: none; }
     #divHomePnl .dash-move-toast { left: 12px; right: 12px; bottom: 12px; width: auto; max-width: none; }
 }
 #divHomePnl .column-count { font-size: 0.8em; font-weight: 600; color: var(--color-text-secondary); }
@@ -5682,6 +5683,7 @@ input.gen-input.mqtt-mono {
 }
 #divHomePnl :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: none; }
 #divHomePnl.show-hidden-cards :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: flex; opacity: 0.5; }
+#divHomePnl .dash-top-btns { display: flex; align-items: center; gap: 8px; flex: none; }
 #divHomePnl .dash-edit-btn { display: inline-flex; align-items: center; gap: 6px; flex: none; width: auto; min-width: 0; height: 32px; margin: 0; padding: 0 12px; border-radius: var(--radius-btn); border: 1px solid var(--color-control-border); background: var(--color-control-bg); color: var(--color-accent); font-size: 0.8em; font-weight: 600; text-transform: none; letter-spacing: normal; cursor: pointer; }
 #divHomePnl .dash-edit-btn:hover { background: var(--color-control-bg-hover); color: var(--color-accent); }
 #divHomePnl .dash-edit-btn svg { width: 15px; height: 15px; }
@@ -5689,8 +5691,7 @@ input.gen-input.mqtt-mono {
 /* Le « + » de l'en-tête mobile le remplace sous 768 px. */
 @media (max-width: 767px) {
     #divHomePnl .dash-add-btn { display: none; }
-    #divHomePnl .dash-edit-btn { right: 15px; }
-    #divHomePnl .dash-house-txt { padding-right: 130px; }
+    #divHomePnl .dash-house-txt { padding-right: 172px; }
 }
 #divHomePnl .dash-edit-bar { display: none; align-items: center; gap: 10px 12px; flex-wrap: wrap; margin: 12px 20px 0; padding: 10px 14px; border-radius: var(--radius-lg); border: 1px solid color-mix(in srgb, var(--color-accent), transparent 65%); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg-card)); }
 #divHomePnl.dash-editing .dash-edit-bar { display: flex; }
@@ -5850,12 +5851,6 @@ input.gen-input.mqtt-mono {
 .cfg-tile { position: relative; display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: var(--tile-minh); box-sizing: border-box; padding: var(--tile-pad); border-radius: var(--r-5); background: var(--surface); color: var(--text); cursor: pointer; transition: box-shadow .15s ease; }
 .cfg-tile:hover { box-shadow: 0 0 0 2px var(--on-fill); }
 .cfg-tile:has(.overlayHeader-dropdown-menu.show) { z-index: 5; }
-.cfg-sortable .cfg-tile:not(.cfg-tile-add) { cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.cfg-tile.cfg-lifted { z-index: 1000; rotate: 2deg; scale: 1.03; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28); cursor: grabbing; }
-.cfg-drop-slot { box-sizing: border-box; border-radius: var(--r-5); border: 2px dashed var(--color-accent); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
-.cfg-drop-zone { display: grid; place-items: center; min-height: 72px; box-sizing: border-box; padding: 12px; border-radius: var(--r-5); border: 2px dashed var(--border); color: var(--text-3); font-size: var(--fs-3); font-weight: 600; text-align: center; }
-.cfg-drop-target { outline: 2px solid var(--color-accent); outline-offset: 3px; border-radius: var(--r-5); }
-.cfg-tiles-title.cfg-drop-target { border-radius: var(--r-2); }
 .cfg-tile-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .cfg-tile-icon { position: relative; display: grid; place-items: center; flex: none; width: var(--tile-icon); height: var(--tile-icon); border-radius: 50%; background: color-mix(in srgb, var(--accent) 15%, var(--surface)); color: var(--accent); }
 .cfg-tile-icon svg { width: 28px; height: 28px; }
@@ -5957,7 +5952,6 @@ input.gen-input.mqtt-mono {
     .cfg-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .sched-tiles { grid-template-columns: minmax(0, 1fr); }
     .cfg-tile { --tile-pad: 14px; --tile-minh: 150px; --tile-icon: 40px; gap: 8px; border-radius: var(--r-4); }
-    .cfg-drop-slot, .cfg-drop-zone { border-radius: var(--r-4); }
     .cfg-tile-icon svg { width: 24px; height: 24px; }
     .cfg-tile-name .name-text { font-size: var(--fs-4); }
     .cfg-tile-add { font-size: var(--fs-3); }

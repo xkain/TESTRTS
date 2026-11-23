@@ -1357,7 +1357,6 @@ class Somfy {
         if (typeof ResizeObserver === 'function') new ResizeObserver(() => this.scrollMobileTab(false)).observe(c);
     }
     // Personnaliser : l'œil masque ou réaffiche une carte, enregistré aussitôt dans le navigateur.
-    // L'ordre et les pièces se règlent sur les pages-listes (Équipements, Groupes, Pièces).
     startDashEdit() {
         if (this.dashEditing) return;
         const pnl = get('divHomePnl');
@@ -1386,6 +1385,156 @@ class Somfy {
     }
     toggleCardHidden(kind, id) {
         this.setCardUIPrefs(kind, id, { hidden: !this.cardUIPrefs(kind, id).hidden });
+    }
+    _byName(a, b) {
+        return (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base', numeric: true });
+    }
+    _dashSort(list) {
+        return list.sort(general._dashOrder & 1 ? this._byName : (a, b) => a.sortOrder - b.sortOrder);
+    }
+    _dashOrderBody(az, flat, work) {
+        const pick = (list, key, order) => az ? list.slice().sort(this._byName) : order.map(id => list.find(x => x[key] === id)).filter(Boolean);
+        const rooms = pick(_rooms.filter(r => r.roomId !== 0), 'roomId', work.room);
+        const groups = pick(this.groups || [], 'groupId', work.group);
+        const shades = pick(this.shades || [], 'shadeId', work.shade);
+        const lock = az ? ' is-locked' : '';
+        const rid = (s) => rooms.some(r => r.roomId === s.roomId) ? s.roomId : 0;
+        const badge = (kind, id, name, icon) => `<span class="dord-badge" data-kind="${kind}" data-id="${id}"><svg><use href="#${icon}"></use></svg><span>${escHtml(name)}</span></span>`;
+        const sb = (s) => badge('shade', s.shadeId, s.name, (this.shadeTypes.find(x => x.type === s.shadeType) || { indic: 'svg-indicRoller' }).indic);
+        const sec = (key, cat, n) => `<h3 class="dp-sec dord-sec" style="--cat: var(--cat-${cat})">${tr(key)}<small>${n}</small></h3>`;
+        const seg = `<span class="gen-seg"><label><input type="radio" name="dordMode" value="0"${az ? '' : ' checked'}><span>${tr('SORT_MANUAL')}</span></label><label><input type="radio" name="dordMode" value="1"${az ? ' checked' : ''}><span>${tr('SORT_AZ')}</span></label></span>`;
+        const bool = `<span class="gen-seg gen-seg-bool"><input id="cbDordRooms" type="checkbox"${flat ? '' : ' checked'}><span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span>`;
+        const shadeRows = flat ? `<div class="dord-badges${lock}" data-sec="shade">${shades.map(sb).join('')}</div>`
+            : [0, ...rooms.map(r => r.roomId)].filter(id => shades.some(s => rid(s) === id)).map(id => `<div class="dord-room" data-roomid="${id}"><span class="dord-room-name">${escHtml(id === 0 ? tr('DASH_NO_ROOM') : rooms.find(r => r.roomId === id).name)}</span>
+                <div class="dord-badges${lock}" data-sec="shade">${shades.filter(s => rid(s) === id).map(sb).join('')}</div></div>`).join('');
+        return `<div class="gen-row"><span class="gen-row-text"><b>${tr('LIST_SORT')}</b><span>${tr(az ? 'DASH_ORDER_HINT_AZ' : 'DASH_ORDER_HINT_MANUAL')}</span></span>${seg}</div>
+        <div class="gen-row"><span class="gen-row-text"><b>${tr('DASH_ORDER_BY_ROOM')}</b><span>${tr(flat ? 'DASH_ORDER_BY_ROOM_OFF' : 'DASH_ORDER_BY_ROOM_ON')}</span></span>${bool}</div>
+        ${sec('SUBTAB_ROOMS', 'piece', rooms.length)}<div class="dord-badges${lock}" data-sec="room">${rooms.map(r => badge('room', r.roomId, r.name, 'svg-navRoom')).join('')}</div>
+        ${sec('SUBTAB_GROUPS', 'groupe', groups.length)}<div class="dord-badges${lock}" data-sec="group">${groups.map(g => badge('group', g.groupId, g.name, 'svg-group')).join('')}</div>
+        ${sec('SUBTAB_DEVICES', 'equipement', shades.length)}${shadeRows}`;
+    }
+    openDashOrder() {
+        if (get('divDashOrder')) return;
+        const so = (list, key) => list.slice().sort((a, b) => a.sortOrder - b.sortOrder).map(x => x[key]);
+        const work = { room: so(_rooms.filter(r => r.roomId !== 0), 'roomId'), group: so(this.groups || [], 'groupId'), shade: so(this.shades || [], 'shadeId') };
+        const saved = general._dashOrder || 0;
+        let az = !!(saved & 1), flat = !!(saved & 2), dirty = false;
+        const div = document.createElement('div');
+        div.id = 'divDashOrder';
+        div.className = 'modal-overlay genmod-overlay';
+        div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
+            id: 'dashOrder', icon: 'svg-sort', titleKey: 'DASH_ORDER_TITLE', descKey: 'DASH_ORDER_DESC',
+            stateKey: tr('SUBTAB_ROOMS'), stateValue: String(work.room.length), sectionKey: 'DASH_ORDER_TITLE', hintKey: '', footId: 'dashOrderFoot',
+            bodyHtml: ''
+        })}</div>`;
+        div.querySelector('#dashOrderState').innerHTML = genModalState(tr('SUBTAB_ROOMS'), String(work.room.length)) + genModalState(tr('SUBTAB_GROUPS'), String(work.group.length)) + genModalState(tr('SUBTAB_DEVICES'), String(work.shade.length));
+        div.querySelector('#dashOrderFoot').innerHTML = `<button type="button" class="gen-btn" data-genmod-close>${tr('BT_CANCEL')}</button>
+            <button type="button" class="gen-btn gen-btn-primary dord-save" disabled><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>`;
+        const body = div.querySelector('.genmod-body'), save = div.querySelector('.dord-save');
+        const value = () => (az ? 1 : 0) | (flat ? 2 : 0);
+        const state = () => { save.disabled = !dirty && value() === saved; };
+        const render = () => { body.innerHTML = this._dashOrderBody(az, flat, work); };
+        const ids = (rows) => [...rows].flatMap(r => [...r.querySelectorAll('.dord-badge')]).map(b => parseInt(b.dataset.id, 10));
+        const capture = () => {
+            work.room = ids(body.querySelectorAll('[data-sec="room"]'));
+            work.group = ids(body.querySelectorAll('[data-sec="group"]'));
+            if (flat) { work.shade = ids(body.querySelectorAll('[data-sec="shade"]')); return; }
+            const per = {};
+            body.querySelectorAll('.dord-room').forEach(r => { per[r.dataset.roomid] = ids([r]); });
+            const roomOf = (id) => { const s = (this.shades || []).find(x => x.shadeId === id); return s && _rooms.some(r => r.roomId === s.roomId) ? s.roomId : 0; };
+            work.shade = work.shade.map(id => per[roomOf(id)].shift());
+        };
+        render();
+        this._bindDashOrderDrag(body, () => { capture(); dirty = true; state(); });
+        div.addEventListener('change', (e) => {
+            if (e.target.name === 'dordMode') az = e.target.value === '1';
+            else if (e.target.id === 'cbDordRooms') flat = !e.target.checked;
+            else return;
+            render();
+            state();
+        });
+        div.onclick = (e) => { if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div); };
+        save.onclick = () => {
+            const fail = (err) => { ui.serviceError(err); this._cfgRefresh('room'); };
+            const done = () => {
+                general._dashOrder = value();
+                if (general._lastSettings) general._lastSettings.dashOrder = value();
+                this._cfgRefresh('room');
+                closeOverlay(div);
+            };
+            const setOrder = (list, key, order) => order.forEach((id, n) => { const it = list.find(x => x[key] === id); if (it) it.sortOrder = n; });
+            const steps = dirty ? [
+                ['/roomSortOrder', work.room, () => setOrder(_rooms, 'roomId', work.room)],
+                ['/groupSortOrder', work.group, () => setOrder(this.groups || [], 'groupId', work.group)],
+                ['/shadeSortOrder', work.shade, () => setOrder(this.shades || [], 'shadeId', work.shade)]
+            ] : [];
+            if (value() !== saved) steps.push(['/setgeneral', { dashOrder: value() }, () => { }]);
+            const next = () => {
+                const s = steps.shift();
+                if (!s) return done();
+                putJSONSync(s[0], s[1], (err) => { if (err) return fail(err); s[2](); next(); });
+            };
+            next();
+        };
+        get('divContainer').appendChild(div);
+        shOverlay(div);
+    }
+    _bindDashOrderDrag(body, onChange) {
+        let st = null;
+        body.addEventListener('contextmenu', (e) => { if (e.target.closest('.dord-badge')) e.preventDefault(); });
+        body.addEventListener('touchmove', (e) => { if (st?.live && e.cancelable) e.preventDefault(); }, { passive: false });
+        body.addEventListener('pointerdown', (e) => {
+            const el = e.target.closest('.dord-badges:not(.is-locked) .dord-badge');
+            if (!el || st || (e.pointerType === 'mouse' && e.button !== 0)) return;
+            if (e.pointerType === 'mouse') e.preventDefault();
+            const r = el.getBoundingClientRect();
+            st = { el, row: el.parentNode, x0: e.clientX, y0: e.clientY, gx: e.clientX - r.left, gy: e.clientY - r.top, pid: e.pointerId, live: false };
+            const place = (x, y) => {
+                st.ghost.style.transform = `translate(${x - st.gx}px, ${y - st.gy}px)`;
+                const sibs = [...st.row.children].filter(c => c !== el);
+                const hit = sibs.find(c => { const b = c.getBoundingClientRect(); return x >= b.left && x <= b.right && y >= b.top && y <= b.bottom; });
+                if (hit) return st.row.insertBefore(el, el.compareDocumentPosition(hit) & Node.DOCUMENT_POSITION_FOLLOWING ? hit.nextSibling : hit);
+                const last = sibs[sibs.length - 1], lb = last && last.getBoundingClientRect();
+                if (lb && (y > lb.bottom || (y >= lb.top && x > lb.right)) && el !== st.row.lastElementChild) st.row.appendChild(el);
+            };
+            const lift = () => {
+                st.live = true;
+                st.ghost = el.cloneNode(true);
+                st.ghost.classList.add('dord-ghost');
+                st.ghost.style.width = r.width + 'px';
+                document.body.appendChild(st.ghost);
+                el.classList.add('is-hole');
+                if (navigator.vibrate) navigator.vibrate(15);
+                place(st.x0, st.y0);
+            };
+            const off = () => {
+                clearTimeout(st.timer);
+                window.removeEventListener('pointermove', move);
+                window.removeEventListener('pointerup', up);
+                window.removeEventListener('pointercancel', up);
+            };
+            const move = (ev) => {
+                if (ev.pointerId !== st.pid) return;
+                if (st.live) return place(ev.clientX, ev.clientY);
+                const d = Math.hypot(ev.clientX - st.x0, ev.clientY - st.y0);
+                if (e.pointerType === 'mouse' && d > 4) lift();
+                else if (e.pointerType !== 'mouse' && d > 8) { off(); st = null; }
+            };
+            const up = (ev) => {
+                if (ev.pointerId !== st.pid) return;
+                off();
+                if (st.live) {
+                    st.ghost.remove();
+                    el.classList.remove('is-hole');
+                    onChange();
+                }
+                st = null;
+            };
+            window.addEventListener('pointermove', move);
+            window.addEventListener('pointerup', up);
+            window.addEventListener('pointercancel', up);
+            if (e.pointerType !== 'mouse') st.timer = setTimeout(() => { if (st && !st.live) lift(); }, 300);
+        });
     }
     // Liaison d'un répéteur sur la trame reçue pendant son écran d'attente. Celle d'une télécommande
     // à un équipement passe par shadeSetup.onFrame (tâche « Lier Télécommande »).
@@ -3336,9 +3485,9 @@ class Somfy {
     // applique filtre, recherche et tri, puis remplit la colonne d'identité (capacité, filtres).
     _cfgConf(kind) {
         return {
-            shade: { root: 'divShadeListContainer', list: 'divShadeList', max: this.maxShades ? this.maxShades - 2 : 0, modes: ['az', 'room'], drag: 'room' },
-            group: { root: 'divGroupListContainer', list: 'divGroupList', max: this.maxGroups ? this.maxGroups - 2 : 0, modes: ['az', 'room'], drag: 'room' },
-            room: { root: 'divRoomListContainer', list: 'divRoomList', max: this.maxRooms ? this.maxRooms - 2 : 0, modes: ['az', 'order'], drag: 'order' },
+            shade: { root: 'divShadeListContainer', list: 'divShadeList', max: this.maxShades ? this.maxShades - 2 : 0, modes: ['az', 'room'] },
+            group: { root: 'divGroupListContainer', list: 'divGroupList', max: this.maxGroups ? this.maxGroups - 2 : 0, modes: ['az', 'room'] },
+            room: { root: 'divRoomListContainer', list: 'divRoomList', max: this.maxRooms ? this.maxRooms - 2 : 0, modes: ['az'] },
             schedule: { root: 'divScheduleListContainer', list: 'divScheduleList', max: this.maxSchedules || 30, modes: ['az', 'time'] }
         }[kind];
     }
@@ -3386,7 +3535,7 @@ class Somfy {
         if (kind === 'shade' && count('todo')) list.push({ key: 'todo', label: tr('LIST_FILTER_TODO'), n: count('todo'), warn: true });
         return list;
     }
-    _cfgBody(kind, items, mode, unfiltered) {
+    _cfgBody(kind, items, mode) {
         const az = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
         const head = (label, n, icon, roomId) => `<div class="cfg-tiles-title"${roomId == null ? '' : ` data-roomid="${roomId}"`}>${icon ? `<svg><use href="${icon}"></use></svg>` : ''}${escHtml(label)}<span>${n}</span></div>`;
         if (kind === 'schedule') {
@@ -3398,24 +3547,17 @@ class Somfy {
                 return head(name, g.length, this._scheduleTargetIcon(g[0].group)) + g.map(it => it.html()).join('');
             }).join('');
         }
-        if (mode === 'order') return items.map(it => it.html()).join('');
         if (mode !== 'room') return items.slice().sort(az).map(it => it.html()).join('');
         const titled = _rooms.length > 1;
-        // Glissable : ordre du tableau de bord, et une section même vide par pièce pour pouvoir y déposer.
-        const drag = this._cfgConf(kind).drag === mode;
         return _rooms.map(r => r.roomId).concat([...new Set(items.map(it => it.roomId))].filter(id => !_rooms.some(r => r.roomId === id))).map(id => {
-            const g = items.filter(it => it.roomId === id);
-            if (!drag) g.sort(az);
-            if (g.length) return (titled ? head(this._cfgRoomName(id), g.length, null, id) : '') + g.map(it => it.html()).join('');
-            return drag && titled && unfiltered && id !== 0 ? head(this._cfgRoomName(id), 0, null, id) + `<div class="cfg-drop-zone">${tr('LIST_DROP_HERE')}</div>` : '';
+            const g = items.filter(it => it.roomId === id).sort(az);
+            return g.length ? (titled ? head(this._cfgRoomName(id), g.length, null, id) : '') + g.map(it => it.html()).join('') : '';
         }).join('');
     }
     renderCfgPage(kind) {
         const conf = this._cfgConf(kind);
         const root = get(conf.root), list = get(conf.list);
         if (!root || !list) return;
-        // Un rendu en plein glisser (événement du socket) arracherait la tuile tenue : remis au dépôt.
-        if (this._cfgDrag?.live && this._cfgDrag.list === list) { this._cfgDrag.stale = true; return; }
         const st = this._cfgStateOf(kind);
         const items = this._cfgItems(kind);
         const filters = this._cfgFilters(kind, items);
@@ -3426,11 +3568,9 @@ class Somfy {
         const n = items.length, max = conf.max;
         const body = n && !vis.length
             ? `<div class="cfg-nomatch"><b>${tr('LIST_NOMATCH_TITLE')}</b><span>${tr('LIST_NOMATCH_DESC')}</span><button type="button" class="gen-btn" onclick="somfy.resetCfgFilters('${kind}');">${tr('BT_SHOW_ALL')}</button></div>`
-            : this._cfgBody(kind, vis, mode, vis.length === items.length);
+            : this._cfgBody(kind, vis, mode);
         list.innerHTML = this.cfgAddTileHtml(kind, max && n >= max) + body;
         list.classList.toggle('cfg-sort-az', mode === 'az');
-        list.classList.toggle('cfg-sortable', mode === conf.drag);
-        if (conf.drag) this._bindCfgDrag(list, kind);
         root.classList.toggle('is-empty', n === 0);
 
         const left = Math.max(0, max - n);
@@ -3515,190 +3655,6 @@ class Somfy {
         });
         return mode;
     }
-    // Glisser une tuile dans le mode d'ordre de sa page (conf.drag). Au doigt, appui long : un geste
-    // qui bouge avant reste un défilement. Chaque dépôt s'enregistre aussitôt.
-    _bindCfgDrag(list, kind) {
-        if (list._cfgDragBound) return;
-        list._cfgDragBound = true;
-        list.addEventListener('pointerdown', (e) => this._cfgPointerDown(e, list, kind));
-        list.addEventListener('touchmove', (e) => { if (this._cfgDrag?.live && e.cancelable) e.preventDefault(); }, { passive: false });
-        list.addEventListener('contextmenu', (e) => { if (list.classList.contains('cfg-sortable') && e.target.closest('.cfg-tile')) e.preventDefault(); });
-        list.addEventListener('click', (e) => { if (this._cfgNoClick > Date.now()) { e.stopPropagation(); e.preventDefault(); } }, true);
-    }
-    _cfgPointerDown(e, list, kind) {
-        if (this._cfgDrag || !list.classList.contains('cfg-sortable') || (e.pointerType === 'mouse' && e.button !== 0)) return;
-        const el = e.target.closest('.cfg-tile:not(.cfg-tile-add)');
-        if (!el || e.target.closest('.cfg-tile-menu')) return;
-        if (e.pointerType === 'mouse') e.preventDefault();
-        const r = el.getBoundingClientRect();
-        const st = { el, list, kind, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, gx: e.clientX - r.left, gy: e.clientY - r.top, pid: e.pointerId, live: false, lock: 0 };
-        this._cfgDrag = st;
-        const off = () => {
-            clearTimeout(st.timer);
-            window.removeEventListener('pointermove', move);
-            window.removeEventListener('pointerup', up);
-            window.removeEventListener('pointercancel', up);
-        };
-        const move = (ev) => {
-            if (ev.pointerId !== st.pid) return;
-            st.x = ev.clientX; st.y = ev.clientY;
-            if (st.live) {
-                el.style.transform = `translate(${st.x - st.lx}px, ${st.y - st.ly}px)`;
-                return this._cfgHit(st);
-            }
-            const dist = Math.hypot(st.x - st.x0, st.y - st.y0);
-            if (e.pointerType === 'mouse' && dist > 4) this._cfgLift(st);
-            else if (e.pointerType !== 'mouse' && dist > 8) { off(); this._cfgDrag = null; }
-        };
-        const up = (ev) => {
-            if (ev.pointerId !== st.pid) return;
-            off();
-            if (st.live) this._cfgDrop(st);
-            else this._cfgDrag = null;
-        };
-        st.off = off;
-        window.addEventListener('pointermove', move);
-        window.addEventListener('pointerup', up);
-        window.addEventListener('pointercancel', up);
-        if (e.pointerType !== 'mouse') st.timer = setTimeout(() => { if (this._cfgDrag === st && !st.live) this._cfgLift(st); }, 300);
-    }
-    _mergeOrder(full, visible) {
-        const vis = visible.filter(id => full.includes(id));
-        const set = new Set(vis);
-        let k = 0;
-        return full.map(id => set.has(id) ? vis[k++] : id);
-    }
-    _cfgScroller(node) {
-        for (let n = node; n && n !== document.body; n = n.parentElement) {
-            const oy = getComputedStyle(n).overflowY;
-            if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight) return n;
-        }
-        return window;
-    }
-    _cfgFlip(items, fn) {
-        const first = new Map(items.map(it => [it, it.getBoundingClientRect()]));
-        fn();
-        items.forEach(it => {
-            const a = first.get(it), b = it.getBoundingClientRect();
-            const dx = a.left - b.left, dy = a.top - b.top;
-            if (dx || dy) it.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 180, easing: 'ease-out' });
-        });
-    }
-    _cfgTileIds(list, kind) {
-        return [...list.querySelectorAll('.cfg-tile:not(.cfg-tile-add)')].map(t => parseInt(t.dataset[kind + 'id'], 10));
-    }
-    // Pièce de la section d'un nœud (titre, tuile, zone) : celle du titre qui le précède ; null sans titres.
-    _cfgSection(node) {
-        for (let n = node; n; n = n.previousElementSibling) if (n.classList.contains('cfg-tiles-title')) return n.dataset.roomid ?? null;
-        return null;
-    }
-    _cfgLift(st) {
-        const el = st.el;
-        st.before = this._cfgTileIds(st.list, st.kind);
-        const r = el.getBoundingClientRect();
-        const slot = document.createElement('div');
-        slot.className = 'cfg-drop-slot';
-        slot.style.height = r.height + 'px';
-        el.before(slot);
-        Object.assign(el.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', margin: '0' });
-        el.classList.add('cfg-lifted');
-        st.slot = slot;
-        st.lx = st.x; st.ly = st.y;
-        st.live = true;
-        st.scroller = this._cfgScroller(st.list);
-        if (navigator.vibrate) navigator.vibrate(30);
-        const loop = () => {
-            if (!st.live) return;
-            const b = st.scroller === window ? { top: 0, bottom: window.innerHeight } : st.scroller.getBoundingClientRect();
-            const edge = 70;
-            let v = 0;
-            if (st.y < b.top + edge) v = -Math.ceil((b.top + edge - st.y) / 5);
-            else if (st.y > b.bottom - edge) v = Math.ceil((st.y - b.bottom + edge) / 5);
-            if (v) { st.scroller.scrollBy(0, v); this._cfgHit(st); }
-            st.raf = requestAnimationFrame(loop);
-        };
-        st.raf = requestAnimationFrame(loop);
-    }
-    // Dans sa section, l'emplacement suit le pointeur. Vers une autre pièce, la cible est seulement
-    // surlignée et l'emplacement n'y va qu'au dépôt : le déplacer en direct décalerait toutes les
-    // tuiles entre les deux sections, et le pointeur tomberait sur une autre cible.
-    _cfgHit(st) {
-        if (Date.now() < st.lock) return;
-        const inside = (r) => st.x >= r.left && st.x <= r.right && st.y >= r.top && st.y <= r.bottom;
-        const all = [...st.list.querySelectorAll('.cfg-tile:not(.cfg-tile-add), .cfg-drop-zone, .cfg-tiles-title[data-roomid]')].filter(c => c !== st.el);
-        const hit = all.find(c => inside(c.getBoundingClientRect()));
-        const home = this._cfgSection(st.slot);
-        st.list.querySelectorAll('.cfg-drop-target').forEach(x => { if (x !== hit) x.classList.remove('cfg-drop-target'); });
-        st.pending = null;
-        if (hit && this._cfgSection(hit) !== home) {
-            hit.classList.add('cfg-drop-target');
-            if (hit.classList.contains('cfg-tile')) st.pending = () => hit.before(st.slot);
-            else {
-                let end = hit.nextElementSibling;
-                while (end && !end.classList.contains('cfg-tiles-title')) end = end.nextElementSibling;
-                st.pending = () => { if (end) end.before(st.slot); else st.list.appendChild(st.slot); };
-            }
-            return;
-        }
-        const items = all.filter(c => c.classList.contains('cfg-tile') && this._cfgSection(c) === home);
-        if (!items.length) return;
-        let target = hit && hit.classList.contains('cfg-tile') ? hit : null;
-        let after = false;
-        if (!target) {
-            const last = items[items.length - 1], lr = last.getBoundingClientRect();
-            const atEnd = last === all.filter(c => c.classList.contains('cfg-tile')).pop();
-            if ((atEnd && st.y > lr.bottom) || (st.y >= lr.top && st.y <= lr.bottom && st.x > lr.right)) { target = last; after = true; }
-        }
-        if (!target) return;
-        const slotFirst = !!(st.slot.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING);
-        if (after && !slotFirst) return;
-        this._cfgFlip(items, () => { if (after || slotFirst) target.after(st.slot); else target.before(st.slot); });
-        st.lock = Date.now() + 160;
-    }
-    _cfgDrop(st) {
-        st.off?.();
-        this._cfgNoClick = Date.now() + 350;
-        st.live = false;
-        cancelAnimationFrame(st.raf);
-        this._cfgDrag = null;
-        const el = st.el;
-        const a = el.getBoundingClientRect();
-        Object.assign(el.style, { position: '', left: '', top: '', width: '', height: '', margin: '', transform: '' });
-        el.classList.remove('cfg-lifted');
-        st.list.querySelectorAll('.cfg-drop-target').forEach(x => x.classList.remove('cfg-drop-target'));
-        if (st.pending) st.pending();
-        const room = this._cfgSection(st.slot);
-        st.slot.replaceWith(el);
-        const b = el.getBoundingClientRect();
-        if (a.left !== b.left || a.top !== b.top) el.animate([{ transform: `translate(${a.left - b.left}px, ${a.top - b.top}px)` }, { transform: 'none' }], { duration: 200, easing: 'ease-out' });
-        const ids = this._cfgTileIds(st.list, st.kind);
-        const move = room != null && room !== el.dataset.roomid ? { id: parseInt(el.dataset[st.kind + 'id'], 10), roomId: parseInt(room, 10) } : null;
-        if (move || ids.some((id, i) => id !== st.before[i])) this._cfgSaveOrder(st.kind, ids, move);
-        else if (st.stale) this.renderCfgPage(st.kind);
-    }
-    // Les tuiles visibles (recherche, filtre) prennent les places qu'elles occupaient entre elles.
-    // Un changement de pièce part avant l'ordre, par /saveShade ou /saveGroup comme la fenêtre Pièce.
-    _cfgSaveOrder(kind, visible, move) {
-        const [url, list, key] = {
-            room: ['/roomSortOrder', _rooms.filter(r => r.roomId !== 0), 'roomId'],
-            shade: ['/shadeSortOrder', this.shades || [], 'shadeId'],
-            group: ['/groupSortOrder', this.groups || [], 'groupId']
-        }[kind];
-        const ids = this._mergeOrder(list.slice().sort((a, b) => a.sortOrder - b.sortOrder).map(x => x[key]), visible);
-        const fail = (err) => { ui.serviceError(err); this._cfgRefresh(kind); };
-        const order = () => putJSONSync(url, ids, (err) => {
-            if (err) return fail(err);
-            ids.forEach((id, n) => { const it = list.find(x => x[key] === id); if (it) it.sortOrder = n; });
-            this._cfgRefresh(kind);
-        });
-        if (!move) return order();
-        putJSONSync(kind === 'shade' ? '/saveShade' : '/saveGroup', { [key]: move.id, roomId: move.roomId }, (err) => {
-            if (err) return fail(err);
-            const it = list.find(x => x[key] === move.id);
-            if (it) it.roomId = move.roomId;
-            order();
-        });
-    }
     // Redessine depuis le modèle la page-liste et ce qui en dépend sur le tableau de bord.
     _cfgRefresh(kind) {
         const active = parseInt(document.querySelector('.room-pill.active')?.dataset.roomid || '0', 10);
@@ -3782,7 +3738,7 @@ class Somfy {
         let divOpts = `<option value="0">${homeName}</option>`;
         _rooms = [{ roomId: 0, name: homeName }];
 
-        rooms.sort((a, b) => a.sortOrder - b.sortOrder);
+        this._dashSort(rooms);
         rooms.forEach(room => {
             divPills += `<div class="room-pill animScale" data-roomid="${room.roomId}" onclick="somfy.selectRoom(${room.roomId})"><span class="room-pill-name">${escHtml(room.name)}</span><span class="room-count">0</span><small class="room-pill-sum"></small></div>`;
             divOpts += `<option value="${room.roomId}">${escHtml(room.name)}</option>`;
@@ -4152,21 +4108,23 @@ class Somfy {
     setShadesList(shades) {
         this.shades = shades;
         let divCtl = '';
-        shades.sort((a, b) => { return a.sortOrder - b.sortOrder });
+        this._dashSort(shades);
         logger.debug('Shade list updated,', shades.length, 'shades');
         let roomId = document.querySelector('.room-pill.active') ? parseInt(document.querySelector('.room-pill.active').getAttribute('data-roomid'), 10) : 0;
-        const byRoom = new Map();
+        const byRoom = new Map(), flat = [];
         for (let i = 0; i < shades.length; i++) {
             let shade = shades[i];
             let room = _rooms.find(x => x.roomId === shade.roomId) || { roomId: 0, name: '' };
             const card = this.dashCardHtml(shade, roomId === 0 || roomId === room.roomId);
             if (!byRoom.has(shade.roomId)) byRoom.set(shade.roomId, []);
             byRoom.get(shade.roomId).push(card);
+            flat.push(card);
         }
         const roomOrder = _rooms.map(r => r.roomId).filter(id => byRoom.has(id));
         byRoom.forEach((v, id) => { if (!roomOrder.includes(id)) roomOrder.push(id); });
         const withTitles = _rooms.length > 1;
-        roomOrder.forEach(id => {
+        if (general._dashOrder & 2) divCtl = flat.join('');
+        else roomOrder.forEach(id => {
             const cards = byRoom.get(id);
             if (withTitles) {
                 // La section 0 regroupe ce qui n'a pas de pièce : « Sans pièce », plus parlant que « Accueil ».
@@ -5723,7 +5681,7 @@ class Somfy {
         let roomId = document.querySelector('.room-pill.active') ? parseInt(document.querySelector('.room-pill.active').getAttribute('data-roomid'), 10) : 0;
 
         if (typeof groups !== 'undefined') {
-            groups.sort((a, b) => a.sortOrder - b.sortOrder);
+            this._dashSort(groups);
 
             for (let i = 0; i < groups.length; i++) {
                 let group = groups[i];
