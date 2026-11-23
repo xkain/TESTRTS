@@ -1221,7 +1221,6 @@
     "HA_HERO_DESC": "Ihr Gerät funktioniert völlig eigenständig. Mit einem Home Assistant-Server geht diese optionale Integration noch weiter.",
     "HA_REQ": "Home Assistant 2026.11 oder neuer. Bei einer älteren Version verwenden Sie",
     "HA_REQ_END": ".",
-    "HA_SEC_INTEGRATION": "Integration",
     "MARKETP": "Home Assistant",
     "MARKETP_DESC": "ESPSomfy-RTS Enhanced Integration",
     "MARKETP_PURPOSE_TITLE": "Wozu dient diese Integration?",

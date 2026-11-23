@@ -188,7 +188,7 @@ class Wifi {
     // =====================================================================
     _bindNetPage() {
         const page = get('divNetAdapter');
-        this._tabs = bindGenTabs(page, { tabs: 'netTabs', panels: 'netPanels', pager: 'netPager', prev: 'btnNetPrev', next: 'btnNetNext' });
+        this._tabs = bindGenTabs({ tabs: 'netTabs', panels: 'netPanels', pager: 'netPager', prev: 'btnNetPrev', next: 'btnNetNext' });
         get('cbNetDhcp').addEventListener('change', () => this._renderIp());
         get('cbNetApProtect').addEventListener('change', () => this._renderAp());
         get('netSummary').addEventListener('click', (e) => {
@@ -461,7 +461,6 @@ class Wifi {
             get('netTabs').querySelector(`[data-tab="${i}"]`).hidden = !on;
             get('netPanels').querySelector(`:scope > [data-tab="${i}"]`).classList.toggle('net-off', !on);
         });
-        fillGenSecMini(Array.from(get('netPanels').children).filter(p => !p.classList.contains('net-off')));
         if (this._tabs) {
             const cur = get('netTabs').querySelector(`[data-tab="${this._tabs.current()}"]`);
             if (!cur || cur.hidden) this._tabs.show(0);

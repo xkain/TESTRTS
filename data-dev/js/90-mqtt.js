@@ -17,7 +17,6 @@ class MQTT {
         // Différé d'un tour : _markDirty (watchDirty) passe après cet écouteur.
         ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateDirtyCount(), 0)));
         this._saveBar = new SaveBar(page, { onSave: () => this.connectMQTT(), onRevert: () => this.revertPage() });
-        bindGenSections(get('divHomeAssistant'));
     }
 
     async loadMQTT() {

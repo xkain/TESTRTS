@@ -12,7 +12,7 @@ class Firmware {
         // de sa durée de vie, et il n'y a ainsi rien à retirer quand l'overlay est détruit.
         window.addEventListener('resize', () => this.fitFileName());
         const page = get('divFirmware');
-        this._tabs = bindGenTabs(page, { tabs: 'fwTabs', panels: 'fwPanels', pager: 'fwPager', prev: 'btnFwPrev', next: 'btnFwNext' });
+        this._tabs = bindGenTabs({ tabs: 'fwTabs', panels: 'fwPanels', pager: 'fwPager', prev: 'btnFwPrev', next: 'btnFwNext' });
         // Rien à enregistrer sur cette page : chaque réglage part tout de suite (setOption), il ne
         // doit donc pas marquer la page « modifiée » auprès de watchDirty (#divSystemSettings).
         page.addEventListener('change', (e) => e.stopPropagation());

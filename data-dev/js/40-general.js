@@ -41,7 +41,7 @@ class General {
     // =====================================================================
     _bindGeneralPage() {
         const page = get('divSystemOptions');
-        this._tabs = bindGenTabs(page, { tabs: 'genTabs', panels: 'genPanels', pager: 'genPager', prev: 'btnGenPrev', next: 'btnGenNext' });
+        this._tabs = bindGenTabs({ tabs: 'genTabs', panels: 'genPanels', pager: 'genPager', prev: 'btnGenPrev', next: 'btnGenNext' });
         page.querySelectorAll('input[name="genTheme"]').forEach(r => r.addEventListener('change', () => {
             const sel = get('selThemeMode');
             sel.value = r.value;

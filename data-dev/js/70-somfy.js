@@ -2449,7 +2449,7 @@ class Somfy {
         const panneau = get('divTransceiverSettings');
         if (!panneau || this._radioEditWatched) return;
         this._radioEditWatched = true;
-        this._radioTabs = bindGenTabs(panneau, { tabs: 'rdcTabs', panels: 'rdcPanels', pager: 'rdcPager', prev: 'btnRdcPrev', next: 'btnRdcNext', onShow: () => this.syncFrameLogVisible() });
+        this._radioTabs = bindGenTabs({ tabs: 'rdcTabs', panels: 'rdcPanels', pager: 'rdcPager', prev: 'btnRdcPrev', next: 'btnRdcNext', onShow: () => this.syncFrameLogVisible() });
         this.syncFrameLogVisible();
         this._radioSaveBar = new SaveBar(panneau, { onSave: () => this.saveRadio(), onRevert: () => this.revertRadio() });
         const signaler = () => {
@@ -5317,7 +5317,7 @@ class Somfy {
     _bindShadePage() {
         if (this._shdTabs) return;
         const page = get('somfyShade');
-        this._shdTabs = bindGenTabs(page, { tabs: 'shdTabs', panels: 'shdPanels', pager: 'shdPager', prev: 'btnShdPrev', next: 'btnShdNext', keyed: true });
+        this._shdTabs = bindGenTabs({ tabs: 'shdTabs', panels: 'shdPanels', pager: 'shdPager', prev: 'btnShdPrev', next: 'btnShdNext', keyed: true });
         ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateShadeDirty(), 0)));
         this._shdSaveBar = new SaveBar(page, { onSave: () => this.saveShade(), onRevert: () => this.revertShade() });
     }
@@ -5828,7 +5828,7 @@ class Somfy {
     _bindGroupPage() {
         if (this._grpTabs) return;
         const page = get('somfyGroup');
-        this._grpTabs = bindGenTabs(page, { tabs: 'grpTabs', panels: 'grpPanels', pager: 'grpPager', prev: 'btnGrpPrev', next: 'btnGrpNext', keyed: true });
+        this._grpTabs = bindGenTabs({ tabs: 'grpTabs', panels: 'grpPanels', pager: 'grpPager', prev: 'btnGrpPrev', next: 'btnGrpNext', keyed: true });
         // Après _markDirty (watchDirty), comme Général : différé d'un tour.
         ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateGroupDirty(), 0)));
         this._grpSaveBar = new SaveBar(page, { onSave: () => this.saveGroup(), onRevert: () => this.revertGroup() });

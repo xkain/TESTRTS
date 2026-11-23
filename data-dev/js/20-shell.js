@@ -1516,14 +1516,6 @@ function bindGenSections(page) {
     return sections;
 }
 
-// Points de position des titres de section quand leur nombre varie (Connexion : selon le type).
-function fillGenSecMini(sections) {
-    sections.forEach((s, i) => {
-        const mini = s.querySelector(':scope > .gen-sec-head > .gen-sec-mini');
-        if (mini) mini.innerHTML = sections.map((_, j) => j === i ? '<i class="on"></i>' : '<i></i>').join('');
-    });
-}
-
 // --- Onglets d'une page migrée (Général, Appareil, Connexion) -----------------------------
 // L'onglet précédent/suivant n'apparaît en pied de page que si l'onglet affiché dépasse de l'écran.
 // Mobile : tous les onglets s'écrivent sur une ligne qui défile, au-dessus d'une barre segmentée
@@ -1569,15 +1561,13 @@ window.addEventListener('scroll', () => {
         st.classList.toggle('is-min', window.scrollY > 0 && st.getBoundingClientRect().top <= top + 0.5);
     });
 }, { passive: true });
-function bindGenTabs(page, ids) {
+function bindGenTabs(ids) {
     const strip = get(ids.tabs), panels = get(ids.panels), pager = get(ids.pager);
     // Un onglet masqué (page Connexion : selon le type choisi) sort de la navigation.
     const tabs = () => Array.from(strip.querySelectorAll('.gen-tab')).filter(t => !t.hidden);
-    const sections = bindGenSections(page);
     let current = 0;
     const update = () => {
         if (!panels.offsetParent) return;
-        sections();
         genTabsSync(strip);
         const list = tabs(), pos = list.findIndex(t => parseInt(t.dataset.tab, 10) === current);
         [[ids.prev, pos - 1], [ids.next, pos + 1]].forEach(([id, n]) => {

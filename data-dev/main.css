@@ -2248,9 +2248,6 @@ label.gen-row {
     .gen-tabs.is-min .gen-tabs-bar i:not(.on) {
         background: color-mix(in srgb, var(--text-3) 38%, transparent);
     }
-    .gen-tabs ~ .gen-panels > .gen-grid > .gen-sec-head {
-        display: none;
-    }
     .gen-grid {
         grid-template-columns: minmax(0, 1fr);
         gap: 12px;
@@ -5746,7 +5743,6 @@ input.gen-input.mqtt-mono {
    onglets s'effacent (display: contents) pour que Communication rejoigne la grille de Général. */
 .ed-page.ed-new #shdPanels { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(max(340px, calc((100% - 3 * 16px) / 4)), 100%), 1fr)); gap: 16px; }
 .ed-page.ed-new #shdPanels > :is([data-tab="0"], [data-tab="2"]) { display: contents; }
-.ed-page.ed-new #shdPanels .gen-sec-head { display: none; }
 .ed-page.ed-new #shdPanels .gen-tile { grid-column: auto; }
 /* !important : onShadeTypeChanged pose un display en ligne sur ces tuiles. */
 .ed-page.ed-new #shdPanels > [data-tab="2"] > :not(#shdCommTile) { display: none !important; }
