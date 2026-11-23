@@ -1047,8 +1047,8 @@ button[line].fw-sidebar-button:hover {
  *  .modal-overlay.is-panel (shOverlay : garde des modifications, empilement). En-tête : panelHead().
  *  ======================================================================= */
 /* Feuille « Détails » d'un hero : le contenu du bloc replié, hors du hero (jetons de la page). */
-.side-panel .hero-fold-body { display: block; padding: 0; }
-.side-panel .hero-fold-body .gen-btn { width: 100%; margin-top: 14px; justify-content: center; }
+.side-panel .hero-fold-body { display: flex; flex-direction: column; gap: 14px; padding: 0; }
+.side-panel .hero-fold-body .gen-btn { width: 100%; justify-content: center; }
 .side-panel-overlay { position: fixed; inset: 0; z-index: 2000; display: flex; justify-content: flex-end; background: rgba(0, 0, 0, 0); transition: background 0.25s ease; }
 .side-panel-overlay.open { background: rgba(0, 0, 0, 0.35); }
 .side-panel,
@@ -1265,7 +1265,7 @@ button[line].fw-sidebar-button:hover {
 #divLinkRepeater .rx-link-meter i { background: var(--violet); }
 :is(#divLinkListener, #divLinkRepeater) .genmod-foot-btns .gen-btn { white-space: nowrap; }
 @media (max-width: 999px) {
-    .rx-link-warn { max-width: none; }
+    .rx-link-warn { grid-column: 1 / -1; justify-self: stretch; max-width: none; }
 }
 @media (max-width: 767px) {
     :is(#divLinkListener, #divLinkRepeater) .genmod-body { padding: 12px 16px; gap: 14px; }
