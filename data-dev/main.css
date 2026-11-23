@@ -5223,21 +5223,6 @@ body:has(.inst-overlay, .modal-overlay) #divSettingsPnl > .button-container-foot
     /* Le bouton Marketplace se règle sur la largeur de la colonne d'identité (unités cqi). */
     container-type: inline-size;
 }
-.ha-reco-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    border-radius: var(--r-pill);
-    background: var(--ok-bg);
-    color: var(--ok);
-    font-size: var(--fs-1);
-    font-weight: 800;
-}
-.ha-reco-chip svg {
-    width: 14px;
-    height: 14px;
-}
 .ha-market-btn {
     display: inline-flex;
     align-items: center;

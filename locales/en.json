@@ -1219,7 +1219,6 @@
 
 "INDEX_PAGE_HOME_ASSISTANT": "PAGE HOME ASSISTANT",
     "HA_HERO_DESC": "Your device works perfectly on its own. With a Home Assistant server, this optional integration takes it further.",
-    "HA_RECOMMENDED": "Recommended method",
     "HA_REQ": "Home Assistant 2026.11 or later. On an older version, use",
     "HA_REQ_END": ".",
     "HA_SEC_INTEGRATION": "Integration",
