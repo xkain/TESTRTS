@@ -1165,8 +1165,6 @@
     "CONNEXION_IP_AUTO": "Automatisch",
     "CONNEXION_IP_STATIC": "Fest",
     "CONNEXION_IP_TIP": "Um immer dieselbe Adresse zu behalten, reservieren Sie sie besser in Ihrem Router.",
-    "CONNEXION_AP_TITLE": "Ersatznetz des Geräts",
-    "CONNEXION_BADGE_AP_PROTECTED": "Geschützt",
     "CONNEXION_AP_PASSWORD": "Zugangspunkt-Passwort",
     "CONNEXION_AP_PASSWORD_DESC": "Wählen Sie, ob der vom Gerät bereitgestellte Zugangspunkt ein Passwort erfordert",
 
@@ -1339,6 +1337,7 @@
     "SECURITY_SECURE_CONFIG_ONLY": "Nur sichere Konfiguration",
     "SECURITY_SECURE_CONFIG_DESC": "Ermöglicht den freien Zugriff auf das Dashboard (Steuerung von Geräten/Gruppen), erfordert jedoch eine Authentifizierung zum Ändern der Einstellungen.",
     "SECURITY_HA_NOTE": "Home Assistant verwendet dieselben Zugangsdaten, um sich mit dem Gerät zu verbinden.",
+    "SECURITY_AP_LINK": "sein Passwort wird unter Netzwerk › Zugriff eingestellt",
 
 "INDEX_PAGE_GENERAL": "PAGE GENERAL",
     "GENERAL_DESC": "Sprache und Erscheinungsbild Ihres Geräts",
@@ -1638,6 +1637,8 @@
 "INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
     "DETAILS": "Details",
     "SETTINGS_MANUAL": "Manuelle Einstellungen",
+    "AP_FALLBACK_TITLE": "Ersatznetz des Geräts",
+    "AP_PROTECTED": "Geschützt",
     "GROUP_LABEL": "Gruppe",
     "INTEGRATED": "Integriert",
     "RX_APPLY_NOW": "Änderungen gelten sofort.",

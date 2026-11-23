@@ -1165,8 +1165,6 @@
     "CONNEXION_IP_AUTO": "Automatic",
     "CONNEXION_IP_STATIC": "Fixed",
     "CONNEXION_IP_TIP": "To always keep the same address, reserve it in your router instead.",
-    "CONNEXION_AP_TITLE": "Device fallback network",
-    "CONNEXION_BADGE_AP_PROTECTED": "Protected",
     "CONNEXION_AP_PASSWORD": "Access point password",
     "CONNEXION_AP_PASSWORD_DESC": "Choose whether the access point emitted by the device requires a password",
 
@@ -1339,6 +1337,7 @@
     "SECURITY_SECURE_CONFIG_ONLY": "Secure configuration only",
     "SECURITY_SECURE_CONFIG_DESC": "Allows free access to the dashboard (device/group control), but requires authentication to modify settings.",
     "SECURITY_HA_NOTE": "Home Assistant uses these same credentials to connect to the device.",
+    "SECURITY_AP_LINK": "its password is set in Network › Access",
 
 "INDEX_PAGE_GENERAL": "PAGE GENERAL",
     "GENERAL_DESC": "Language and appearance of your device",
@@ -1638,6 +1637,8 @@
 "INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
     "DETAILS": "Details",
     "SETTINGS_MANUAL": "Manual settings",
+    "AP_FALLBACK_TITLE": "Device fallback network",
+    "AP_PROTECTED": "Protected",
     "GROUP_LABEL": "Group",
     "INTEGRATED": "Integrated",
     "RX_APPLY_NOW": "Changes apply right away.",

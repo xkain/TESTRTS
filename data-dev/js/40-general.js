@@ -1844,6 +1844,10 @@ class General {
     // un nouvel enregistrement ni à un rechargement. Les champs secrets sont réinitialisés à chaque
     // rendu, la confirmation comprise : le gestionnaire de mots de passe du navigateur peut repeupler
     // un champ juste après l'insertion (d'où aussi les attributs autocomplete).
+    openApSettings() {
+        if (typeof wifi !== 'undefined' && wifi._tabs) wifi._tabs.show(3);
+        location.hash = _routeSlug('divNetAdapter');
+    }
     renderSecurityTile() {
         const tile = get('genSecTile'), body = get('genSecBody'), scope = get('secScopeBody');
         if (!tile || !body || !scope) return;
@@ -1930,6 +1934,8 @@ class General {
         };
         body.querySelectorAll('input[name="secTypeGroup"]').forEach(r => r.addEventListener('change', applyType));
         applyType();
+        const ap =typeof wifi !== 'undefined' && wifi._settings ? tr(wifi._hasApPassword ? 'AP_PROTECTED' : 'IS_OPEN') : '';
+        get('secApState').textContent = [ap, tr('SECURITY_AP_LINK')].filter(Boolean).join(' · ');
 
         const pinInputs = body.querySelectorAll('.pin-digit');
         pinInputs.forEach((input, index) => {

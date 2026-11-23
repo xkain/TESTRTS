@@ -552,7 +552,7 @@ class Wifi {
         const dhcp = get('cbNetDhcp').checked;
         add('CONNEXION_CURRENT_IP', dhcp ? tr('CONNEXION_IP_AUTO') : `${tr('CONNEXION_IP_STATIC')} · ${get('fldIPAddress').value.trim()}`, 3);
         const protect = get('cbNetApProtect').checked;
-        add('CONNEXION_AP_TITLE', tr(protect ? 'CONNEXION_BADGE_AP_PROTECTED' : 'IS_OPEN'), 3,
+        add('AP_FALLBACK_TITLE', tr(protect ? 'AP_PROTECTED' : 'IS_OPEN'), 3,
             protect && !this._hasApPassword && secretValue(get('fldAPPassword')).length < 8);
         // SSID et adresses viennent de champs libres : textContent, jamais innerHTML.
         box.replaceChildren(...rows.map(r => {

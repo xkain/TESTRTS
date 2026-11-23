@@ -1165,8 +1165,6 @@
     "CONNEXION_IP_AUTO": "Automatique",
     "CONNEXION_IP_STATIC": "Fixe",
     "CONNEXION_IP_TIP": "Pour garder toujours la même adresse, réservez-la plutôt dans votre box.",
-    "CONNEXION_AP_TITLE": "Réseau de secours de l'appareil",
-    "CONNEXION_BADGE_AP_PROTECTED": "Protégé",
     "CONNEXION_AP_PASSWORD": "Mot de passe du point d'accès",
     "CONNEXION_AP_PASSWORD_DESC": "Choisir si le point d'accès émis par l'appareil exige un mot de passe",
 
@@ -1339,6 +1337,7 @@
     "SECURITY_SECURE_CONFIG_ONLY": "Configuration sécurisée uniquement",
     "SECURITY_SECURE_CONFIG_DESC": "Autorise l'accès libre au dashboard (contrôle des équipements/groupes), mais exige une authentification pour modifier les paramètres.",
     "SECURITY_HA_NOTE": "Home Assistant utilise ces mêmes accès pour se connecter à l'appareil.",
+    "SECURITY_AP_LINK": "son mot de passe se règle dans Réseau › Accès",
 
 "INDEX_PAGE_GENERAL": "PAGE GENERAL",
     "GENERAL_DESC": "Langue et apparence de votre appareil",
@@ -1638,6 +1637,8 @@
 "INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
     "DETAILS": "Détails",
     "SETTINGS_MANUAL": "Réglages manuels",
+    "AP_FALLBACK_TITLE": "Réseau de secours de l'appareil",
+    "AP_PROTECTED": "Protégé",
     "GROUP_LABEL": "Groupe",
     "INTEGRATED": "Intégré",
     "RX_APPLY_NOW": "Les changements s'appliquent tout de suite.",

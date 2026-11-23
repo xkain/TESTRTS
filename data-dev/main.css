@@ -2106,6 +2106,10 @@ label.gen-row {
     gap: 10px;
     align-items: flex-start;
 }
+.sec-ap-row {
+    margin-top: auto;
+    border-top: 1px solid var(--divider);
+}
 .sec-ha-note svg {
     flex: none;
     width: 22px;

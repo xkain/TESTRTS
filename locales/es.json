@@ -1165,8 +1165,6 @@
     "CONNEXION_IP_AUTO": "Automática",
     "CONNEXION_IP_STATIC": "Fija",
     "CONNEXION_IP_TIP": "Para conservar siempre la misma dirección, resérvela mejor en su router.",
-    "CONNEXION_AP_TITLE": "Red de respaldo del dispositivo",
-    "CONNEXION_BADGE_AP_PROTECTED": "Protegido",
     "CONNEXION_AP_PASSWORD": "Contraseña del punto de acceso",
     "CONNEXION_AP_PASSWORD_DESC": "Elija si el punto de acceso emitido por el dispositivo requiere una contraseña",
 
@@ -1339,6 +1337,7 @@
     "SECURITY_SECURE_CONFIG_ONLY": "Solo configuración segura",
     "SECURITY_SECURE_CONFIG_DESC": "Permite el acceso libre al panel de control (control de dispositivos/grupos), pero requiere autenticación para modificar la configuración.",
     "SECURITY_HA_NOTE": "Home Assistant usa estas mismas credenciales para conectarse al dispositivo.",
+    "SECURITY_AP_LINK": "su contraseña se ajusta en Red › Acceso",
 
 "INDEX_PAGE_GENERAL": "PAGE GENERAL",
     "GENERAL_DESC": "Idioma y apariencia de su dispositivo",
@@ -1638,6 +1637,8 @@
 "INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
     "DETAILS": "Detalles",
     "SETTINGS_MANUAL": "Ajustes manuales",
+    "AP_FALLBACK_TITLE": "Red de respaldo del dispositivo",
+    "AP_PROTECTED": "Protegido",
     "GROUP_LABEL": "Grupo",
     "INTEGRATED": "Integrado",
     "RX_APPLY_NOW": "Los cambios se aplican al instante.",
