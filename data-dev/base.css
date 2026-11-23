@@ -1658,13 +1658,9 @@ button:disabled:active {
     --danger: #ffb4ab;
     --info: #ffffff;
     color: var(--text);
-    background:
-        radial-gradient(60% 45% at 68% 0%, rgba(255, 255, 255, .16), transparent 65%),
-        radial-gradient(45% 35% at 78% 12%, rgba(190, 210, 255, .14), transparent 70%),
-        radial-gradient(130% 90% at 28% 42%, color-mix(in srgb, var(--g) 88%, #ffffff) 0%, transparent 70%),
-        radial-gradient(120% 100% at 100% 100%, rgba(4, 10, 24, .6), transparent 65%),
-        linear-gradient(155deg, color-mix(in srgb, var(--g) 52%, #000000) 0%, var(--g) 45%,
-                        color-mix(in srgb, var(--g) 70%, #000000) 75%, color-mix(in srgb, var(--g) 42%, #000000) 100%);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--g) 88%, #000000) 0%, var(--g) 40%,
+                                color-mix(in srgb, var(--g), #ffffff 18%) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), inset 0 0 0 1px rgba(255, 255, 255, .14);
 }
 .hero {
     position: sticky;
@@ -1685,14 +1681,13 @@ button:disabled:active {
     text-align: center;
 }
 :root[data-theme="dark"] :is(.hero, .hero-skin) {
-    background-image:
-        linear-gradient(rgba(0, 0, 0, .38), rgba(0, 0, 0, .38)),
-        radial-gradient(60% 45% at 68% 0%, rgba(255, 255, 255, .08), transparent 65%),
-        radial-gradient(130% 90% at 28% 42%, var(--g) 0%, transparent 70%),
-        radial-gradient(120% 100% at 100% 100%, rgba(0, 0, 0, .6), transparent 65%),
-        linear-gradient(155deg, color-mix(in srgb, var(--g) 52%, #000000) 0%, var(--g) 45%,
-                        color-mix(in srgb, var(--g) 70%, #000000) 75%, color-mix(in srgb, var(--g) 42%, #000000) 100%);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--g) 62%, #000000) 0%, color-mix(in srgb, var(--g) 80%, #000000) 40%,
+                                color-mix(in srgb, color-mix(in srgb, var(--g) 80%, #000000), #ffffff 9%) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), inset 0 0 0 1px rgba(255, 255, 255, .07);
 }
+/* Lèvre : la teinte assombrie sur le bord côté contenu (à droite en colonne, en bas en bandeau). */
+.hero { --hero-lip: 4px 0 0 color-mix(in srgb, var(--g) 70%, #000000); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), inset 0 0 0 1px rgba(255, 255, 255, .14), var(--hero-lip); }
+:root[data-theme="dark"] .hero { --hero-lip: 4px 0 0 color-mix(in srgb, var(--g) 45%, #000000); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), inset 0 0 0 1px rgba(255, 255, 255, .07), var(--hero-lip); }
 :is(.hero, .hero-skin, .hero-media, .genmod-side, .home-step-card)[data-obj="reseau"] { --hc: #0f766e; }
 :is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="piece"] { --hc: var(--cat-piece); }
 :is(.hero, .hero-skin, .hero-media, .genmod-side, .home-step-card)[data-obj="radio"] { --hc: #5b21b6; }
@@ -1701,8 +1696,7 @@ button:disabled:active {
 :is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="groupe"] { --hc: var(--cat-groupe); }
 :is(.hero, .hero-skin, .hero-media, .genmod-side, .home-step-card)[data-obj="planning"] { --hc: var(--cat-planning); }
 :root[data-cat-colors="full"] :is(.hero, .hero-skin):is([data-obj="equipement"], [data-obj="groupe"], [data-obj="piece"], [data-obj="planning"]) { --g: color-mix(in srgb, var(--hc) 78%, #0b1220); --g: oklch(from var(--hc) min(l, 0.5) c h); }
-:is(.hero, .hero-skin)[data-sys] { --g: #2f343c; background: #23272e; }
-:root[data-theme="dark"] :is(.hero, .hero-skin)[data-sys] { background: #272c34; }
+:is(.hero, .hero-skin)[data-sys] { --g: #2f343c; }
 .hero[data-tone="warn"] { --hc: #c2410c; }
 .hero[data-tone="bad"] { --hc: #b3261e; }
 .hero[data-tone="off"] { --hc: #64748b; }
@@ -1845,6 +1839,8 @@ button:disabled:active {
         overflow: visible;
         text-align: left;
     }
+    .hero { --hero-lip: 0 4px 0 color-mix(in srgb, var(--g) 70%, #000000); margin-bottom: 4px; }
+    :root[data-theme="dark"] .hero { --hero-lip: 0 4px 0 color-mix(in srgb, var(--g) 45%, #000000); }
     .hero-media { box-shadow: 0 0 0 4px var(--hero-ring); }
     .hero-head { align-items: flex-start; gap: 2px; }
     .hero-head:has(> .hero-titlerow) { justify-self: stretch; }
