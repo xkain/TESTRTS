@@ -1695,7 +1695,8 @@ button:disabled:active {
 :is(.hero, .hero-skin, .hero-media, .genmod-side, .home-step-card)[data-obj="equipement"] { --hc: var(--cat-equipement); }
 :is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="groupe"] { --hc: var(--cat-groupe); }
 :is(.hero, .hero-skin, .hero-media, .genmod-side, .home-step-card)[data-obj="planning"] { --hc: var(--cat-planning); }
-:root[data-cat-colors="full"] :is(.hero, .hero-skin):is([data-obj="equipement"], [data-obj="groupe"], [data-obj="piece"], [data-obj="planning"]) { --g: color-mix(in srgb, var(--hc) 78%, #0b1220); --g: oklch(from var(--hc) min(l, 0.5) c h); }
+:root[data-cat-colors="full"] :is(.hero, .hero-skin):is([data-obj="equipement"], [data-obj="groupe"], [data-obj="piece"], [data-obj="planning"]) { --g: color-mix(in srgb, var(--hc) 78%, #0b1220); --g: oklch(from var(--hc) min(l, 0.5) min(c, 0.15) h); }
+:root[data-cat-colors="full"] :is(.hero, .hero-skin)[data-obj="planning"] { --g: color-mix(in srgb, var(--hc) 70%, #0b1220); --g: oklch(from var(--hc) min(l, 0.46) min(c, 0.12) h); }
 :is(.hero, .hero-skin)[data-sys] { --g: #2f343c; }
 .hero[data-tone="warn"] { --hc: #c2410c; }
 .hero[data-tone="bad"] { --hc: #b3261e; }
