@@ -76,6 +76,7 @@ bool ShadeConfigFile::backupNdjson(SomfyShadeController *s) {
   fmt.addElem("defaultMobileTab", settings.defaultMobileTab);
   fmt.addElem("showRadioActivity", settings.showRadioActivity);
   fmt.addElem("themeMode", settings.themeMode);
+  fmt.addElem("catColors", settings.catColors);
   fmt.addElem("showMovementIndicator", settings.showMovementIndicator);
   fmt.addElem("ledPin", settings.ledPin);
   fmt.addElem("ledActiveLow", settings.ledActiveLow);

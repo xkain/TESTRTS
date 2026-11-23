@@ -229,6 +229,10 @@
     --tile-pad: 18px;
     --tile-minh: 176px;
     --tile-icon: 48px;
+    --cat-equipement: #1a5fb4;
+    --cat-groupe: #6d28d9;
+    --cat-piece: #0f766e;
+    --cat-planning: #c2410c;
 }
 :root[data-theme="light"] {
     /* Fond neutre (gris froid) choisi le 16/11 : le gris chaud #eceae6 rendait mal.
@@ -1689,12 +1693,14 @@ button:disabled:active {
         linear-gradient(155deg, color-mix(in srgb, var(--g) 52%, #000000) 0%, var(--g) 45%,
                         color-mix(in srgb, var(--g) 70%, #000000) 75%, color-mix(in srgb, var(--g) 42%, #000000) 100%);
 }
-:is(.hero, .hero-skin, .hero-media, .genmod-side, .home-step-card)[data-obj="reseau"], :is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="piece"] { --hc: #0f766e; }
+:is(.hero, .hero-skin, .hero-media, .genmod-side, .home-step-card)[data-obj="reseau"] { --hc: #0f766e; }
+:is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="piece"] { --hc: var(--cat-piece); }
 :is(.hero, .hero-skin, .hero-media, .genmod-side, .home-step-card)[data-obj="radio"] { --hc: #5b21b6; }
 :is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="integ"] { --hc: #0277bd; }
-:is(.hero, .hero-skin, .hero-media, .genmod-side, .home-step-card)[data-obj="equipement"] { --hc: #1a5fb4; }
-:is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="groupe"] { --hc: #6d28d9; }
-:is(.hero, .hero-skin, .hero-media, .genmod-side, .home-step-card)[data-obj="planning"] { --hc: #a21caf; }
+:is(.hero, .hero-skin, .hero-media, .genmod-side, .home-step-card)[data-obj="equipement"] { --hc: var(--cat-equipement); }
+:is(.hero, .hero-skin, .hero-media, .genmod-side)[data-obj="groupe"] { --hc: var(--cat-groupe); }
+:is(.hero, .hero-skin, .hero-media, .genmod-side, .home-step-card)[data-obj="planning"] { --hc: var(--cat-planning); }
+:root[data-cat-colors="full"] :is(.hero, .hero-skin):is([data-obj="equipement"], [data-obj="groupe"], [data-obj="piece"], [data-obj="planning"]) { --g: color-mix(in srgb, var(--hc) 78%, #0b1220); --g: oklch(from var(--hc) min(l, 0.5) c h); }
 :is(.hero, .hero-skin)[data-sys] { --g: #2f343c; background: #23272e; }
 :root[data-theme="dark"] :is(.hero, .hero-skin)[data-sys] { background: #272c34; }
 .hero[data-tone="warn"] { --hc: #c2410c; }

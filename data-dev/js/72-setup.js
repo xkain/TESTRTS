@@ -128,14 +128,6 @@ class ShadeSetup {
         if (!steps && shade.paired) return 0;
         return this.tasksFor(shade).filter(id => !(steps & SETUP_BIT[id])).length;
     }
-    badgeHtml(shade) {
-        const n = this.missingSteps(shade);
-        if (!n) return '';
-        // Forme courte « faites/total » pour la liste sur mobile (cf. main.css) : en restantes/total,
-        // un équipement où tout reste à faire afficherait 4/4 et passerait pour terminé.
-        const total = this.tasksFor(shade).length;
-        return `<button type="button" class="setup-badge" title="${escAttr(tr('SETUP_RESUME'))}" onclick="event.stopPropagation(); shadeSetup.resume(${shade.shadeId});"><span class="setup-badge-long">${n > 1 ? this.t('SETUP_BADGE_MANY', { n }) : tr('SETUP_BADGE_ONE')}</span><span class="setup-badge-short">${total - n}/${total}</span></button>`;
-    }
 
     // ---------- Deux fenêtres ----------
     // L'assistant (création, puis toute la mise en service, ou sa reprise depuis la liste) vit dans

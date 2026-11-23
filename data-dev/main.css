@@ -2074,6 +2074,28 @@ label.gen-row {
 .gen-swatch-other {
     position: relative;
 }
+.gen-cat-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-2);
+    color: var(--text-2);
+}
+.gen-cat-legend li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.gen-cat-legend li::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--cat);
+}
 .gen-btn-row {
     display: flex;
     flex-wrap: wrap;
@@ -5017,16 +5039,11 @@ body.fw-update .set-fw-new {
 #divShadeSetup .setup-okline { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-main); }
 #divShadeSetup .setup-okline svg { width: 18px; height: 18px; color: var(--color-success); flex: none; }
 #divShadeSetup .setup-okline span { flex: 1; }
-.setup-badge { width: auto; min-width: 0; height: auto; margin: 0 8px; padding: 4px 10px; flex: none; font-size: 12px; border-radius: 999px; text-transform: none; background: var(--color-warning-tint-bg); border: 1px solid var(--color-warning-tint-border); color: var(--color-text-main); }
 @media (max-width: 600px) {
     #divShadeSetup .setup-fields { grid-template-columns: minmax(0, 1fr); }
     #divShadeSetup .setup-chips { display: grid; align-self: stretch; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
     #divShadeSetup .setup-chip { display: flex; align-items: center; justify-content: center; min-height: 32px; text-align: center; }
 }
-/* Survol et clic restent dans l'orange du badge : sans quoi button:hover/:active (base.css) le
- * repeignent à la couleur d'accent. */
-.setup-badge:hover, .setup-badge:active { background: color-mix(in srgb, var(--color-warning), transparent 78%); border-color: color-mix(in srgb, var(--color-warning), transparent 55%); }
-.setup-badge-short { display: none; }
 .uniRow .field-pen { width: 18px; height: 18px; flex: none; margin-left: auto; align-self: center; cursor: text; opacity: .55; transition: opacity .15s; }
 .uniRow .field-pen path { fill: var(--color-text-secondary); }
 .uniRow:hover .field-pen { opacity: .85; }
@@ -5840,22 +5857,30 @@ input.gen-input.mqtt-mono {
 .cfg-drop-target { outline: 2px solid var(--color-accent); outline-offset: 3px; border-radius: var(--r-5); }
 .cfg-tiles-title.cfg-drop-target { border-radius: var(--r-2); }
 .cfg-tile-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-.cfg-tile-icon { display: grid; place-items: center; flex: none; width: var(--tile-icon); height: var(--tile-icon); border-radius: 50%; background: color-mix(in srgb, var(--accent) 15%, var(--surface)); color: var(--accent); }
+.cfg-tile-icon { position: relative; display: grid; place-items: center; flex: none; width: var(--tile-icon); height: var(--tile-icon); border-radius: 50%; background: color-mix(in srgb, var(--accent) 15%, var(--surface)); color: var(--accent); }
 .cfg-tile-icon svg { width: 28px; height: 28px; }
-.cfg-tile-stack { display: flex; }
+.cfg-tile-dot { position: absolute; top: 0; right: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--color-warning); box-shadow: 0 0 0 2px var(--surface); }
+.cfg-tile-stack { position: relative; display: flex; }
 .cfg-tile-stack > span { display: grid; place-items: center; width: 36px; height: 36px; margin-left: -8px; border-radius: 50%; border: 2px solid var(--surface); background: color-mix(in srgb, var(--accent) 15%, var(--surface)); color: var(--accent); }
 .cfg-tile-stack > span:first-child { margin-left: 0; }
 .cfg-tile-stack svg { width: 18px; height: 18px; }
-.cfg-tile-stack .cfg-tile-more-n { background: var(--on-fill); color: var(--on-fill-text); font-size: var(--fs-1); font-weight: 700; }
+.cfg-tile-count { position: absolute; top: -5px; right: -9px; box-sizing: border-box; min-width: 18px; height: 18px; padding: 0 4px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--text-2); font-size: 10px; font-style: normal; font-weight: 800; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px var(--surface); }
+.cfg-list[data-kind="shade"] { --cat: var(--cat-equipement); }
+.cfg-list[data-kind="group"] { --cat: var(--cat-groupe); }
+.cfg-list[data-kind="room"] { --cat: var(--cat-piece); }
+.cfg-list[data-kind="schedule"] { --cat: var(--cat-planning); }
+.cfg-list[data-kind] { --cat-c: var(--cat); }
+:root[data-theme="dark"] .cfg-list[data-kind] { --cat-c: color-mix(in srgb, var(--cat), #ffffff 45%); --cat-c: oklch(from var(--cat) max(l, 0.72) c h); }
+:root:is([data-cat-colors="icons"], [data-cat-colors="full"]) .cfg-list[data-kind] :is(.cfg-tile-icon, .cfg-tile-stack > span) { background: color-mix(in srgb, var(--cat-c) 15%, var(--surface)); color: var(--cat-c); }
+.cfg-list[data-kind]:not([data-kind="schedule"]) .cfg-tile { --tile-minh: 0; }
 .cfg-tile-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .cfg-tile-name .name-text { font-family: inherit; font-size: 1.0625em; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
 .cfg-tile-sub { overflow: hidden; font-size: var(--fs-2); color: var(--text-3); text-overflow: ellipsis; white-space: nowrap; }
-.cfg-tile-state { font-size: var(--fs-3); font-weight: 700; }
+.cfg-tile-meta { font-size: var(--fs-2); font-weight: 600; line-height: 1.35; color: var(--text-3); }
 .cfg-tile-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 24px; margin-top: auto; }
 .cfg-tile-room { display: none; max-width: 100%; padding: 4px 10px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--text-2); font-size: var(--fs-1); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cfg-sort-az .cfg-tile-room { display: inline-block; }
 .cfg-tile-id { margin-left: auto; font-family: monospace; font-size: 11px; color: var(--text-3); }
-.cfg-tile .setup-badge { margin: 0; padding: 3px 9px; font-size: 11px; }
 .cfg-tile-menu { margin: -6px -6px 0 0; }
 .cfg-tile-menu .cfg-tile-more, .cfg-tile-menu .cfg-tile-more:hover { display: grid; place-items: center; width: 36px; height: 36px; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--text-3); }
 .cfg-tile-menu .cfg-tile-more:hover { background: var(--surface-2); color: var(--text); }
@@ -5910,6 +5935,7 @@ input.gen-input.mqtt-mono {
 }
 @media (max-width: 767px) {
     .cfg-list { position: relative; }
+    .cfg-list .gen-body { padding-top: 16px; }
     .cfg-list .hero { grid-template-columns: auto minmax(0, 1fr) auto; }
     .cfg-list .hero-head { display: none; }
     .cfg-list .gen-cap { grid-column: 2; gap: 12px; }

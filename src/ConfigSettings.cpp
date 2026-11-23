@@ -253,6 +253,8 @@ bool ConfigSettings::load() {
   this->checkForUpdate = pref.getBool("checkForUpdate", true);
   pref.getString("accentColor", this->accentColor, sizeof(this->accentColor));
   this->themeMode = static_cast<uint8_t>(pref.getChar("themeMode", 0));
+  this->catColors = pref.getUChar("catColors", 1);
+  if(this->catColors > 2) this->catColors = 1;
   // Migration transparente : les versions antérieures stockaient un enum uint8_t sous la clé
   // "language" (0=en,1=fr,2=de,3=es). La nouvelle clé "langCode" (string) est prioritaire dès
   // qu'elle existe ; sinon on relit l'ancienne valeur et on la convertit. Si aucune des deux
@@ -333,6 +335,7 @@ bool ConfigSettings::save() {
   ok &= nvsPutOk(pref.putBool("checkForUpdate", this->checkForUpdate));
   ok &= nvsPutOk(pref.putString("accentColor", this->accentColor), this->accentColor);
   ok &= nvsPutOk(pref.putChar("themeMode", static_cast<uint8_t>(this->themeMode)));
+  ok &= nvsPutOk(pref.putUChar("catColors", this->catColors));
   ok &= nvsPutOk(pref.putString("langCode", this->language), this->language);
   ok &= nvsPutOk(pref.putBool("swShowGpio", this->swShowGpio));
   ok &= nvsPutOk(pref.putBool("enableDebugLogs", this->enableDebugLogs));
@@ -367,6 +370,7 @@ void ConfigSettings::toJSON(JsonFormatter &json) {
   json.addElem("checkForUpdate", this->checkForUpdate);
   json.addElem("accentColor", this->accentColor);
   json.addElem("themeMode", this->themeMode);
+  json.addElem("catColors", this->catColors);
   json.addElem("swShowGpio", this->swShowGpio);
   json.addElem("enableDebugLogs", this->enableDebugLogs);
   json.addElem("ledPin", this->ledPin);
@@ -394,6 +398,7 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     jget(obj, "checkForUpdate", this->checkForUpdate);
     if(obj.containsKey("accentColor")) this->parseValueString(obj, "accentColor",this->accentColor, sizeof(this->accentColor));
     jget(obj, "themeMode", this->themeMode);
+    if(obj.containsKey("catColors") && obj["catColors"].as<uint8_t>() <= 2) this->catColors = obj["catColors"].as<uint8_t>();
     jget(obj, "swShowGpio", this->swShowGpio);
     jget(obj, "enableDebugLogs", this->enableDebugLogs);
     // La validation de la broche (plage, collision avec la radio ou les relais) est faite en amont

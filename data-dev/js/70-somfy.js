@@ -1142,7 +1142,7 @@ class Somfy {
         // Sous-titre de l'entrée Tableau de bord (barre latérale, Menu mobile) : « n équipement(s) · o/t ouvert(s) ».
         const all = this.shades || [], positioned = all.filter(sh => !this.dryContactShadeTypes.includes(sh.shadeType));
         const open = positioned.filter(sh => sh.position !== this.closedPosition(sh.shadeType, sh.flipPosition)).length;
-        const navSub = tr('DASH_NAV_SUB').replace('{n}', all.length) + (positioned.length ? ' · ' + tr('IS_SUMMARY_OPEN').replace('{n}', open).replace('{t}', positioned.length) : '');
+        const navSub = tr('N_DEVICES').replace('{n}', all.length) + (positioned.length ? ' · ' + tr('IS_SUMMARY_OPEN').replace('{n}', open).replace('{t}', positioned.length) : '');
         document.querySelectorAll('[data-dash-sub]').forEach(el => { el.textContent = navSub; });
         const moving = (this.shades || []).filter(sh => (parseInt(sh.direction, 10) || 0) !== 0 || (parseInt(sh.tiltDirection, 10) || 0) !== 0);
         const stop = document.querySelector('.dash-house-stop');
@@ -3727,11 +3727,11 @@ class Somfy {
     shadeTileHtml(shade) {
         const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { indic: 'svg-indicRoller' };
         const typeKey = this.shadeTypeKey(shade.shadeType);
+        const steps = typeof shadeSetup !== 'undefined' ? shadeSetup.missingSteps(shade) : 0;
         return `<div class="cfg-tile" data-roomid="${shade.roomId}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-shadetype="${shade.shadeType}" onclick="somfy.openEditShade(${shade.shadeId});">
-        <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#${st.indic}"></use></svg></span>${this.cfgTileMenu(`somfy.deleteShade(${shade.shadeId})`)}</div>
-        <div class="cfg-tile-name"><span class="name-text">${escHtml(shade.name)}</span>${typeKey ? `<span class="cfg-tile-sub">${tr(typeKey)}</span>` : ''}</div>
-        <div class="cfg-tile-state">${this.shadeTileState(shade)}</div>
-        <div class="cfg-tile-foot">${this.cfgTileRoomHtml(shade.roomId)}${typeof shadeSetup !== 'undefined' ? shadeSetup.badgeHtml(shade) : ''}<span class="cfg-tile-id">${shade.remoteAddress}</span></div>
+        <div class="cfg-tile-top"><span class="cfg-tile-icon"${typeKey ? ` title="${escAttr(tr(typeKey))}"` : ''}><svg><use href="#${st.indic}"></use></svg>${steps ? `<i class="cfg-tile-dot" title="${escAttr(steps > 1 ? shadeSetup.t('SETUP_BADGE_MANY', { n: steps }) : tr('SETUP_BADGE_ONE'))}"></i>` : ''}</span>${this.cfgTileMenu(`somfy.deleteShade(${shade.shadeId})`, steps ? `<div class="dropdown-item" onclick="this.parentElement.classList.remove('show'); shadeSetup.resume(${shade.shadeId});"><svg><use href="#svg-tabSettings"></use></svg>${tr('SETUP_RESUME')}</div>` : '')}</div>
+        <div class="cfg-tile-name"><span class="name-text">${escHtml(shade.name)}</span><span class="cfg-tile-meta">${this.shadeTileState(shade)}</span></div>
+        <div class="cfg-tile-foot">${this.cfgTileRoomHtml(shade.roomId)}<span class="cfg-tile-id">${shade.remoteAddress}</span></div>
         </div>`;
     }
     groupMemberNames(group) {
@@ -3739,24 +3739,21 @@ class Somfy {
     }
     groupTileHtml(group) {
         const members = group.linkedShades || [];
-        const names = this.groupMemberNames(group);
         const icons = members.slice(0, 3).map(m => {
             const sh = (this.shades || []).find(x => x.shadeId === m.shadeId);
             const st = this.shadeTypes.find(x => x.type === (sh ? sh.shadeType : m.shadeType)) || { indic: 'svg-indicRoller' };
             return `<span><svg><use href="#${st.indic}"></use></svg></span>`;
-        }).join('') + (members.length > 3 ? `<span class="cfg-tile-more-n">+${members.length - 3}</span>` : '');
+        }).join('') + (members.length > 3 ? `<i class="cfg-tile-count">+${members.length - 3}</i>` : '');
         return `<div class="cfg-tile" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});">
         <div class="cfg-tile-top">${members.length ? `<span class="cfg-tile-stack">${icons}</span>` : `<span class="cfg-tile-icon"><svg><use href="#svg-group"></use></svg></span>`}${this.cfgTileMenu(`somfy.deleteGroup(${group.groupId})`)}</div>
-        <div class="cfg-tile-name"><span class="name-text">${escHtml(group.name)}</span><span class="cfg-tile-sub">${tr('GROUP_LINKED_COUNT').replace('{n}', members.length)}</span></div>
-        ${names.length ? `<div class="cfg-tile-state">${escHtml(names.slice(0, 3).join(', '))}${names.length > 3 ? ` +${names.length - 3}` : ''}</div>` : ''}
+        <div class="cfg-tile-name"><span class="name-text">${escHtml(group.name)}</span><span class="cfg-tile-meta">${tr('N_DEVICES').replace('{n}', members.length)}</span></div>
         <div class="cfg-tile-foot">${this.cfgTileRoomHtml(group.roomId)}<span class="cfg-tile-id">${group.remoteAddress}</span></div>
         </div>`;
     }
     roomTileHtml(room, nShades, nGroups) {
         return `<div class="cfg-tile" data-roomid="${room.roomId}" onclick="somfy.openEditRoom(${room.roomId});">
         <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="#svg-navRoom"></use></svg></span>${this.cfgTileMenu(`somfy.deleteRoom(${room.roomId})`)}</div>
-        <div class="cfg-tile-name"><span class="name-text">${escHtml(room.name)}</span></div>
-        <div class="cfg-tile-state">${nShades + nGroups ? tr('LIST_ROOM_STATS').replace('{S}', nShades).replace('{G}', nGroups) : tr('LIST_ROOM_EMPTY')}</div>
+        <div class="cfg-tile-name"><span class="name-text">${escHtml(room.name)}</span><span class="cfg-tile-meta">${tr('N_DEVICES').replace('{n}', nShades)}<br>${tr('N_GROUPS').replace('{n}', nGroups)}</span></div>
         </div>`;
     }
     toggleTileMenu(btn) {
@@ -5040,7 +5037,7 @@ class Somfy {
             btn.style.display = state.sunSensor ? '' : 'none';
             btn.dataset.on = (state.flags & 0x01) === 0x01;
         });
-        document.querySelectorAll(`#divShadeList .cfg-tile[data-shadeid="${sId}"] .cfg-tile-state`).forEach(el => { el.textContent = this.shadeTileState(cached || state); });
+        document.querySelectorAll(`#divShadeList .cfg-tile[data-shadeid="${sId}"] .cfg-tile-meta`).forEach(el => { el.textContent = this.shadeTileState(cached || state); });
         document.querySelectorAll(`.somfyShadeCtl[data-shadeid="${sId}"], .card-sheet[data-shadeid="${sId}"]`).forEach(d => {
             Object.assign(d.dataset, {
                 direction: state.direction,

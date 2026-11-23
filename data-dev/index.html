@@ -16,6 +16,7 @@
       const s=localStorage, t=s.getItem('themeMode'), l=s.getItem('selectedLang');
       let m=t==='1'?'dark':t==='2'?'light':(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
       document.documentElement.setAttribute('data-theme',m);
+      document.documentElement.setAttribute('data-cat-colors',['off','icons','full'][s.getItem('catColors')]||'icons');
       if(l)document.documentElement.lang=l;
     })();
     // Serveur de dev ou vrai firmware ? build_data_image.py remplace {{VERSION}} au build, et
@@ -404,6 +405,26 @@
                                                 <label class="gen-btn gen-swatch-other"><span tr="GENERAL_COLOR_OTHER"></span><input id="fldAccentColor" class="general-accent-color" name="accentColor" type="color" data-bind="general.accentColor"></label>
                                             </div>
                                             <p class="gen-tile-desc" tr="GENERAL_COLOR_DESC"></p>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="GENERAL_CAT_COLORS"></h3>
+                                            <div class="gen-seg dirty-target">
+                                                <label><input type="radio" name="genCatColors" value="0"><span tr="BT_NO"></span></label>
+                                                <label><input type="radio" name="genCatColors" value="1"><span tr="GENERAL_OPT_CAT_ICONS"></span></label>
+                                                <label><input type="radio" name="genCatColors" value="2"><span tr="GENERAL_OPT_CAT_FULL"></span></label>
+                                                <select id="selCatColors" hidden data-bind="general.catColors" onchange="general.applyCatColors(this.value);" data-datatype="int">
+                                                    <option value="0"></option>
+                                                    <option value="1" selected></option>
+                                                    <option value="2"></option>
+                                                </select>
+                                            </div>
+                                            <ul class="gen-cat-legend">
+                                                <li style="--cat: var(--cat-equipement);" tr="SUBTAB_DEVICES"></li>
+                                                <li style="--cat: var(--cat-groupe);" tr="SUBTAB_GROUPS"></li>
+                                                <li style="--cat: var(--cat-piece);" tr="SUBTAB_ROOMS"></li>
+                                                <li style="--cat: var(--cat-planning);" tr="SUBTAB_SCHEDULES"></li>
+                                            </ul>
+                                            <p class="gen-tile-desc" tr="GENERAL_CAT_COLORS_DESC"></p>
                                         </div>
                                         <div id="genFeedbackTile" class="gen-tile">
                                             <h3 class="gen-tile-title" tr="GENERAL_FEEDBACK"></h3>

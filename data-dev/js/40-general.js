@@ -25,6 +25,8 @@ class General {
             document.documentElement.style.setProperty('--color-accent', savedColor);
         }
         this.bindAccentColor(savedColor || this._defaultAccent);
+        this._savedCat = localStorage.getItem('catColors') || '1';
+        this.applyCatColors(this._savedCat);
         this.applyFeedbackPrefs();
         this.setAppVersion();
         this.setTimeZones();
@@ -42,11 +44,11 @@ class General {
     _bindGeneralPage() {
         const page = get('divSystemOptions');
         this._tabs = bindGenTabs({ tabs: 'genTabs', panels: 'genPanels', pager: 'genPager', prev: 'btnGenPrev', next: 'btnGenNext' });
-        page.querySelectorAll('input[name="genTheme"]').forEach(r => r.addEventListener('change', () => {
-            const sel = get('selThemeMode');
+        [['genTheme', 'selThemeMode'], ['genCatColors', 'selCatColors']].forEach(([name, id]) => page.querySelectorAll(`input[name="${name}"]`).forEach(r => r.addEventListener('change', () => {
+            const sel = get(id);
             sel.value = r.value;
             sel.dispatchEvent(new Event('change', { bubbles: true }));
-        }));
+        })));
         get('genSwatches').addEventListener('click', (e) => {
             const sw = e.target.closest('.gen-swatch');
             if (!sw) return;
@@ -119,6 +121,7 @@ class General {
             field('GEO_LON', [get('inputGeoLon')], geoSet ? geo.geoLon.toFixed(2) : '', get('inputGeoLon').value.trim(), undefined, (a, b) => num(a) === num(b)),
             field('GENERAL_DISPLAY_MODE', [get('selThemeMode'), ...radios('genTheme')], String(this._savedTheme ?? '0'), get('selThemeMode').value, radioText('genTheme')),
             field('GENERAL_COLOR', [get('fldAccentColor')], (this._savedAccent || '').toLowerCase(), get('fldAccentColor').value.toLowerCase()),
+            field('GENERAL_CAT_COLORS', [get('selCatColors'), ...radios('genCatColors')], String(this._savedCat ?? '1'), get('selCatColors').value, radioText('genCatColors')),
             field('FEEDBACK_VISUAL_COMMANDS', radios('genFbCommands'), fbStyle(fb.visualCommands, fb.styleCommands), radioVal('genFbCommands'), radioText('genFbCommands')),
             field('FEEDBACK_VISUAL_UI', radios('genFbUi'), fbStyle(fb.visualUI, fb.style), radioVal('genFbUi'), radioText('genFbUi')),
             field('FEEDBACK_VISUAL_FORMS', [get('cbFeedbackForms')], !!fb.visualForms, get('cbFeedbackForms').checked, yesNo),
@@ -211,9 +214,22 @@ class General {
         if (scope && !(sel && scope.contains(sel))) return;
         this.applyTheme(this._savedTheme);
     }
+    revertCatPreview(scope) {
+        const sel = get('selCatColors');
+        if (scope && !(sel && scope.contains(sel))) return;
+        this.applyCatColors(this._savedCat);
+    }
     revertClientPreviews(scope) {
         this.revertAccentPreview(scope);
         this.revertThemePreview(scope);
+        this.revertCatPreview(scope);
+    }
+    applyCatColors(val) {
+        val = ['0', '1', '2'].includes(String(val)) ? String(val) : '1';
+        document.documentElement.setAttribute('data-cat-colors', ['off', 'icons', 'full'][val]);
+        const sel = get('selCatColors');
+        if (sel) sel.value = val;
+        document.querySelectorAll('input[name="genCatColors"]').forEach(r => { r.checked = r.value === val; });
     }
     applyTheme(val) {
         if (val === '1') {
@@ -535,6 +551,10 @@ class General {
                 this._savedTheme = String(settings.themeMode);
                 localStorage.setItem('themeMode', this._savedTheme);
             }
+            if (typeof settings.catColors !== 'undefined') {
+                this._savedCat = String(settings.catColors);
+                localStorage.setItem('catColors', this._savedCat);
+            }
             this.revertClientPreviews();
 
             watchDirty(pnl);
@@ -590,6 +610,10 @@ class General {
                     if (typeof obj.themeMode !== 'undefined') {
                         this._savedTheme = String(obj.themeMode);
                         localStorage.setItem('themeMode', this._savedTheme);
+                    }
+                    if (typeof obj.catColors !== 'undefined') {
+                        this._savedCat = String(obj.catColors);
+                        localStorage.setItem('catColors', this._savedCat);
                     }
                     this._geoSettings = geo;
                     this._lastSettings = Object.assign(this._lastSettings || {}, obj);
