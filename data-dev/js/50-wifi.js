@@ -188,7 +188,7 @@ class Wifi {
     // =====================================================================
     _bindNetPage() {
         const page = get('divNetAdapter');
-        this._tabs = bindGenTabs({ tabs: 'netTabs', panels: 'netPanels', pager: 'netPager', prev: 'btnNetPrev', next: 'btnNetNext' });
+        this._tabs = bindGenTabs({ tabs: 'netTabs', panels: 'netPanels', pager: 'netPager', prev: 'btnNetPrev', next: 'btnNetNext', route: 'divNetAdapter' });
         get('cbNetDhcp').addEventListener('change', () => this._renderIp());
         get('cbNetApProtect').addEventListener('change', () => this._renderAp());
         get('netSummary').addEventListener('click', (e) => {

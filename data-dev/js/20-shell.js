@@ -879,25 +879,30 @@ const ROUTE_EDITORS = {
         },
     },
 };
-function _routeSlug(leafId, editorId) {
+function _routeSlug(leafId, editorId, tab) {
     const base = ROUTE_SLUGS[leafId] || 'dashboard';
-    return (editorId == null || !ROUTE_EDITORS[leafId]) ? base : `${base}/${editorId}`;
+    const slug = (editorId == null || !ROUTE_EDITORS[leafId]) ? base : `${base}/${editorId}`;
+    return tab ? `${slug}/${tab}` : slug;
 }
 function _parseRoute(hash) {
     const raw = (hash || '').replace(/^#/, '');
     const sep = raw.indexOf('/');
     const slug = sep === -1 ? raw : raw.slice(0, sep);
-    const param = sep === -1 ? '' : raw.slice(sep + 1);
+    const parts = sep === -1 ? [] : raw.slice(sep + 1).split('/');
     const grpid = ROUTE_SLUG_TO_GRPID[slug];
-    if (!grpid) return { grpid: 'divHomePnl', editor: null };
-    if (!param || !ROUTE_EDITORS[grpid]) return { grpid: grpid, editor: null };
-    if (param === 'new') return { grpid: grpid, editor: 'new' };
+    if (!grpid) return { grpid: 'divHomePnl', editor: null, tab: '' };
+    const tabOf = (s) => /^[a-z-]+$/.test(s || '') ? s : '';
+    if (!ROUTE_EDITORS[grpid]) return { grpid: grpid, editor: null, tab: tabOf(parts[0]) };
+    const param = parts[0] || '', tab = tabOf(parts[1]);
+    if (!param) return { grpid: grpid, editor: null, tab: '' };
+    if (param === 'new') return { grpid: grpid, editor: 'new', tab: tab };
     // Les plannings sont adressés par CLÉ DE GROUPE (cible + jours, cf. somfy.groupKeyOf) et non
     // par identifiant de règle : s3-127, g2-62. Les autres éditeurs restent numériques, et la clé
     // n'est acceptée que là où elle a un sens -- ailleurs elle ouvrirait un éditeur sur un
     // identifiant qui n'existe pas.
-    if (grpid === 'divSomfySchedules' && /^[sg]\d+-\d+$/.test(param)) return { grpid: grpid, editor: param };
-    return { grpid: grpid, editor: /^\d+$/.test(param) ? parseInt(param, 10) : null };
+    if (grpid === 'divSomfySchedules' && /^[sg]\d+-\d+$/.test(param)) return { grpid: grpid, editor: param, tab: '' };
+    const editor = /^\d+$/.test(param) ? parseInt(param, 10) : null;
+    return { grpid: grpid, editor: editor, tab: editor == null ? '' : tab };
 }
 // N'importe quel appelant (sidebar, onglets mobiles, boutons du dashboard, retour F5/historique)
 // passe par isApplyingHash pour éviter qu'un hashchange déclenché par nous-mêmes ne relance une
@@ -908,7 +913,22 @@ let isApplyingHash = false;
 // navigation par bouton Précédent/Suivant bloquée par des modifications non enregistrées.
 let currentSlug = 'dashboard';
 let currentLeafId = null;
+let currentEditor = null;
 let isRouting = false;
+const ROUTE_TABS = {};
+let routeEditorTab = '';
+let routePageTab = '';
+function _routeTabSlug(leafId, editor) {
+    const tabs = ROUTE_TABS[leafId];
+    return tabs && tabs.editor === (editor != null) ? tabs.slug() : '';
+}
+function routeSyncTab(leafId, isEditor) {
+    if (isRouting || leafId !== currentLeafId || (currentEditor != null) !== isEditor) return;
+    const slug = _routeSlug(leafId, currentEditor, _routeTabSlug(leafId, currentEditor));
+    if (slug === currentSlug) return;
+    currentSlug = slug;
+    history.replaceState(null, '', location.pathname + location.search + '#' + slug);
+}
 
 // Fil d'Ariane (desktop) : lit les libellés déjà traduits depuis la sidebar (section) et le
 // .subtab-container (feuille) plutôt que de dupliquer une table de traduction -- reste donc
@@ -1117,7 +1137,8 @@ function whenSomfyDataReady(cb, onGiveUp) {
 function routeSetEditor(leafId, editorId, opts) {
     const o = opts || {};
     if (isRouting || leafId !== currentLeafId || !ROUTE_EDITORS[leafId]) return;
-    const slug = _routeSlug(leafId, editorId);
+    currentEditor = editorId == null ? null : editorId;
+    const slug = _routeSlug(leafId, editorId, editorId == null ? '' : _routeTabSlug(leafId, editorId));
     const wasNew = currentSlug === _routeSlug(leafId, 'new');
     if (slug !== currentSlug) {
         currentSlug = slug;
@@ -1149,7 +1170,7 @@ function activateGrpid(grpid, opts) {
     try { return _activateGrpid(grpid, opts || {}); }
     finally { isRouting = false; }
 }
-function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
+function _activateGrpid(grpid, { updateHash = true, editor = null, tab = '' } = {}) {
     // Le Wizard reste seul maître de l'affichage tant qu'il n'est pas terminé/ignoré (mode AP) :
     // aucune navigation ne doit pouvoir le faire disparaître derrière le tableau de bord -- ni la
     // restauration de route au chargement (init(), qui appelle toujours activateGrpid une fois,
@@ -1167,10 +1188,10 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
     // doit demander un login au lieu de l'exposer silencieusement.
     if (!isDashboard && typeof security !== 'undefined' && !security.authenticated && security.type !== 0) {
         get('divContainer').addEventListener('afterlogin', () => {
-            if (security.authenticated) activateGrpid(grpid, { updateHash, editor });
+            if (security.authenticated) activateGrpid(grpid, { updateHash, editor, tab });
         }, { once: true });
         security.authUser();
-        return _routeSlug(leafId, editor);
+        return _routeSlug(leafId, editor, tab);
     }
 
     clearOverlays();
@@ -1263,6 +1284,10 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
 
         currentLeafId = leafId;
         if (ROUTE_EDITORS[leafId] && editor != null) activeEditor = editor;
+        const tabs = ROUTE_TABS[leafId];
+        if (tabs && !tabs.editor && activeEditor == null) tabs.select(tab);
+        routeEditorTab = activeEditor == null ? '' : tab;
+        routePageTab = activeEditor == null && !tabs ? tab : '';
         _updateBreadcrumb(topId, leafId, activeEditor == null ? null : ROUTE_EDITORS[leafId].label(activeEditor));
     }
 
@@ -1275,13 +1300,15 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
         if (leafId === 'divScanFrequency') somfy.scanEnter();
         else somfy.scanLeave();
     }
-    const slug = _routeSlug(leafId, activeEditor);
+    currentEditor = activeEditor;
+    const slug = _routeSlug(leafId, activeEditor, activeEditor != null ? routeEditorTab : ROUTE_TABS[leafId] ? _routeTabSlug(leafId, null) : routePageTab);
     currentSlug = slug;
     if (updateHash && location.hash.slice(1) !== slug) {
         mobileNav.willPush(location.hash.slice(1) || 'dashboard');
         isApplyingHash = true;
         location.hash = slug;
     }
+    else if (!updateHash && location.hash.slice(1) !== slug) history.replaceState(null, '', location.pathname + location.search + '#' + slug);
     if (activeEditor != null) {
         const cfg = ROUTE_EDITORS[leafId];
         whenSomfyDataReady(() => { if (currentLeafId === leafId) cfg.open(activeEditor, { silentError: true }); }, () => routeSetEditor(leafId, null, { replace: true }));
@@ -1332,10 +1359,10 @@ function bindNavigation() {
             // l'utilisateur choisit de quitter sans enregistrer, on réapplique la cible voulue.
             isApplyingHash = true;
             location.hash = currentSlug;
-            confirmDiscardChanges(() => activateGrpid(target.grpid, { editor: target.editor }));
+            confirmDiscardChanges(() => activateGrpid(target.grpid, { editor: target.editor, tab: target.tab }));
             return;
         }
-        activateGrpid(target.grpid, { updateHash: false, editor: target.editor });
+        activateGrpid(target.grpid, { updateHash: false, editor: target.editor, tab: target.tab });
     });
     // Fermeture d'onglet/fenêtre ou rechargement (F5) : déjà couvert par le listener 'beforeunload'
     // au niveau module (voir plus haut), qui couvre aussi les verrous 'hard', pas seulement isDirty.
@@ -1579,14 +1606,9 @@ function bindGenTabs(ids) {
         });
         pager.hidden = panels.getBoundingClientRect().bottom + window.scrollY <= window.innerHeight;
     };
-    // Onglet mémorisé pour la session de l'onglet du navigateur : un rechargement y revient. `key`
-    // distingue l'élément affiché (fiche d'un équipement, d'un groupe) ; vide pour les pages fixes.
-    const store = 'genTab:' + ids.tabs;
-    let key = '';
     const show = (i) => {
         if (!tabs().some(t => parseInt(t.dataset.tab, 10) === i)) return false;
         current = i;
-        try { sessionStorage.setItem(store, JSON.stringify({ key, i })); } catch (e) { /* stockage indisponible */ }
         // Tous les onglets, masqués compris : un onglet masqué resté « selected » reparaîtrait
         // sélectionné à côté du vrai (page Connexion, type choisi après coup).
         strip.querySelectorAll('.gen-tab').forEach(t => {
@@ -1599,6 +1621,7 @@ function bindGenTabs(ids) {
         panels.querySelectorAll(':scope > [data-tab]').forEach(p => { p.hidden = parseInt(p.dataset.tab, 10) !== i; });
         genTabsSync(strip);
         update();
+        if (ids.route) routeSyncTab(ids.route, !!ids.editor);
         if (ids.onShow) ids.onShow(i);
         return true;
     };
@@ -1614,14 +1637,23 @@ function bindGenTabs(ids) {
     // La hauteur de l'onglet change au chargement, à l'affichage de la page, à la rotation.
     if (window.ResizeObserver) new ResizeObserver(update).observe(panels);
     window.addEventListener('resize', update);
-    const restore = (k = '') => {
-        key = k;
-        let i = 0;
-        try { const v = JSON.parse(sessionStorage.getItem(store) || 'null'); if (v && v.key === k) i = v.i; } catch (e) { /* stockage indisponible */ }
-        if (!show(i)) show(parseInt(tabs()[0].dataset.tab, 10));
+    const select = (slug) => {
+        const t = slug && tabs().find(x => x.dataset.slug === slug);
+        show(parseInt((t || tabs()[0]).dataset.tab, 10));
     };
-    if (!ids.keyed) restore('');
-    return { show, update, restore, current: () => current };
+    const slug = () => {
+        const list = tabs(), t = list.find(x => parseInt(x.dataset.tab, 10) === current);
+        return t && t !== list[0] ? t.dataset.slug || '' : '';
+    };
+    const api = { show, update, select, slug, editor: !!ids.editor, current: () => current };
+    if (ids.route) ROUTE_TABS[ids.route] = api;
+    const pending = !ids.editor && ids.route && ids.route === currentLeafId ? routePageTab : '';
+    if (pending) routePageTab = '';
+    select(pending);
+    return api;
+}
+function genTabSlug(stripId, i) {
+    return get(stripId)?.querySelector(`.gen-tab[data-tab="${i}"]`)?.dataset.slug || '';
 }
 
 // Grille gen- dont le JS masque des tuiles : nth-of-type (main.css) les compte quand même. On pose
@@ -1910,7 +1942,7 @@ async function init() {
     // défaut le Dashboard si absent/inconnu. replaceState (réécriture manuelle ci-dessous) pour
     // ne pas ajouter une entrée d'historique superflue au tout premier chargement.
     const initialRoute = _parseRoute(location.hash);
-    const resolvedSlug = activateGrpid(initialRoute.grpid, { updateHash: false, editor: initialRoute.editor });
+    const resolvedSlug = activateGrpid(initialRoute.grpid, { updateHash: false, editor: initialRoute.editor, tab: initialRoute.tab });
     if (location.hash.slice(1) !== resolvedSlug) {
         history.replaceState(null, '', location.pathname + location.search + '#' + resolvedSlug);
     }

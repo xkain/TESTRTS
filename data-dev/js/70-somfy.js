@@ -2598,7 +2598,7 @@ class Somfy {
         const panneau = get('divTransceiverSettings');
         if (!panneau || this._radioEditWatched) return;
         this._radioEditWatched = true;
-        this._radioTabs = bindGenTabs({ tabs: 'rdcTabs', panels: 'rdcPanels', pager: 'rdcPager', prev: 'btnRdcPrev', next: 'btnRdcNext', onShow: () => this.syncFrameLogVisible() });
+        this._radioTabs = bindGenTabs({ tabs: 'rdcTabs', panels: 'rdcPanels', pager: 'rdcPager', prev: 'btnRdcPrev', next: 'btnRdcNext', route: 'divTransceiverSettings', onShow: () => this.syncFrameLogVisible() });
         this.syncFrameLogVisible();
         this._radioSaveBar = new SaveBar(panneau, { onSave: () => this.saveRadio(), onRevert: () => this.revertRadio() });
         const signaler = () => {
@@ -4648,12 +4648,9 @@ class Somfy {
         return `<div class="card-block"><div class="card-block-head"><span>${tr('GROUP_LINKED_S')}</span></div>${rows || `<div class="card-empty">${tr('GROUP_LINKED_COUNT').replace('{n}', 0)}</div>`}</div>`;
     }
     openCardEditor(kind, id, tab) {
-        if (tab !== undefined) {
-            const ids = kind === 'shade' ? ['shdTabs', 'somfyShade'] : ['grpTabs', 'somfyGroup'];
-            try { sessionStorage.setItem('genTab:' + ids[0], JSON.stringify({ key: `${ids[1]}:${id}`, i: tab })); } catch (e) { /* stockage indisponible */ }
-        }
+        const slug = tab === undefined ? '' : genTabSlug(kind === 'shade' ? 'shdTabs' : 'grpTabs', tab);
         mobileNav.willPush(location.hash.slice(1) || 'dashboard');
-        location.hash = _routeSlug(kind === 'shade' ? 'divSomfyMotors' : 'divSomfyGroups', id);
+        location.hash = _routeSlug(kind === 'shade' ? 'divSomfyMotors' : 'divSomfyGroups', id, slug);
     }
 
     // lastSentAgo est un écart figé au moment du chargement de /shades : on le convertit une fois en
@@ -4896,8 +4893,8 @@ class Somfy {
     }
     // Onglets de Radio : 3 Journal, 4 Répéteur.
     openRadioTab(i) {
-        if (this._radioTabs) this._radioTabs.show(i);
-        location.hash = _routeSlug('divTransceiverSettings');
+        if (currentLeafId === 'divTransceiverSettings' && this._radioTabs) return this._radioTabs.show(i);
+        location.hash = _routeSlug('divTransceiverSettings', null, genTabSlug('rdcTabs', i));
     }
     // La liste des télécommandes liées vit dans la zone « Mise en service » de la fiche.
     setLinkedRemotesList(shade) {
@@ -5263,7 +5260,9 @@ class Somfy {
     _keepView(pageId, spanId, id, tabs) {
         const page = get(pageId), same = id !== undefined && page && page.style.display !== 'none' && get(spanId).innerText === String(id);
         const tab = same ? tabs.current() : 0, y = window.scrollY;
-        return () => { if (same) { tabs.show(tab); window.scrollTo(0, y); } else tabs.restore(`${pageId}:${id ?? 'new'}`); };
+        const routeTab = routeEditorTab;
+        routeEditorTab = '';
+        return () => { if (same) { tabs.show(tab); window.scrollTo(0, y); } else tabs.select(routeTab); };
     }
 
     // =====================================================================
@@ -5272,7 +5271,7 @@ class Somfy {
     _bindShadePage() {
         if (this._shdTabs) return;
         const page = get('somfyShade');
-        this._shdTabs = bindGenTabs({ tabs: 'shdTabs', panels: 'shdPanels', pager: 'shdPager', prev: 'btnShdPrev', next: 'btnShdNext', keyed: true });
+        this._shdTabs = bindGenTabs({ tabs: 'shdTabs', panels: 'shdPanels', pager: 'shdPager', prev: 'btnShdPrev', next: 'btnShdNext', route: 'divSomfyMotors', editor: true });
         ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateShadeDirty(), 0)));
         this._shdSaveBar = new SaveBar(page, { onSave: () => this.saveShade(), onRevert: () => this.revertShade() });
     }
@@ -5783,7 +5782,7 @@ class Somfy {
     _bindGroupPage() {
         if (this._grpTabs) return;
         const page = get('somfyGroup');
-        this._grpTabs = bindGenTabs({ tabs: 'grpTabs', panels: 'grpPanels', pager: 'grpPager', prev: 'btnGrpPrev', next: 'btnGrpNext', keyed: true });
+        this._grpTabs = bindGenTabs({ tabs: 'grpTabs', panels: 'grpPanels', pager: 'grpPager', prev: 'btnGrpPrev', next: 'btnGrpNext', route: 'divSomfyGroups', editor: true });
         // Après _markDirty (watchDirty), comme Général : différé d'un tour.
         ['input', 'change'].forEach(evt => page.addEventListener(evt, () => setTimeout(() => this.updateGroupDirty(), 0)));
         this._grpSaveBar = new SaveBar(page, { onSave: () => this.saveGroup(), onRevert: () => this.revertGroup() });

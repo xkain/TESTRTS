@@ -43,7 +43,7 @@ class General {
     // =====================================================================
     _bindGeneralPage() {
         const page = get('divSystemOptions');
-        this._tabs = bindGenTabs({ tabs: 'genTabs', panels: 'genPanels', pager: 'genPager', prev: 'btnGenPrev', next: 'btnGenNext' });
+        this._tabs = bindGenTabs({ tabs: 'genTabs', panels: 'genPanels', pager: 'genPager', prev: 'btnGenPrev', next: 'btnGenNext', route: 'divSystemOptions' });
         [['genTheme', 'selThemeMode'], ['genCatColors', 'selCatColors']].forEach(([name, id]) => page.querySelectorAll(`input[name="${name}"]`).forEach(r => r.addEventListener('change', () => {
             const sel = get(id);
             sel.value = r.value;
@@ -1874,8 +1874,7 @@ class General {
     // rendu, la confirmation comprise : le gestionnaire de mots de passe du navigateur peut repeupler
     // un champ juste après l'insertion (d'où aussi les attributs autocomplete).
     openApSettings() {
-        if (typeof wifi !== 'undefined' && wifi._tabs) wifi._tabs.show(3);
-        location.hash = _routeSlug('divNetAdapter');
+        location.hash = _routeSlug('divNetAdapter', null, genTabSlug('netTabs', 3));
     }
     renderSecurityTile() {
         const tile = get('genSecTile'), body = get('genSecBody'), scope = get('secScopeBody');
