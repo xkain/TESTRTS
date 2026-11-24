@@ -20,6 +20,12 @@ namespace FwInfo {
   // Jeton de carte des noms d'asset (esp32, esp32wrover, esp32c6, esp32_BOX_eth...) : le relais
   // s'en sert pour choisir l'image à envoyer.
   void boardToken(char *out, size_t len);
+  // Recopie le jeton dans la NVS (CFG/fwBoard) s'il a changé : le Mode installation, qui ne peut pas
+  // le recalculer (suffixe de boîtier fixé à la compilation), y lit le nom du fichier à proposer.
+  void rememberBoard();
+  // Rend le Mode installation (partition factory) amorçable s'il est présent et intact. Faux sinon :
+  // le redémarrage tomberait sur une partition vide.
+  bool selectInstallMode();
   void toJSON(JsonFormatter &json);
   // Événement socket fwStatus, à un client (num) ou à tous (255).
   void emit(uint8_t num = 255);

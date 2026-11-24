@@ -11,6 +11,7 @@
 #include <Update.h>
 #include <esp_task_wdt.h>
 #include "Recovery.h"
+#include "FwInfo.h"
 #include "RecoveryPage.h"
 #include "web/WebCommon.h"
 #include "somfy/Somfy.h"
@@ -102,8 +103,23 @@ void Recovery::beginDetection() {
 
   Preferences p;
   p.begin("rst_logic", false);
+  // Marqueur posé pour le Mode installation (qui n'écrit jamais en NVS) : consommé dès le retour.
+  if(p.isKey("inst")) p.remove("inst");
   this->_cycle = p.getInt("c", 0) + 1;
   p.putInt("c", this->_cycle);
+  // Décidé ici, avant le montage du filesystem et le chargement des réglages : un firmware qui
+  // plante plus loin dans son démarrage reste ainsi rattrapable. Sans Mode installation intact, le
+  // compteur reste acquis et c'est le mode Récupération qui s'ouvre.
+  if(this->_cycle >= INSTALL_CYCLES && FwInfo::selectInstallMode()) {
+    p.putInt("c", 0);
+    p.putUChar("inst", 1);
+    p.end();
+    Serial.println(F("\n[BOOT] Install mode requested"));
+    this->_led(true);
+    delay(1500);
+    this->_led(false);
+    ESP.restart();
+  }
   p.end();
 
   Serial.print(F("\n[BOOT] Cycle: "));

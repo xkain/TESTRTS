@@ -62,6 +62,7 @@ void setup() {
   CfgStore::begin();
 
   settings.begin();
+  FwInfo::rememberBoard();
 
   // Consomme le reliquat de la fenêtre puis arrête la décision.
   recovery.endDetection();

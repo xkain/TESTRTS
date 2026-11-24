@@ -419,6 +419,14 @@ class Firmware {
     // après une installation (finishInstall).
     procFwStatus(info) {
         this.fwInfo = info;
+        // Retour depuis le Mode installation après un envoi réussi (cf. home('?installed') de sa page).
+        if (!this._installedSeen) {
+            this._installedSeen = true;
+            if (new URLSearchParams(location.search).has('installed')) {
+                ui.toast({ title: tr('GIT_RELEASE_SUCCESS_TITLE'), detail: tr('MSG_FW_INSTALLED').replace('%1', `v${info.appVersion?.name || ''}`) });
+                history.replaceState(null, '', location.pathname + location.hash);
+            }
+        }
         const gitInst = get('divGitInstall');
         if (gitInst && this._pendingInstall && this._pendingInstall.sent) {
             this.finishInstall(gitInst, info);
@@ -645,8 +653,10 @@ class Firmware {
         this._pendingInstall = { tag: rel.version.name, sent: false };
         try {
             const bin = await this.downloadImage(rel.asset, pct => this.setInstallBar('progInstall', pct));
-            this.setInstallPhase(div, 2, tr('GIT_RELEASE_PHASE_INSTALL'));
-            await this.sendImage(bin, rel.asset.sha256, pct => this.setInstallBar('progInstall', pct));
+            this.setInstallPhase(div, 2, tr('GIT_RELEASE_PHASE_INSTALL_MODE'));
+            await this.installThroughMode(bin, rel.asset.sha256,
+                () => this.setInstallPhase(div, 2, tr('GIT_RELEASE_PHASE_INSTALL')),
+                pct => this.setInstallBar('progInstall', pct));
             this._pendingInstall.sent = true;
             this.setInstallPhase(div, 3, tr('GIT_RELEASE_PHASE_REBOOT'));
             // La suite arrive avec le fwStatus de la reconnexion socket (finishInstall). Filet si
@@ -785,6 +795,54 @@ class Firmware {
             xhr.onerror = () => reject(new Error('upload failed'));
             xhr.send(fd);
         });
+    }
+    // Le firmware ne s'écrit pas lui-même : il redémarre sur le Mode installation, qui répond sur la
+    // même adresse et reconnaît le même jeton (même secret, même formule que /login).
+    async rebootToInstall() {
+        if (typeof socket !== 'undefined') socket.close(3000, 'install');
+        const resp = await fetch(baseUrl + '/rebootInstall', { method: 'POST', headers: { apikey: security.apiKey || '' } });
+        if (resp.ok) return;
+        let body = {};
+        try { body = await resp.json(); } catch (e) { /* corps non JSON */ }
+        throw new Error(trOr('ERR_' + body.code, body.desc || ('HTTP ' + resp.status)));
+    }
+    async waitInstallMode(timeoutMs = 90000) {
+        const end = Date.now() + timeoutMs;
+        while (Date.now() < end) {
+            await new Promise(r => setTimeout(r, 2000));
+            try {
+                const resp = await fetch(baseUrl + '/install', { cache: 'no-store' });
+                if (resp.ok && (await resp.json()).install) return;
+            }
+            catch (e) { /* encore en redémarrage */ }
+        }
+        throw new Error(tr('ERR_INSTALL_MODE_TIMEOUT'));
+    }
+    // Après un échec, le Mode installation ne renvoie sur le firmware installé que si son image est
+    // restée intacte ; sinon il reste en place et la page suivante pourra réessayer.
+    leaveInstallMode() {
+        return fetch(baseUrl + '/bootApp', { method: 'POST', headers: { apikey: security.apiKey || '' } }).catch(() => {});
+    }
+    async installThroughMode(blob, sha256, onReady, onPct) {
+        await this.rebootToInstall();
+        await this.waitInstallMode();
+        onReady();
+        try { return await this.sendImage(blob, sha256, onPct); }
+        catch (e) { await this.leaveInstallMode(); throw e; }
+    }
+    async restartInstallMode() {
+        if (!await ui.confirm({ icon: 'svg-reboot', title: tr('PROMPT_INSTALL_MODE_TITLE'), desc: `<p>${tr('PROMPT_INSTALL_MODE_MSG')}</p>`, confirm: tr('BT_REBOOT') })) return;
+        const wait = ui.waitMessage(get('divContainer'), 'WAIT_MSG_INSTALL_MODE');
+        wait.classList.add('socket-wait');
+        try {
+            await this.rebootToInstall();
+            await this.waitInstallMode();
+            window.location.href = baseUrl + '/';
+        }
+        catch (e) {
+            wait.remove();
+            ui.errorMessage(e.message);
+        }
     }
 
     // Menu du header de divGitInstall. Le mode n'est jamais mémorisé : chaque ouverture repart en
@@ -1289,6 +1347,7 @@ class Firmware {
             // que rien n'avait été restauré et qu'aucun redémarrage n'était même programmé côté
             // firmware dans ce cas (cf. handleRestore, branche else).
             if (xhr.status !== 200) {
+                if (service === '/updateFirmware') this.leaveInstallMode();
                 // Échec confirmé : l'avertissement "ne pas débrancher" n'a plus lieu d'être, et
                 // l'utilisateur doit pouvoir refermer l'overlay normalement (btnCancel masqué au
                 // lancement du transfert, cf. plus haut).
@@ -1323,6 +1382,7 @@ class Firmware {
         };
         xhr.onerror = () => {
             clearOverlayLock(el);
+            if (service === '/updateFirmware') this.leaveInstallMode();
             // Échec réseau : même rétablissement qu'en cas d'échec HTTP ci-dessus (xhr.onload),
             // voir le commentaire associé.
             if (inProgressNotice) inProgressNotice.style.display = 'none';
@@ -1335,6 +1395,23 @@ class Firmware {
         // tant que la requête est en vol -- requestCloseOverlay() se contente d'un retour visuel
         // (flashOverlayLocked) et referme normalement une fois le verrou levé (onload/onerror).
         btnCancel.onclick = () => requestCloseOverlay(el);
+        if (service === '/updateFirmware') {
+            const label = progWrap.querySelector('.progress-bar-label');
+            label.textContent = tr('WAIT_MSG_INSTALL_MODE');
+            try {
+                await this.rebootToInstall();
+                await this.waitInstallMode();
+            }
+            catch (e) {
+                clearOverlayLock(el);
+                if (inProgressNotice) inProgressNotice.style.display = 'none';
+                btnCancel.style.display = '';
+                btnCancel.innerText = tr('BT_CLOSE');
+                ui.errorMessage(e.message);
+                return;
+            }
+            label.textContent = '';
+        }
         xhr.send(formData);
     }
 }

@@ -105,10 +105,6 @@ const HARDWARE = [
     { kind: 'diy', id: 'esp32c3', label: 'ESP32-C3', cores: 1, ramKB: 400, nativeUsb: false, psram: false },
     { kind: 'diy', id: 'esp32s2', label: 'ESP32-S2', cores: 1, ramKB: 320, nativeUsb: true, psram: false },
     { kind: 'diy', id: 'esp32s3', label: 'ESP32-S3', cores: 2, ramKB: 512, nativeUsb: true, psram: false },
-    // ESP32-C6 : soutenu en 8 Mo UNIQUEMENT. Une carte C6 de 4 Mo ne démarrerait pas sur l'image
-    // proposée ici, dont l'en-tête déclare 8 Mo -- et l'écriture échouerait de toute façon avant,
-    // esptool refusant d'écrire au-delà de la flash détectée. Les cartes 4 Mo (XIAO ESP32C6,
-    // DevKitM-1, Feather, FireBeetle 2) sont donc hors support, délibérément.
     { kind: 'diy', id: 'esp32c6', label: 'ESP32-C6', cores: 1, ramKB: 512, nativeUsb: true, psram: false },
 ];
 
@@ -472,17 +468,19 @@ function versionCourante() {
     return catalogue.versions.find((v) => v.tag === choix.dataset.tag) || null;
 }
 
-function varianteFs() {
+// Jusqu'à la génération 5 de la table, le C6 avait la sienne (8 Mo) : ses versions de cette époque
+// publient encore une variante « c6 », les suivantes partagent celle des autres cartes.
+function varianteFs(langues) {
     if (!selected || selected.kind === 'box') return null;
-    return selected.id === 'esp32c6' ? 'c6' : '4mb';
+    return selected.id === 'esp32c6' && langues && langues.offsets && langues.offsets.c6 ? 'c6' : '4mb';
 }
 
 function majLangSelect() {
     const champ = $('langField');
     const sel = $('fsLang');
     const version = versionCourante();
-    const variante = varianteFs();
     const langues = version && version.langues;
+    const variante = varianteFs(langues);
     const nomNatif = (code) => (langues && langues.natives && langues.natives[code]) || code;
     const codes = langues && variante && langues.offsets && langues.offsets[variante]
         ? Object.keys(langues.packs).filter((c) => langues.packs[c][variante])
@@ -840,9 +838,9 @@ async function startFlash() {
     setFlashDialog('busy', tr('installer_flash_state_preparing'), '');
 
     const version = versionCourante();
-    const variante = varianteFs();
     const codeLang = !$('langField').hidden ? $('fsLang').value : '';
     const langues = codeLang && version ? version.langues : null;
+    const variante = varianteFs(version && version.langues);
 
     // Récupéré et déballé AVANT de toucher au port : inutile d'aller plus loin, et surtout de
     // lancer un effacement, si l'image n'est même pas récupérable.

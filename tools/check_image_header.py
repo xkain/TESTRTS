@@ -4,6 +4,7 @@
 # Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 
 import os
+import re
 import sys
 
 SIZE_CODES = {0: "1MB", 1: "2MB", 2: "4MB", 3: "8MB", 4: "16MB", 5: "32MB"}
@@ -18,12 +19,7 @@ CODE_BY_NAME = {v: k for k, v in SIZE_CODES.items()}
 # attrapait ce cas. Une table le fait aussi, a condition que l'absence d'une entree signifie 4 Mo :
 # c'est le cas ici, et c'est tout l'interet de devoir s'y inscrire.
 POLICY_DEFAULT_MAX = "4MB"
-POLICY_MAX_BY_ENV = {
-    # Le C6 est soutenu en 8 Mo EXCLUSIVEMENT (cf. l'en-tete de partitions_custom_c6_8mb.csv) :
-    # son binaire core 3.x occupait 89,7 % d'un emplacement de 4 Mo et faisait du C6 le plafond de
-    # tout le projet. Contrepartie assumee : une carte C6 de 4 Mo ne demarre pas sur cette image.
-    "esp32c6": "8MB",
-}
+POLICY_MAX_BY_ENV = {}
 
 IMAGE_MAGIC = 0xE9
 
@@ -60,6 +56,15 @@ def check_file(path, declared_code, label):
              "  espressif32 ignore : il ne lit que board.get(\"upload.flash_size\"))."
              % (label, path, SIZE_CODES.get(declared_code, declared_code),
                 SIZE_CODES.get(code, code)))
+
+
+def image_marker(project_dir):
+    try:
+        text = open(os.path.join(project_dir, "src", "ConfigSettings.h"), encoding="utf-8").read()
+    except OSError:
+        return None
+    m = re.search(r"#define\s+FW_PARTITION_LAYOUT\s+(\d+)", text)
+    return "ESPSomfyRTS-PART/%s/" % m.group(1) if m else None
 
 
 def check(env):
@@ -107,6 +112,13 @@ def check(env):
 
     if checked == 0:
         fail("  Aucune image trouvée dans %s." % build_dir)
+
+    marker = image_marker(env.subst("$PROJECT_DIR"))
+    app = targets[0][0]
+    if marker and os.path.isfile(app) and marker.encode() not in open(app, "rb").read():
+        fail("  Le marqueur %s est absent de l'application.\n"
+             "  Le Mode installation refuserait cette image : plus aucune mise à jour ne passerait.\n"
+             "  /loginContext (WebAuth.cpp) doit continuer à servir FW_IMAGE_MARKER." % marker)
 
     print("[image] en-tête conforme : %s déclaré, %d image(s) vérifiée(s)"
           % (declared, checked))

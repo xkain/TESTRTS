@@ -32,6 +32,9 @@
 #include "web/WResp.h"
 #include <Preferences.h>
 #define FW_VERSION "v3.0.0"
+// Précède FW_VERSION dans l'image : le Mode installation y lit la version du firmware installé,
+// le descripteur d'application ne portant que celle d'ESP-IDF.
+#define FW_VERSION_PREFIX "ESPSomfyRTS-VER/"
 // Tag GitHub dont viennent les assets de CE build : "dev" injecté par build.yaml pour la
 // pré-release de développement, dont FW_VERSION (v3.0.0-<sha>) n'est pas un tag existant.
 #ifndef FW_RELEASE_TAG
@@ -72,13 +75,12 @@
 // jamais réécrite par Update, la mise à jour exige alors un flash USB.
 // Le détail de CHAQUE génération vit dans KNOWN_LAYOUTS (tools/check_partition_layout.py), qui est
 // aussi le garde-fou de build : la compilation casse si un .csv bouge sans ce numéro.
-#define FW_PARTITION_LAYOUT 5
+#define FW_PARTITION_LAYOUT 6
 
-// Marqueur recherché dans toute image reçue par /updateFirmware. Il n'a besoin d'AUCUNE astuce
-// d'embarquement (attribut used, section de linker, KEEP) : c'est le code de vérification
-// lui-même qui référence ce littéral, donc tout firmware capable de vérifier une image en porte
-// forcément un exemplaire en .rodata. La présence du marqueur EST la présence du contrôle -- un
-// binaire antérieur à ce mécanisme, comme ceux de la v2.x.x, ne peut pas s'en réclamer.
+// Marqueur que le Mode installation exige de toute image reçue : un binaire bâti pour une autre
+// table (v2.x.x renommée, génération précédente) est refusé. Le firmware principal ne vérifie plus
+// d'image ; c'est /loginContext qui garde ce littéral dans l'image, et check_image_header.py
+// casse le build s'il venait à disparaître -- plus aucune mise à jour ne passerait.
 #define _FW_STR2(x) #x
 #define _FW_STR(x) _FW_STR2(x)
 #define FW_IMAGE_MARKER "ESPSomfyRTS-PART/" _FW_STR(FW_PARTITION_LAYOUT) "/"

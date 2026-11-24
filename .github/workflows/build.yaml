@@ -30,7 +30,7 @@ concurrency:
 
 jobs:
   # =======================================================================
-  # JOB 1 : Génération des images LittleFS (générique 4 Mo + C6, vides ; images par langue)
+  # JOB 1 : Génération de l'image LittleFS (vide, commune à toutes les cartes ; images par langue)
   # =======================================================================
   littlefs:
     permissions: write-all
@@ -136,49 +136,6 @@ jobs:
               "ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_4mb.bin"
           done
 
-      # Image LittleFS propre au C6 -- NON pas une question de contenu (vide comme la générique)
-      # mais de TAILLE : une image
-      # LittleFS fait exactement la taille de la partition spiffs pour laquelle elle est fabriquée, et
-      # la table 8 Mo dédiée au C6 lui donne 1 835 008 octets là où la table commune en donne 262 144.
-      # L'image générique n'y entrerait donc pas -- et l'inverse non plus : ni par OTA
-      # (Update.begin(U_SPIFFS) refuse une image plus grande que sa partition) ni à la fusion de
-      # l'image d'usine, où le défaut serait SILENCIEUX. Vérifié en exécutant la fusion avec le
-      # mauvais filesystem : `esptool merge-bin` ne connaît pas la taille de la flash visée et écrit
-      # sans broncher une image qui déborde de la carte. Rien ne proteste avant le flash. C'est la
-      # raison pour laquelle fsname est une entrée de matrice par carte et non une constante : le
-      # seul garde-fou ici est que le nom soit juste.
-
-      # Ce `pkg install` n'est PAS décoratif et ne peut pas être fusionné avec le step suivant.
-      # Ce job construit trois systèmes de fichiers sur UN SEUL runner, et le C6 est le seul à venir
-      # de la plateforme pioarduino (core Arduino 3.x) quand les deux autres viennent
-      # d'espressif32@6.8.1 (core 2.x). Les deux plateformes livrent un paquet du MÊME nom,
-      # framework-arduinoespressif32, dans deux versions : après un build de l'une, le builder de
-      # l'autre reçoit FRAMEWORK_DIR = None et s'arrête sur un TypeError dans arduino.py, sans le
-      # moindre rapport apparent avec la cause. Reproduit à l'identique en local, dans les deux
-      # sens. Réinstaller les paquets de l'environnement visé juste avant de le construire remet la
-      # bonne version en place. Cf. l'en-tête de platformio.ini, qui documente le même piège.
-      # Le job "arduino" n'est pas concerné : sa matrice donne un runner neuf par environnement.
-      - name: Restore C6 toolchain packages
-        run: pio pkg install -e esp32c6
-
-      - name: Build filesystem image (C6, spiffs 1,92 Mo)
-        run: pio run -e esp32c6 -t buildfs
-
-      - name: Rename filesystem to C6 Name
-        run: cp .pio/build/esp32c6/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
-
-      - name: Build per-language filesystem images (C6)
-        if: github.event_name == 'release'
-        run: |
-          mkdir -p fs_langs
-          for code in $(python3 -c "import json; print(' '.join(sorted(json.load(open('locales/manifest.json'))['langs'])))"); do
-            [ "$code" = "en" ] && continue
-            ESPSOMFY_EXTRA_LANG="$code" pio run -e esp32c6 -t buildfs
-            cp .pio/build/esp32c6/littlefs.bin "ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_c6.bin"
-            zip -j "fs_langs/ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_c6.zip" \
-              "ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_c6.bin"
-          done
-
       - name: Write language filesystem descriptor
         if: github.event_name == 'release'
         run: |
@@ -192,10 +149,9 @@ jobs:
           cat = json.load(open("locales/manifest.json"))["langs"]
           langs = sorted(c for c in cat if c != "en")
           desc = {
-              "offsets": {"4mb": spiffs_offset("partitions_common_4mb.csv"),
-                          "c6": spiffs_offset("partitions_custom_c6_8mb.csv")},
+              "offsets": {"4mb": spiffs_offset("partitions_common_4mb.csv")},
               "natives": {c: cat[c].get("native", c) for c in langs},
-              "langs": {c: {v: f"ESPSomfyRTS_{tag}_fs_{c}_{v}.zip" for v in ("4mb", "c6")} for c in langs},
+              "langs": {c: {"4mb": f"ESPSomfyRTS_{tag}_fs_{c}_4mb.zip"} for c in langs},
           }
           with open(f"fs_langs/ESPSomfyRTS_{tag}_fs_langs.json", "w") as f:
               json.dump(desc, f, indent=1)
@@ -210,16 +166,14 @@ jobs:
       # ATTENTION si un filesystem doit un jour être retiré de la liste ci-dessous : `path:` est une
       # chaîne multi-ligne, pas du YAML. Un "#" n'y commente rien et serait transmis tel quel comme
       # chemin à chercher par actions/upload-artifact. Retirer la ligne, ne pas la commenter.
-      # Sauvegarde temporaire des deux filesystems pour le job suivant (firmwares) -- un seul
-      # artefact, actions/download-artifact restitue les fichiers tels quels (noms distincts) dans
-      # le CWD du job "arduino", qui choisit celui qui lui revient via matrix.fsname.
+      # Sauvegarde temporaire du filesystem pour le job suivant (firmwares), qui le restitue dans
+      # son CWD et le désigne via matrix.fsname.
       - name: Upload filesystem Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Filesystem
           path: |
             ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
-            ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
           retention-days: 5
 
       # Les filesystems ne sont plus publiés à part : l'interface est compilée dans le firmware, une
@@ -283,6 +237,7 @@ jobs:
           # silencieux. Les noms d'ASSETS de release (fwname/obname/obzip/fsname) sont en revanche
           # indépendants de `env` : ils ne bougent pas.
           - env: esp32
+            install: esp32
             name: ESP32
             chip: ESP32
             addr_bootloader: "0x1000"
@@ -292,6 +247,7 @@ jobs:
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
           - env: esp32wrover
+            install: esp32
             name: ESP32-Wrover
             chip: ESP32
             addr_bootloader: "0x1000"
@@ -301,6 +257,7 @@ jobs:
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32wrover.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
           - env: esp32c3
+            install: esp32c3
             name: ESP32C3
             chip: ESP32-C3
             addr_bootloader: "0x0"
@@ -310,6 +267,7 @@ jobs:
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c3.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
           - env: esp32s2
+            install: esp32s2
             name: ESP32S2
             chip: ESP32-S2
             addr_bootloader: "0x1000"
@@ -319,6 +277,7 @@ jobs:
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s2.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
           - env: esp32s3
+            install: esp32s3
             name: ESP32S3
             chip: ESP32-S3
             addr_bootloader: "0x0"
@@ -328,30 +287,22 @@ jobs:
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s3.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
 
-          # --- ESP32-C6 --- seule carte à ne PAS utiliser partitions_common_4mb.csv, et seule à
-          # être soutenue en 8 Mo : sa table dédiée (partitions_custom_c6_8mb.csv) lui donne des
-          # emplacements OTA de 0x300000 et un filesystem de 1 835 008 octets. D'où les DEUX valeurs
-          # qui s'écartent de toutes les lignes ci-dessus, et qu'il ne faut surtout pas recopier
-          # d'une voisine :
-          #   addr_littlefs 0x610000 au lieu de 0x3B0000 (le spiffs commence bien plus loin)
-          #   fsname ..._filesystem_c6.bin au lieu du générique (1 835 008 octets contre 262 144)
-          # addr_bootloader est 0x0 comme sur toutes les puces RISC-V et les S3 -- vérifié sur la
-          # sortie de build réelle de cet environnement, pas déduit de la famille.
-          # Une carte C6 de 4 Mo ne démarre PAS sur cette image : l'en-tête déclare 8 Mo. C'est
-          # assumé, cf. l'en-tête du .csv et POLICY_MAX_BY_ENV dans tools/check_image_header.py.
+          # --- ESP32-C6 --- addr_bootloader 0x0 comme sur toutes les puces RISC-V et les S3.
           - env: esp32c6
+            install: esp32c6
             name: ESP32C6
             chip: ESP32-C6
             addr_bootloader: "0x0"
-            addr_littlefs: "0x610000"
+            addr_littlefs: "0x3B0000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_ota_esp32c6.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c6.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c6.zip
-            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_c6.bin
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
 
           # ---  LES DEUX BOX VENTE (4 Mo) --- même filesystem vide que les autres cartes 4 Mo : leur
           # "fr" d'usine est compilé dans l'application.
           - env: box_wifi
+            install: esp32
             name: BOX-Wifi
             chip: ESP32
             addr_bootloader: "0x1000"
@@ -361,6 +312,7 @@ jobs:
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_wifi.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
           - env: box_eth
+            install: esp32
             name: BOX-Ethernet
             chip: ESP32
             addr_bootloader: "0x1000"
@@ -381,7 +333,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      # Récupère les images filesystem générées au Job 1 (générique 4 Mo + C6)
+      # Récupère l'image filesystem générée au Job 1
       - name: Get filesystem
         uses: actions/download-artifact@v4
         with:
@@ -425,15 +377,22 @@ jobs:
       - name: Build firmware
         run: pio run -e ${{ matrix.env }}
 
-      # Création de l'image de fusion factory (utilise l'offset filesystem propre à chaque carte,
-      # et le filesystem propre à chaque carte via matrix.fsname -- générique partout SAUF le C6)
+      # Une image par famille de puce (matrix.install), écrite à l'adresse de la partition factory.
+      - name: Build install mode
+        run: pio run -d install -e ${{ matrix.install }}
+
+      # Image factory : adresses lues dans la table, et une otadata qui désigne app0. Sans elle, une
+      # carte fraîchement flashée démarrerait sur le Mode installation au lieu du firmware.
       - name: ${{ matrix.name }} Image
         run: |
+          read OTADATA INSTALL APP0 < <(python3 tools/factory_layout.py partitions_common_4mb.csv otadata.bin)
           python -m esptool --chip ${{ matrix.chip }} \
             merge-bin -o .pio/build/${{ matrix.env }}/${{ matrix.obname }} \
             ${{ matrix.addr_bootloader }} .pio/build/${{ matrix.env }}/bootloader.bin \
             0x8000 .pio/build/${{ matrix.env }}/partitions.bin \
-            0x10000 .pio/build/${{ matrix.env }}/firmware.bin \
+            $OTADATA otadata.bin \
+            $INSTALL install/.pio/build/${{ matrix.install }}/firmware.bin \
+            $APP0 .pio/build/${{ matrix.env }}/firmware.bin \
             ${{ matrix.addr_littlefs }} ${{ matrix.fsname }}
 
       # Compression de l'image factory avec son nom d'archive propre -- matrix.obzip (SANS ".bin",

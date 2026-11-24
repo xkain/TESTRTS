@@ -4,6 +4,7 @@
 #include <esp_chip_info.h>   // esp_chip_info() -- n'arrive plus par esp_system.h en IDF 5
 #include <esp_arduino_version.h>
 #include <esp_ota_ops.h>
+#include <esp_image_format.h>
 #include "FwInfo.h"
 #include "ConfigSettings.h"
 #include "Sockets.h"
@@ -46,6 +47,24 @@ void FwInfo::boardToken(char *out, size_t len) {
   #else
   strlcpy(out, carte, len);
   #endif
+}
+
+void FwInfo::rememberBoard() {
+  char board[40], stored[40] = "";
+  boardToken(board, sizeof(board));
+  Preferences p;
+  if(!p.begin("CFG", false)) return;
+  if(p.isKey("fwBoard")) p.getString("fwBoard", stored, sizeof(stored));
+  if(strcmp(board, stored) != 0) p.putString("fwBoard", board);
+  p.end();
+}
+
+bool FwInfo::selectInstallMode() {
+  const esp_partition_t *install = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_FACTORY, nullptr);
+  if(!install) return false;
+  const esp_partition_pos_t pos = {install->address, install->size};
+  esp_image_metadata_t meta;
+  return esp_image_verify(ESP_IMAGE_VERIFY_SILENT, &pos, &meta) == ESP_OK && esp_ota_set_boot_partition(install) == ESP_OK;
 }
 
 // Champs conservés de l'ancien fwStatus pour que l'interface et l'intégration Home Assistant

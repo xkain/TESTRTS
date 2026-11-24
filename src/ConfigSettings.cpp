@@ -65,6 +65,8 @@ void appver_t::copy(appver_t &ver) {
   this->build = ver.build;
   strcpy(this->suffix, ver.suffix);
 }
+static const char FW_VERSION_ID[] = FW_VERSION_PREFIX FW_VERSION;
+
 void appver_t::parse(const char *ver) {
   memset(this, 0x00, sizeof(appver_t));
   strlcpy(this->name, ver, sizeof(this->name));
@@ -223,7 +225,7 @@ bool ConfigSettings::begin() {
   // Log de validation du boot
   Serial.printf("Chip Model ESP32-%s | Hardware Profile: %s\n", this->chipModel, this->hardwareProfile);
 
-  this->fwVersion.parse(FW_VERSION);
+  this->fwVersion.parse(FW_VERSION_ID + sizeof(FW_VERSION_PREFIX) - 1);
   uint64_t mac = ESP.getEfuseMac();
   for(int i=0; i<17; i=i+8) {
     chipId |= ((mac >> (40 - i)) & 0xff) << i;
@@ -245,7 +247,7 @@ bool ConfigSettings::begin() {
 
 bool ConfigSettings::load() {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
-  this->fwVersion.parse(FW_VERSION);
+  this->fwVersion.parse(FW_VERSION_ID + sizeof(FW_VERSION_PREFIX) - 1);
   this->getAppVersion();
   pref.begin("CFG");
   pref.getString("hostname", this->hostname, sizeof(this->hostname));

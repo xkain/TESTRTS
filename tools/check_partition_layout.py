@@ -74,6 +74,10 @@ KNOWN_LAYOUTS = {
     #     128 Ko (shades.cfg, schedules.cfg). C6 8 Mo : spiffs 0x1E0000 -> 0x1C0000, plus cfg.
     #     Les offsets des emplacements bougent : passage par USB obligatoire depuis la génération 4.
     5: "921af3f42c39a125",
+    # 6 = un seul emplacement d'application précédé du Mode installation (factory 0x130000, app0
+    #     0x140000/0x250000) ; cfg, spiffs et coredump inchangés. partitions_custom_c6_8mb.csv est
+    #     SUPPRIMÉE : le C6 rejoint la table commune, 4 Mo compris. Passage par USB obligatoire.
+    6: "077438c0524e2666",
 }
 
 CSV_GLOB = "partitions_*.csv"

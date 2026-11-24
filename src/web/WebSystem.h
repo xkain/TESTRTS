@@ -7,7 +7,7 @@
 #include <ESPAsyncWebServer.h>
 
 // Système / Firmware / OTA / Backup / découverte réseau. registerRoutes() enregistre sur le serveur
-// principal : /upnp.xml, /controller, /cancelFirmware, /backup, /restore, /updateFirmware,
+// principal : /upnp.xml, /controller, /cancelFirmware, /backup, /restore, /rebootInstall,
 // /updateShadeConfig, /updateApplication, /reboot, /recoverFilesystem.
 // Les cinq handlers déclarés ci-dessous le sont parce que Web::begin() les mirrore sur apiServer
 // (8081) -- /controller, /backup et /reboot en plus du serveur principal, /discovery et

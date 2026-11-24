@@ -362,7 +362,7 @@ namespace WebAuth {
     // Marqueur attendu dans une image de firmware, pour que le navigateur puisse refuser un
     // fichier incompatible AVANT de le téléverser (cf. Firmware.uploadFile). Servi plutôt que
     // redit en dur côté JS : la génération de table de partition ne doit exister qu'à un seul
-    // endroit, FW_PARTITION_LAYOUT. Le contrôle qui compte reste celui de /updateFirmware --
+    // endroit, FW_PARTITION_LAYOUT. Le contrôle qui compte reste celui du Mode installation --
     // un client REST ne passe pas par l'interface.
     resp.addElem("fwImageMarker", FW_IMAGE_MARKER);
     #if LED_PROFILE_FIXED

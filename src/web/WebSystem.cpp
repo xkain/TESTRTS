@@ -3,12 +3,11 @@
 // SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #include <LittleFS.h>
-#include <Update.h>
+#include <esp_ota_ops.h>
+#include <esp_image_format.h>
 #include <memory>            // std::make_shared -- état de la réponse chunked de /controller
 #include <esp_task_wdt.h>
 #include <esp_heap_caps.h>   // heap_caps_get_largest_free_block() -- cf. handleDiscovery()
-#include "mbedtls/sha256.h"
-#include "mbedtls/version.h"   // MBEDTLS_VERSION_MAJOR -- cf. FW_SHA_*
 #include "ConfigSettings.h"
 #include "ConfigFile.h"
 #include "Utils.h"
@@ -613,6 +612,22 @@ namespace WebSystem {
     }
   }
 
+  // Le firmware ne s'écrit jamais lui-même : une image s'installe depuis le Mode installation
+  // (partition factory), qui la reçoit sur son propre /updateFirmware. Refus si ce mode est absent
+  // ou abîmé, sinon le redémarrage tomberait sur une partition vide.
+  void handleRebootInstall(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    if(request->method() != AsyncHttp::POST && request->method() != AsyncHttp::PUT) { webServer.rejectMethod(request); return; }
+    if(!FwInfo::selectInstallMode()) {
+      webServer.sendError(request, 409, "Install mode is missing on this device.", "INSTALL_MODE_MISSING");
+      return;
+    }
+    rebootDelay.rebootTime = millis() + 500;
+    rebootDelay.reboot = true;
+    request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Rebooting into install mode\"}");
+  }
+
   // Le mot de confirmation est exigé : un appel sans corps (script, intégration) n'efface rien.
   void handleFactoryReset(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -644,97 +659,6 @@ namespace WebSystem {
   // sans que rien ne le remarque, `success` passant quand même à true au dernier paquet.
   struct UploadState { bool success = false; bool rejected = false; bool writeFailed = false; };
 
-  // Détection du marqueur d'image (cf. FW_IMAGE_MARKER dans ConfigSettings.h) pendant la
-  // réception d'un /updateFirmware. Le marqueur peut tomber à cheval sur deux paquets : on
-  // conserve donc les (len-1) derniers octets de chaque morceau et on cherche dans
-  // "queue + morceau". État par requête via request->_tempObject, comme les autres uploads de ce
-  // module -- pas de variable globale partagée entre requêtes.
-  #define FW_MARKER_LEN (sizeof(FW_IMAGE_MARKER) - 1)
-  // En-tête facultatif portant l'empreinte attendue de l'image, en hexadécimal. Le relais (page
-  // Firmware, intégration Home Assistant) la lit dans le catalogue publié et l'envoie avec l'image :
-  // l'appareil la recalcule pendant l'écriture et refuse de rendre la partition amorçable si elles
-  // diffèrent. Sans en-tête (envoi manuel d'un .bin), seul le marqueur est contrôlé, comme avant.
-  #define FW_DIGEST_HEADER "X-Firmware-SHA256"
-  struct FwImageScan {
-    bool found = false;
-    // Même rôle que dans UploadState : posé si la requête n'était pas authentifiée (ou si le
-    // filesystem était occupé) au démarrage de l'upload, auquel cas AUCUN octet n'atteint Update.
-    // Cf. handleUpdateFirmwareBody().
-    bool rejected = false;
-    bool hasDigest = false;
-    bool digestMismatch = false;
-    bool badHeader = false;   // magie, puce ou taille de flash de l'en-tête d'image refusés
-    uint8_t expected[32];
-    mbedtls_sha256_context sha;
-    uint8_t tailLen = 0;
-    uint8_t tail[FW_MARKER_LEN > 0 ? FW_MARKER_LEN - 1 : 1];
-  };
-  // mbedTLS 3 (core 3.x, C6) a retiré le suffixe _ret de ces trois fonctions.
-  #if MBEDTLS_VERSION_MAJOR >= 3
-    #define FW_SHA_STARTS mbedtls_sha256_starts
-    #define FW_SHA_UPDATE mbedtls_sha256_update
-    #define FW_SHA_FINISH mbedtls_sha256_finish
-  #else
-    #define FW_SHA_STARTS mbedtls_sha256_starts_ret
-    #define FW_SHA_UPDATE mbedtls_sha256_update_ret
-    #define FW_SHA_FINISH mbedtls_sha256_finish_ret
-  #endif
-  static bool parseHexDigest(const String &hex, uint8_t out[32]) {
-    if(hex.length() != 64) return false;
-    for(uint8_t i = 0; i < 32; i++) {
-      uint8_t o = 0;
-      for(uint8_t k = 0; k < 2; k++) {
-        char c = hex[i * 2 + k];
-        uint8_t v;
-        if(c >= '0' && c <= '9') v = c - '0';
-        else if(c >= 'a' && c <= 'f') v = c - 'a' + 10;
-        else if(c >= 'A' && c <= 'F') v = c - 'A' + 10;
-        else return false;
-        o = (uint8_t)((o << 4) | v);
-      }
-      out[i] = o;
-    }
-    return true;
-  }
-  static void fwScanChunk(FwImageScan *st, const uint8_t *data, size_t len) {
-    if(!st || st->found) return;
-    const size_t keep = FW_MARKER_LEN - 1;
-    // AUCUNE allocation ici : cette fonction s'exécute sur la tâche async_tcp pour chaque paquet
-    // d'un upload, précisément quand le tas est le plus sollicité. Un malloc par paquet y serait un
-    // risque gratuit. On procède donc en deux temps, avec un unique tampon de pile de 2*(len-1)
-    // octets.
-    //
-    // 1) La jointure : le marqueur peut chevaucher la frontière entre le paquet précédent et
-    //    celui-ci. On ne recompose que cette zone -- la queue conservée, suivie du début du
-    //    paquet courant -- et on l'examine.
-    if(st->tailLen > 0) {
-      uint8_t edge[2 * (FW_MARKER_LEN - 1)];
-      size_t head = len < keep ? len : keep;
-      memcpy(edge, st->tail, st->tailLen);
-      memcpy(edge + st->tailLen, data, head);
-      size_t edgeLen = st->tailLen + head;
-      for(size_t i = 0; !st->found && i + FW_MARKER_LEN <= edgeLen; i++) {
-        if(memcmp(edge + i, FW_IMAGE_MARKER, FW_MARKER_LEN) == 0) st->found = true;
-      }
-    }
-    // 2) Le paquet lui-même, lu sur place.
-    for(size_t i = 0; !st->found && i + FW_MARKER_LEN <= len; i++) {
-      if(memcmp(data + i, FW_IMAGE_MARKER, FW_MARKER_LEN) == 0) st->found = true;
-    }
-    if(st->found) { st->tailLen = 0; return; }
-    // Nouvelle queue : les (len-1) derniers octets vus, en tenant compte d'un paquet plus court
-    // que le marqueur (la queue doit alors glisser plutôt que d'être remplacée).
-    if(len >= keep) {
-      memcpy(st->tail, data + len - keep, keep);
-      st->tailLen = (uint8_t)keep;
-    }
-    else {
-      size_t drop = (st->tailLen + len > keep) ? (st->tailLen + len - keep) : 0;
-      memmove(st->tail, st->tail + drop, st->tailLen - drop);
-      memcpy(st->tail + (st->tailLen - drop), data, len);
-      st->tailLen = (uint8_t)(st->tailLen - drop + len);
-    }
-  }
 
   static void handleRestore(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -823,158 +747,6 @@ namespace WebSystem {
       // Relevé de pile async_tcp : chemin d'upload (parseur multipart + écriture LittleFS par
       // chunks, entièrement sur async_tcp). Cf. CONFIG_ASYNC_TCP_STACK_SIZE dans platformio.ini.
       ConfigSettings::reportAsyncTcpStackLow("upload /restore");
-    }
-  }
-
-  static void handleUpdateFirmware(AsyncWebServerRequest *request) {
-    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
-    if(!webServer.isAuthenticated(request, true)) return;
-    FwImageScan *scan = (FwImageScan *)request->_tempObject;
-    // Aucun état, ou upload refusé en amont (filesystem occupé -- le cas non authentifié n'arrive
-    // jamais jusqu'ici, isAuthenticated() vient de répondre 401) : RIEN n'a été écrit, ni la radio
-    // ni MQTT coupés. Il n'y a donc rien à remettre d'aplomb, et surtout aucune raison de
-    // redémarrer -- d'où le return, contrairement aux deux autres branches d'échec ci-dessous.
-    if(scan && scan->rejected && scan->digestMismatch) {
-      webServer.sendError(request, 400, "Malformed " FW_DIGEST_HEADER " header.", "FW_DIGEST_MISMATCH");
-      return;
-    }
-    if(scan && scan->badHeader) {
-      webServer.sendError(request, 400, "This image is not a firmware for this chip or its flash size.", "FW_IMAGE_INCOMPATIBLE");
-      return;
-    }
-    if(!scan || scan->rejected) {
-      webServer.sendError(request, 503, "Firmware update could not be started, please retry.");
-      return;
-    }
-    if(!scan->found)
-      webServer.sendError(request, 400, "This firmware image was not built for this partition layout.", "FW_IMAGE_INCOMPATIBLE");
-    else if(scan->digestMismatch)
-      webServer.sendError(request, 400, "The received image does not match its published checksum.", "FW_DIGEST_MISMATCH");
-    else if (Update.hasError())
-      webServer.sendError(request, 500, "Error updating firmware: ");
-    else
-      request->send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Successfully updated firmware\"}");
-    // Redémarrage même sur refus : handleUpdateFirmwareBody a coupé la radio et MQTT dès le
-    // premier paquet, avant qu'on puisse savoir si l'image était valide. Les rallumer à chaud au
-    // milieu d'un flux interrompu est plus fragile que de repartir proprement -- et l'appareil
-    // revient sur son firmware actuel, la partition OTA n'ayant pas été validée.
-    rebootDelay.rebootTime = millis() + 500;
-    rebootDelay.reboot = true;
-  }
-
-  static void handleUpdateFirmwareBody(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
-    if (index == 0) {
-      DBG_PRINTF("Update: %s\n", filename.c_str());
-      FwImageScan *scan = (FwImageScan *)malloc(sizeof(FwImageScan));
-      // Sans allocation il n'y a pas d'état pour porter le refus : on n'écrit rien plutôt que de
-      // continuer à l'aveugle. handleUpdateFirmware() verra scan == nullptr et refusera l'image.
-      if(!scan) return;
-      *scan = FwImageScan();
-      request->_tempObject = scan;
-      // Refus AVANT tout effet de bord. Ce callback s'exécute pendant l'analyse de la requête, donc
-      // AVANT le handler et son isAuthenticated() -- c'est exactement la fenêtre déjà documentée et
-      // fermée dans handleRestoreBody()/handleUploadLangBody(), qui n'avait jamais été reportée ici
-      // alors que c'est la route la plus dangereuse du lot : sans ce test, un POST non authentifié
-      // coupait la radio et MQTT, déversait toute son image dans la partition OTA, et le
-      // Update.end(true) du chunk final la rendait AMORÇABLE -- le firmware d'un tiers démarrait au
-      // redémarrage suivant. checkAuth() plutôt qu'isAuthenticated() : on ne peut pas répondre ici,
-      // au milieu de la réception ; `rejected` fait retomber le handler sur son refus normal.
-      scan->rejected = fsLocked || !webServer.checkAuth(request, true);
-      if(scan->rejected) {
-        Serial.println("Firmware upload rejected: unauthorized or filesystem busy");
-        return;
-      }
-      // Empreinte facultative (cf. FW_DIGEST_HEADER). Mal formée, elle vaut refus : un relais qui
-      // en envoie une entend qu'elle soit vérifiée, l'ignorer en silence trahirait cette intention.
-      if(request->hasHeader(FW_DIGEST_HEADER)) {
-        if(!parseHexDigest(request->header(FW_DIGEST_HEADER), scan->expected)) {
-          Serial.println("Firmware upload rejected: malformed " FW_DIGEST_HEADER);
-          scan->digestMismatch = true;
-          scan->found = true;   // le marqueur n'est pas en cause : c'est le refus d'empreinte qui répond
-          scan->rejected = true;
-          return;
-        }
-        scan->hasDigest = true;
-        mbedtls_sha256_init(&scan->sha);
-        FW_SHA_STARTS(&scan->sha, 0);
-      }
-      // En-tête d'image (esp_image_header_t) : magie 0xE9, puce (CONFIG_IDF_FIRMWARE_CHIP_ID) et
-      // taille de flash déclarée (octet 3, quartet haut : 0 = 1 Mo, 1 = 2, 2 = 4, 3 = 8...). Une image
-      // d'une autre puce ou déclarant plus de flash que le chargeur n'en voit = bootloop puis retour
-      // arrière, sans que rien ne le dise au client.
-      if(len >= 16) {
-        uint16_t chipId = data[12] | ((uint16_t)data[13] << 8);
-        uint32_t declared = 1UL << (20 + (data[3] >> 4));
-        if(data[0] != 0xE9 || chipId != CONFIG_IDF_FIRMWARE_CHIP_ID || declared > ESP.getFlashChipSize()) {
-          Serial.printf("Firmware upload rejected: image header (magic %02X, chip %u, flash %u MB)\n", data[0], chipId, (unsigned)(declared >> 20));
-          scan->badHeader = true;
-          scan->rejected = true;
-          return;
-        }
-      }
-      // Un second téléversement pendant le premier partagerait le singleton Update : refusé AVANT
-      // d'armer onDisconnect, sinon la déconnexion du second abortait le premier.
-      if (Update.isRunning() || !Update.begin(UPDATE_SIZE_UNKNOWN)) {
-        Update.printError(Serial);
-        scan->rejected = true;
-        return;
-      }
-      somfy.transceiver.end(); // Shut down the radio so we do not get any interrupts during this process.
-      mqtt.end();
-      // Équivalent de UPLOAD_FILE_ABORTED (WebServer&) : ESPAsyncWebServer ne signale pas
-      // l'abandon via le callback d'upload lui-même, mais via un callback de déconnexion séparé.
-      request->onDisconnect([]() {
-        if (Update.isRunning()) {
-          Serial.println("Upload aborted (client disconnected)");
-          Update.abort();
-        }
-      });
-    }
-    /* flashing firmware to ESP*/
-    FwImageScan *scan = (FwImageScan *)request->_tempObject;
-    if(!scan || scan->rejected) return;
-    fwScanChunk(scan, data, len);
-    if(scan->hasDigest) FW_SHA_UPDATE(&scan->sha, data, len);
-    if (Update.write(data, len) != len) {
-      Update.printError(Serial);
-      Serial.printf("Upload of %s aborted invalid size %d\n", filename.c_str(), len);
-      Update.abort();
-    }
-    if (final) {
-      // Image étrangère : rien n'est validé. Update.end() n'étant jamais appelé, la partition OTA
-      // ne devient pas amorçable et l'appareil restera sur son firmware actuel. Le contrôle par
-      // nom de fichier côté navigateur ne suffisait pas -- renommer un binaire v2.x.x au format
-      // v3 le faisait passer, avec pour résultat une table de partition incompatible et une
-      // récupération par USB obligatoire.
-      if(!scan->found) {
-        Serial.println("Update rejected: firmware image marker not found (incompatible partition layout)");
-        Update.abort();
-        if(scan->hasDigest) mbedtls_sha256_free(&scan->sha);
-        return;
-      }
-      // Vérification AVANT Update.end(true), qui appelle esp_ota_set_boot_partition() : après lui,
-      // il serait trop tard pour refuser l'image.
-      if(scan->hasDigest) {
-        uint8_t got[32];
-        FW_SHA_FINISH(&scan->sha, got);
-        mbedtls_sha256_free(&scan->sha);
-        if(memcmp(got, scan->expected, sizeof(got)) != 0) {
-          Serial.println("Update rejected: SHA-256 mismatch");
-          scan->digestMismatch = true;
-          Update.abort();
-          return;
-        }
-      }
-      if (Update.end(true)) { //true to set the size to the current progress
-        DBG_PRINTF("Update Success: %u\nRebooting...\n", index + len);
-      }
-      else {
-        Update.printError(Serial);
-      }
-      wdtReset();
-      // Relevé de pile async_tcp : upload firmware (multipart + écriture partition OTA), l'autre
-      // chemin d'upload à mesurer. Cf. CONFIG_ASYNC_TCP_STACK_SIZE dans platformio.ini.
-      ConfigSettings::reportAsyncTcpStackLow("upload /updateFirmware");
     }
   }
 
@@ -1072,8 +844,7 @@ namespace WebSystem {
     // correspond pas exactement au std::function attendu par on() sans cette conversion explicite.
     server.on("/restore", AsyncHttp::POST, handleRestore,
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleRestoreBody(request, filename, index, data, len, final); });
-    server.on("/updateFirmware", AsyncHttp::POST, handleUpdateFirmware,
-      [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateFirmwareBody(request, filename, index, data, len, final); });
+    server.on("/rebootInstall", AsyncHttp::ANY, handleRebootInstall);
     server.on("/updateShadeConfig", AsyncHttp::POST, handleUpdateShadeConfig,
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateShadeConfigBody(request, filename, index, data, len, final); });
     server.on("/reboot", AsyncHttp::ANY, handleReboot);

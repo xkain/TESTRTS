@@ -9,10 +9,10 @@
 #include <DNSServer.h>
 
 // Nombre de coupures d'alimentation successives (pendant la fenêtre BOOT_TIMEOUT) donnant accès au
-// mode Récupération. L'ancien palier à 6 cycles, qui déclenchait un effacement d'usine à l'aveugle,
-// n'existe plus : la réinitialisation d'usine est devenue une case à cocher de l'interface, donc
-// délibérée et annulable tant qu'elle n'est pas appliquée.
+// mode Récupération, puis au Mode installation. Les coupures 4 et 5 tombent pendant le clignotement
+// du mode Récupération, qui ne remet pas le compteur à zéro tant que la fenêtre n'est pas close.
 #define RECOVERY_CYCLES 3
+#define INSTALL_CYCLES 6
 #define BOOT_TIMEOUT 5000
 
 // SSID volontairement distinct de celui de l'AP d'onboarding (qui diffuse settings.hostname) : en
