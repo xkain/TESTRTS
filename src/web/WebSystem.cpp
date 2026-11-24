@@ -5,6 +5,9 @@
 #include <LittleFS.h>
 #include <esp_ota_ops.h>
 #include <esp_image_format.h>
+#if __has_include(<spi_flash_mmap.h>)
+#include <spi_flash_mmap.h>   // SPI_FLASH_SEC_SIZE sous IDF 5 (C6) ; IDF 4 le donne déjà
+#endif
 #include "mbedtls/sha256.h"
 #include "mbedtls/version.h"
 #include <memory>            // std::make_shared -- état de la réponse chunked de /controller
