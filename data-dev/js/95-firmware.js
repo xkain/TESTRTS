@@ -650,7 +650,7 @@ class Firmware {
             msgKey: 'PROMPT_UPDATE_IN_PROGRESS_MSG',
         });
         this.renderGitInstallProgress(div, rel.name);
-        this._pendingInstall = { tag: rel.version.name, sent: false };
+        this._pendingInstall = { tag: rel.version.name, sent: false, install: rel.asset.install };
         try {
             const bin = await this.downloadImage(rel.asset, pct => this.setInstallBar('progInstall', pct));
             this.setInstallPhase(div, 2, tr('GIT_RELEASE_PHASE_INSTALL_MODE'));
@@ -694,13 +694,23 @@ class Firmware {
             try { await relayLangViaBrowser(codes[i]); }
             catch (e) { langFailed = true; logger.error('Language pack refresh failed for ' + codes[i] + ':', e); }
         }
+        // Le Mode installation n'est pas dans l'image du firmware : il suit à part quand le catalogue
+        // en annonce un autre que celui en place. Un échec le laisse tel quel, il fonctionne encore.
+        let installFailed = false;
+        const inst = pending.install;
+        if (inst && info.install?.id !== inst.id) {
+            this.setInstallStatus(tr('GIT_RELEASE_PHASE_INSTALL_UPDATE'));
+            try { await this.updateInstallMode(inst); }
+            catch (e) { installFailed = true; logger.error('Install mode update failed:', e); }
+        }
         // Au-delà de la dernière étape : les trois puces passent à « terminé ».
         this.setInstallPhase(div, 4, '');
         clearOverlayLock(div);
         closeOverlay(div);
-        const subMsg = langFailed
+        let subMsg = langFailed
             ? `${tr('GIT_RELEASE_SUCCESS_1')}<br>${tr('GIT_LANG_RESTORE_FAILED').replace('%1', codes.join(', '))}`
             : `${tr('GIT_RELEASE_SUCCESS_1')}<br>${tr('GIT_RELEASE_SUCCESS_2')}`;
+        if (installFailed) subMsg += `<br>${tr('GIT_INSTALL_MODE_UPDATE_FAILED')}`;
         ui.toast({ title: tr('GIT_RELEASE_SUCCESS_TITLE'), detail: subMsg });
         general.reloadApp = true;
         setTimeout(() => general.reload(), 3000);
@@ -777,12 +787,12 @@ class Firmware {
     }
     // Envoi à /updateFirmware. XMLHttpRequest plutôt que fetch : seul lui expose la progression de
     // l'envoi. L'empreinte part en en-tête (FW_DIGEST_HEADER côté firmware).
-    sendImage(blob, sha256, onPct) {
+    sendImage(blob, sha256, onPct, route = '/updateFirmware') {
+        const fd = new FormData();
+        fd.append('update', blob, 'firmware.bin');
         return new Promise((resolve, reject) => {
-            const fd = new FormData();
-            fd.append('update', blob, 'firmware.bin');
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', baseUrl + '/updateFirmware');
+            xhr.open('POST', baseUrl + route);
             xhr.setRequestHeader('apikey', security.apiKey || '');
             if (sha256) xhr.setRequestHeader('X-Firmware-SHA256', sha256);
             xhr.upload.onprogress = e => { if (e.lengthComputable) onPct(Math.round((e.loaded / e.total) * 100)); };
@@ -795,6 +805,27 @@ class Firmware {
             xhr.onerror = () => reject(new Error('upload failed'));
             xhr.send(fd);
         });
+    }
+    // Le firmware redémarre après /updateInstall dès qu'il a commencé à écrire (radio et MQTT
+    // coupés), refus compris : on attend son retour, sinon le rechargement de la page qui suit
+    // tomberait pendant le redémarrage.
+    async updateInstallMode(inst) {
+        const bin = await this.downloadImage(inst, () => {});
+        if (typeof socket !== 'undefined') socket.close(3000, 'install');
+        let err = null;
+        try { await this.sendImage(bin, inst.sha256, () => {}, '/updateInstall'); }
+        catch (e) { err = e; }
+        const start = Date.now();
+        let down = false;
+        while (Date.now() - start < 90000) {
+            await new Promise(r => setTimeout(r, 1500));
+            let up = false;
+            try { up = (await fetch(baseUrl + '/loginContext', { cache: 'no-store', signal: AbortSignal.timeout(1500) })).ok; }
+            catch (e) { /* en redémarrage */ }
+            if (!up) down = true;
+            else if (down || Date.now() - start > 6000) break;
+        }
+        if (err) throw err;
     }
     // Le firmware ne s'écrit pas lui-même : il redémarre sur le Mode installation, qui répond sur la
     // même adresse et reconnaît le même jeton (même secret, même formule que /login).

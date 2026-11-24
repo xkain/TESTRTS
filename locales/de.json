@@ -1534,7 +1534,9 @@
     "GIT_RELEASE_PHASE_INSTALL": "Wird auf das Gerät geschrieben",
     "GIT_RELEASE_PHASE_REBOOT": "Gerät wird neu gestartet…",
     "GIT_LANG_RESTORE_IN_PROGRESS": "Sprachpaket %1 wird aktualisiert…",
+    "GIT_RELEASE_PHASE_INSTALL_UPDATE": "Installationsmodus wird aktualisiert…",
     "GIT_LANG_RESTORE_FAILED": "Sprachpaket %1 nicht verfügbar, Standardsprache wird verwendet",
+    "GIT_INSTALL_MODE_UPDATE_FAILED": "Installationsmodus nicht aktualisiert: der bisherige bleibt erhalten und funktioniert weiter",
 
 "INDEX_OVERLAY_FIRMWARE_OTA": "OVERLAY FIRMWARE OTA",
     "FIRMWARE_OTA_TITLE": "Software-Update",

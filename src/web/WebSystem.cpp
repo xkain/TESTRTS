@@ -5,6 +5,8 @@
 #include <LittleFS.h>
 #include <esp_ota_ops.h>
 #include <esp_image_format.h>
+#include "mbedtls/sha256.h"
+#include "mbedtls/version.h"
 #include <memory>            // std::make_shared -- état de la réponse chunked de /controller
 #include <esp_task_wdt.h>
 #include <esp_heap_caps.h>   // heap_caps_get_largest_free_block() -- cf. handleDiscovery()
@@ -628,6 +630,146 @@ namespace WebSystem {
     request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Rebooting into install mode\"}");
   }
 
+  // Remplacement du Mode installation par le firmware principal, qui tourne pendant l'écriture : une
+  // coupure n'abîme que la partition install, et l'envoi se recommence. L'image doit porter un
+  // identifiant de Mode installation ET le marqueur de cette table, sans quoi un firmware principal
+  // ou un Mode installation d'une autre génération prendrait la place.
+  #if MBEDTLS_VERSION_MAJOR >= 3
+    #define IN_SHA_STARTS mbedtls_sha256_starts
+    #define IN_SHA_UPDATE mbedtls_sha256_update
+    #define IN_SHA_FINISH mbedtls_sha256_finish
+  #else
+    #define IN_SHA_STARTS mbedtls_sha256_starts_ret
+    #define IN_SHA_UPDATE mbedtls_sha256_update_ret
+    #define IN_SHA_FINISH mbedtls_sha256_finish_ret
+  #endif
+  // `hex` caractères hexadécimaux exigés après le motif : le firmware principal contient le préfixe
+  // FW_INSTALL_TAG nu (il s'en sert pour chercher), seul un Mode installation le fait suivre de son
+  // identifiant.
+  struct InScan {
+    const char *pat; size_t len; size_t hex; size_t matched = 0, tail = 0; bool found = false;
+    InScan(const char *p, size_t l, size_t h = 0) : pat(p), len(l), hex(h) {}
+    void feed(const uint8_t *d, size_t n) {
+      for(size_t i = 0; i < n && !found; i++) {
+        if(matched == len) {
+          bool isHex = (d[i] >= '0' && d[i] <= '9') || (d[i] >= 'a' && d[i] <= 'f');
+          if(isHex && ++tail == hex) found = true;
+          else if(!isHex) { matched = d[i] == (uint8_t)pat[0] ? 1 : 0; tail = 0; }
+        }
+        else if(d[i] == (uint8_t)pat[matched]) { if(++matched == len && hex == 0) found = true; }
+        else matched = d[i] == (uint8_t)pat[0] ? 1 : 0;
+      }
+    }
+  };
+  struct InstallUpload {
+    const esp_partition_t *part = nullptr;
+    const char *error = nullptr;
+    uint32_t written = 0, erased = 0;
+    bool hasDigest = false;
+    uint8_t expected[32];
+    mbedtls_sha256_context sha;
+    InScan tag{FW_INSTALL_TAG, sizeof(FW_INSTALL_TAG) - 1, 12};
+    InScan marker{FW_IMAGE_MARKER, sizeof(FW_IMAGE_MARKER) - 1};
+  };
+  static bool parseSha(const String &hex, uint8_t out[32]) {
+    if(hex.length() != 64) return false;
+    for(uint8_t i = 0; i < 64; i++) {
+      char c = hex[i];
+      uint8_t v = c >= '0' && c <= '9' ? c - '0' : c >= 'a' && c <= 'f' ? c - 'a' + 10 : c >= 'A' && c <= 'F' ? c - 'A' + 10 : 16;
+      if(v > 15) return false;
+      out[i / 2] = (i & 1) ? (out[i / 2] | v) : (uint8_t)(v << 4);
+    }
+    return true;
+  }
+  static void handleUpdateInstallBody(AsyncWebServerRequest *request, const String &, size_t index, uint8_t *data, size_t len, bool final) {
+    InstallUpload *st = (InstallUpload *)request->_tempObject;
+    if(index == 0) {
+      void *mem = malloc(sizeof(InstallUpload));
+      if(!mem) return;
+      st = new (mem) InstallUpload();
+      request->_tempObject = st;
+      if(!webServer.checkAuth(request, true)) { st->error = "auth"; return; }
+      // Le redémarrage qui suit tomberait avant la validation à 60 s d'un firmware fraîchement
+      // installé, et le chargeur repartirait sur le Mode installation : un firmware qui reçoit un
+      // envoi authentifié a fait ses preuves.
+      esp_ota_mark_app_valid_cancel_rollback();
+      st->part = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_FACTORY, nullptr);
+      if(!st->part) { st->error = "no install partition"; return; }
+      // Refus AVANT tout effacement : un firmware principal n'y tient pas, et la partition reste intacte.
+      if(request->contentLength() > st->part->size) { st->error = "size"; return; }
+      uint16_t chipId = len >= 16 ? (data[12] | ((uint16_t)data[13] << 8)) : 0xFFFF;
+      uint32_t declared = len >= 16 ? 1UL << (20 + (data[3] >> 4)) : 0;
+      if(len < 16 || data[0] != 0xE9 || chipId != CONFIG_IDF_FIRMWARE_CHIP_ID || declared > ESP.getFlashChipSize()) { st->error = "header"; return; }
+      if(request->hasHeader("X-Firmware-SHA256")) {
+        if(!parseSha(request->header("X-Firmware-SHA256"), st->expected)) { st->error = "sha256"; return; }
+        st->hasDigest = true;
+        mbedtls_sha256_init(&st->sha);
+        IN_SHA_STARTS(&st->sha, 0);
+      }
+      somfy.transceiver.end();
+      mqtt.end();
+      // Radio et MQTT ne reviennent qu'au redémarrage, y compris si le client lâche en route.
+      request->onDisconnect([]() {
+        rebootDelay.rebootTime = millis() + 500;
+        rebootDelay.reboot = true;
+      });
+    }
+    if(!st || st->error) {
+      if(st && st->part && st->written > 0 && final) esp_partition_erase_range(st->part, 0, SPI_FLASH_SEC_SIZE);
+      return;
+    }
+    if(st->written + len > st->part->size) { st->error = "size"; return; }
+    while(st->erased < st->written + len) {
+      if(esp_partition_erase_range(st->part, st->erased, SPI_FLASH_SEC_SIZE) != ESP_OK) { st->error = "erase"; return; }
+      st->erased += SPI_FLASH_SEC_SIZE;
+    }
+    if(esp_partition_write(st->part, st->written, data, len) != ESP_OK) { st->error = "write"; return; }
+    st->written += len;
+    st->tag.feed(data, len);
+    st->marker.feed(data, len);
+    if(st->hasDigest) IN_SHA_UPDATE(&st->sha, data, len);
+    wdtReset();
+    if(final) {
+      if(!st->tag.found) st->error = "not an install mode";
+      else if(!st->marker.found) st->error = "marker";
+      else if(st->hasDigest) {
+        uint8_t got[32];
+        IN_SHA_FINISH(&st->sha, got);
+        if(memcmp(got, st->expected, sizeof(got)) != 0) st->error = "sha256";
+      }
+      if(!st->error) {
+        const esp_partition_pos_t pos = {st->part->address, st->part->size};
+        esp_image_metadata_t meta;
+        if(esp_image_verify(ESP_IMAGE_VERIFY_SILENT, &pos, &meta) != ESP_OK) st->error = "verify";
+      }
+      // Une image refusée ne doit pas rester démarrable, même complète : on efface son en-tête.
+      if(st->error) esp_partition_erase_range(st->part, 0, SPI_FLASH_SEC_SIZE);
+      FwInfo::inspectInstall();
+    }
+  }
+  static void handleUpdateInstall(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    InstallUpload *st = (InstallUpload *)request->_tempObject;
+    const char *err = !st ? "no upload" : st->error;
+    if(err && strcmp(err, "auth") == 0) { free(st); request->_tempObject = nullptr; webServer.isAuthenticated(request, true); return; }
+    bool touched = st && st->written > 0;
+    if(st && st->hasDigest) mbedtls_sha256_free(&st->sha);
+    free(st);
+    request->_tempObject = nullptr;
+    if(err) {
+      char desc[64];
+      snprintf(desc, sizeof(desc), "Install mode rejected: %s", err);
+      webServer.sendError(request, 400, desc);
+    }
+    else request->send(200, "application/json", "{\"status\":\"SUCCESS\",\"desc\":\"Install mode updated\"}");
+    // Radio et MQTT ont été coupés dès le premier paquet : on repart proprement, comme après une
+    // mise à jour. Un refus avant toute écriture ne coupe rien et ne redémarre pas.
+    if(touched || (err == nullptr)) {
+      rebootDelay.rebootTime = millis() + 500;
+      rebootDelay.reboot = true;
+    }
+  }
+
   // Le mot de confirmation est exigé : un appel sans corps (script, intégration) n'efface rien.
   void handleFactoryReset(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -845,6 +987,8 @@ namespace WebSystem {
     server.on("/restore", AsyncHttp::POST, handleRestore,
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleRestoreBody(request, filename, index, data, len, final); });
     server.on("/rebootInstall", AsyncHttp::ANY, handleRebootInstall);
+    server.on("/updateInstall", AsyncHttp::POST, handleUpdateInstall,
+      [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateInstallBody(request, filename, index, data, len, final); });
     server.on("/updateShadeConfig", AsyncHttp::POST, handleUpdateShadeConfig,
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateShadeConfigBody(request, filename, index, data, len, final); });
     server.on("/reboot", AsyncHttp::ANY, handleReboot);

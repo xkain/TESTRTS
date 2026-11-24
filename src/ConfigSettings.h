@@ -35,6 +35,9 @@
 // Précède FW_VERSION dans l'image : le Mode installation y lit la version du firmware installé,
 // le descripteur d'application ne portant que celle d'ESP-IDF.
 #define FW_VERSION_PREFIX "ESPSomfyRTS-VER/"
+// Précède l'identifiant du Mode installation dans son image (empreinte de ses sources, cf.
+// install/main_contract.py) : le firmware principal y lit lequel est en place.
+#define FW_INSTALL_TAG "ESPSomfyRTS-INSTALL/"
 // Tag GitHub dont viennent les assets de CE build : "dev" injecté par build.yaml pour la
 // pré-release de développement, dont FW_VERSION (v3.0.0-<sha>) n'est pas un tag existant.
 #ifndef FW_RELEASE_TAG

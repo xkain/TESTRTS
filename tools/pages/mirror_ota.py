@@ -44,12 +44,16 @@ DEV_TAG = "dev"
 # ces tags sortiraient du catalogue sans un mot.
 RE_FIRMWARE = re.compile(r"^ESPSomfyRTS_.+_(?:ota|firmware)_(.+)\.bin$")
 RE_MARKER = re.compile(rb"ESPSomfyRTS-PART/(\d+)/")
+# Mode installation de chaque carte : publié à côté de l'image ota, annoncé dans boards[c]["install"]
+# avec l'identifiant gravé dans l'image (empreinte de ses sources, cf. install/main_contract.py).
+RE_INSTALL = re.compile(r"^ESPSomfyRTS_.+_install_(.+)\.bin$")
+RE_INSTALL_ID = re.compile(rb"ESPSomfyRTS-INSTALL/([0-9a-f]{12})")
 CARTES = {"esp32", "esp32wrover", "esp32c3", "esp32s2", "esp32s3", "esp32c6"}
 
 
-def carte(nom):
+def carte(nom, motif=RE_FIRMWARE):
     """Clé de carte du catalogue, identique à celle de l'installateur web (box_eth, box_wifi)."""
-    m = RE_FIRMWARE.match(nom)
+    m = motif.match(nom)
     if not m:
         return None
     reste = m.group(1)
@@ -144,6 +148,29 @@ def main():
                 "layout": lay,
             }
             print(f"  {tag}/{c:12s} {len(data)} o, table {lay}")
+        for a in r["assets"]:
+            c = carte(a["name"], RE_INSTALL)
+            if not c or c not in boards or "install" in boards[c]:
+                continue
+            stamp = re.sub(r"[^0-9]", "", a.get("updated_at") or "")
+            fichier_cache = os.path.join(cache, tag, f"{c}-install-{stamp}.bin")
+            if not (os.path.exists(fichier_cache) and os.path.getsize(fichier_cache) > 0):
+                telecharger(args.repo, tag, a["name"], fichier_cache)
+            with open(fichier_cache, "rb") as f:
+                data = f.read()
+            m = RE_INSTALL_ID.search(data)
+            if not m:
+                print(f"  {tag}/{c}: Mode installation sans identifiant, ignoré")
+                continue
+            with open(os.path.join(racine, tag, f"{c}-install.bin"), "wb") as f:
+                f.write(data)
+            boards[c]["install"] = {
+                "path": f"{tag}/{c}-install.bin",
+                "size": len(data),
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "id": m.group(1).decode(),
+            }
+            print(f"  {tag}/{c:12s} Mode installation {m.group(1).decode()}")
         if not boards:
             continue
         notes = f"notes/{tag}.md"

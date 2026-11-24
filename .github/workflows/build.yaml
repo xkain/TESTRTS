@@ -420,6 +420,7 @@ jobs:
         run: |
           mkdir -p devbuild
           cp .pio/build/${{ matrix.env }}/firmware.bin devbuild/${{ matrix.fwname }}
+          cp install/.pio/build/${{ matrix.install }}/firmware.bin devbuild/$(echo "${{ matrix.fwname }}" | sed 's/_ota_/_install_/')
           cp .pio/build/${{ matrix.env }}/${{ matrix.obzip }} devbuild/
 
       - name: Upload ${{ matrix.name }} dev build assets
@@ -440,6 +441,17 @@ jobs:
           asset_name: ${{ matrix.fwname }}
           asset_path: .pio/build/${{ matrix.env }}/firmware.bin
           overwrite: true
+
+      # CAS 2 suite : le Mode installation de cette carte, que l'appareil remplace par le réseau
+      # (/updateInstall) quand son identifiant diffère de celui du catalogue.
+      - name: Upload install mode to Release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NAME=$(echo "${{ matrix.fwname }}" | sed 's/_ota_/_install_/')
+          cp install/.pio/build/${{ matrix.install }}/firmware.bin "$NAME"
+          gh release upload "${{ github.ref_name }}" "$NAME" --clobber
 
       # CAS 2 suite : Si c'est une RELEASE (Image zip d'usine)
       - name: Upload factory image to Release

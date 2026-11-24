@@ -35,6 +35,7 @@
 #define _IN_STR(x) _IN_STR2(x)
 static const char IMAGE_MARKER[] = "ESPSomfyRTS-PART/" _IN_STR(FW_PARTITION_LAYOUT) "/";
 static const char AP_SSID[] = "ESPSomfy-INSTALL";
+static const char INSTALL_TAG[] = FW_INSTALL_TAG INSTALL_ID;
 static const uint32_t NET_TIMEOUT_MS = 20000;
 static const uint32_t IDLE_TIMEOUT_MS = 600000;
 
@@ -300,6 +301,8 @@ struct UploadState {
   uint8_t expected[32];
   mbedtls_sha256_context sha;
   size_t matched = 0;
+  size_t tagMatched = 0, tagHex = 0;
+  bool isInstall = false;
   bool begun = false;
   const char *error = nullptr;
 } up;
@@ -343,6 +346,21 @@ static bool imageHeaderOk(const uint8_t *d, size_t len) {
 
 static void inspectMainApp();
 
+// Un Mode installation dans app0 démarrerait à la place du firmware : son identifiant (préfixe suivi
+// de 12 caractères hexadécimaux) le trahit, quand le firmware principal ne porte que le préfixe nu.
+static void scanInstallTag(const uint8_t *data, size_t len) {
+  const size_t plen = sizeof(FW_INSTALL_TAG) - 1;
+  for(size_t i = 0; i < len && !up.isInstall; i++) {
+    if(up.tagMatched == plen) {
+      bool hex = (data[i] >= '0' && data[i] <= '9') || (data[i] >= 'a' && data[i] <= 'f');
+      if(hex && ++up.tagHex == 12) up.isInstall = true;
+      else if(!hex) { up.tagMatched = data[i] == (uint8_t)FW_INSTALL_TAG[0] ? 1 : 0; up.tagHex = 0; }
+    }
+    else if(data[i] == (uint8_t)FW_INSTALL_TAG[up.tagMatched]) up.tagMatched++;
+    else up.tagMatched = data[i] == (uint8_t)FW_INSTALL_TAG[0] ? 1 : 0;
+  }
+}
+
 static void reject(const char *why) {
   if(!up.rejected) Serial.printf("[INSTALL] envoi refuse : %s\n", why);
   up.rejected = true;
@@ -366,12 +384,14 @@ static void handleUploadChunk() {
     if(up.rejected) return;
     if(u.totalSize == 0 && !imageHeaderOk(u.buf, u.currentSize)) { reject("header"); return; }
     scanMarker(u.buf, u.currentSize);
+    scanInstallTag(u.buf, u.currentSize);
     if(up.hasDigest) SHA_UPDATE(&up.sha, u.buf, u.currentSize);
     if(Update.write(u.buf, u.currentSize) != u.currentSize) reject("write");
   }
   else if(u.status == UPLOAD_FILE_END) {
     if(up.rejected) return;
     if(!up.markerFound) { reject("marker"); return; }
+    if(up.isInstall) { reject("install"); return; }
     if(up.hasDigest) {
       uint8_t got[32];
       SHA_FINISH(&up.sha, got);
@@ -438,7 +458,9 @@ static void handleBootApp() {
 
 static void handleStatus() {
   touch();
-  String json = "{\"install\":true,\"version\":\"" FW_VERSION "\",\"marker\":\"";
+  String json = "{\"install\":true,\"version\":\"" FW_VERSION "\",\"id\":\"";
+  json += INSTALL_TAG + sizeof(FW_INSTALL_TAG) - 1;
+  json += "\",\"marker\":\"";
   json += IMAGE_MARKER;
   json += "\",\"host\":\"";
   json += cfg.hostname;
@@ -494,8 +516,8 @@ main{flex:1;display:grid;place-items:center;padding:24px 16px}
 <div class=bar id=br><i id=pg></i></div><p class=msg id=m></p>
 <div class=btns><button class=btn id=bb data-t=back disabled></button><button class="btn p" id=bi data-t=install></button></div><a class=help href="https://xkain.github.io/ESPSomfy-RTS/guide/v3/appareil/systeme/mode-installation/" target=_blank rel=noopener data-t=help></a></div></main>
 <script>
-const L={fr:{title:'Mode installation',lead:"Choisissez un fichier de firmware ESPSomfy-RTS pour l'installer.",ok:'Firmware installé : ',fid:'Le fichier qui correspond à votre appareil',ver:'[version]',none:'Aucun firmware valide',none2:' · installez-en un pour reprendre',user:'Utilisateur',pin:'Code PIN',pass:'Mot de passe',pick:'Choisir un fichier de firmware',drop:'ou le déposer ici',back:'Revenir au firmware',install:'Installer',nofile:"Choisissez d'abord un fichier.",send:'Envoi…',done:"Installé. Redémarrage de l'appareil…",going:'Retour au firmware…',auth:'Code incorrect ou accès refusé.',marker:"Ce fichier n'est pas un firmware ESPSomfy-RTS pour cet appareil.",header:'Ce fichier est fait pour une autre puce.',sha256:'Le fichier est abîmé.',noapp:'Aucun firmware valide à relancer.',fail:"L'installation a échoué.",help:'Aide sur le mode installation'},
-en:{title:'Install mode',lead:'Choose an ESPSomfy-RTS firmware file to install it.',ok:'Installed firmware: ',fid:'The file that matches your device',ver:'[version]',none:'No valid firmware',none2:' · install one to resume',user:'Username',pin:'PIN code',pass:'Password',pick:'Choose a firmware file',drop:'or drop it here',back:'Back to firmware',install:'Install',nofile:'Choose a file first.',send:'Uploading…',done:'Installed. The device is restarting…',going:'Returning to the firmware…',auth:'Wrong code or access denied.',marker:'This file is not an ESPSomfy-RTS firmware for this device.',header:'This file is built for another chip.',sha256:'The file is damaged.',noapp:'No valid firmware to start.',fail:'Installation failed.',help:'Help about install mode'}};
+const L={fr:{title:'Mode installation',lead:"Choisissez un fichier de firmware ESPSomfy-RTS pour l'installer.",ok:'Firmware installé : ',fid:'Le fichier qui correspond à votre appareil',ver:'[version]',none:'Aucun firmware valide',none2:' · installez-en un pour reprendre',user:'Utilisateur',pin:'Code PIN',pass:'Mot de passe',pick:'Choisir un fichier de firmware',drop:'ou le déposer ici',back:'Revenir au firmware',install:'Installer',nofile:"Choisissez d'abord un fichier.",send:'Envoi…',done:"Installé. Redémarrage de l'appareil…",going:'Retour au firmware…',auth:'Code incorrect ou accès refusé.',marker:"Ce fichier n'est pas un firmware ESPSomfy-RTS pour cet appareil.",header:'Ce fichier est fait pour une autre puce.',sha256:'Le fichier est abîmé.',noapp:'Aucun firmware valide à relancer.',install:'Ce fichier est un mode installation, pas un firmware.',fail:"L'installation a échoué.",help:'Aide sur le mode installation'},
+en:{title:'Install mode',lead:'Choose an ESPSomfy-RTS firmware file to install it.',ok:'Installed firmware: ',fid:'The file that matches your device',ver:'[version]',none:'No valid firmware',none2:' · install one to resume',user:'Username',pin:'PIN code',pass:'Password',pick:'Choose a firmware file',drop:'or drop it here',back:'Back to firmware',install:'Install',nofile:'Choose a file first.',send:'Uploading…',done:'Installed. The device is restarting…',going:'Returning to the firmware…',auth:'Wrong code or access denied.',marker:'This file is not an ESPSomfy-RTS firmware for this device.',header:'This file is built for another chip.',sha256:'The file is damaged.',noapp:'No valid firmware to start.',install:'This file is an install mode, not a firmware.',fail:'Installation failed.',help:'Help about install mode'}};
 const $=i=>document.getElementById(i);let T=L.en,sec=0,file=null,busy=false;
 const say=(k,bad,x)=>{$('m').textContent=(T[k]||k)+(x?' ('+x+')':'');$('m').className='msg'+(bad?' bad':'')};
 fetch('/install').then(r=>r.json()).then(j=>{

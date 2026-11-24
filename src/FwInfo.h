@@ -26,6 +26,9 @@ namespace FwInfo {
   // Rend le Mode installation (partition factory) amorçable s'il est présent et intact. Faux sinon :
   // le redémarrage tomberait sur une partition vide.
   bool selectInstallMode();
+  // Lit la partition install : image complète valide, et identifiant après FW_INSTALL_TAG. Appelée
+  // au démarrage et après /updateInstall ; toJSON() en publie le résultat.
+  void inspectInstall();
   void toJSON(JsonFormatter &json);
   // Événement socket fwStatus, à un client (num) ou à tous (255).
   void emit(uint8_t num = 255);

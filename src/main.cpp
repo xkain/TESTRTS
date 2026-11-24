@@ -63,6 +63,7 @@ void setup() {
 
   settings.begin();
   FwInfo::rememberBoard();
+  FwInfo::inspectInstall();
 
   // Consomme le reliquat de la fenêtre puis arrête la décision.
   recovery.endDetection();

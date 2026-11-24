@@ -1534,7 +1534,9 @@
     "GIT_RELEASE_PHASE_INSTALL": "Écriture dans l'appareil",
     "GIT_RELEASE_PHASE_REBOOT": "Redémarrage de l'appareil…",
     "GIT_LANG_RESTORE_IN_PROGRESS": "Mise à jour du pack de langue %1…",
+    "GIT_RELEASE_PHASE_INSTALL_UPDATE": "Mise à jour du mode installation…",
     "GIT_LANG_RESTORE_FAILED": "Pack de langue %1 indisponible, langue par défaut utilisée",
+    "GIT_INSTALL_MODE_UPDATE_FAILED": "Mode installation non mis à jour : l'ancien reste en place et fonctionne",
 
 "INDEX_OVERLAY_FIRMWARE_OTA": "OVERLAY FIRMWARE OTA",
     "FIRMWARE_OTA_TITLE": "Mise à jour Logicielle",
