@@ -46,7 +46,7 @@ RE_FIRMWARE = re.compile(r"^ESPSomfyRTS_.+_(?:ota|firmware)_(.+)\.bin$")
 RE_MARKER = re.compile(rb"ESPSomfyRTS-PART/(\d+)/")
 # Mode installation de chaque carte : publié à côté de l'image ota, annoncé dans boards[c]["install"]
 # avec l'identifiant gravé dans l'image (empreinte de ses sources, cf. install/main_contract.py).
-RE_INSTALL = re.compile(r"^ESPSomfyRTS_.+_install_(.+)\.bin$")
+RE_INSTALL = re.compile(r"^ESPSomfyRTS_.+_installmode_(.+)\.bin$")
 RE_INSTALL_ID = re.compile(rb"ESPSomfyRTS-INSTALL/([0-9a-f]{12})")
 CARTES = {"esp32", "esp32wrover", "esp32c3", "esp32s2", "esp32s3", "esp32c6"}
 

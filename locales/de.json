@@ -1569,6 +1569,7 @@
     "FIRMWARE_MA_FILE_TOOLTIP_GREEN": "<b>Grün hervorgehoben</b>: identifiziert Ihre Hardware. Eine Datei, die diesen Teil nicht exakt enthält, ist nicht für dieses Gerät bestimmt.",
     "FIRMWARE_MA_FILE_TOOLTIP_ANYBOARD": "Diese Datei ist für alle Boards identisch: Ihr Name enthält kein bestimmtes Modell.",
     "FIRMWARE_MA_FILE_TOOLTIP_KIND_FW": "Der Name muss <b>_ota_</b> enthalten: das ist das Programm des Geräts, einschließlich der Web-Oberfläche. Eine <b>_filesystem_</b>-Datei stammt aus älteren Versionen und wird nicht mehr akzeptiert.",
+    "FIRMWARE_MA_FILE_TOOLTIP_KIND_INSTALL": "Eine Datei <b>_installmode_</b> ist der Installationsmodus: Sie wird ebenfalls angenommen und ersetzt nur den des Geräts.",
     "FIRMWARE_MA_FILE_TOOLTIP_BOX": "Ihr Gerät ist eines meiner fertigen Gehäuse: Nur eine Datei mit dem oben hervorgehobenen Hinweis ist dafür geeignet. Dateien ohne diesen Hinweis sind für generische Boards bestimmt.",
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Falls nicht lokal vorhanden: von GitHub herunterladen",
 
@@ -1849,6 +1850,7 @@
     "PROMPT_RESTORE_IN_PROGRESS_MSG": "Die Datei wird gerade hochgeladen und vom Gerät verarbeitet. Bitte warten Sie, bis es abgeschlossen ist — schließen Sie dieses Fenster nicht und schalten Sie das Gerät nicht aus.",
     "PROMPT_INSTALL_MODE_TITLE": "Im Installationsmodus neu starten?",
     "PROMPT_INSTALL_MODE_MSG": "Das Gerät startet auf einer minimalen Seite neu, die nur zum Installieren einer Firmware dient. Die Geräte reagieren nicht mehr, bis Sie zur installierten Firmware zurückkehren.",
+    "PROMPT_INSTALL_FILE_MSG": "Diese Datei ist ein Installationsmodus: Sie ersetzt den des Geräts, ohne die installierte Firmware zu verändern. Das Gerät startet danach neu.",
     "PROMPT_SCHEDULE_MERGE": "Beide Zeitpläne zusammenführen?",
     "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} hat bereits einen Zeitplan an diesen Tagen. Beide werden zu einem einzigen mit {n} Auslösezeiten.",
     "PROMPT_UNLINK_LISTENER": "Diese Fernbedienung nicht mehr abhören?",

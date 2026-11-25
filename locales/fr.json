@@ -1569,6 +1569,7 @@
     "FIRMWARE_MA_FILE_TOOLTIP_GREEN": "<b>Surligné en vert</b> : ce qui identifie votre matériel. Un fichier qui ne porte pas exactement cette partie n'est pas destiné à cet appareil.",
     "FIRMWARE_MA_FILE_TOOLTIP_ANYBOARD": "Ce fichier est le même pour toutes les cartes : son nom ne comporte aucun modèle.",
     "FIRMWARE_MA_FILE_TOOLTIP_KIND_FW": "Le nom doit contenir <b>_ota_</b> : c'est le programme de l'appareil, interface web comprise. Un fichier <b>_filesystem_</b> vient des anciennes versions et n'est plus accepté.",
+    "FIRMWARE_MA_FILE_TOOLTIP_KIND_INSTALL": "Un fichier <b>_installmode_</b> est le mode installation : il est accepté aussi, et ne remplace que celui de l'appareil.",
     "FIRMWARE_MA_FILE_TOOLTIP_BOX": "Votre appareil est un de mes boîtiers : seul un fichier portant la mention surlignée ci-dessus lui convient. Les fichiers qui ne la portent pas sont destinés aux cartes génériques.",
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Si vous ne l'avez pas en local : télécharger sur GitHub",
 
@@ -1849,6 +1850,7 @@
     "PROMPT_RESTORE_IN_PROGRESS_MSG": "Le fichier est en cours d'envoi et de traitement par l'appareil. Veuillez patienter jusqu'à la fin — ne fermez pas cette fenêtre et n'éteignez pas l'appareil.",
     "PROMPT_INSTALL_MODE_TITLE": "Redémarrer en mode installation ?",
     "PROMPT_INSTALL_MODE_MSG": "L'appareil redémarre sur une page minimale qui sert uniquement à installer un firmware. Les équipements ne répondent plus tant que vous n'êtes pas revenu au firmware installé.",
+    "PROMPT_INSTALL_FILE_MSG": "Ce fichier est un mode installation : il remplacera celui de l'appareil sans toucher au firmware installé. L'appareil redémarre ensuite.",
     "PROMPT_SCHEDULE_MERGE": "Réunir les deux plannings ?",
     "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} a déjà une programmation sur ces jours. Les deux n'en formeront plus qu'une seule, de {n} horaires.",
     "PROMPT_UNLINK_LISTENER": "Ne plus écouter cette télécommande ?",

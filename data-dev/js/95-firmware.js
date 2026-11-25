@@ -259,7 +259,7 @@ class Firmware {
         // à son contraire quand il n'y a rien à surligner.
         const tips = ['FIRMWARE_MA_FILE_TOOLTIP_VERSION'];
         tips.push(p.device ? 'FIRMWARE_MA_FILE_TOOLTIP_GREEN' : 'FIRMWARE_MA_FILE_TOOLTIP_ANYBOARD');
-        tips.push('FIRMWARE_MA_FILE_TOOLTIP_KIND_FW');
+        tips.push('FIRMWARE_MA_FILE_TOOLTIP_KIND_FW', 'FIRMWARE_MA_FILE_TOOLTIP_KIND_INSTALL');
         if (p.box) tips.push('FIRMWARE_MA_FILE_TOOLTIP_BOX');
         return `
         <div class="fw-band fw-id">
@@ -1269,11 +1269,15 @@ class Firmware {
         // pour une autre table de partition -- récupération par USB obligatoire. On regarde donc
         // le contenu. Le contrôle qui fait foi reste celui de /updateFirmware côté
         // firmware, celui-ci n'évite qu'un téléversement inutile de plus d'un mégaoctet.
-        if (service === '/updateFirmware' && window.__fwImageMarker) {
-            if (!await this.imageMarkerPresent(file, window.__fwImageMarker)) {
+        if (service === '/updateFirmware') {
+            const text = await this.imageText(file);
+            if (text !== null && window.__fwImageMarker && text.indexOf(window.__fwImageMarker) < 0) {
                 ui.errorMessage(title, tr('ERR_GIT_PARTITION_BLOCKED'));
                 return;
             }
+            // Envoyé au Mode installation, ce fichier écraserait le firmware avant d'y être reconnu :
+            // il part au firmware principal, qui ne touche que la partition du Mode installation.
+            if (text !== null && /ESPSomfyRTS-INSTALL\/[0-9a-f]{12}/.test(text)) service = '/updateInstall';
         }
 
         // Même porte de confirmation que btnUpdate/confirmInstallGitRelease() (divGitInstall) :
@@ -1283,19 +1287,18 @@ class Firmware {
         // avoir lieu, pas après.
         this.confirmUploadFile(service, el, data, file);
     }
-    // Cherche le marqueur d'image dans le binaire. 'latin1' fait correspondre chaque octet à une
-    // unité de code, ce qui permet un indexOf() natif plutôt qu'un balayage octet par octet en JS
-    // sur plus d'un mégaoctet.
-    async imageMarkerPresent(file, marker) {
+    // Binaire lu en texte pour y chercher les marqueurs. 'latin1' fait correspondre chaque octet à
+    // une unité de code, ce qui permet un indexOf() natif plutôt qu'un balayage octet par octet en
+    // JS sur plus d'un mégaoctet.
+    async imageText(file) {
         try {
-            const buf = new Uint8Array(await file.arrayBuffer());
-            return new TextDecoder('latin1').decode(buf).indexOf(marker) >= 0;
+            return new TextDecoder('latin1').decode(new Uint8Array(await file.arrayBuffer()));
         }
         catch (err) {
             // Fichier illisible (permissions, fichier remplacé entre-temps) : on ne bloque pas sur
             // un doute, le firmware refusera de son côté s'il y a lieu.
-            logger.warn('Firmware image marker check skipped:', err);
-            return true;
+            logger.warn('Firmware image check skipped:', err);
+            return null;
         }
     }
     async confirmUploadFile(service, el, data, file) {
@@ -1303,13 +1306,13 @@ class Firmware {
         const ok = await ui.confirm({
             icon: isRestore ? 'svg-restore' : 'svg-upload',
             title: tr(isRestore ? 'RESTORE_CONFIRM_TITLE' : 'GIT_RELEASE_CONFIRM_TITLE'),
-            desc: `<p>${tr(isRestore ? 'RESTORE_CONFIRM_SUB' : 'GIT_RELEASE_CONFIRM_SUB')}</p>`,
+            desc: `<p>${service === '/updateInstall' ? tr('PROMPT_INSTALL_FILE_MSG') : tr(isRestore ? 'RESTORE_CONFIRM_SUB' : 'GIT_RELEASE_CONFIRM_SUB')}</p>`,
             confirm: tr(isRestore ? 'BT_RESTORE' : 'BT_INSTALL')
         });
         if (ok) this._startUpload(service, el, data, file);
     }
     async _startUpload(service, el, data, file) {
-        if (service !== '/restore' && !this.isMobile()) {
+        if (service === '/updateFirmware' && !this.isMobile()) {
             try { await firmware.backup(); }
             catch (e) { return ui.serviceError(el, e); }
         }
