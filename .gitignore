@@ -2,6 +2,8 @@
 .pio/
 .pioenvs/
 .piolibdeps/
+install/.gitignore
+install/src/idf_component.yml*
 .clang_complete
 .gcc-flags.json
 extdata/
