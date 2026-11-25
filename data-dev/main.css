@@ -2688,6 +2688,9 @@ button.fw-act:hover .fw-act-chev {
 .fw-meter-sub .fw-meter {
     --progress-bar-height: 6px;
 }
+.fw-meter-sub .gen-btn {
+    align-self: flex-start;
+}
 .fw-meter-head {
     display: flex;
     justify-content: space-between;

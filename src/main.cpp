@@ -47,35 +47,22 @@ void setup() {
 
   Serial.println("Mounting File System...");
   // formatOnFail : spiffs ne porte que des fichiers régénérables, et le Mode installation l'efface en
-  // bloc (Langues, Tout effacer). La Récupération ne reste forcée que si même le formatage échoue.
+  // bloc (Langues, Tout effacer).
   if (LittleFS.begin(true)) {
     Serial.println("File system mounted successfully");
   } else {
-    // Le mode Récupération sert justement à réparer ce cas, et sa page est embarquée dans le
-    // binaire (cf. RecoveryPage.h) donc indépendante du filesystem -- on le déclenche nous-mêmes
-    // plutôt que d'attendre les 3 coupures d'alimentation manuelles : un FS illisible (OTA
-    // interrompue, secteur corrompu) laisserait sinon démarrer une UI cassée sans aucune piste
-    // pour l'utilisateur.
+    // Même le formatage a échoué : le Mode installation sait effacer la partition (Langues), et
+    // sans lui l'appareil démarre quand même, l'interface étant dans l'application.
     Serial.println("Error mounting file system");
-    recovery.forceRequest();
+    if(FwInfo::selectInstallMode()) ESP.restart();
   }
-  // Avant le mode Récupération : sa réinitialisation sélective supprime aussi shades.cfg et
-  // schedules.cfg, qui vivent sur cette partition.
   CfgStore::begin();
 
   settings.begin();
   FwInfo::rememberBoard();
   FwInfo::inspectInstall();
 
-  // Consomme le reliquat de la fenêtre puis arrête la décision.
   recovery.endDetection();
-
-  if (recovery.isRequested()) {
-    // Point d'accès de secours + portail captif + serveur web dédié. On s'arrête là : ni Somfy, ni
-    // MQTT, ni plannings, ni pile réseau normale. loop() est court-circuité de la même façon.
-    recovery.begin();
-    return;
-  }
 
   if (WiFi.status() == WL_CONNECTED) WiFi.disconnect(true);
   delay(10);
@@ -145,10 +132,6 @@ static void rebootNow() {
 }
 
 void loop() {
-  // En mode Récupération, rien du fonctionnement nominal ne doit tourner : le watchdog n'a pas été
-  // armé (setup() sort avant) et aucun sous-système n'a été démarré.
-  if (recovery.isActive()) { recovery.loop(); return; }
-
   // Fenêtre de détection des coupures d'alimentation : elle tourne ICI, en parallèle du reste du
   // démarrage plutôt que derrière une attente bloquante, pour la même durée exactement. No-op dès
   // qu'elle est refermée, c'est-à-dire au bout de BOOT_TIMEOUT et pour tout le reste de la vie de

@@ -107,7 +107,19 @@ bool FwInfo::selectInstallMode() {
   if(!install) return false;
   const esp_partition_pos_t pos = {install->address, install->size};
   esp_image_metadata_t meta;
-  return esp_image_verify(ESP_IMAGE_VERIFY_SILENT, &pos, &meta) == ESP_OK && esp_ota_set_boot_partition(install) == ESP_OK;
+  if(esp_image_verify(ESP_IMAGE_VERIFY_SILENT, &pos, &meta) != ESP_OK) return false;
+  // Lu AVANT esp_ota_set_boot_partition, qui efface otadata : un firmware déjà validé le note pour
+  // se revalider seul au retour (marque consommée par Recovery::beginDetection, retirée par le Mode
+  // installation s'il écrit une autre image).
+  const esp_partition_t *run = esp_ota_get_running_partition();
+  esp_ota_img_states_t st;
+  bool proven = !run || esp_ota_get_state_partition(run, &st) != ESP_OK || st != ESP_OTA_IMG_PENDING_VERIFY;
+  if(esp_ota_set_boot_partition(install) != ESP_OK) return false;
+  if(proven) {
+    Preferences p;
+    if(p.begin("rst_logic", false)) { p.putUChar("ok", 1); p.end(); }
+  }
+  return true;
 }
 
 // Champs conservés de l'ancien fwStatus pour que l'interface et l'intégration Home Assistant

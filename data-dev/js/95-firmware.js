@@ -447,6 +447,24 @@ class Firmware {
             bar.classList.remove('is-full');
         }
         get('spanInstallId').textContent = ins.id || '';
+        get('btnInstallRepair').hidden = !!ins.valid;
+    }
+    // Sans Mode installation, les 3 coupures ne mènent nulle part : l'image de la version en place,
+    // sinon de la dernière stable du catalogue.
+    async repairInstallMode() {
+        const wait = ui.waitMessage(get('divContainer'), 'WAIT_MSG_LOADING');
+        try {
+            const vs = (await this.loadCatalog()).versions || [];
+            const cur = this.fwInfo?.fwVersion?.name || '';
+            const img = x => x.boards?.[this.boardKey()]?.install;
+            const v = vs.find(x => (x.tag === cur || x.tag === `v${cur}`) && img(x)) || vs.find(x => !x.dev && img(x)) || vs.find(img);
+            const inst = v && img(v);
+            if (!inst) throw new Error('no install image');
+            await this.updateInstallMode(inst);
+            general.reload();
+        }
+        catch (e) { ui.errorMessage(`${tr('ERR_INSTALL_MODE_REPAIR')} (${e.message})`); }
+        finally { wait.remove(); }
     }
 
     // Badge « mise à jour disponible » : version stable la plus haute du catalogue pour CETTE carte

@@ -6,14 +6,9 @@
 #include <nvs_flash.h>
 #include <Preferences.h>
 #include <sdkconfig.h>
-#include <WiFi.h>
-#include <ArduinoJson.h>
-#include <Update.h>
-#include <esp_task_wdt.h>
+#include <esp_ota_ops.h>
 #include "Recovery.h"
 #include "FwInfo.h"
-#include "RecoveryPage.h"
-#include "web/WebCommon.h"
 #include "somfy/Somfy.h"
 #include "ConfigSettings.h"
 #include "ConfigFile.h"
@@ -103,52 +98,51 @@ void Recovery::beginDetection() {
 
   Preferences p;
   p.begin("rst_logic", false);
-  // Marqueur posé pour le Mode installation (qui n'écrit jamais en NVS) : consommé dès le retour.
+  // Marqueur posé pour le Mode installation : consommé dès le retour.
   if(p.isKey("inst")) p.remove("inst");
+  // Retour du Mode installation sans nouvelle image (cf. FwInfo::selectInstallMode) : ce firmware
+  // avait déjà fait ses preuves, il n'a pas à repasser par FW_PROVEN_AFTER_MS.
+  if(p.isKey("ok")) {
+    p.remove("ok");
+    const esp_partition_t *run = esp_ota_get_running_partition();
+    esp_ota_img_states_t st;
+    if(run && esp_ota_get_state_partition(run, &st) == ESP_OK && st == ESP_OTA_IMG_PENDING_VERIFY)
+      esp_ota_mark_app_valid_cancel_rollback();
+  }
   this->_cycle = p.getInt("c", 0) + 1;
   p.putInt("c", this->_cycle);
   // Décidé ici, avant le montage du filesystem et le chargement des réglages : un firmware qui
-  // plante plus loin dans son démarrage reste ainsi rattrapable. Sans Mode installation intact, le
-  // compteur reste acquis et c'est le mode Récupération qui s'ouvre.
-  if(this->_cycle >= INSTALL_CYCLES && FwInfo::selectInstallMode()) {
+  // plante plus loin dans son démarrage reste ainsi rattrapable.
+  if(this->_cycle >= RECOVERY_CYCLES) {
     p.putInt("c", 0);
-    p.putUChar("inst", 1);
-    p.end();
-    Serial.println(F("\n[BOOT] Install mode requested"));
-    this->_led(true);
-    delay(1500);
-    this->_led(false);
-    ESP.restart();
+    if(FwInfo::selectInstallMode()) {
+      p.putUChar("inst", 1);
+      p.end();
+      Serial.println(F("\n[BOOT] Install mode requested"));
+      this->_led(true);
+      delay(1500);
+      this->_led(false);
+      ESP.restart();
+    }
+    Serial.println(F("\n[BOOT] Install mode missing, normal start"));
   }
   p.end();
 
   Serial.print(F("\n[BOOT] Cycle: "));
   Serial.println(this->_cycle);
-
-  // Le clignotement rapide n'apparaît qu'au cycle qui donne accès au mode Récupération : c'est le
-  // signal que l'utilisateur attend avant de laisser l'appareil démarrer.
-  this->_flashSpeed = (this->_cycle >= RECOVERY_CYCLES) ? 150 : 0;
   this->_detectStart = millis();
   this->_lastBlink = 0;
 }
 
 void Recovery::_serviceLed() {
   if(this->_ledPin < 0) return;
-  if(this->_flashSpeed > 0) {
-    if((uint32_t)(millis() - this->_lastBlink) >= (uint32_t)this->_flashSpeed) {
-      // Bascule sur l'état mémorisé et non sur une relecture de la broche : _led() applique la
-      // polarité dans les deux cas, et un pixel adressable ne se relit pas.
-      this->_led(!this->_ledOn);
-      this->_lastBlink = millis();
-    }
-  }
   // Ré-affirmation périodique, et non à chaque tour de boucle. Elle est nécessaire : pendant cette
   // fenêtre StatusLed::begin() éteint la broche une fois (cf. la cohabitation décrite dans
   // Recovery.h), et un éclat d'activité radio peut faire de même. Mais sur une LED adressable
   // chaque reprise est une trame RMT d'une trentaine de microsecondes, là où le digitalWrite
   // d'origine ne coûtait rien -- la payer des milliers de fois par seconde ralentirait le démarrage
   // pour un résultat identique à l'oeil. 100 ms, soit bien en dessous du seuil de perception.
-  else if((uint32_t)(millis() - this->_lastBlink) >= 100) {
+  if((uint32_t)(millis() - this->_lastBlink) >= 100) {
     this->_led(true);
     this->_lastBlink = millis();
   }
@@ -167,28 +161,8 @@ void Recovery::_finishDetection() {
 
   if(this->_ledPin >= 0) this->_led(false);
 }
-// Cf. le commentaire détaillé de cette méthode dans Recovery.h : décision immédiate, attente
-// déportée sur loopDetection() -- sauf mode Récupération, où l'attente historique est conservée.
 void Recovery::endDetection() {
-  // Deux sources possibles pour cette décision : les coupures d'alimentation comptées ici, et
-  // forceRequest(), posé par setup() quand le filesystem ne se monte pas. Elle est calculée AVANT
-  // le branchement ci-dessous, qui a besoin de connaître les deux.
-  if(this->_cycle >= RECOVERY_CYCLES) {
-    this->_requested = true;
-    Serial.println(F("[BOOT] Recovery mode requested"));
-  }
-
-  if(this->_requested) {
-    // Chemin historique, inchangé : l'appareil ne démarrera pas, et ces 5 secondes de clignotement
-    // sont le signal que l'utilisateur attend.
-    while((uint32_t)(millis() - this->_detectStart) < BOOT_TIMEOUT) {
-      this->_serviceLed();
-      delay(10);
-    }
-    this->_finishDetection();
-  }
-  // Démarrage nominal : on rend la main sur-le-champ. La fenêtre court toujours, loopDetection()
-  // l'entretient et la refermera à son terme.
+  // La fenêtre court toujours : loopDetection() l'entretient et la refermera à son terme.
   Serial.println(F("Boot OK"));
 }
 void Recovery::loopDetection() {
@@ -202,132 +176,6 @@ void Recovery::loopDetection() {
   // BOOT_TIMEOUT alors que le démarrage ne l'attendait plus.
   if(settings.enableDebugLogs)
     Serial.printf("[BOOT] Detection window closed at t=%lums\n", (unsigned long)millis());
-}
-
-void Recovery::begin() {
-  this->_active = true;
-  Serial.println(F("\n[RECOVERY] Starting recovery access point..."));
-
-  // Aucune connexion sortante en secours : on force le mode AP seul pour ne pas rejouer une
-  // configuration Wi-Fi potentiellement fautive.
-  WiFi.persistent(false);
-  WiFi.disconnect(true, false);
-  WiFi.mode(WIFI_AP);
-  // Adresse identique à celle de l'AP d'onboarding : les deux modes s'excluent dans le temps, donc
-  // aucun conflit possible, et l'adresse bien connue reste documentable.
-  WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
-  WiFi.softAP(RECOVERY_AP_SSID);
-  delay(200);
-  Serial.print(F("[RECOVERY] SSID: "));  Serial.println(F(RECOVERY_AP_SSID));
-  Serial.print(F("[RECOVERY] IP: "));    Serial.println(WiFi.softAPIP());
-
-  // Portail captif : toute résolution DNS pointe sur l'ESP32, ce qui déclenche l'ouverture
-  // automatique de la page dès la connexion au réseau sur Android/iOS.
-  this->_dns = new DNSServer();
-  this->_dns->setErrorReplyCode(DNSReplyCode::NoError);
-  this->_dns->start(RECOVERY_DNS_PORT, "*", WiFi.softAPIP());
-
-  this->_server = new AsyncWebServer(80);
-  this->_registerRoutes();
-  this->_server->begin();
-
-  this->_lastClientSeen = millis();
-
-  // Clignotement lent et continu : l'appareil reste visuellement identifiable comme étant en mode
-  // secours, même sans navigateur connecté.
-  if(this->_ledPin >= 0) this->_lastBlink = millis();
-}
-
-void Recovery::_registerRoutes() {
-  AsyncWebServer *srv = this->_server;
-
-  srv->on("/", AsyncHttp::GET, [](AsyncWebServerRequest *request) {
-    AsyncWebServerResponse *resp = request->beginResponse(200, "text/html", RECOVERY_PAGE_GZ, RECOVERY_PAGE_GZ_LEN);
-    resp->addHeader("Content-Encoding", "gzip");
-    resp->addHeader("Cache-Control", "no-store");
-    request->send(resp);
-  });
-
-  srv->on("/recoveryCancel", AsyncHttp::POST, [this](AsyncWebServerRequest *request) {
-    Serial.println(F("[RECOVERY] Cancelled by user, rebooting untouched"));
-    request->send(200, "application/json", "{\"status\":\"ok\"}");
-    this->_deferReboot();
-  });
-
-  srv->on("/recoveryApply", AsyncHttp::POST, [this](AsyncWebServerRequest *request) {
-    StaticJsonDocument<512> doc;
-    if(!asyncHasBody(request) || deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request))) {
-      request->send(400, "application/json", "{\"status\":\"ERROR\"}");
-      return;
-    }
-    RecoveryTargets t;
-    t.network         = doc["network"]  | false;
-    t.security        = doc["security"] | false;
-    t.radio           = doc["radio"]    | false;
-    t.system          = doc["system"]   | false;
-    t.shades          = doc["shades"]   | false;
-    t.schedules       = doc["schedules"]| false;
-    t.langs           = doc["langs"]    | false;
-    t.rollingCodes    = doc["codes"]    | false;
-    t.factory         = doc["factory"]  | false;
-    t.enableDebugLogs = doc["debug"]    | false;
-    if(t.shades) t.schedules = true;
-    this->_targets = t;
-
-    // On répond AVANT d'effacer : l'effacement peut couper la pile réseau, et l'utilisateur doit
-    // dans tous les cas recevoir la confirmation. L'effacement lui-même part de loop().
-    request->send(200, "application/json", "{\"status\":\"ok\"}");
-    this->_pendingApply = true;
-    this->_deferReboot();
-  }, nullptr, asyncBodyHandler);
-
-  // Restauration de l'interface web : le flux est écrit directement dans la partition du système
-  // de fichiers via l'API Update, sans passer par LittleFS. C'est ce qui permet de réparer une
-  // partition illisible -- et ce qui rend le formatage seul inutile, l'image écrasant l'intégralité
-  // de la partition. En récupération, ni la radio Somfy ni MQTT ne tournent : rien à arrêter avant.
-  srv->on("/recoveryUploadFS", AsyncHttp::POST,
-    [this](AsyncWebServerRequest *request) {
-      bool ok = this->_uploadOk && !Update.hasError();
-      request->send(ok ? 200 : 500, "application/json",
-                    ok ? "{\"status\":\"ok\"}" : "{\"status\":\"ERROR\"}");
-      if(ok) this->_deferReboot();
-    },
-    [this](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
-      if(index == 0) {
-        this->_uploadOk = false;
-        Serial.printf("[RECOVERY] Filesystem image upload: %s\n", filename.c_str());
-        // La partition ne doit plus être montée pendant qu'on la réécrit.
-        LittleFS.end();
-        if(!Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS)) Update.printError(Serial);
-        // L'abandon n'arrive pas par ce callback mais par la déconnexion (cf. handleUpdateFirmwareBody).
-        request->onDisconnect([]() {
-          if(Update.isRunning()) {
-            Serial.println(F("[RECOVERY] Upload aborted"));
-            Update.abort();
-            LittleFS.begin();
-          }
-        });
-      }
-      if(len && Update.write(data, len) != len) {
-        Update.printError(Serial);
-        Update.abort();
-      }
-      if(final) {
-        if(Update.end(true)) {
-          this->_uploadOk = true;
-          Serial.printf("[RECOVERY] Filesystem restored (%u bytes)\n", (unsigned)(index + len));
-        }
-        else {
-          Update.printError(Serial);
-          LittleFS.begin();
-        }
-      }
-    });
-
-  // Sondes de portail captif (Android/iOS/Windows) et tout le reste : on renvoie vers la page.
-  srv->onNotFound([](AsyncWebServerRequest *request) {
-    request->redirect("http://192.168.4.1/");
-  });
 }
 
 void Recovery::_apply(const RecoveryTargets &t) {
@@ -406,8 +254,7 @@ void Recovery::_apply(const RecoveryTargets &t) {
     p.putBool("enableDebugLogs", t.enableDebugLogs);
     p.end();
   }
-  // Le compteur de cycles doit repartir de zéro, sinon le prochain démarrage rentrerait à nouveau
-  // en récupération.
+  // Le compteur de cycles doit repartir de zéro, sinon le prochain démarrage le prolongerait.
   if(p.begin("rst_logic", false)) {
     p.putInt("c", 0);
     p.end();
@@ -437,42 +284,4 @@ void Recovery::factoryReset(bool keepNetwork) {
     }
   }
   this->_apply(t);
-}
-
-void Recovery::_rebootSoon() {
-  if(this->_ledPin >= 0) this->_led(false);
-  delay(500);
-  ESP.restart();
-}
-
-void Recovery::_deferReboot() {
-  this->_pendingAt = millis();
-  this->_pendingReboot = true;
-}
-
-void Recovery::loop() {
-  if(!this->_active) return;
-  if(this->_dns) this->_dns->processNextRequest();
-
-  // Suite différée des routes (async_tcp) : 300 ms laissent partir la réponse déjà envoyée.
-  if(this->_pendingReboot && (uint32_t)(millis() - this->_pendingAt) >= 300) {
-    if(this->_pendingApply) {
-      this->_pendingApply = false;
-      this->_apply(this->_targets);
-    }
-    this->_rebootSoon();
-  }
-
-  if(this->_ledPin >= 0 && (uint32_t)(millis() - this->_lastBlink) >= 800) {
-    this->_led(!this->_ledOn);
-    this->_lastBlink = millis();
-  }
-
-  // Un appareil laissé en récupération ne doit pas rester indéfiniment un point d'accès ouvert.
-  // Le compteur repart dès qu'un client est associé.
-  if(WiFi.softAPgetStationNum() > 0) this->_lastClientSeen = millis();
-  else if((uint32_t)(millis() - this->_lastClientSeen) >= RECOVERY_IDLE_TIMEOUT) {
-    Serial.println(F("[RECOVERY] Idle timeout, rebooting"));
-    this->_rebootSoon();
-  }
 }

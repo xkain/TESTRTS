@@ -5,24 +5,11 @@
 #define RECOVERY_H
 
 #include <Arduino.h>
-#include <ESPAsyncWebServer.h>
-#include <DNSServer.h>
 
-// Nombre de coupures d'alimentation successives (pendant la fenêtre BOOT_TIMEOUT) donnant accès au
-// mode Récupération, puis au Mode installation. Les coupures 4 et 5 tombent pendant le clignotement
-// du mode Récupération, qui ne remet pas le compteur à zéro tant que la fenêtre n'est pas close.
+// Coupures d'alimentation successives (chacune pendant la fenêtre BOOT_TIMEOUT du démarrage
+// précédent) qui mènent au Mode installation.
 #define RECOVERY_CYCLES 3
-#define INSTALL_CYCLES 6
 #define BOOT_TIMEOUT 5000
-
-// SSID volontairement distinct de celui de l'AP d'onboarding (qui diffuse settings.hostname) : en
-// scannant les réseaux, il doit être évident que l'appareil est en secours et pas en première
-// configuration. Réseau OUVERT : le mot de passe de l'AP normal fait justement partie de ce qu'on
-// peut avoir à récupérer, s'en servir pour garder l'accès de secours serait circulaire. Le garde-fou
-// est physique (trois coupures délibérées) et temporel (RECOVERY_IDLE_TIMEOUT).
-#define RECOVERY_AP_SSID "ESPSomfy-RECOVERY"
-#define RECOVERY_IDLE_TIMEOUT 600000UL   // 10 min sans client -> redémarrage automatique
-#define RECOVERY_DNS_PORT 53
 
 // --- CONFIGURATION DE LA LED SELON LE BOÎTIER ---
 // Ces constantes décrivent un CÂBLAGE, pas une préférence. Sur les boîtiers elles font autorité et
@@ -65,8 +52,7 @@
 // Câblée en dur et NON configurable, délibérément : ce témoin est le seul retour dont dispose
 // l'utilisateur quand plus rien d'autre ne fonctionne, un réglage pourrait l'éteindre -- ou être
 // lui-même illisible, puisqu'il vit dans la configuration qu'on est précisément en train de
-// réparer. Le rythme continue de porter le reste du message (fixe = démarrage normal, rapide =
-// cycle de récupération atteint, lent = point d'accès de secours).
+// réparer. Fixe pendant la fenêtre de démarrage, 1,5 s avant de basculer sur le Mode installation.
 #define LED_RECOVERY_R 0
 #define LED_RECOVERY_G 0
 #define LED_RECOVERY_B LED_ADDRESSABLE_LEVEL
@@ -117,15 +103,7 @@ static inline void ledPixelWrite(uint8_t pin, uint8_t r, uint8_t g, uint8_t b,
 }
 // ------------------------------------------------
 
-// Ce que l'utilisateur a coché dans la page de récupération. Tout est faux par défaut : une session
-// de récupération sans case cochée ne doit strictement rien modifier.
-//
-// `shades` entraîne `schedules`, forcé à la lecture du JSON de /recoveryApply -- donc quel que soit
-// le client, et pas seulement quand l'interface a verrouillé la case. Sans ça, les plannings
-// survivraient à leurs cibles : les identifiants d'équipement et de groupe étant réattribués en
-// partant du plus petit libre (SomfyShadeController::getNextShadeId), une règle orpheline se
-// rattacherait en silence au prochain équipement créé. L'inverse reste libre -- effacer les
-// plannings seuls ne touche à rien d'autre, et c'est tout l'intérêt d'une case distincte.
+// Ce que factoryReset() efface. Tout est faux par défaut.
 struct RecoveryTargets {
   bool network = false;       // WIFI + IP + ETH + connType
   bool security = false;      // SEC + jeton d'API
@@ -145,26 +123,12 @@ class Recovery {
     // (montage du filesystem, chargement des réglages) se déroule PENDANT la fenêtre de détection
     // au lieu d'attendre derrière elle.
     void beginDetection();
-    // Arrête la DÉCISION (mode Récupération demandé ou non) et rend la main. NE BLOQUE PAS dans le
-    // cas nominal : la fenêtre de BOOT_TIMEOUT continue de courir en arrière-plan, entretenue par
-    // loopDetection().
-    //
-    // Ce que la fenêtre décide est connu dès beginDetection() -- `_cycle >= RECOVERY_CYCLES`, lu en
-    // NVS avant même le montage du filesystem. Son SEUL rôle restant est donc de retarder la remise
-    // à zéro du compteur de cycles : « l'appareil a tenu BOOT_TIMEOUT sans coupure, ce démarrage est
-    // normal ». Attendre pour ça immobilisait tout le démarrage 4,6 s, alors que le même verdict
-    // s'obtient en horodatant la décision plutôt qu'en la faisant patienter. La fenêtre utilisateur
-    // reste de 5 s à la milliseconde près, le retour visuel aussi.
-    //
-    // EXCEPTION, délibérée : quand le mode Récupération est acquis (cycle atteint, ou forceRequest()
-    // après un filesystem illisible), l'attente historique est CONSERVÉE telle quelle. Il n'y a rien
-    // à gagner à écourter le démarrage d'un appareil qui ne démarrera pas, et le clignotement rapide
-    // de ces 5 secondes est le seul signe qui confirme à l'utilisateur qu'il a atteint le cycle de
-    // récupération -- il doit rester visible en entier.
+    // Ne bloque pas : la décision est prise dès beginDetection(), et la fenêtre de BOOT_TIMEOUT ne
+    // sert plus qu'à retarder la remise à zéro du compteur (« l'appareil a tenu sans coupure »).
+    // loopDetection() l'entretient en arrière-plan.
     void endDetection();
     // Entretient la fenêtre de détection depuis la boucle principale, puis la referme (compteur de
-    // cycles remis à zéro, témoin rendu à StatusLed). No-op dès qu'elle est close, et jamais
-    // atteinte en mode Récupération, où endDetection() a déjà tout fait.
+    // cycles remis à zéro, témoin rendu à StatusLed). No-op dès qu'elle est close.
     //
     // Cohabitation avec StatusLed pendant ces quelques secondes : les deux pilotent la même broche,
     // mais StatusLed s'abstient d'écrire tant que isDetecting() est vrai, et pose sa couleur de
@@ -175,33 +139,19 @@ class Recovery {
     void loopDetection();
     // Referme la fenêtre séance tenante. À n'appeler que depuis le chemin de redémarrage volontaire
     // de loop() : sans elle, un redémarrage demandé pendant la fenêtre laisserait le compteur de
-    // cycles incrémenté, et trois d'affilée ouvriraient le mode Récupération sans qu'aucune
+    // cycles incrémenté, et trois d'affilée ouvriraient le Mode installation sans qu'aucune
     // alimentation n'ait été coupée. Cas de figure très improbable (le réseau n'est pas encore
     // connecté à ce stade du démarrage), fermé quand même : c'est deux lignes.
     void closeDetection() { this->_finishDetection(); }
-    bool isRequested() { return this->_requested; }
     // Vrai tant que la fenêtre de détection court. StatusLed s'en sert pour ne pas écraser le
     // témoin de démarrage : les deux pilotent la même broche pendant ces quelques secondes, et une
     // couleur de repos autre que « éteint » les ferait se disputer la LED dix fois par seconde.
     // Vrai AVANT beginDetection() aussi, ce qui est correct : rien ne doit écrire là non plus.
     bool isDetecting() const { return !this->_detectClosed; }
-    bool isActive() { return this->_active; }
-    // Force l'entrée en mode Récupération indépendamment du compteur de coupures d'alimentation --
-    // utilisé quand le montage du filesystem échoue au boot (OTA interrompue, secteur corrompu) :
-    // attendre les 3 coupures manuelles laisserait sinon démarrer une UI cassée sans que rien ne
-    // guide l'utilisateur vers la réparation. Sans effet sur le compteur/la LED de la détection
-    // physique, qui continuent de fonctionner normalement en parallèle.
-    void forceRequest() { this->_requested = true; }
-    // Démarre l'AP de secours, le portail captif et le serveur web dédié.
-    void begin();
-    void loop();
     // Remise à zéro demandée depuis l'interface normale (/factoryReset), juste avant ESP.restart().
     // keepNetwork garde de quoi rejoindre l'appareil à la même adresse, et la radio.
     void factoryReset(bool keepNetwork);
   private:
-    bool _requested = false;
-    bool _active = false;
-    bool _uploadOk = false;
     // Résolus au tout début de beginDetection(), donc AVANT settings.begin() : la lecture se fait
     // directement via Preferences, comme celle du compteur de cycles juste à côté.
     int8_t _ledPin = -1;
@@ -215,28 +165,13 @@ class Recovery {
     // mémoriser. Fonctionne à l'identique pour une sortie à niveau.
     bool _ledOn = false;
     int _cycle = 0;
-    int _flashSpeed = 0;
     bool _detectClosed = false;
     uint32_t _detectStart = 0;
-    uint32_t _lastClientSeen = 0;
     uint32_t _lastBlink = 0;
-    // Les routes tournent sur la tâche async_tcp : effacements et redémarrage sont différés à loop()
-    // (loopTask), après un court délai qui laisse partir la réponse HTTP.
-    volatile bool _pendingApply = false;
-    volatile bool _pendingReboot = false;
-    uint32_t _pendingAt = 0;
-    RecoveryTargets _targets;
-    AsyncWebServer *_server = nullptr;
-    DNSServer *_dns = nullptr;
-    void _registerRoutes();
     void _apply(const RecoveryTargets &t);
-    void _rebootSoon();
-    void _deferReboot();
     void _resolveLed();
     void _led(bool on);
-    // Un pas d'entretien du témoin pendant la fenêtre de détection. Partagé par les deux chemins de
-    // endDetection() (l'attente bloquante du mode Récupération et loopDetection()) pour qu'ils ne
-    // puissent pas diverger.
+    // Un pas d'entretien du témoin pendant la fenêtre de détection.
     void _serviceLed();
     void _finishDetection();
 };

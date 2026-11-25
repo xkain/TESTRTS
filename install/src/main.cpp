@@ -398,6 +398,10 @@ static void handleUploadChunk() {
       if(memcmp(got, up.expected, 32) != 0) { reject("sha256"); return; }
     }
     if(!Update.end(true)) reject("end");
+    else {
+      Preferences p;
+      if(p.begin("rst_logic", false)) { p.remove("ok"); p.end(); }
+    }
   }
   else if(u.status == UPLOAD_FILE_ABORTED) {
     reject("aborted");
