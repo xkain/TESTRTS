@@ -519,7 +519,9 @@ static void handleReset() {
       clearNs("NTP");
       static const char *k[] = {"hostname", "ssdpBroadcast", "checkForUpdate", "accentColor", "themeMode", "catColors",
                                 "swShowGpio", "onboardingDone", "pendingLang", "langCode", "language",
-                                "ledPin", "ledActiveLow", "ledAddr", "ledRfBlink"};
+                                "ledPin", "ledActiveLow", "ledAddr", "ledRfBlink", "ledColAct", "ledColOrder",
+                                "dashCompact", "dashOrder", "revDashCols", "defMobileTab", "hdrMobileDisp",
+                                "showMoveInd", "showRadioAct", "geoLat", "geoLon"};
       removeKeys("CFG", k, sizeof(k) / sizeof(k[0]));
     }
     if(on("shades")) {
