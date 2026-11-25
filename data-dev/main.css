@@ -1687,27 +1687,72 @@ body.is-home-welcome .container {
     min-width: 0;
     /* La marge réservée à la barre d'enregistrement vit ici, dans la grille : posée sur la page,
        elle laissait la colonne d'identité collante remonter d'autant en bas de page. */
-    padding: clamp(16px, 2.4vh, 28px) clamp(20px, 3vw, 48px) 110px;
+    --gb-pt: clamp(16px, 2.4vh, 28px);
+    --gb-px: clamp(20px, 3vw, 48px);
+    padding: var(--gb-pt) var(--gb-px) 110px;
 }
 .gen-tabs {
+    position: sticky;
+    top: var(--topbar-height);
+    z-index: 3;
     display: flex;
-    align-self: flex-start;
+    flex-direction: column;
+    align-self: stretch;
     scroll-margin-top: calc(var(--topbar-height) + 16px);
-    gap: 4px;
-    max-width: 100%;
-    box-sizing: border-box;
-    padding: 4px;
-    border-radius: var(--r-pill);
-    background: var(--surface);
+    margin: calc(-1 * var(--gb-pt)) calc(-1 * var(--gb-px)) 0;
+    padding: 0 var(--gb-px);
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+}
+.gen-tabs-names {
+    position: relative;
+    display: flex;
+    gap: 28px;
     overflow-x: auto;
     scrollbar-width: none;
 }
-.gen-tabs::-webkit-scrollbar {
+.gen-tabs-names::-webkit-scrollbar {
     display: none;
 }
-/* Conteneur des noms et barre segmentée (genTabsSync) : sans effet sur PC, cf. bloc mobile. */
-.gen-tabs-names {
-    display: contents;
+.gen-tabs-names::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: var(--ink-w, 0);
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: var(--accent);
+    transform: translateX(var(--ink-x, 0));
+    transition: transform .22s ease, width .22s ease;
+}
+.gen-tabs-more {
+    display: none;
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    min-height: 0;
+    margin: -15px 0 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: var(--panel);
+    color: var(--text-2);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
+}
+.gen-tabs-more svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+.gen-tabs-more.is-prev {
+    left: calc(var(--gb-px) - 15px);
+}
+.gen-tabs-more.is-next {
+    right: calc(var(--gb-px) - 15px);
 }
 .gen-tabs-bar {
     display: none;
@@ -1715,23 +1760,52 @@ body.is-home-welcome .container {
 .gen-tab {
     flex: none;
     width: auto;
-    min-height: 44px;
-    padding: 8px 12px;
+    min-height: 0;
+    padding: 16px 0 14px;
     border: 0;
-    border-radius: var(--r-pill);
-    background: transparent;
+    border-radius: 0;
+    background: none;
     color: var(--text-3);
-    font-size: var(--fs-3);
-    font-weight: 600;
+    font-size: var(--fs-4);
+    font-weight: 700;
     text-transform: none;
     white-space: nowrap;
 }
 .gen-tab:hover {
-    background: var(--surface-2);
+    background: none;
+    color: var(--text-2);
 }
 .gen-tab.selected {
-    background: var(--on-fill);
-    color: var(--on-fill-text);
+    background: none;
+    color: var(--text);
+}
+@media (min-width: 768px) {
+    .gen-tabs.can-l .gen-tabs-more.is-prev,
+    .gen-tabs.can-r .gen-tabs-more.is-next {
+        display: grid;
+    }
+    .gen-tabs.can-r .gen-tabs-names {
+        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent);
+        mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent);
+    }
+    .gen-tabs.can-l .gen-tabs-names {
+        -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent);
+        mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent);
+    }
+    .gen-tabs.can-l.can-r .gen-tabs-names {
+        -webkit-mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
+        mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .gen-tabs-names::after {
+        transition: none;
+    }
+}
+@media (min-width: 1000px) {
+    .gen-tabs {
+        margin-left: calc(4px - var(--gb-px));
+    }
 }
 .gen-grid {
     display: grid;
@@ -2165,6 +2239,11 @@ label.gen-row {
     margin-left: auto;
     text-align: right;
 }
+@media (min-width: 768px) {
+    .gen-pager {
+        display: none;
+    }
+}
 /* Titres de section : sur mobile seulement, où les onglets deviennent des sections empilées. */
 .gen-sec-head {
     display: none;
@@ -2175,7 +2254,8 @@ label.gen-row {
         min-height: 0;
     }
     .gen-body {
-        padding: 8px 48px 110px;
+        --gb-pt: 8px;
+        --gb-px: 48px;
     }
 }
 @media (max-width: 767px) {
@@ -2198,6 +2278,7 @@ label.gen-row {
         max-width: none;
         margin: 0 -16px 8px;
         padding: 6px 16px 8px;
+        border-bottom: 0;
         border-radius: 0;
         background: var(--bg);
         overflow: hidden;
@@ -2212,6 +2293,9 @@ label.gen-row {
         transition: max-height .22s ease, opacity .16s ease;
     }
     .gen-tabs-names::-webkit-scrollbar {
+        display: none;
+    }
+    .gen-tabs-names::after {
         display: none;
     }
     .gen-tabs-names.is-overflow {
@@ -2250,7 +2334,7 @@ label.gen-row {
         transition: height .22s ease, border-radius .22s ease;
     }
     .gen-tabs-bar i.on {
-        background: var(--on-fill);
+        background: var(--accent);
     }
     .gen-tabs.is-min {
         padding: 0;
@@ -2618,11 +2702,6 @@ button.fw-act:hover .fw-act-chev {
     flex-wrap: wrap;
     justify-content: flex-start;
     gap: 4px 10px;
-}
-@media (max-width: 767px) {
-    #fwPager {
-        display: none;
-    }
 }
 
 .accent-swatch {

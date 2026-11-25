@@ -1544,13 +1544,17 @@ function bindGenSections(page) {
 }
 
 // --- Onglets d'une page migrée (Général, Appareil, Connexion) -----------------------------
-// L'onglet précédent/suivant n'apparaît en pied de page que si l'onglet affiché dépasse de l'écran.
+// Mobile : l'onglet précédent/suivant n'apparaît en pied de page que si l'onglet affiché dépasse de l'écran.
 // Mobile : tous les onglets s'écrivent sur une ligne qui défile, au-dessus d'une barre segmentée
 // qui reste seule collée sous l'en-tête pendant le défilement (.is-min). Les onglets masqués
 // sortent de la barre.
 function genTabsVisible(strip) {
     // Affichage réel : un onglet peut sortir par son attribut ou une classe (type de connexion).
     return [...strip.querySelectorAll('.gen-tab')].filter(t => !t.hidden && getComputedStyle(t).display !== 'none');
+}
+function genTabsEdges(strip, names) {
+    strip.classList.toggle('can-l', names.scrollLeft > 1);
+    strip.classList.toggle('can-r', names.scrollLeft + names.clientWidth < names.scrollWidth - 1);
 }
 function genTabsSync(strip) {
     if (!strip) return;
@@ -1560,11 +1564,26 @@ function genTabsSync(strip) {
         names.className = 'gen-tabs-names';
         strip.querySelectorAll(':scope > .gen-tab').forEach(t => names.appendChild(t));
         strip.prepend(names);
+        ['Left', 'Right'].forEach((dir, i) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'gen-tabs-more ' + (i ? 'is-next' : 'is-prev');
+            b.tabIndex = -1;
+            b.setAttribute('aria-hidden', 'true');
+            b.innerHTML = `<svg><use href="#svg-arrow${dir}"></use></svg>`;
+            b.addEventListener('click', () => names.scrollBy({ left: (i ? 1 : -1) * names.clientWidth * 0.6, behavior: 'smooth' }));
+            strip.appendChild(b);
+        });
+        names.addEventListener('scroll', () => genTabsEdges(strip, names), { passive: true });
     }
     const tabs = genTabsVisible(strip), cur = tabs.findIndex(t => t.classList.contains('selected'));
     const sel = tabs[cur], over = names.scrollWidth > names.clientWidth + 1;
     names.classList.toggle('is-overflow', over);
-    if (sel && over) names.scrollLeft = sel.offsetLeft - names.offsetLeft - (names.clientWidth - sel.offsetWidth) / 2;
+    const x = sel ? sel.getBoundingClientRect().left - names.getBoundingClientRect().left + names.scrollLeft : 0;
+    if (sel && over) names.scrollLeft = x - (names.clientWidth - sel.offsetWidth) / 2;
+    names.style.setProperty('--ink-x', x + 'px');
+    names.style.setProperty('--ink-w', (sel ? sel.offsetWidth : 0) + 'px');
+    genTabsEdges(strip, names);
     let bar = strip.querySelector('.gen-tabs-bar');
     if (!bar) {
         bar = document.createElement('span');
@@ -1632,7 +1651,7 @@ function bindGenTabs(ids) {
     [ids.prev, ids.next].forEach(id => get(id).addEventListener('click', (e) => {
         show(parseInt(e.currentTarget.dataset.tab, 10));
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        strip.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+        window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
     }));
     // La hauteur de l'onglet change au chargement, à l'affichage de la page, à la rotation.
     if (window.ResizeObserver) new ResizeObserver(update).observe(panels);
