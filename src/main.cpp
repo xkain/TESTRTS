@@ -46,7 +46,9 @@ void setup() {
   recovery.beginDetection();
 
   Serial.println("Mounting File System...");
-  if (LittleFS.begin()) {
+  // formatOnFail : spiffs ne porte que des fichiers régénérables, et le Mode installation l'efface en
+  // bloc (Langues, Tout effacer). La Récupération ne reste forcée que si même le formatage échoue.
+  if (LittleFS.begin(true)) {
     Serial.println("File system mounted successfully");
   } else {
     // Le mode Récupération sert justement à réparer ce cas, et sa page est embarquée dans le

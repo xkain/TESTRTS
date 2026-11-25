@@ -2,9 +2,9 @@
 // SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 //
-// Mode installation (partition factory). Ne fait que : rejoindre le reseau avec les reglages NVS du
-// firmware principal, authentifier comme lui (jeton HMAC du namespace authkey), recevoir une image,
-// la verifier et l'ecrire dans app0. La NVS n'est jamais ecrite ici.
+// Mode installation (partition factory). Rejoint le reseau avec les reglages NVS du firmware
+// principal, authentifie comme lui (jeton HMAC du namespace authkey), recoit une image, la verifie
+// et l'ecrit dans app0. Seul /reset ecrit dans la NVS et efface les partitions cfg et spiffs.
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
@@ -14,6 +14,7 @@
 #include <Update.h>
 #include <esp_ota_ops.h>
 #include <esp_image_format.h>
+#include <nvs_flash.h>
 #include <mbedtls/md.h>
 #include <mbedtls/sha256.h>
 #include <mbedtls/version.h>
@@ -454,6 +455,84 @@ static void handleBootApp() {
   ESP.restart();
 }
 
+// ---------------------------------------------------------------- Reinitialisation
+
+// Sans code seulement apres les coupures ET depuis son propre point d'acces : sur le reseau de la
+// maison, un voisin pourrait sinon effacer la securite pendant l'attente.
+static bool physical() {
+  return cfg.byCycles && apOpen && server.client().localIP() == WiFi.softAPIP();
+}
+
+static void clearNs(const char *ns) {
+  Preferences p;
+  if(p.begin(ns, false)) { p.clear(); p.end(); }
+}
+
+static void removeKeys(const char *ns, const char *const *keys, size_t n) {
+  Preferences p;
+  if(!p.begin(ns, false)) return;
+  for(size_t i = 0; i < n; i++) if(p.isKey(keys[i])) p.remove(keys[i]);
+  p.end();
+}
+
+// cfg ne porte que shades.cfg et schedules.cfg, spiffs que des fichiers regenerables : le firmware
+// principal les reformate vides au demarrage suivant (formatOnFail).
+static void eraseData(const char *label) {
+  const esp_partition_t *part = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, label);
+  if(part) esp_partition_erase_range(part, 0, part->size);
+}
+
+static void handleReset() {
+  touch();
+  const bool phys = physical();
+  if(phys ? fromForeignSite() : !checkAuth()) { server.send(401, "application/json", "{\"status\":\"ERROR\",\"desc\":\"auth\"}"); return; }
+  auto on = [](const char *k) { return server.arg(k) == "1"; };
+  if(!phys && (on("security") || on("factory"))) {
+    server.send(403, "application/json", "{\"status\":\"ERROR\",\"desc\":\"cuts\"}");
+    return;
+  }
+  if(on("factory")) {
+    nvs_flash_erase();
+    nvs_flash_init();
+    eraseData("cfg");
+    eraseData("spiffs");
+  }
+  else {
+    if(on("network")) {
+      clearNs("WIFI");
+      clearNs("IP");
+      clearNs("ETH");
+      static const char *k[] = {"connType"};
+      removeKeys("CFG", k, 1);
+    }
+    if(on("security")) {
+      clearNs("SEC");
+      clearNs("authkey");
+    }
+    if(on("radio")) clearNs("CC1101");
+    if(on("system")) {
+      clearNs("MQTT");
+      clearNs("NTP");
+      static const char *k[] = {"hostname", "ssdpBroadcast", "checkForUpdate", "accentColor", "themeMode", "catColors",
+                                "swShowGpio", "onboardingDone", "pendingLang", "langCode", "language",
+                                "ledPin", "ledActiveLow", "ledAddr", "ledRfBlink"};
+      removeKeys("CFG", k, sizeof(k) / sizeof(k[0]));
+    }
+    if(on("shades")) {
+      clearNs("Shades");
+      eraseData("cfg");
+    }
+    if(on("langs")) eraseData("spiffs");
+    if(on("codes")) clearNs("ShadeCodes");
+  }
+  Serial.println("[INSTALL] reinitialisation faite");
+  server.send(200, "application/json", "{\"status\":\"SUCCESS\"}");
+  delay(500);
+  const esp_partition_t *app = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, nullptr);
+  if(mainApp.valid && app) esp_ota_set_boot_partition(app);
+  ESP.restart();
+}
+
 static void handleStatus() {
   touch();
   String json = "{\"install\":true,\"version\":\"" FW_VERSION "\",\"id\":\"";
@@ -470,6 +549,8 @@ static void handleStatus() {
   json += ESP.getChipModel();
   json += "\",\"security\":";
   json += cfg.secType;
+  json += ",\"cuts\":";
+  json += physical() ? "true" : "false";
   json += ",\"main\":{\"valid\":";
   json += mainApp.valid ? "true" : "false";
   json += ",\"version\":";
@@ -501,42 +582,50 @@ main{flex:1;display:grid;place-items:center;padding:24px 16px}
 .msg{margin:0;min-height:1.4em;font-size:.875em;font-weight:600;color:var(--t2)}.msg.bad{color:var(--bad)}
 .btns{display:flex;gap:10px}.btn{flex:1 1 0;min-height:44px;padding:0 16px;border:0;border-radius:12px;background:var(--s2);color:var(--text);font:inherit;font-size:.875em;font-weight:700;cursor:pointer}
 .btn.p{background:var(--a);color:var(--oa)}.help{align-self:center;font-size:.8125em;font-weight:600;color:var(--a)}.btn[disabled]{opacity:.5;cursor:default}[hidden]{display:none!important}
+.pick{display:flex;gap:14px;align-items:center;width:100%;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font:inherit;text-align:left;cursor:pointer}.pick:hover{border-color:var(--a)}.pick svg{width:28px;height:28px;flex:none;fill:var(--a)}
+.pick span,.row span{display:flex;flex-direction:column;gap:2px}.pick small,.row small{font-size:.8125em;color:var(--t2)}.pick b{font-size:.9375em}
+.rows{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:14px;background:var(--surface);overflow:hidden}
+.row{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;cursor:pointer}.row+.row{border-top:1px solid var(--border)}.row b{font-size:.9375em}
+.row input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--a);flex:none}.row.dgr b{color:var(--bad)}.row.dgr input{accent-color:var(--bad)}.row.off{opacity:.5;cursor:default}
+.back{align-self:flex-start;padding:0;border:0;background:none;font:inherit;font-size:.875em;font-weight:700;color:var(--a);cursor:pointer}
 @media(max-width:767px){body{flex-direction:column}.hero{width:auto;flex-direction:row;justify-content:flex-start;gap:14px;padding:16px;text-align:left;box-shadow:0 4px 0 color-mix(in srgb,var(--g) 70%,#000)}.medal{width:56px;height:56px;box-shadow:0 0 0 5px rgba(255,255,255,.22)}.medal svg{width:28px;height:28px}.hero .eb{display:none}main{place-items:start center}}
 </style></head><body>
 <svg width=0 height=0 style=position:absolute><defs><linearGradient id=ls gradientUnits=userSpaceOnUse x1=15.5 x2=35.2><stop offset=0 stop-color=#3a9cf0 /><stop offset=1 stop-color=#36b4ff /></linearGradient></defs>
 <symbol id=lg viewBox="0 0 36 36"><path fill=#1d7be6 d="M0 32.5V15.6q0-1.5 1.2-2.5L13.6 3l5.5 6L8 19.9v12.6q0 1.5-1.5 1.5h-5Q0 34 0 32.5z"/><path fill=#145bb9 d="M0 23.4l8-3.5V34H1.5Q0 34 0 32.5z"/><path fill=#30a7fa d="M13.6 3q1.2-1 2.6-1h3.9q1.3 0 2.3.8L36 14.2v6.7L19.1 9z"/><path fill=#165eaf d="M13.6 3l5.5 6-1.2 1.2-5.6-6.2z"/><g fill=url(#ls)><path d="M16 17h12.5l3 2H16z"/><rect x=16 y=21 width=19 height=2 rx=.25 /><rect x=16 y=25 width=19 height=2 rx=.25 /><rect x=16 y=29 width=19 height=2 rx=.25 /></g><g fill=#3a9df1><rect x=32 y=21 width=3 height=2 rx=.25 /><rect x=32 y=25 width=3 height=2 rx=.25 /><rect x=32 y=29 width=3 height=2 rx=.25 /></g></symbol></svg>
 <aside class=hero><div class=medal><svg><use href=#lg /></svg></div><div><p class=eb>ESPSomfy-RTS</p><h1 data-t=title></h1><p id=host></p></div></aside>
-<main><div class=card><p class=lead data-t=lead></p><div class=st id=st><i></i><span id=stt></span></div>
-<div class=fid><span data-t=fid></span><code>ESPSomfyRTS_<i data-t=ver></i>_ota_<b id=dev></b>.bin</code></div>
-<div class=f id=fu hidden><label data-t=user></label><div class=box><input id=u autocomplete=username></div></div>
-<div class=f id=fp hidden><label id=lp></label><div class=box><input id=p type=password autocomplete=current-password></div></div>
-<label class=drop id=dz><svg viewBox="0 0 24 24"><path d="M12 21a1 1 0 0 1-1-1v-9.6l-3.3 3.3a1 1 0 0 1-1.4-1.4l5-5a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1-1.4 1.4L13 10.4V20a1 1 0 0 1-1 1zM5 3h14a1 1 0 1 1 0 2H5a1 1 0 0 1 0-2z"/></svg><b id=fn data-t=pick></b><span data-t=drop></span><input id=f type=file accept=.bin hidden></label>
-<div class=bar id=br><i id=pg></i></div><p class=msg id=m></p>
-<div class=btns><button class=btn id=bb data-t=back disabled></button><button class="btn p" id=bi data-t=install></button></div><a class=help href="https://xkain.github.io/ESPSomfy-RTS/guide/v3/appareil/systeme/mode-installation/" target=_blank rel=noopener data-t=help></a></div></main>
+<main><div class=card><button class=back id=bk data-s=fr data-t=back2></button><p class=lead data-s=h data-t=q></p><p class=lead data-s=f data-t=lead></p><div class=st id=st data-s=hf><i></i><span id=stt></span></div><button class=pick data-s=h onclick="show('f')"><svg viewBox="0 0 24 24"><path d="M12 21a1 1 0 0 1-1-1v-9.6l-3.3 3.3a1 1 0 0 1-1.4-1.4l5-5a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1-1.4 1.4L13 10.4V20a1 1 0 0 1-1 1zM5 3h14a1 1 0 1 1 0 2H5a1 1 0 0 1 0-2z"/></svg><span><b data-t=pfw></b><small data-t=pfwd></small></span></button><button class=pick data-s=h onclick="show('r')"><svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-7.4 5 1 1 0 1 1 1.8.8A6 6 0 1 0 12 6v2.2a.5.5 0 0 1-.8.4L7.6 6a.5.5 0 0 1 0-.8l3.6-2.6a.5.5 0 0 1 .8.4z"/></svg><span><b data-t=prs></b><small data-t=prsd></small></span></button><button class=btn id=bb data-s=h data-t=back disabled></button><div class=fid data-s=f><span data-t=fid></span><code>ESPSomfyRTS_<i data-t=ver></i>_ota_<b id=dev></b>.bin</code></div><div class=rows id=rows data-s=r></div><p class=lead data-s=r data-t=note></p><div class=f id=fu data-s=fr hidden><label data-t=user></label><div class=box><input id=u autocomplete=username></div></div><div class=f id=fp data-s=fr hidden><label id=lp></label><div class=box><input id=p type=password autocomplete=current-password></div></div><label class=drop id=dz data-s=f><svg viewBox="0 0 24 24"><path d="M12 21a1 1 0 0 1-1-1v-9.6l-3.3 3.3a1 1 0 0 1-1.4-1.4l5-5a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1-1.4 1.4L13 10.4V20a1 1 0 0 1-1 1zM5 3h14a1 1 0 1 1 0 2H5a1 1 0 0 1 0-2z"/></svg><b id=fn data-t=pick></b><span data-t=drop></span><input id=f type=file accept=.bin hidden></label><div class=bar id=br data-s=f><i id=pg></i></div><p class=msg id=m data-s=fr></p><div class=btns data-s=f><button class="btn p" id=bi data-t=go></button></div><div class=btns data-s=r><button class="btn p" id=bz data-t=reset></button></div><a class=help href="https://xkain.github.io/ESPSomfy-RTS/guide/v3/appareil/systeme/mode-installation/" target=_blank rel=noopener data-t=help></a></div></main>
 <script>
-const L={fr:{title:'Mode installation',lead:"Choisissez un fichier de firmware ESPSomfy-RTS pour l'installer.",ok:'Firmware installé : ',fid:'Le fichier qui correspond à votre appareil',ver:'[version]',none:'Aucun firmware valide',none2:' · installez-en un pour reprendre',user:'Utilisateur',pin:'Code PIN',pass:'Mot de passe',pick:'Choisir un fichier de firmware',drop:'ou le déposer ici',back:'Revenir au firmware',install:'Installer',nofile:"Choisissez d'abord un fichier.",send:'Envoi…',done:"Installé. Redémarrage de l'appareil…",going:'Retour au firmware…',auth:'Code incorrect ou accès refusé.',marker:"Ce fichier n'est pas un firmware ESPSomfy-RTS pour cet appareil.",header:'Ce fichier est fait pour une autre puce.',sha256:'Le fichier est abîmé.',noapp:'Aucun firmware valide à relancer.',install:'Ce fichier est un mode installation, pas un firmware.',fail:"L'installation a échoué.",help:'Aide sur le mode installation'},
-en:{title:'Install mode',lead:'Choose an ESPSomfy-RTS firmware file to install it.',ok:'Installed firmware: ',fid:'The file that matches your device',ver:'[version]',none:'No valid firmware',none2:' · install one to resume',user:'Username',pin:'PIN code',pass:'Password',pick:'Choose a firmware file',drop:'or drop it here',back:'Back to firmware',install:'Install',nofile:'Choose a file first.',send:'Uploading…',done:'Installed. The device is restarting…',going:'Returning to the firmware…',auth:'Wrong code or access denied.',marker:'This file is not an ESPSomfy-RTS firmware for this device.',header:'This file is built for another chip.',sha256:'The file is damaged.',noapp:'No valid firmware to start.',install:'This file is an install mode, not a firmware.',fail:'Installation failed.',help:'Help about install mode'}};
-const $=i=>document.getElementById(i);let T=L.en,sec=0,file=null,busy=false;
-const say=(k,bad,x)=>{$('m').textContent=(T[k]||k)+(x?' ('+x+')':'');$('m').className='msg'+(bad?' bad':'')};
+const L={fr:{title:'Mode installation',lead:"Choisissez un fichier de firmware ESPSomfy-RTS pour l'installer.",ok:'Firmware installé : ',fid:'Le fichier qui correspond à votre appareil',ver:'[version]',none:'Aucun firmware valide',none2:' · installez-en un pour reprendre',user:'Utilisateur',pin:'Code PIN',pass:'Mot de passe',pick:'Choisir un fichier de firmware',drop:'ou le déposer ici',back:'Revenir au firmware',go:'Installer',nofile:"Choisissez d'abord un fichier.",send:'Envoi…',done:"Installé. Redémarrage de l'appareil…",going:'Retour au firmware…',auth:'Code incorrect ou accès refusé.',marker:"Ce fichier n'est pas un firmware ESPSomfy-RTS pour cet appareil.",header:'Ce fichier est fait pour une autre puce.',sha256:'Le fichier est abîmé.',noapp:'Aucun firmware valide à relancer.',install:'Ce fichier est un mode installation, pas un firmware.',fail:"L'installation a échoué.",help:'Aide sur le mode installation',q:'Que voulez-vous faire ?',pfw:'Installer un firmware',pfwd:'Remplacer ou réparer le firmware principal avec un fichier .bin.',prs:'Réinitialiser',prsd:"Effacer le réseau, la radio, les équipements… ou tout.",back2:'‹ Retour au choix',reset:'Réinitialiser et redémarrer',note:"Équipements, groupes et plannings ne reviennent qu'avec une sauvegarde.",lock:'3 coupures de courant nécessaires',nosel:'Cochez au moins un élément.',sure:'Effacer définitivement les éléments cochés ?',rdone:"Réinitialisé. Redémarrage de l'appareil…",cuts:'Sécurité et Tout effacer exigent 3 coupures de courant.',
+network:['Réseau','Wi-Fi, adresse IP, Ethernet.'],security:['Sécurité','Code PIN, identifiant et mot de passe.'],radio:['Radio','Module, broches, fréquence, puissance.'],system:['Réglages système',"MQTT, heure, nom et préférences de l'appareil."],shades:['Équipements, groupes et pièces','Avec les plannings, répéteurs et télécommandes.'],langs:['Langues téléchargées',"La langue d'origine reste."],codes:['Codes tournants Somfy',"Les moteurs appairés ignoreront l'appareil jusqu'à un nouvel appairage."],factory:['Tout effacer',"Retour à l'état d'usine, codes tournants compris."]},
+en:{title:'Install mode',lead:'Choose an ESPSomfy-RTS firmware file to install it.',ok:'Installed firmware: ',fid:'The file that matches your device',ver:'[version]',none:'No valid firmware',none2:' · install one to resume',user:'Username',pin:'PIN code',pass:'Password',pick:'Choose a firmware file',drop:'or drop it here',back:'Back to firmware',go:'Install',nofile:'Choose a file first.',send:'Uploading…',done:'Installed. The device is restarting…',going:'Returning to the firmware…',auth:'Wrong code or access denied.',marker:'This file is not an ESPSomfy-RTS firmware for this device.',header:'This file is built for another chip.',sha256:'The file is damaged.',noapp:'No valid firmware to start.',install:'This file is an install mode, not a firmware.',fail:'Installation failed.',help:'Help about install mode',q:'What do you want to do?',pfw:'Install a firmware',pfwd:'Replace or repair the main firmware with a .bin file.',prs:'Reset',prsd:'Erase the network, radio, devices… or everything.',back2:'‹ Back to the choice',reset:'Reset and restart',note:'Devices, groups and schedules only come back from a backup.',lock:'3 power cuts required',nosel:'Tick at least one item.',sure:'Permanently erase the ticked items?',rdone:'Reset done. The device is restarting…',cuts:'Security and Erase everything require 3 power cuts.',
+network:['Network','Wi-Fi, IP address, Ethernet.'],security:['Security','PIN code, username and password.'],radio:['Radio','Module, pins, frequency, power.'],system:['System settings','MQTT, time, device name and preferences.'],shades:['Devices, groups and rooms','With schedules, repeaters and remotes.'],langs:['Downloaded languages','The original language stays.'],codes:['Somfy rolling codes','Paired motors will ignore the device until they are paired again.'],factory:['Erase everything','Back to factory state, rolling codes included.']}};
+const $=i=>document.getElementById(i);let T=L.en,sec=0,cuts=false,file=null,busy=false,P='h';
+const show=v=>{P=v;document.querySelectorAll('[data-s]').forEach(e=>e.hidden=!e.dataset.s.includes(v));auth();say('')};
+const auth=()=>{const a=sec&&!(P=='r'&&cuts);$('fu').hidden=!a||sec!=2||P=='h';$('fp').hidden=!a||P=='h'};
+const K=['network','security','radio','system','shades','langs','codes','factory'],PH={security:1,factory:1};
+const say=(k,bad,x)=>{$('m').textContent=(T[k]||k)+(x?' ('+x+')':'');$('m').className='msg'+(bad?' bad':'')};show('h');
 fetch('/install').then(r=>r.json()).then(j=>{
  const n=(j.lang||navigator.language||'en').slice(0,2);T=L[n]||L.en;document.documentElement.lang=L[n]?n:'en';
  document.querySelectorAll('[data-t]').forEach(e=>e.textContent=T[e.dataset.t]);document.title='ESPSomfy-RTS · '+T.title;
- $('host').textContent=(j.host?j.host+' · ':'')+location.host;sec=j.security;
- $('fu').hidden=sec!=2;$('fp').hidden=!sec;$('lp').textContent=sec==2?T.pass:T.pin;
+ $('host').textContent=(j.host?j.host+' · ':'')+location.host;sec=j.security;cuts=j.cuts;$('lp').textContent=sec==2?T.pass:T.pin;auth();
+ $('rows').innerHTML=K.map(k=>{const off=PH[k]&&!cuts;return`<label class="row${k=='codes'||k=='factory'?' dgr':''}${off?' off':''}"><input type=checkbox id=r_${k}${off?' disabled':''}><span><b>${T[k][0]}</b><small>${off?T.lock:T[k][1]}</small></span></label>`}).join('');
  $('st').classList.toggle('bad',!j.main.valid);$('stt').textContent=j.main.valid?T.ok+(j.main.version||'?'):T.none+T.none2;$('dev').textContent=j.board||{'ESP32-C3':'esp32c3','ESP32-S2':'esp32s2','ESP32-S3':'esp32s3','ESP32-C6':'esp32c6'}[j.chip]||'esp32';$('bb').disabled=!j.main.valid});
 const pickf=x=>{if(x){file=x;$('fn').textContent=x.name}};
 $('f').onchange=e=>pickf(e.target.files[0]);
 ['dragover','dragenter'].forEach(v=>$('dz').addEventListener(v,e=>{e.preventDefault();$('dz').classList.add('ov')}));
 ['dragleave','drop'].forEach(v=>$('dz').addEventListener(v,()=>$('dz').classList.remove('ov')));
 $('dz').addEventListener('drop',e=>{e.preventDefault();pickf(e.dataTransfer.files[0])});
-async function key(){if(!sec)return'';const l=await fetch('/login',{method:'POST',body:new URLSearchParams(sec==2?{username:$('u').value,password:$('p').value}:{pin:$('p').value})});if(!l.ok)throw'auth';return(await l.json()).apiKey||''}
-function lock(b){busy=b;$('br').classList.toggle('run',b);$('bi').disabled=b;$('bb').disabled=b||$('st').classList.contains('bad')}
+async function key(){if(!sec||(P=='r'&&cuts))return'';const l=await fetch('/login',{method:'POST',body:new URLSearchParams(sec==2?{username:$('u').value,password:$('p').value}:{pin:$('p').value})});if(!l.ok)throw'auth';return(await l.json()).apiKey||''}
+function lock(b){busy=b;$('br').classList.toggle('run',b);$('bi').disabled=$('bz').disabled=$('bk').disabled=b;$('bb').disabled=b||$('st').classList.contains('bad')}
 function home(q){setTimeout(function w(){fetch('/loginContext').then(r=>r.ok?location.replace('/'+(q||'')):setTimeout(w,2000)).catch(()=>setTimeout(w,2000))},4000)}
 $('bi').onclick=async()=>{if(busy)return;if(!file)return say('nofile',1);lock(true);say('send');
  try{const k=await key();const d=new FormData();d.append('f',file);const x=new XMLHttpRequest();x.open('POST','/updateFirmware');x.setRequestHeader('apikey',k);
  x.upload.onprogress=e=>{if(e.lengthComputable)$('pg').style.width=(e.loaded/e.total*100)+'%'};
  x.onload=()=>{if(x.status==200){say('done');home('?installed')}else{let c='';try{c=JSON.parse(x.responseText).desc}catch(e){}lock(false);$('pg').style.width=0;say(L.en[c]?c:'fail',1,L.en[c]?'':c||x.status);fetch('/install').then(r=>r.json()).then(j=>{$('st').classList.toggle('bad',!j.main.valid);if(!j.main.valid)$('stt').textContent=T.none+T.none2;lock(false)})}};
  x.onerror=()=>{lock(false);say('fail',1)};x.send(d)}catch(e){lock(false);say(e=='auth'?'auth':'fail',1)}};
+$('bk').onclick=()=>busy||show('h');
+$('bz').onclick=async()=>{if(busy)return;const b=new URLSearchParams();K.forEach(k=>{if($('r_'+k).checked)b.append(k,1)});if(![...b].length)return say('nosel',1);if(!confirm(T.sure))return;lock(true);
+ try{const r=await fetch('/reset',{method:'POST',headers:{apikey:await key()},body:b});if(r.ok){say('rdone');$('st').classList.contains('bad')?setTimeout(()=>location.reload(),8000):home()}else{lock(false);say(r.status==401?'auth':r.status==403?'cuts':'fail',1)}}catch(e){lock(false);say(e=='auth'?'auth':'fail',1)}};
 $('bb').onclick=async()=>{if(busy)return;lock(true);say('going');try{const r=await fetch('/bootApp',{method:'POST',headers:{apikey:await key()}});if(r.ok)home();else{lock(false);say(r.status==401?'auth':'noapp',1)}}catch(e){lock(false);say(e=='auth'?'auth':'fail',1)}};
 </script></body></html>)HTML";
 
@@ -561,6 +650,7 @@ void setup() {
   server.on("/login", HTTP_POST, handleLogin);
   server.on("/updateFirmware", HTTP_POST, handleUploadDone, handleUploadChunk);
   server.on("/bootApp", HTTP_POST, handleBootApp);
+  server.on("/reset", HTTP_POST, handleReset);
   server.begin();
 }
 
