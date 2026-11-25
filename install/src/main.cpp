@@ -176,16 +176,14 @@ static bool connectEthernet() {
 }
 #endif
 
-// Ouvert sans mot de passe seulement apres les 6 coupures : comme pour le mode Recuperation, le
-// garde-fou est physique et temporel (IDLE_TIMEOUT_MS). Sinon, la regle du principal (>= 8 car.).
-static void openAP(bool open) {
+// Apres les 6 coupures : ESPSomfy-INSTALL, ouvert, comme le mode Recuperation. Sinon le point d'acces
+// que le principal ouvre sans reseau, nom et mot de passe compris (cf. NetManager::openSoftAP) :
+// celui qui pilotait l'appareil par la reste connecte pendant l'envoi.
+static void openAP(bool byCycles) {
   WiFi.mode(netUp && !ethUp ? WIFI_AP_STA : WIFI_AP);
-  const char *pass = open ? nullptr : (strlen(cfg.apPassword) >= 8 ? cfg.apPassword : nullptr);
-  if(!open && !pass) {
-    Serial.println("[INSTALL] pas de mot de passe de point d'acces : aucun point d'acces ouvert");
-    return;
-  }
-  apOpen = WiFi.softAP(AP_SSID, pass);
+  size_t n = strlen(cfg.apPassword);
+  if(byCycles) apOpen = WiFi.softAP(AP_SSID);
+  else apOpen = WiFi.softAP(cfg.hostname[0] ? cfg.hostname : "ESPSomfy RTS", n >= 8 && n < 64 ? cfg.apPassword : nullptr);
   if(apOpen) dns.start(53, "*", WiFi.softAPIP());
 }
 
@@ -569,7 +567,7 @@ void setup() {
 // Retour seul au firmware installe apres IDLE_TIMEOUT_MS sans client, s'il est intact : une entree
 // involontaire (bouton, coupures accidentelles) ne laisse pas l'appareil hors service.
 static void loopIdle() {
-  if(apOpen && WiFi.softAPgetStationNum() > 0) touch();
+  if(apOpen && cfg.byCycles && WiFi.softAPgetStationNum() > 0) touch();
   if(!mainApp.valid || (uint32_t)(millis() - lastSeen) < IDLE_TIMEOUT_MS) return;
   const esp_partition_t *app = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, nullptr);
   if(app && esp_ota_set_boot_partition(app) == ESP_OK) {
