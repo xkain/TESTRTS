@@ -10,13 +10,13 @@ la version du firmware.
     2. **Le mode Récupération**&nbsp;: trois coupures d'alimentation rapides, chacune
        dans les 5 secondes qui suivent le démarrage précédent. Il répare un appareil
        dont l'interface pose problème sans dépendre de ce qui est cassé, et vous laisse choisir
-       ce qu'il faut effacer. Voir [Mode Récupération](../v3/recuperation.md).
+       ce qu'il faut effacer. Voir [Mode Récupération](../v3/appareil/systeme/recuperation.md).
     3. **Les journaux du port série**&nbsp;: quand plus rien ne répond par le réseau,
        le câble USB reste le seul témoin. Voir
        [Journaux du port série](../outils/journaux-port-serie.md).
     4. **Un nouveau flash**, avec l'[Installateur web](../outils/installateur-web.md) (ou, s'il ne
        fonctionne pas, l'[installateur de secours](../outils/installateur-esphome.md)),
-       puis la [restauration d'une sauvegarde](../v3/firmware/restaurer.md).
+       puis la [restauration d'une sauvegarde](../v3/appareil/systeme/restaurer.md).
 
 === "v2.x"
 

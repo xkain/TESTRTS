@@ -79,7 +79,7 @@ L'écran d'accueil de l'interface : le parcours de démarrage tant qu'elle est v
 
     La barre du haut, le menu, et le parcours en trois étapes qu'affiche l'interface tant qu'elle est vide.
 
--   :material-view-dashboard-outline:{ .lg .middle } **[Tableau de bord](tableau-de-bord.md)**
+-   :material-view-dashboard-outline:{ .lg .middle } **[Tableau de bord](tableau-de-bord/index.md)**
 
     ---
 
@@ -93,31 +93,31 @@ Relier l'appareil à votre réseau, en Wi-Fi ou en Ethernet : c'est la première
 
 <div class="grid cards" markdown>
 
--   :material-lan-connect:{ .lg .middle } **[Connexion réseau](reseau/index.md)**
+-   :material-lan-connect:{ .lg .middle } **[Connexion réseau](appareil/reseau/index.md)**
 
     ---
 
     Wi-Fi ou Ethernet, réseau caché, itinérance, repli vers le Wi-Fi.
 
--   :material-wizard-hat:{ .lg .middle } **[Assistant de connexion](reseau/assistant-de-connexion.md)**
+-   :material-wizard-hat:{ .lg .middle } **[Assistant de connexion](appareil/reseau/assistant-de-connexion.md)**
 
     ---
 
     Le parcours guidé, depuis le point d'accès de secours.
 
--   :material-ip-network-outline:{ .lg .middle } **[DHCP et IP statique](reseau/dhcp-ip-statique.md)**
+-   :material-ip-network-outline:{ .lg .middle } **[DHCP et IP statique](appareil/reseau/dhcp-ip-statique.md)**
 
     ---
 
     Laisser votre box attribuer l'adresse, ou la fixer.
 
--   :material-wifi-lock:{ .lg .middle } **[Mot de passe du point d'accès](reseau/mot-de-passe-point-d-acces.md)**
+-   :material-wifi-lock:{ .lg .middle } **[Mot de passe du point d'accès](appareil/reseau/mot-de-passe-point-d-acces.md)**
 
     ---
 
     Protéger le réseau de secours que l'appareil ouvre quand il n'a plus de réseau.
 
--   :material-server-network:{ .lg .middle } **[Paramètres MQTT](reseau/parametres-mqtt.md)**
+-   :material-server-network:{ .lg .middle } **[Paramètres MQTT](domotique/mqtt/index.md)**
 
     ---
 
@@ -131,31 +131,31 @@ Activer la radio et vérifier que vos télécommandes sont reconnues : si toutes
 
 <div class="grid cards" markdown>
 
--   :material-radio-tower:{ .lg .middle } **[Configurer la radio](radio/index.md)**
+-   :material-radio-tower:{ .lg .middle } **[Configurer la radio](appareil/radio/index.md)**
 
     ---
 
     Activer la radio et régler ses paramètres.
 
--   :material-remote:{ .lg .middle } **[Test des télécommandes](radio/assistant-de-reglages.md)**
+-   :material-remote:{ .lg .middle } **[Test des télécommandes](appareil/radio/assistant-de-reglages.md)**
 
     ---
 
     Vérifier que l'appareil entend vos télécommandes.
 
--   :material-sine-wave:{ .lg .middle } **[Balayage de fréquence](radio/balayage-frequence.md)**
+-   :material-sine-wave:{ .lg .middle } **[Balayage de fréquence](appareil/radio/balayage-frequence.md)**
 
     ---
 
     Retrouver la fréquence exacte de vos télécommandes.
 
--   :material-text-box-search-outline:{ .lg .middle } **[Journal radio](radio/journal.md)**
+-   :material-text-box-search-outline:{ .lg .middle } **[Journal radio](appareil/radio/journal.md)**
 
     ---
 
     Les trames reçues et émises, en direct.
 
--   :material-lifebuoy:{ .lg .middle } **[Dépannage radio](radio/depannage.md)**
+-   :material-lifebuoy:{ .lg .middle } **[Dépannage radio](appareil/radio/depannage.md)**
 
     ---
 
@@ -167,38 +167,38 @@ Activer la radio et vérifier que vos télécommandes sont reconnues : si toutes
 
 <div class="grid cards" markdown>
 
--   :material-window-shutter:{ .lg .middle } **[Équipements](somfy/equipements/index.md)**
+-   :material-window-shutter:{ .lg .middle } **[Équipements](habitation/equipements/index.md)**
 
     ---
 
-    Ajouter volets, stores, portes de garage et portails&nbsp;: [Ajouter un équipement](somfy/equipements/mise-en-service.md) (la mise en service guidée),
+    Ajouter volets, stores, portes de garage et portails&nbsp;: [Ajouter un équipement](habitation/equipements/mise-en-service.md) (la mise en service guidée),
     l'appairage, les temps de course, les télécommandes et la plannification.
 
--   :material-group:{ .lg .middle } **[Groupes](somfy/groupes/index.md)**
+-   :material-group:{ .lg .middle } **[Groupes](habitation/groupes/index.md)**
 
     ---
 
     Centraliser plusieurs équipements sous une même commande.
 
--   :material-door-open:{ .lg .middle } **[Pièces](somfy/pieces.md)**
+-   :material-door-open:{ .lg .middle } **[Pièces](habitation/pieces.md)**
 
     ---
 
     Organiser la maison par zones.
 
--   :material-repeat:{ .lg .middle } **[Répéteurs](somfy/repeteurs.md)**
+-   :material-repeat:{ .lg .middle } **[Répéteurs](appareil/radio/repeteur.md)**
 
     ---
 
     Étendre la portée du signal radio.
 
--   :material-remote-tv:{ .lg .middle } **[Télécommandes écoutées](somfy/telecommandes-ecoutees.md)**
+-   :material-remote-tv:{ .lg .middle } **[Télécommandes écoutées](domotique/declencheurs.md)**
 
     ---
 
     Transformer une télécommande physique en bouton d'automatisation, via MQTT.
 
--   :material-remote:{ .lg .middle } **[Télécommande virtuelle](somfy/telecommande-virtuelle.md)**
+-   :material-remote:{ .lg .middle } **[Télécommande virtuelle](habitation/equipements/telecommande-virtuelle.md)**
 
     ---
 
@@ -210,13 +210,13 @@ Activer la radio et vérifier que vos télécommandes sont reconnues : si toutes
 
 <div class="grid cards" markdown>
 
--   :material-cog-outline:{ .lg .middle } **[Général](general/index.md)**
+-   :material-cog-outline:{ .lg .middle } **[Général](appareil/preferences/index.md)**
 
     ---
 
     Identité et services, langue et région, apparence, sécurité et mises à jour.
 
--   :material-memory:{ .lg .middle } **[Firmware](firmware/index.md)**
+-   :material-memory:{ .lg .middle } **[Firmware](appareil/systeme/index.md)**
 
     ---
 
@@ -228,13 +228,13 @@ Activer la radio et vérifier que vos télécommandes sont reconnues : si toutes
 
 <div class="grid cards" markdown>
 
--   :material-connection:{ .lg .middle } **[Options d'intégration](integrations/index.md)**
+-   :material-connection:{ .lg .middle } **[Options d'intégration](domotique/index.md)**
 
     ---
 
     API REST, MQTT et Home Assistant&nbsp;: vue d'ensemble.
 
--   :material-home-assistant:{ .lg .middle } **[Intégration Home Assistant](integrations/home-assistant/index.md)**
+-   :material-home-assistant:{ .lg .middle } **[Intégration Home Assistant](domotique/home-assistant/index.md)**
 
     ---
 
@@ -247,7 +247,7 @@ Activer la radio et vérifier que vos télécommandes sont reconnues : si toutes
 
 <div class="grid cards" markdown>
 
--   :material-lifebuoy:{ .lg .middle } **[Mode Récupération](recuperation.md)**
+-   :material-lifebuoy:{ .lg .middle } **[Mode Récupération](appareil/systeme/recuperation.md)**
 
     ---
 
@@ -266,7 +266,7 @@ Activer la radio et vérifier que vos télécommandes sont reconnues : si toutes
 
     **En second recours**, avec un moniteur série classique.
 
--   :material-backup-restore:{ .lg .middle } **[Restaurer le système](firmware/restaurer.md)**
+-   :material-backup-restore:{ .lg .middle } **[Restaurer le système](appareil/systeme/restaurer.md)**
 
     ---
 

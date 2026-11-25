@@ -82,7 +82,7 @@ Les deux éditions sortent **entièrement préconfigurées et testées** avant e
 - Édition Ethernet & Wi-Fi : vous n'avez plus besoin de choisir le type de carte (GPIO) pour activer la connexion Ethernet.
 - Voyant LED d'état intégré : bleu pour l'édition Wi-Fi - vert pour l'édition Ethernet & Wi-Fi
 
-Vous pouvez directement passer à la [configuration de vos équipements](../somfy/equipements/index.md).
+Vous pouvez directement passer à la [configuration de vos équipements](../habitation/equipements/index.md).
 
 ### 💡 Connexion réseau pour l'édition Ethernet & Wi-Fi
 
@@ -92,7 +92,7 @@ Le dernier est recommandé : en cas de déconnexion ou de problème sur le câbl
 
 ### En cas de besoin de remise à zéro
 
-Le boîtier dispose d'un [mode Récupération](../recuperation.md)) dédié : trois
+Le boîtier dispose d'un [mode Récupération](../appareil/systeme/recuperation.md)) dédié : trois
 coupures d'alimentation volontaires ouvrent un point d'accès de réparation indépendant, où
 vous choisissez précisément quoi réinitialiser (réseau, équipements, codes tournants,
 jusqu'à la réinitialisation d'usine complète) — rien n'est effacé sans confirmation. Même

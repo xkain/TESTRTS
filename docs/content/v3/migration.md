@@ -18,7 +18,7 @@ La v3 apporte une interface repensée, simplifiée et avec bon nombres de foncti
 !!! warning "Ce n'est pas une mise à jour en un clic"
 
     Ce changement de version majeure n'est **pas** proposé par la page
-    [Mises à jour du firmware](firmware/mises-a-jour.md)&nbsp;: la structure des
+    [Mises à jour du firmware](appareil/systeme/mises-a-jour.md)&nbsp;: la structure des
     partitions a changé entre les deux. La migration passe par un **flash USB
     complet**, avec l'[Installateur web](../outils/installateur-web.md), qui
     **efface toute la mémoire** de l'appareil. D'où la sauvegarde d'abord.
@@ -31,7 +31,7 @@ Il vous faut&nbsp;:
 
 ## 1. Sauvegarder (avant tout)
 
-Depuis l'interface de l'appareil, **Système → Firmware → Sauvegarder** produit
+Depuis l'interface de l'appareil, **Appareil › Système › Sauvegarde**, le bouton `Sauvegarder` produit
 un fichier `.backup`. Gardez-le précieusement&nbsp;: il contient vos équipements,
 groupes, pièces, plannings, répéteurs et réglages, **et les codes tournants**,
 sans lesquels vos moteurs cesseraient de répondre.
@@ -63,14 +63,14 @@ secours](../outils/installateur-esphome.md) écrit la même image avec un outil 
 
 À la fin, l'appareil redémarre. N'ayant plus d'identifiants Wi-Fi, il ouvre son
 **point d'accès de secours** : connectez-vous-y pour lancer l'assistant de
-premier démarrage (voir [Assistant de connexion](reseau/assistant-de-connexion.md)).
+premier démarrage (voir [Assistant de connexion](appareil/reseau/assistant-de-connexion.md)).
 
 ## 3. Restaurer la sauvegarde
 
-Une fois l'appareil de nouveau joignable, ouvrez **Système → Firmware →
-Restaurer le système** et envoyez votre fichier `.backup` (moins de 32&nbsp;Ko).
+Une fois l'appareil de nouveau joignable, ouvrez **Appareil › Système › Sauvegarde**,
+cliquez sur `Restaurer une sauvegarde` et envoyez votre fichier `.backup` (moins de 32&nbsp;Ko).
 Le détail des cases à cocher est sur la page
-[Restaurer le système](firmware/restaurer.md).
+[Restaurer le système](appareil/systeme/restaurer.md).
 
 - Cochez ce que vous voulez retrouver&nbsp;: équipements, réseau, MQTT, radio…
 - L'appareil **redémarre** une seconde après la fin du transfert.
@@ -81,13 +81,13 @@ Le détail des cases à cocher est sur la page
 
     Les réglages de broches radio d'un fichier plus ancien ne sont pas
     restaurés correctement&nbsp;: vérifiez-les dans
-    [Configurer la radio](radio/index.md).
+    [Configurer la radio](appareil/radio/index.md).
 
 ## Après la migration
 
 - **Vérifiez vos équipements** dans l'interface&nbsp;: positions, noms, etc.
 - Si vous utilisez **Home Assistant**, consultez la page de l'
-  [intégration dédiée](integrations/home-assistant/index.md) et son
+  [intégration dédiée](domotique/home-assistant/index.md) et son
   [installation par le Marketplace (anciennement HACS)](../commun/home-assistant.md#installation-via-le-marketplace-anciennement-hacs).
 - En cas de souci, [l'aide](../aide/index.md) rassemble les pages de diagnostic.
 

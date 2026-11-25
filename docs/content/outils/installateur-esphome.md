@@ -106,5 +106,5 @@ v2, voir le [guide d'installation v2.x](../v2/installation/guide.md).
 L'appareil sort sans réseau : il ouvre **son propre point d'accès Wi-Fi**, pour lancer
 l'assistant de premier démarrage. La suite est décrite dans
 [Après l'installation](installateur-web.md#apres) de l'installateur web, puis, selon votre
-lignée, dans la documentation [v3.x](../v3/reseau/assistant-de-connexion.md) ou
+lignée, dans la documentation [v3.x](../v3/appareil/reseau/assistant-de-connexion.md) ou
 [v2.x](../v2/configuration/connexion.md).

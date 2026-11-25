@@ -6,7 +6,7 @@ fonctionner.
 
 Pour que l'interface affiche la **bonne position** quand vous utilisez un
 bouton réel, l'appareil doit « écouter » vos télécommandes&nbsp;: c'est la
-[liaison de télécommande](../v3/somfy/equipements/liaison-telecommande.md).
+[liaison de télécommande](../v3/habitation/equipements/liaison-telecommande.md).
 Sans elle, la position affichée devient fausse dès qu'un bouton réel est
 utilisé.
 

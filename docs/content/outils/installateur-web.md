@@ -43,8 +43,8 @@ Dans tous les autres cas, la mise à jour par le réseau est plus simple et **ne
     | Télécommandes appairées et codes tournants | **les moteurs ne répondront plus** tant que l'appairage n'est pas refait |
     | Programmations, groupes, réglages | à ressaisir |
 
-Depuis l'interface de l'appareil, **Système → Firmware → Sauvegarder** produit un fichier
-qui contient tout cela. Après l'installation, **Restaurer le système** au même endroit vous
+Depuis l'interface de l'appareil, **Appareil › Système › Sauvegarde**, le bouton `Sauvegarder` produit un fichier
+qui contient tout cela. Après l'installation, `Restaurer une sauvegarde` au même endroit vous
 rend votre installation intacte, codes tournants compris.
 
 Si l'appareil ne démarre plus, cette sauvegarde n'est évidemment plus possible — raison de
@@ -91,10 +91,10 @@ Chaque carte du catalogue s'affiche avec une courte description et une **note su
 | ESP32-C3 | cœur unique | 1/5 — Limité |
 | ESP32-S2 | cœur unique, USB natif | 1/5 — Limité |
 
-!!! warning "ESP32-C6 : uniquement avec 8 Mo de flash"
+!!! note "ESP32-C6"
 
-    Une carte ESP32-C6 de 4 Mo ne démarrerait pas sur l'image proposée : le C6 n'est
-    pris en charge qu'en 8 Mo. Voir [Composants](../commun/composants.md).
+    Toutes les cartes ESP32-C6 de 4 Mo de flash ou plus conviennent, comme les autres puces.
+    Voir [Composants](../commun/composants.md).
 
 **Comprendre la note.** Un lien « Comprendre la note », sous la grille, déplie la
 même explication. La note additionne quatre caractéristiques matérielles :
@@ -150,12 +150,12 @@ démarrage. La liste est triée par nom de langue, et celle de votre navigateur 
 présélectionnée. **Anglais seulement** installe l'appareil tel qu'il sort de l'usine.
 L'anglais reste toujours installé, en plus de la langue choisie : c'est la langue de secours de
 l'interface. D'autres langues s'ajoutent ensuite depuis
-[Gérer les langues](../v3/general/langues.md).
+[Gérer les langues](../v3/appareil/preferences/langues.md).
 
 Ce choix n'apparaît que pour les cartes génériques, et pour les versions qui publient leurs
 images de langue. Un boîtier officiel démarre en français ; une version sans images de langue
 démarre en anglais. Dans les deux cas, les autres langues s'installent ensuite depuis
-[Gérer les langues](../v3/general/langues.md).
+[Gérer les langues](../v3/appareil/preferences/langues.md).
 
 ### 3. Téléverser un fichier
 

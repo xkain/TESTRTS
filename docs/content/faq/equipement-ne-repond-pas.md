@@ -8,13 +8,13 @@ Procédez dans cet ordre&nbsp;:
    pas réglé.
 2. **L'équipement est-il appairé&nbsp;?** L'appairage se confirme par un bref
    va-et-vient du moteur (le « jog »). Voir
-   [Appairage](../v3/somfy/equipements/appairage.md).
+   [Appairage](../v3/habitation/equipements/appairage.md).
 3. **La fréquence est-elle bien réglée&nbsp;?** L'
-   [assistant de réglages radio](../v3/radio/assistant-de-reglages.md) et le
-   [balayage de fréquence](../v3/radio/balayage-frequence.md) aident à la
+   [assistant de réglages radio](../v3/appareil/radio/assistant-de-reglages.md) et le
+   [balayage de fréquence](../v3/appareil/radio/balayage-frequence.md) aident à la
    trouver.
 
 Le détail complet est sur la page
-[Dépannage radio](../v3/radio/depannage.md). Pour comprendre ce que l'appareil
-reçoit et émet, le [journal radio](../v3/radio/journal.md) est l'outil de
+[Dépannage radio](../v3/appareil/radio/depannage.md). Pour comprendre ce que l'appareil
+reçoit et émet, le [journal radio](../v3/appareil/radio/journal.md) est l'outil de
 référence.

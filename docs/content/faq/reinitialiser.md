@@ -11,7 +11,7 @@ version.
     équipements, plannings, codes tournants, ou tout). Rien n'est effacé tant que vous n'avez pas
     validé, et **Annuler** redémarre l'appareil sans rien toucher.
 
-    Voir [Mode Récupération](../v3/recuperation.md).
+    Voir [Mode Récupération](../v3/appareil/systeme/recuperation.md).
 
 === "v2.x"
 

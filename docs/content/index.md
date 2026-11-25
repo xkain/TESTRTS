@@ -25,14 +25,14 @@ Du matériel à votre premier équipement piloté, dans cet ordre&nbsp;:
     Depuis le navigateur, par le câble USB. Rien à installer sur
     l'ordinateur.
 
--   :material-numeric-3-circle:{ .lg .middle } **[Se connecter au réseau](v3/reseau/assistant-de-connexion.md)**
+-   :material-numeric-3-circle:{ .lg .middle } **[Se connecter au réseau](v3/appareil/reseau/assistant-de-connexion.md)**
 
     ---
 
     Un assistant guide la connexion de l'appareil à votre Wi-Fi ou à votre
     câble Ethernet.
 
--   :material-numeric-4-circle:{ .lg .middle } **[Ajouter vos équipements](v3/somfy/equipements/index.md)**
+-   :material-numeric-4-circle:{ .lg .middle } **[Ajouter vos équipements](v3/habitation/equipements/index.md)**
 
     ---
 
@@ -72,7 +72,7 @@ Vous préférez un appareil déjà assemblé et préconfiguré&nbsp;? Voir les
     RTS. L'intégration s'installe par le Marketplace (anciennement HACS).
 
     [:octicons-arrow-right-24: Installer l'intégration](commun/home-assistant.md#installation-via-le-marketplace-anciennement-hacs)
-    [:octicons-arrow-right-24: Documentation de l'intégration](v3/integrations/home-assistant/index.md)
+    [:octicons-arrow-right-24: Documentation de l'intégration](v3/domotique/home-assistant/index.md)
 
 </div>
 
@@ -122,7 +122,7 @@ Vous préférez un appareil déjà assemblé et préconfiguré&nbsp;? Voir les
 
 ??? question "Quelle version de firmware ai-je&nbsp;?"
 
-    Elle est affichée dans l'interface, sous **Système → Firmware**. En 2.x.x,
+    Elle est affichée dans l'interface, sous **Appareil › Système**. En 2.x.x,
     suivez la [documentation v2.x](v2/index.md)&nbsp;; en 3.x.x et plus, la
     [documentation v3.x](v3/index.md).
 

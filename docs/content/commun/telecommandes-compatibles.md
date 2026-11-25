@@ -117,5 +117,5 @@ ouvert.
 * Une trame invalide ou une commande inconnue : la télécommande parle un dialecte voisin. Essayez
   les protocoles `RTW` ou `RTV`, et une fréquence de 433,92 MHz.
 
-Pour la marche à suivre détaillée, voir la page [Dépannage de la radio](../v3/radio/depannage.md)
+Pour la marche à suivre détaillée, voir la page [Dépannage de la radio](../v3/appareil/radio/depannage.md)
 et les [composants](composants.md) nécessaires.

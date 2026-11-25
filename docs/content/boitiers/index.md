@@ -57,7 +57,7 @@ Un boîtier officiel est pensé pour qu'on n'ait **rien à configurer** :
 
 Au premier démarrage, il ne reste que le réseau : un assistant de connexion vous
 guide, puis vous pouvez
-[configurer vos équipements](../v3/somfy/equipements/index.md).
+[configurer vos équipements](../v3/habitation/equipements/index.md).
 
 ## Deux éditions
 
@@ -141,7 +141,7 @@ voyant d'état**.
 
 - **Le voyant ne s'allume pas** : votre boîtier est en **v2.x.x**.
 
-Vous pouvez aussi lire la version dans l'interface, sous **Système → Firmware**,
+Vous pouvez aussi lire la version dans l'interface, sous **Appareil › Système**,
 ou sur la page de connexion.
 
 Un boîtier en v2.x.x peut passer en v3 : voir

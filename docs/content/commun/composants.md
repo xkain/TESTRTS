@@ -279,9 +279,9 @@ La plupart des brochages décrits plus haut sont directement disponibles comme p
 
 !!! note "Note"
 
-    Le support de l'ESP32-C6 est en chantier : une carte de 8 Mo de flash est nécessaire (la
-    table de partitions 4 Mo habituelle ne lui convient pas), et ce n'est pas encore un
-    environnement de version publiée. À réserver aux utilisateurs avertis pour le moment.
+    Le support de l'ESP32-C6 est récent : toutes les cartes de 4 Mo de flash ou plus
+    conviennent, avec la même table de partitions que les autres puces. À réserver aux
+    utilisateurs avertis pour le moment.
 
 ## XIAO ESP32-C3
 

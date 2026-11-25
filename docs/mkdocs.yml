@@ -156,69 +156,69 @@ nav:
 
   - Documentation v3.x:
       - v3/index.md
-      - Matériel:
+      - Installation:
           - Boîtiers officiels: v3/materiel/boitiers-officiels.md
           - Contrôle des moteurs avec GPIO: v3/materiel/controle-moteurs-gpio.md
-      - Installation:
           - Passer de la v2 à la v3: v3/migration.md
       - Tableau de bord:
+          - v3/tableau-de-bord/index.md
           - Page d'accueil: v3/accueil.md
-          - Tableau de bord: v3/tableau-de-bord.md
-      - Réseau:
-          - v3/reseau/index.md
-          - Assistant de connexion: v3/reseau/assistant-de-connexion.md
-          - DHCP et IP statique: v3/reseau/dhcp-ip-statique.md
-          - Mot de passe du point d'accès: v3/reseau/mot-de-passe-point-d-acces.md
-          - Paramètres MQTT: v3/reseau/parametres-mqtt.md
-      - Radio:
-          - v3/radio/index.md
-          - Test des télécommandes: v3/radio/assistant-de-reglages.md
-          - Balayage de fréquence: v3/radio/balayage-frequence.md
-          - Journal radio: v3/radio/journal.md
-          - Dépannage radio: v3/radio/depannage.md
-      - Gestion Somfy RTS:
+          - Personnaliser le tableau de bord: v3/tableau-de-bord/personnaliser.md
+      - Habitation:
           - Équipements:
-              - v3/somfy/equipements/index.md
-              - Mise en service d'un équipement: v3/somfy/equipements/mise-en-service.md
-              - Appairage et sens de rotation: v3/somfy/equipements/appairage.md
-              - Temps de course et lames: v3/somfy/equipements/calibration.md
-              - Télécommandes liées: v3/somfy/equipements/liaison-telecommande.md
-              - Plannification: v3/somfy/equipements/plannification.md
-          - Groupes (Groups):
-              - v3/somfy/groupes/index.md
-              - Lier un équipement au groupe: v3/somfy/groupes/lier-un-equipement.md
-          - Pièces (Rooms): v3/somfy/pieces.md
-          - Répéteurs (Repeaters): v3/somfy/repeteurs.md
-          - Télécommandes écoutées: v3/somfy/telecommandes-ecoutees.md
-          - Télécommande virtuelle: v3/somfy/telecommande-virtuelle.md
-      - Système:
-          - Général:
-              - v3/general/index.md
-              - Sécurité de l'appareil: v3/general/securite.md
-              - Gérer les langues: v3/general/langues.md
-              - Retours tactiles et visuels: v3/general/retours-tactiles-et-visuels.md
-              - Réglages du tableau de bord: v3/general/tableau-de-bord.md
-              - Position géographique: v3/general/position-geographique.md
-          - Firmware:
-              - v3/firmware/index.md
-              - Mises à jour du firmware: v3/firmware/mises-a-jour.md
-              - Témoin LED de statut: v3/firmware/led-de-statut.md
-              - Restaurer le système: v3/firmware/restaurer.md
-              - Anatomie du fichier de sauvegarde: v3/firmware/anatomie-sauvegarde.md
-      - Intégrations et domotique:
-          - v3/integrations/index.md
-          - MQTT: v3/integrations/mqtt.md
+              - v3/habitation/equipements/index.md
+              - Mise en service d'un équipement: v3/habitation/equipements/mise-en-service.md
+              - Appairage et sens de rotation: v3/habitation/equipements/appairage.md
+              - Temps de course et lames: v3/habitation/equipements/calibration.md
+              - Télécommandes liées: v3/habitation/equipements/liaison-telecommande.md
+              - Télécommande virtuelle: v3/habitation/equipements/telecommande-virtuelle.md
+          - Groupes:
+              - v3/habitation/groupes/index.md
+              - Lier un équipement au groupe: v3/habitation/groupes/lier-un-equipement.md
+          - Pièces: v3/habitation/pieces.md
+          - Plannings: v3/habitation/plannings.md
+      - Domotique:
+          - v3/domotique/index.md
           - Home Assistant:
-              - v3/integrations/home-assistant/index.md
-              - Entités exposées: v3/integrations/home-assistant/entites.md
-              - Attributs en template: v3/integrations/home-assistant/attributs.md
-              - Services: v3/integrations/home-assistant/services.md
-              - Événements: v3/integrations/home-assistant/evenements.md
-              - Recettes d'automatisation: v3/integrations/home-assistant/automatisations.md
-              - Diagnostics: v3/integrations/home-assistant/diagnostics.md
-              - Pièges et limites: v3/integrations/home-assistant/pieges-et-limites.md
-      - Maintenance:
-          - Mode Récupération: v3/recuperation.md
+              - v3/domotique/home-assistant/index.md
+              - Entités exposées: v3/domotique/home-assistant/entites.md
+              - Attributs en template: v3/domotique/home-assistant/attributs.md
+              - Services: v3/domotique/home-assistant/services.md
+              - Événements: v3/domotique/home-assistant/evenements.md
+              - Recettes d'automatisation: v3/domotique/home-assistant/automatisations.md
+              - Diagnostics: v3/domotique/home-assistant/diagnostics.md
+              - Pièges et limites: v3/domotique/home-assistant/pieges-et-limites.md
+          - MQTT:
+              - v3/domotique/mqtt/index.md
+              - Topics publiés et commandes: v3/domotique/mqtt/topics.md
+          - Déclencheurs: v3/domotique/declencheurs.md
+      - Appareil:
+          - Réseau:
+              - v3/appareil/reseau/index.md
+              - Assistant de connexion: v3/appareil/reseau/assistant-de-connexion.md
+              - DHCP et IP statique: v3/appareil/reseau/dhcp-ip-statique.md
+              - Mot de passe du point d'accès: v3/appareil/reseau/mot-de-passe-point-d-acces.md
+          - Radio:
+              - v3/appareil/radio/index.md
+              - Test des télécommandes: v3/appareil/radio/assistant-de-reglages.md
+              - Balayage de fréquence: v3/appareil/radio/balayage-frequence.md
+              - Journal radio: v3/appareil/radio/journal.md
+              - Répéteur: v3/appareil/radio/repeteur.md
+              - Dépannage radio: v3/appareil/radio/depannage.md
+          - Sécurité: v3/appareil/securite.md
+          - Préférences:
+              - v3/appareil/preferences/index.md
+              - Gérer les langues: v3/appareil/preferences/langues.md
+              - Position géographique: v3/appareil/preferences/position-geographique.md
+              - Retours tactiles et visuels: v3/appareil/preferences/retours-tactiles-et-visuels.md
+          - Système:
+              - v3/appareil/systeme/index.md
+              - Mises à jour du firmware: v3/appareil/systeme/mises-a-jour.md
+              - Mode installation: v3/appareil/systeme/mode-installation.md
+              - Témoin LED de statut: v3/appareil/systeme/led-de-statut.md
+              - Restaurer le système: v3/appareil/systeme/restaurer.md
+              - Anatomie du fichier de sauvegarde: v3/appareil/systeme/anatomie-sauvegarde.md
+              - Mode Récupération: v3/appareil/systeme/recuperation.md
 
   - Boîtiers:
       - boitiers/index.md

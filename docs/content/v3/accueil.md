@@ -18,7 +18,7 @@ Sur ordinateur, la barre du haut porte, de gauche à droite :
   un niveau précédent permet de **revenir en arrière** ;
 - l'**indicateur d'activité radio / mouvement** : une icône radio qui **s'anime à chaque signal
   radio** émis ou reçu, ou dès qu'un équipement ou un groupe **est en mouvement**. Il se règle dans
-  les [réglages du tableau de bord](general/tableau-de-bord.md) ;
+  les [réglages du tableau de bord](tableau-de-bord/personnaliser.md) ;
 - l'**état de la connexion** : trois pastilles **WIFI**, **LAN** et **POE**, dont **celle du mode
   actif est allumée**. En survol : « Connexion Wi-Fi », « Connexion filaire Ethernet », « Connexion
   Ethernet avec alimentation PoE ». Sur le [point d'accès de secours](../aide/point-d-acces.md),
@@ -32,7 +32,7 @@ Sur **téléphone**, la barre du haut change de forme : le **logo** et le nom, p
 d'**activité radio**, une icône de **statut réseau** avec un point de couleur, une icône
 d'**uptime** (avec la même infobulle), et un bouton **engrenage** qui ouvre la section
 **Système**. Ce qui s'affiche se règle dans les [réglages du tableau de
-bord](general/tableau-de-bord.md#en-tête-mobile).
+bord](tableau-de-bord/personnaliser.md#en-tête-mobile).
 
 Sur téléphone, une **bannière** apparaît en haut quand une **mise à jour** du firmware est disponible ; sur ordinateur, c'est le bouton du bas du menu (voir ci-dessous).
 
@@ -43,7 +43,7 @@ de route**, **dans l'ordre où l'on s'en sert** :
 
 | Entrée | Contenu | Pourquoi à cette place |
 |---|---|---|
-| **Tableau de bord** | vos équipements et groupes, une fois créés : voir [Tableau de bord](tableau-de-bord.md) | l'écran principal |
+| **Tableau de bord** | vos équipements et groupes, une fois créés : voir [Tableau de bord](tableau-de-bord/index.md) | l'écran principal |
 | **Réseau** | *Connexion*, *MQTT* | la première étape depuis le [point d'accès de secours](../aide/point-d-acces.md) |
 | **Radio** | *Configuration* (dont l'onglet *Journal*) | L'appairage, les télécommandes liées, les répéteurs et les plannings passent tous par elle |
 | **Somfy** | *Équipements*, *Groupes*, *Pièces*, *Répéteur*, *Plannings* | la gestion de l'installation |
@@ -72,20 +72,20 @@ parcours mais vous pouvez y faire un détours pour changer la langue par exemple
 
 Les états se mettent à jour tout seuls : à chaque changement de réseau, à l'enregistrement de
 la radio et à chaque affichage de la page. **Dès qu'une pièce, un équipement ou un groupe est
-créé, cette page ne s'affiche plus** : le [tableau de bord](tableau-de-bord.md) prend sa place.
+créé, cette page ne s'affiche plus** : le [tableau de bord](tableau-de-bord/index.md) prend sa place.
 
 ### Pas à pas
 
 1. **Réseau.** Reliez l'appareil à votre box : voir l'[assistant de
-   connexion](reseau/assistant-de-connexion.md) et la page [Connexion réseau](reseau/index.md).
+   connexion](appareil/reseau/assistant-de-connexion.md) et la page [Connexion réseau](appareil/reseau/index.md).
 2. **Radio.** Activez-la et testez vos télécommandes : voir [Configurer la
-   radio](radio/index.md) et le [test des télécommandes](radio/assistant-de-reglages.md). Si
+   radio](appareil/radio/index.md) et le [test des télécommandes](appareil/radio/assistant-de-reglages.md). Si
    toutes vos télécommandes sont reconnues, **aucun réglage radio n'est nécessaire**.
 3. **Premier équipement.** Voir la [mise en service d'un
-   équipement](somfy/equipements/mise-en-service.md).
+   équipement](habitation/equipements/mise-en-service.md).
    
 **Configuration.**  Ajustez l'appareil à votre usage :
    langue, sécurité d'accès, apparence, mises à jour et sauvegarde. Tout se trouve dans
-   **Système → Général** : voir la page [Général](general/index.md).
+   **Système → Général** : voir la page [Général](appareil/preferences/index.md).
 
    

@@ -18,7 +18,7 @@ Un problème, une question&nbsp;? Voici où chercher, puis où demander.
 
     Les réponses courtes aux questions les plus fréquentes.
 
--   :material-radio-tower:{ .lg .middle } **[Dépannage radio](../v3/radio/depannage.md)**
+-   :material-radio-tower:{ .lg .middle } **[Dépannage radio](../v3/appareil/radio/depannage.md)**
 
     ---
 
@@ -36,12 +36,12 @@ Un problème, une question&nbsp;? Voici où chercher, puis où demander.
 
     Le réseau que l'appareil ouvre quand il n'a pas de réseau, et comment s'y connecter.
 
--   :material-lifebuoy:{ .lg .middle } **[Mode Récupération](../v3/recuperation.md)**
+-   :material-lifebuoy:{ .lg .middle } **[Mode Récupération](../v3/appareil/systeme/recuperation.md)**
 
     ---
 
     Reprendre la main sur un appareil injoignable. En v2.x : le
-    [Factory Reset](../v2/maintenance/factory-reset.md) et son évolution à partir de la v3.x : [Mode Récupération](../v3/recuperation.md)
+    [Factory Reset](../v2/maintenance/factory-reset.md) et son évolution à partir de la v3.x : [Mode Récupération](../v3/appareil/systeme/recuperation.md)
 
 </div>
 
@@ -75,6 +75,6 @@ Un problème, une question&nbsp;? Voici où chercher, puis où demander.
 
 !!! tip "Pour un signalement utile"
 
-    Indiquez la **version du firmware** (Système → Firmware), le modèle de
+    Indiquez la **version du firmware** (Appareil › Système), le modèle de
     carte, et joignez les journaux de l'appareil (voir
     [Journaux du port série](../outils/journaux-port-serie.md)).
