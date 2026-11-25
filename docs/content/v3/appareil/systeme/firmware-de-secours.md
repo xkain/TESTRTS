@@ -46,10 +46,12 @@ suivent le démarrage précédent. C'est un geste physique, pas un bouton à mai
 | Démarrage | LED |
 | :--- | :--- |
 | 1er et 2e | **allumée fixe** pendant les 5 secondes |
-| 3e | **allumée 1,5 seconde**, puis l'appareil redémarre sur le firmware de secours |
+| 3e | **clignotement rapide** pendant 1,5 seconde : c'est bon, l'appareil redémarre sur le firmware de secours |
 
-Le compteur repart de zéro dès que l'appareil reste alimenté plus de 5 secondes. Le firmware de
-secours lui-même ne pilote pas la LED : aucun signal ne confirme ensuite que vous y êtes.
+Le compteur repart de zéro dès que l'appareil reste alimenté plus de 5 secondes. Ensuite, sur les
+[boîtiers officiels](../../materiel/boitiers-officiels.md), la LED **clignote lentement** tant que
+l'appareil est sur le firmware de secours. Sur une carte générique, elle reste éteinte : sa broche
+est un réglage, que le firmware de secours ne reprend pas pour ne pas risquer de gêner l'Ethernet.
 
 Sur les [boîtiers officiels](../../materiel/boitiers-officiels.md), la LED est déjà câblée et
 reconnue. Sur une carte générique, indiquez sa broche et sa polarité dans

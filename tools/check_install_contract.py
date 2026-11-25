@@ -89,6 +89,17 @@ def check(root):
             if key not in legacy and not re.search(r'put[A-Za-z]*\("%s"' % re.escape(key), main):
                 errors.append('%s/%s : effacé par install/, jamais écrit par src/' % (ns, key))
 
+    # Témoin des boîtiers : même broche et même polarité que le firmware principal.
+    rec = read(os.path.join(root, "src", "Recovery.h"))
+    for macro, suffix in (("HARDWARE_BOX_ETH", "_BOX_eth"), ("HARDWARE_BOX_WIFI", "_BOX_wifi")):
+        m = re.search(r"defined\(%s\)\s*\n(?:\s*//.*\n)*\s*#define LED_PROFILE_PIN\s+(-?\d+)\s*\n"
+                      r"\s*#define LED_PROFILE_ACTIVE_LOW\s+(true|false)" % macro, rec)
+        n = re.search(r'\{"%s", (-?\d+), (true|false)\}' % suffix, inst)
+        if not m or not n:
+            errors.append("témoin %s : introuvable dans src/Recovery.h ou install/" % suffix)
+        elif m.groups() != n.groups():
+            errors.append("témoin %s : src/ vaut %s, install/ vaut %s" % (suffix, m.groups(), n.groups()))
+
     header = read(os.path.join(root, "src", "ConfigSettings.h"))
     pairs = [
         ("type de connexion", r"enum class conn_types_t[^{]*\{(.*?)\}", r"enum : uint8_t \{ (CONN_UNSET.*?)\}"),

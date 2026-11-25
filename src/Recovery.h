@@ -52,7 +52,8 @@
 // Câblée en dur et NON configurable, délibérément : ce témoin est le seul retour dont dispose
 // l'utilisateur quand plus rien d'autre ne fonctionne, un réglage pourrait l'éteindre -- ou être
 // lui-même illisible, puisqu'il vit dans la configuration qu'on est précisément en train de
-// réparer. Fixe pendant la fenêtre de démarrage, 1,5 s avant de basculer sur le Mode installation.
+// réparer. Fixe pendant la fenêtre de démarrage, clignotement rapide 1,5 s avant de basculer sur le
+// Mode installation.
 #define LED_RECOVERY_R 0
 #define LED_RECOVERY_G 0
 #define LED_RECOVERY_B LED_ADDRESSABLE_LEVEL

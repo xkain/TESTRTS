@@ -119,8 +119,10 @@ void Recovery::beginDetection() {
       p.putUChar("inst", 1);
       p.end();
       Serial.println(F("\n[BOOT] Install mode requested"));
-      this->_led(true);
-      delay(1500);
+      for(int i = 0; i < 10; i++) {
+        this->_led(!this->_ledOn);
+        delay(150);
+      }
       this->_led(false);
       ESP.restart();
     }

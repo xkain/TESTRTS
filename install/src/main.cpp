@@ -634,12 +634,40 @@ $('bz').onclick=async()=>{if(busy)return;const b=new URLSearchParams();K.forEach
 $('bb').onclick=async()=>{if(busy)return;lock(true);say('going');try{const r=await fetch('/bootApp',{method:'POST',headers:{apikey:await key()}});if(r.ok)home();else{lock(false);say(r.status==401?'auth':'noapp',1)}}catch(e){lock(false);say(e=='auth'?'auth':'fail',1)}};
 </script></body></html>)HTML";
 
+// ---------------------------------------------------------------- Temoin
+
+// Boitiers officiels seulement, broche cablee (LED_PROFILE_* de src/Recovery.h, verifie par
+// check_install_contract.py) : sur une carte generique, la broche reglee pourrait heurter l'Ethernet.
+static const struct { const char *board; int8_t pin; bool low; } BOX_LED[] = {
+  {"_BOX_eth", 5, true},
+  {"_BOX_wifi", 2, false},
+};
+static int8_t ledPin = -1;
+static bool ledLow = false;
+
+static void ledBegin() {
+  for(const auto &b : BOX_LED)
+    if(strstr(cfg.board, b.board)) { ledPin = b.pin; ledLow = b.low; }
+  if(ledPin >= 0) pinMode(ledPin, OUTPUT);
+}
+
+// Clignotement lent tant que l'appareil est sur le firmware de secours.
+static void ledLoop() {
+  static uint32_t last = 0;
+  static bool on = false;
+  if(ledPin < 0 || millis() - last < 800) return;
+  last = millis();
+  on = !on;
+  digitalWrite(ledPin, on != ledLow ? HIGH : LOW);
+}
+
 void setup() {
   Serial.begin(115200);
   // Seul usage d'INSTALL_TAG : sans lui, l'éditeur de liens retirerait la balise de l'image, et ni le
   // firmware principal ni le catalogue ne reconnaîtraient plus ce firmware.
   Serial.printf("\n[INSTALL] Firmware de secours %s\n", INSTALL_TAG);
   loadSettings();
+  ledBegin();
   inspectMainApp();
   startNetwork();
   static const char *headers[] = {"apikey", "Origin", "Host", "Sec-Fetch-Site", "X-Firmware-SHA256"};
@@ -677,6 +705,7 @@ static void loopIdle() {
 void loop() {
   if(apOpen) dns.processNextRequest();
   loopIdle();
+  ledLoop();
   server.handleClient();
   delay(2);
 }
