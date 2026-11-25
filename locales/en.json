@@ -1453,7 +1453,7 @@
     "FW_UPDATE_FILE": "Install from a file",
     "FW_UPDATE_FILE_DESC": "Manual · .bin image (%1)",
     "FW_INSTALL_MODE": "Restart in install mode",
-    "FW_INSTALL_MODE_DESC": "Minimal page that accepts a file, if the interface no longer responds",
+    "FW_INSTALL_MODE_DESC": "Minimal firmware, with a single page to send a file. 6 power cuts lead there too.",
     "FW_TITLE_INFO": "Hardware",
     "FW_CHIP": "Chip",
     "FW_CPU": "Processor",

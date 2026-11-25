@@ -1453,7 +1453,7 @@
     "FW_UPDATE_FILE": "Instalar desde un archivo",
     "FW_UPDATE_FILE_DESC": "Manual · imagen .bin (%1)",
     "FW_INSTALL_MODE": "Reiniciar en modo instalación",
-    "FW_INSTALL_MODE_DESC": "Página mínima que acepta un archivo, si la interfaz ya no responde",
+    "FW_INSTALL_MODE_DESC": "Firmware mínimo, con una sola página para enviar un archivo. 6 cortes de corriente también llevan a él.",
     "FW_TITLE_INFO": "Hardware",
     "FW_CHIP": "Chip",
     "FW_CPU": "Procesador",

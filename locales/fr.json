@@ -1453,7 +1453,7 @@
     "FW_UPDATE_FILE": "Installer depuis un fichier",
     "FW_UPDATE_FILE_DESC": "Manuel · image .bin (%1)",
     "FW_INSTALL_MODE": "Redémarrer en mode installation",
-    "FW_INSTALL_MODE_DESC": "Page minimale qui accepte un fichier, si l'interface ne répond plus",
+    "FW_INSTALL_MODE_DESC": "Firmware minimal, avec une seule page pour envoyer un fichier. 6 coupures de courant y mènent aussi.",
     "FW_TITLE_INFO": "Matériel",
     "FW_CHIP": "Puce",
     "FW_CPU": "Processeur",

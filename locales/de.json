@@ -1453,7 +1453,7 @@
     "FW_UPDATE_FILE": "Aus Datei installieren",
     "FW_UPDATE_FILE_DESC": "Manuell · .bin-Image (%1)",
     "FW_INSTALL_MODE": "Im Installationsmodus neu starten",
-    "FW_INSTALL_MODE_DESC": "Minimale Seite, die eine Datei annimmt, falls die Oberfläche nicht mehr reagiert",
+    "FW_INSTALL_MODE_DESC": "Minimale Firmware mit einer einzigen Seite zum Senden einer Datei. Auch 6 Stromunterbrechungen führen dorthin.",
     "FW_TITLE_INFO": "Hardware",
     "FW_CHIP": "Chip",
     "FW_CPU": "Prozessor",
