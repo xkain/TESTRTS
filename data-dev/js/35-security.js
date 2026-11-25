@@ -15,6 +15,19 @@
 // PIN a chaque rechargement, laquelle poussait surtout l'utilisateur a choisir un code trivial.
 const SECURITY_SESSION_KEY = 'espsomfy.apiKey';
 
+// Jauge d'occupation de Système › Appareil › État du système, en Ko.
+function fwMeter(bar, pctId, txtId, total, used) {
+    if (!total) return;
+    const pct = Math.round((used / total) * 100);
+    const el = get(txtId);
+    if (el) el.innerHTML = `<span class="status-detail">${total - used}</span> ${tr('UNIT_KO')} ${tr('FW_FREE_SUFFIX')}<span class="hide550"> ${tr('FW_ON')} <span class="status-detail">${total}</span></span>`;
+    const pctEl = get(pctId);
+    if (pctEl) pctEl.textContent = `${pct} %`;
+    const b = get(bar);
+    b?.style.setProperty('--progress', `${pct}%`);
+    b?.classList.toggle('is-full', pct >= 90);
+}
+
 class Security {
     type = 0;
     authenticated = false;
@@ -147,17 +160,8 @@ class Security {
                     if (ctx.flashSize) {
                         get('info-flash').innerHTML = `<span>${tr('FW_TOTAL')}: </span><span class="status-detail">${ctx.flashSize}</span> ${tr('UNIT_MO')} (<span class="hide550">${tr('FW_SPEED')}: </span><span class="status-detail">${ctx.flashSpeed}</span> ${tr('UNIT_MHZ')})`;
                     }
-                    const meter = (bar, pctId, txtId, total, used) => {
-                        if (!total) return;
-                        const pct = Math.round((used / total) * 100);
-                        const el = get(txtId);
-                        if (el) el.innerHTML = `<span class="status-detail">${total - used}</span> ${tr('UNIT_KO')} ${tr('FW_FREE_SUFFIX')}<span class="hide550"> ${tr('FW_ON')} <span class="status-detail">${total}</span></span>`;
-                        const pctEl = get(pctId);
-                        if (pctEl) pctEl.textContent = `${pct} %`;
-                        get(bar)?.style.setProperty('--progress', `${pct}%`);
-                    };
-                    meter('fwFsBar', 'spanFsPct', 'info-fs-status', ctx.fsTotal, ctx.fsUsed);
-                    meter('fwAppBar', 'spanAppPct', 'info-app-status', ctx.appTotal, ctx.appUsed);
+                    fwMeter('fwFsBar', 'spanFsPct', 'info-fs-status', ctx.fsTotal, ctx.fsUsed);
+                    fwMeter('fwAppBar', 'spanAppPct', 'info-app-status', ctx.appTotal, ctx.appUsed);
                     if (ctx.mac) document.querySelectorAll('.spanMacAddress').forEach(el => el.textContent = ctx.mac);
 
                     this.type = ctx.type;

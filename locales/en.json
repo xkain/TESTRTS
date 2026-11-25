@@ -1473,6 +1473,8 @@
     "FW_SPEED": "Speed",
     "FW_APP_SPACE": "Firmware Space",
     "FW_APP_USED": "of the application partition used",
+    "FW_INSTALL_SPACE": "Install mode",
+    "FW_INSTALL_ABSENT": "Missing or invalid",
     "FW_BACKUP_DESC": "Downloads a .backup file with the whole configuration of this device.",
     "FW_BACKUP_HAS": "What it contains",
     "FW_BACKUP": "Backup",

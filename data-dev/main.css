@@ -2674,6 +2674,32 @@ button.fw-act:hover .fw-act-chev {
     font-weight: 700;
     color: var(--text-2);
 }
+.fw-meter.is-full .progress-bar-fill {
+    background: var(--warn);
+}
+.fw-meter-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid var(--divider);
+}
+.fw-meter-sub .fw-meter {
+    --progress-bar-height: 6px;
+}
+.fw-meter-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    font-size: var(--fs-3);
+    color: var(--text-2);
+}
+.fw-meter-head b {
+    font-size: var(--fs-5);
+    color: var(--text);
+}
 .fw-bk-sub {
     margin: 4px 0 0;
     font-size: var(--fs-1);

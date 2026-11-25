@@ -62,17 +62,21 @@ void FwInfo::rememberBoard() {
 static struct {
   bool valid = false;
   char id[16] = "";
+  uint32_t used = 0, size = 0;
 } installState;
 
 void FwInfo::inspectInstall() {
   installState.valid = false;
   installState.id[0] = '\0';
+  installState.used = installState.size = 0;
   const esp_partition_t *install = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_FACTORY, nullptr);
   if(!install) return;
+  installState.size = install->size / 1024;
   const esp_partition_pos_t pos = {install->address, install->size};
   esp_image_metadata_t meta;
   if(esp_image_verify(ESP_IMAGE_VERIFY_SILENT, &pos, &meta) != ESP_OK) return;
   installState.valid = true;
+  installState.used = meta.image_len / 1024;
   static const char tag[] = FW_INSTALL_TAG;
   const size_t tlen = sizeof(tag) - 1;
   uint8_t buf[512];
@@ -127,6 +131,8 @@ void FwInfo::toJSON(JsonFormatter &json) {
   json.beginObject("install");
   json.addElem("valid", installState.valid);
   json.addElem("id", installState.id);
+  json.addElem("used", installState.used);
+  json.addElem("size", installState.size);
   json.endObject();
 }
 

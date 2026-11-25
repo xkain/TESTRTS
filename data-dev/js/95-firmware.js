@@ -419,6 +419,7 @@ class Firmware {
     // après une installation (finishInstall).
     procFwStatus(info) {
         this.fwInfo = info;
+        this.renderInstallSpace(info.install);
         // Retour depuis le Mode installation après un envoi réussi (cf. home('?installed') de sa page).
         if (!this._installedSeen) {
             this._installedSeen = true;
@@ -433,6 +434,19 @@ class Firmware {
             return;
         }
         this.refreshUpdateBadge();
+    }
+
+    renderInstallSpace(ins) {
+        if (!ins?.size) return;
+        if (ins.valid) fwMeter('fwInstallBar', 'spanInstallPct', 'info-install-status', ins.size, ins.used);
+        else {
+            get('spanInstallPct').textContent = '—';
+            get('info-install-status').textContent = tr('FW_INSTALL_ABSENT');
+            const bar = get('fwInstallBar');
+            bar.style.setProperty('--progress', '0%');
+            bar.classList.remove('is-full');
+        }
+        get('spanInstallId').textContent = ins.id || '';
     }
 
     // Badge « mise à jour disponible » : version stable la plus haute du catalogue pour CETTE carte
