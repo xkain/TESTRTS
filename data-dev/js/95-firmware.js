@@ -446,7 +446,6 @@ class Firmware {
             bar.style.setProperty('--progress', '0%');
             bar.classList.remove('is-full');
         }
-        get('spanInstallVer').textContent = ins.ver ? `v${ins.ver}` : '';
         const ver = !ins.valid ? tr('FW_INSTALL_ABSENT') : ins.ver ? `v${ins.ver}` : '—';
         document.querySelectorAll('.fw-rescue-ver').forEach(e => { e.textContent = ver; });
         get('btnInstallRepair').hidden = !!ins.valid;
