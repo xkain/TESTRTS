@@ -79,6 +79,16 @@ def check(root):
         elif not re.search(r'%s\("%s"' % (put, re.escape(key)), main):
             errors.append('%s/%s : install/ le lit par %s, src/ ne l\'écrit jamais par %s' % (ns, key, getter, put))
 
+    # /reset efface par le nom : un espace ou une clé renommés côté src/ laisseraient la case sans effet.
+    for ns in re.findall(r'clearNs\("([A-Za-z0-9_]+)"\)', inst):
+        if not re.search(r'begin\("%s"' % re.escape(ns), main):
+            errors.append('espace NVS "%s" effacé par install/ mais jamais ouvert par src/' % ns)
+    legacy = {k for (_, k) in READ_ONLY_LEGACY}
+    for keys, ns in re.findall(r'static const char \*k\[\] = \{(.*?)\};\s*removeKeys\("([A-Za-z0-9_]+)"', inst, re.S):
+        for key in re.findall(r'"([A-Za-z0-9_]+)"', keys):
+            if key not in legacy and not re.search(r'put[A-Za-z]*\("%s"' % re.escape(key), main):
+                errors.append('%s/%s : effacé par install/, jamais écrit par src/' % (ns, key))
+
     header = read(os.path.join(root, "src", "ConfigSettings.h"))
     pairs = [
         ("type de connexion", r"enum class conn_types_t[^{]*\{(.*?)\}", r"enum : uint8_t \{ (CONN_UNSET.*?)\}"),
@@ -105,11 +115,11 @@ def report(errors):
         print("[install] contrat avec le firmware principal conforme")
         return
     print("\n" + "=" * 78)
-    print("[install] BUILD INTERROMPU -- %d écart(s) avec le Mode installation" % len(errors))
+    print("[install] BUILD INTERROMPU -- %d écart(s) avec le firmware de secours" % len(errors))
     for e in errors:
         print("  - " + e)
-    print("Le Mode installation (install/src/main.cpp) doit suivre : il ne rejoindrait plus le réseau\n"
-          "ou refuserait le bon accès.")
+    print("Le firmware de secours (install/src/main.cpp) doit suivre : il ne rejoindrait plus le réseau,\n"
+          "refuserait le bon accès ou n'effacerait plus ce qu'annonce sa page.")
     print("=" * 78 + "\n")
     sys.exit(1)
 

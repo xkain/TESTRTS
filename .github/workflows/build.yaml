@@ -420,7 +420,7 @@ jobs:
         run: |
           mkdir -p devbuild
           cp .pio/build/${{ matrix.env }}/firmware.bin devbuild/${{ matrix.fwname }}
-          cp install/.pio/build/${{ matrix.install }}/firmware.bin devbuild/$(echo "${{ matrix.fwname }}" | sed 's/_ota_/_installmode_/')
+          cp install/.pio/build/${{ matrix.install }}/firmware.bin devbuild/$(echo "${{ matrix.fwname }}" | sed 's/_ota_/_rescue_/')
           cp .pio/build/${{ matrix.env }}/${{ matrix.obzip }} devbuild/
 
       - name: Upload ${{ matrix.name }} dev build assets
@@ -449,7 +449,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          NAME=$(echo "${{ matrix.fwname }}" | sed 's/_ota_/_installmode_/')
+          NAME=$(echo "${{ matrix.fwname }}" | sed 's/_ota_/_rescue_/')
           cp install/.pio/build/${{ matrix.install }}/firmware.bin "$NAME"
           gh release upload "${{ github.ref_name }}" "$NAME" --clobber
 

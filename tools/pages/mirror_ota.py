@@ -46,8 +46,8 @@ RE_FIRMWARE = re.compile(r"^ESPSomfyRTS_.+_(?:ota|firmware)_(.+)\.bin$")
 RE_MARKER = re.compile(rb"ESPSomfyRTS-PART/(\d+)/")
 # Mode installation de chaque carte : publié à côté de l'image ota, annoncé dans boards[c]["install"]
 # avec l'identifiant gravé dans l'image (empreinte de ses sources, cf. install/main_contract.py).
-RE_INSTALL = re.compile(r"^ESPSomfyRTS_.+_installmode_(.+)\.bin$")
-RE_INSTALL_ID = re.compile(rb"ESPSomfyRTS-INSTALL/([0-9a-f]{12})")
+RE_INSTALL = re.compile(r"^ESPSomfyRTS_.+_rescue_(.+)\.bin$")
+RE_INSTALL_ID = re.compile(rb"ESPSomfyRTS-INSTALL/([0-9a-f]{12})(?:/([0-9.]+\+?))?")
 CARTES = {"esp32", "esp32wrover", "esp32c3", "esp32s2", "esp32s3", "esp32c6"}
 
 
@@ -160,7 +160,7 @@ def main():
                 data = f.read()
             m = RE_INSTALL_ID.search(data)
             if not m:
-                print(f"  {tag}/{c}: Mode installation sans identifiant, ignoré")
+                print(f"  {tag}/{c}: firmware de secours sans identifiant, ignoré")
                 continue
             with open(os.path.join(racine, tag, f"{c}-install.bin"), "wb") as f:
                 f.write(data)
@@ -169,8 +169,9 @@ def main():
                 "size": len(data),
                 "sha256": hashlib.sha256(data).hexdigest(),
                 "id": m.group(1).decode(),
+                "ver": (m.group(2) or b"").decode(),
             }
-            print(f"  {tag}/{c:12s} Mode installation {m.group(1).decode()}")
+            print(f"  {tag}/{c:12s} firmware de secours {m.group(2).decode() if m.group(2) else '?'} {m.group(1).decode()}")
         if not boards:
             continue
         notes = f"notes/{tag}.md"

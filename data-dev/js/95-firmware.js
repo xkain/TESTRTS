@@ -446,7 +446,7 @@ class Firmware {
             bar.style.setProperty('--progress', '0%');
             bar.classList.remove('is-full');
         }
-        get('spanInstallId').textContent = ins.id || '';
+        get('spanInstallVer').textContent = ins.ver ? `v${ins.ver}` : '';
         get('btnInstallRepair').hidden = !!ins.valid;
     }
     // Sans Mode installation, les 3 coupures ne mènent nulle part : l'image de la version en place,

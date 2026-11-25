@@ -62,12 +62,14 @@ void FwInfo::rememberBoard() {
 static struct {
   bool valid = false;
   char id[16] = "";
+  char ver[8] = "";
   uint32_t used = 0, size = 0;
 } installState;
 
 void FwInfo::inspectInstall() {
   installState.valid = false;
   installState.id[0] = '\0';
+  installState.ver[0] = '\0';
   installState.used = installState.size = 0;
   const esp_partition_t *install = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_FACTORY, nullptr);
   if(!install) return;
@@ -80,18 +82,30 @@ void FwInfo::inspectInstall() {
   static const char tag[] = FW_INSTALL_TAG;
   const size_t tlen = sizeof(tag) - 1;
   uint8_t buf[512];
-  size_t matched = 0, got = 0;
+  size_t matched = 0, got = 0, vlen = 0;
+  bool slash = false;
   for(uint32_t off = 0; off < meta.image_len; off += sizeof(buf)) {
     size_t n = min((uint32_t)sizeof(buf), meta.image_len - off);
     if(esp_partition_read(install, off, buf, n) != ESP_OK) return;
     for(size_t i = 0; i < n; i++) {
+      if(got == 12) {
+        // « /1.0 » après l'identifiant ; absent des images d'avant la version lisible.
+        char c = (char)buf[i];
+        if(!slash && c == '/') { slash = true; continue; }
+        if(slash && vlen < sizeof(installState.ver) - 1 && ((c >= '0' && c <= '9') || c == '.' || c == '+')) {
+          installState.ver[vlen++] = c;
+          installState.ver[vlen] = '\0';
+          continue;
+        }
+        return;
+      }
       if(matched == tlen) {
         // Le préfixe nu apparaît aussi dans le Mode installation (il s'en sert pour chercher) :
         // seule l'occurrence suivie de 12 caractères hexadécimaux est son identifiant.
         bool hex = (buf[i] >= '0' && buf[i] <= '9') || (buf[i] >= 'a' && buf[i] <= 'f');
         if(hex) {
           installState.id[got++] = (char)buf[i];
-          if(got == 12) { installState.id[12] = '\0'; return; }
+          if(got == 12) installState.id[12] = '\0';
         }
         else { matched = buf[i] == (uint8_t)tag[0] ? 1 : 0; got = 0; }
       }
@@ -99,7 +113,7 @@ void FwInfo::inspectInstall() {
       else matched = buf[i] == (uint8_t)tag[0] ? 1 : 0;
     }
   }
-  installState.id[0] = '\0';
+  if(got < 12) installState.id[0] = '\0';
 }
 
 bool FwInfo::selectInstallMode() {
@@ -143,6 +157,7 @@ void FwInfo::toJSON(JsonFormatter &json) {
   json.beginObject("install");
   json.addElem("valid", installState.valid);
   json.addElem("id", installState.id);
+  json.addElem("ver", installState.ver);
   json.addElem("used", installState.used);
   json.addElem("size", installState.size);
   json.endObject();
