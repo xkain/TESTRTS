@@ -10,6 +10,7 @@ on:
     # Ignoré par GitHub sur un push de tag : une release v* se construit toujours.
     paths:
       - 'src/**'
+      - 'install/**'
       - 'data-dev/**'
       - 'locales/**'
       - 'tools/**'
