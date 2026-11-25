@@ -114,8 +114,13 @@ fichier.
 
 ## 6. Réinitialiser { #reinitialiser }
 
-Cochez ce qu'il faut effacer, puis `Réinitialiser et redémarrer`. **Rien n'est effacé avant la
-confirmation.** L'appareil revient ensuite sur son firmware principal.
+Cochez ce qu'il faut effacer, puis `Réinitialiser et redémarrer` : le bouton passe au rouge et
+devient `Confirmer l'effacement`. **Rien n'est effacé avant ce second clic.** L'appareil revient
+ensuite sur son firmware principal.
+
+Après **Réseau** ou **Tout effacer**, l'appareil redémarre sans réseau : la page indique le Wi-Fi
+ouvert à rejoindre (le nom de l'appareil, ou `ESPSomfyRTS` après **Tout effacer**) et l'adresse
+`http://192.168.4.1`. Après les trois coupures, elle vous invite à rejoindre votre réseau habituel.
 
 | Case | Ce qui est effacé |
 | :--- | :--- |
