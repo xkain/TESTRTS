@@ -34,12 +34,17 @@ jour ou restauration.
 | **Version installée** | Le numéro de version, l'état (*Votre système est à jour*, *Mise à jour disponible*…) et l'heure de la dernière vérification. Quand une version est disponible, la tuile affiche la version proposée, un lien vers ses **notes de version** et un bouton pour l'installer. La ligne **Choisir une autre version** permet de réinstaller, de revenir en arrière ou de passer en version de développement. |
 | **Vérification automatique** | **Me prévenir des mises à jour** : `Oui` / `Non`. La vérification a lieu à chaque ouverture de l'interface ; rien n'est installé sans votre accord. |
 | **Canal** | **Version stable** (une version publiée) ou **Version de développement** (construite à chaque modification du code, sans être éprouvée). |
-| **Installation manuelle** | Sans passer par Internet : **Installer depuis un fichier** (un fichier `.bin` téléchargé au préalable) et **Redémarrer en mode installation**. |
+| **Installation manuelle** | Sans passer par Internet, avec un fichier téléchargé au préalable. **Installer depuis un fichier** envoie une image `.bin` faite pour votre carte (son nom est rappelé sous le bouton). **Redémarrer en mode installation** demande confirmation, redémarre l'appareil sur son firmware minimal et ouvre sa page d'envoi de fichier. |
 
 C'est **votre navigateur**, et non l'appareil, qui va chercher les versions publiées : c'est lui qui
 doit avoir accès à Internet.
 
-Pour aller plus loin : [Mises à jour du firmware](mises-a-jour.md).
+Chaque mise à jour, en ligne ou par fichier, passe par le [Mode installation](mode-installation.md) :
+l'appareil y redémarre, reçoit l'image, puis revient sur le nouveau firmware. Votre configuration
+n'est pas touchée.
+
+Pour aller plus loin : [Mises à jour du firmware](mises-a-jour.md) et
+[Mode installation](mode-installation.md).
 
 ## État du système { #status }
 
@@ -121,7 +126,9 @@ l'appareil redémarre sur son point d'accès de secours.
 
     Seule une sauvegarde faite avant permet de revenir en arrière.
 
-Si l'interface ne répond plus du tout, voir [Mode Récupération](recuperation.md).
+Si l'interface ne répond plus du tout, voir [Mode Récupération](recuperation.md) (trois coupures
+d'alimentation) ou, si le firmware lui-même ne démarre plus, le
+[Mode installation](mode-installation.md#six-coupures) (six coupures).
 
 ## À propos { #about }
 
@@ -129,7 +136,7 @@ Si l'interface ne répond plus du tout, voir [Mode Récupération](recuperation.
 
 | Tuile | Ce qu'elle montre ou permet |
 |---|---|
-| **Aide** | **Documentation** ouvre le guide. **Signaler un problème** ouvre un rapport de bug pré-rempli sur GitHub ; l'infobulle `?` rappelle que les tickets sont réservés aux vrais bugs du firmware (pour une question, voir [Aide](../../../aide/index.md)). |
+| **Aide** | **Documentation** ouvre le guide. **Signaler un problème** ouvre un rapport de bug pré-rempli sur GitHub ; l'infobulle `?` rappelle que les tickets sont réservés aux vrais bugs du firmware et propose de poser plutôt une question dans les Discussions GitHub (voir aussi [Aide](../../../aide/index.md)). |
 | **Crédits du projet** | Les auteurs, le copyright et la licence. |
 | **Contributeurs du projet** | Celles et ceux qui ont apporté du code, des traductions, des tests ou des signalements. Un clic sur un nom ouvre son profil GitHub. |
 
@@ -154,6 +161,7 @@ conditions de l'AGPL-3.0.
 ## Pages liées
 
 * [Mises à jour du firmware](mises-a-jour.md)
+* [Mode installation](mode-installation.md)
 * [Témoin LED de statut](led-de-statut.md)
 * [Restaurer le système](restaurer.md)
 * [Anatomie du fichier de sauvegarde](anatomie-sauvegarde.md)
