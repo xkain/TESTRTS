@@ -127,12 +127,12 @@ confirmation.** L'appareil revient ensuite sur son firmware principal.
 | **Langues téléchargées** | la langue d'origine reste ; efface aussi un stockage devenu illisible |
 | **Tout effacer** | retour à l'état d'usine, codes tournants compris : vos moteurs devront être réappairés |
 
-!!! important "Sécurité et Tout effacer : trois coupures exigées"
+!!! important "Sans code : après les trois coupures seulement"
 
-    Ces deux cases ne sont proposées qu'après les **trois coupures**, depuis le réseau
-    **`ESPSomfy-RESCUE`**. Arrivé par le bouton, ou depuis le réseau de la maison, le firmware de
-    secours refuse celles-ci, et demande le code PIN pour les autres si la sécurité est activée :
-    sans le geste physique, quelqu'un sur votre réseau pourrait effacer votre code.
+    Si la sécurité est activée, le firmware de secours demande le code PIN ou le mot de passe, comme
+    la page **Système**. Il ne s'en passe qu'après les **trois coupures**, depuis le réseau
+    **`ESPSomfy-RESCUE`** : c'est ainsi qu'on réinitialise un code oublié, et le geste physique
+    garantit que vous êtes devant l'appareil.
 
 !!! tip "Avant d'effacer"
 
