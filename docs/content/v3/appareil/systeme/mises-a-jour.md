@@ -141,7 +141,7 @@ alors **trois étapes**, avec une seule barre de progression qui repart de zéro
 | Étape | Ce qui se passe |
 | :--- | :--- |
 | **1. Téléchargement** | le navigateur récupère l'image de votre carte et en vérifie la taille |
-| **2. Installation** | l'appareil redémarre en [Mode installation](mode-installation.md), qui reçoit l'image et l'écrit |
+| **2. Installation** | l'appareil redémarre sur le [firmware de secours](firmware-de-secours.md), qui reçoit l'image et l'écrit |
 | **3. Redémarrage** | l'appareil redémarre sur la nouvelle version ; la barre cède la place à un message d'attente |
 
 À l'étape 3, l'interface attend le retour de l'appareil, puis **renvoie le pack de la langue
@@ -150,8 +150,8 @@ plus correspondre à la nouvelle version. Si ce renvoi échoue, un message l'ind
 réinstalle ensuite depuis [Gérer les langues](../preferences/langues.md). L'installation se termine par
 un message de réussite, et la page se recharge d'elle-même.
 
-Si la version installée apporte un autre [Mode installation](mode-installation.md#mettre-a-jour),
-l'interface l'envoie aussi, juste avant ce message (« Mise à jour du mode installation… »).
+Si la version installée apporte un autre [firmware de secours](firmware-de-secours.md#mettre-a-jour),
+l'interface l'envoie aussi, juste avant ce message (« Mise à jour du firmware de secours… »).
 
 !!! note "Ce que l'appareil vérifie, et comment il se protège"
 
@@ -160,12 +160,12 @@ l'interface l'envoie aussi, juste avant ce message (« Mise à jour du mode inst
       démarrable si elles diffèrent.
     * **Compatibilité** : l'image porte un repère qui indique la table de partitions pour laquelle
       elle a été bâtie. L'appareil refuse une image qui ne correspond pas à la sienne.
-    * **Mode installation** : l'image est reçue et écrite par le [Mode installation](mode-installation.md),
+    * **Firmware de secours** : l'image est reçue et écrite par le [firmware de secours](firmware-de-secours.md),
       un programme à part que l'installation ne touche jamais. Si l'envoi est coupé ou l'image
-      refusée, l'appareil reste en Mode installation, prêt pour un nouvel essai.
+      refusée, l'appareil reste sur le firmware de secours, prêt pour un nouvel essai.
     * **Retour automatique** : la nouvelle version n'est considérée comme valide qu'après **60
       secondes** de fonctionnement avec un accès possible (réseau ou point d'accès). Si elle plante
-      avant, l'appareil **revient sur le Mode installation**, d'où l'on réinstalle une version.
+      avant, l'appareil **revient sur le firmware de secours**, d'où l'on réinstalle une version.
     * **Garde-fou** : si l'appareil ne répond pas dans les **trois minutes** après l'envoi, la fenêtre
       se débloque et affiche une erreur, au lieu de rester bloquée.
 
@@ -219,8 +219,8 @@ ESPSomfyRTS_[1: vX.X.X]_ota_[2: carte][3: suffixe].bin
       `ESPSomfyRTS_vX.X.X_fs_langs.json` : les images de langue que l'Installateur Web écrit à la
       suite du firmware quand vous choisissez une langue.
 
-    Le fichier `ESPSomfyRTS_vX.X.X_installmode_<carte>.bin` est accepté lui aussi : il ne remplace
-    que le [Mode installation](mode-installation.md#mettre-a-jour), sans toucher au firmware.
+    Le fichier `ESPSomfyRTS_vX.X.X_rescue_<carte>.bin` est accepté lui aussi : il ne remplace
+    que le [firmware de secours](firmware-de-secours.md#mettre-a-jour), sans toucher au firmware principal.
 
     Pour mettre à jour le firmware, c'est le fichier `_ota_` qu'il faut.
 
@@ -237,7 +237,7 @@ Plusieurs vérifications bloquent un envoi incompatible avant même qu'il ne par
     celui que couvre l'[Installateur Web](../../../outils/installateur-web.md).
 
 Contrairement à la mise à jour en ligne, aucune empreinte n'est fournie : seul ce repère est
-contrôlé. Les protections de l'appareil (écriture par le [Mode installation](mode-installation.md),
+contrôlé. Les protections de l'appareil (écriture par le [firmware de secours](firmware-de-secours.md),
 validation après 60 secondes, retour automatique) restent, elles, identiques.
 
 Il y a une seule barre de progression ; une fois le transfert terminé et validé, l'appareil

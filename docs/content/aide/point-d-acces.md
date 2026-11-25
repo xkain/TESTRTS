@@ -87,10 +87,10 @@ Il suffit de **rejoindre votre réseau** :
 L'appareil prend alors une adresse de votre box : `http://192.168.4.1` n'est plus accessible, il
 faut retrouver sa nouvelle adresse (dans l'interface de votre box, par exemple).
 
-## À ne pas confondre avec le mode Récupération
+## À ne pas confondre avec le firmware de secours
 
-En v3, un autre réseau Wi-Fi existe pour **réparer** un appareil : le
-[mode Récupération](../v3/appareil/systeme/recuperation.md). Il s'ouvre après trois coupures d'alimentation rapides,
-porte le nom **`ESPSomfy-RECOVERY`** et ne demande jamais de mot de passe. Il est volontairement
+En v3, un autre réseau Wi-Fi existe pour **réparer** un appareil : celui du
+[firmware de secours](../v3/appareil/systeme/firmware-de-secours.md). Il s'ouvre après trois coupures d'alimentation rapides,
+porte le nom **`ESPSomfy-RESCUE`** et ne demande jamais de mot de passe. Il est volontairement
 nommé autrement, pour qu'on ne le confonde pas avec le point d'accès de secours habituel, qui porte
 le nom de votre appareil.

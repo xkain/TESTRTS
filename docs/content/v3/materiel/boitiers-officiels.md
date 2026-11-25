@@ -92,10 +92,10 @@ Le dernier est recommandé : en cas de déconnexion ou de problème sur le câbl
 
 ### En cas de besoin de remise à zéro
 
-Le boîtier dispose d'un [mode Récupération](../appareil/systeme/recuperation.md)) dédié : trois
-coupures d'alimentation volontaires ouvrent un point d'accès de réparation indépendant, où
-vous choisissez précisément quoi réinitialiser (réseau, équipements, codes tournants,
-jusqu'à la réinitialisation d'usine complète) — rien n'est effacé sans confirmation. Même
+Le boîtier dispose d'un [firmware de secours](../appareil/systeme/firmware-de-secours.md) : trois
+coupures d'alimentation volontaires y mènent, avec un réseau de réparation indépendant, où
+vous choisissez précisément quoi réinitialiser (réseau, sécurité, équipements, jusqu'à la
+réinitialisation d'usine complète) — rien n'est effacé sans confirmation. Même
 dans ce dernier cas, vos réglages régionaux (langue, fuseau horaire) et l'assignation des
 GPIO radio reviennent automatiquement aux bonnes valeurs : le firmware de ces boîtiers les
 embarque déjà comme réglages par défaut, il n'y a rien à ressaisir.

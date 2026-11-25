@@ -36,12 +36,12 @@ Un problème, une question&nbsp;? Voici où chercher, puis où demander.
 
     Le réseau que l'appareil ouvre quand il n'a pas de réseau, et comment s'y connecter.
 
--   :material-lifebuoy:{ .lg .middle } **[Mode Récupération](../v3/appareil/systeme/recuperation.md)**
+-   :material-lifebuoy:{ .lg .middle } **[Firmware de secours](../v3/appareil/systeme/firmware-de-secours.md)**
 
     ---
 
     Reprendre la main sur un appareil injoignable. En v2.x : le
-    [Factory Reset](../v2/maintenance/factory-reset.md) et son évolution à partir de la v3.x : [Mode Récupération](../v3/appareil/systeme/recuperation.md)
+    [Factory Reset](../v2/maintenance/factory-reset.md) et son évolution à partir de la v3.x : le [firmware de secours](../v3/appareil/systeme/firmware-de-secours.md)
 
 </div>
 

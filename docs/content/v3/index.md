@@ -247,7 +247,7 @@ Activer la radio et vérifier que vos télécommandes sont reconnues : si toutes
 
 <div class="grid cards" markdown>
 
--   :material-lifebuoy:{ .lg .middle } **[Mode Récupération](appareil/systeme/recuperation.md)**
+-   :material-lifebuoy:{ .lg .middle } **[Firmware de secours](appareil/systeme/firmware-de-secours.md)**
 
     ---
 

@@ -208,5 +208,5 @@ Si l'appareil reste introuvable après quelques minutes, vérifiez le mot de pas
 que l'URL, si vous vous connectez par adresse IP. Débranchez l'appareil, puis rebranchez-le.
 En cas d'échec de connexion prolongé, il réactivera de lui-même son point d'accès de
 configuration. Pour un appareil totalement injoignable, voir
-[Mode Récupération](../systeme/recuperation.md).
+[Firmware de secours](../systeme/firmware-de-secours.md).
 

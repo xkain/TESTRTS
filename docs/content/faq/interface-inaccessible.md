@@ -7,10 +7,10 @@ la version du firmware.
 
     1. **Le [point d'accès de secours](../aide/point-d-acces.md)**&nbsp;: sans Wi-Fi ou sans
        réseau, l'appareil ouvre son propre point d'accès, à rejoindre pour le reconfigurer.
-    2. **Le mode Récupération**&nbsp;: trois coupures d'alimentation rapides, chacune
+    2. **Le firmware de secours**&nbsp;: trois coupures d'alimentation rapides, chacune
        dans les 5 secondes qui suivent le démarrage précédent. Il répare un appareil
-       dont l'interface pose problème sans dépendre de ce qui est cassé, et vous laisse choisir
-       ce qu'il faut effacer. Voir [Mode Récupération](../v3/appareil/systeme/recuperation.md).
+       dont l'interface pose problème sans dépendre de ce qui est cassé : il réinstalle un firmware
+       ou efface ce que vous choisissez. Voir [Firmware de secours](../v3/appareil/systeme/firmware-de-secours.md).
     3. **Les journaux du port série**&nbsp;: quand plus rien ne répond par le réseau,
        le câble USB reste le seul témoin. Voir
        [Journaux du port série](../outils/journaux-port-serie.md).
@@ -25,7 +25,7 @@ la version du firmware.
     2. **La réinitialisation par cycles d'alimentation** (depuis la v2.5.1)&nbsp;: **trois**
        coupures rapides, chacune dans les 5 secondes qui suivent le démarrage précédent,
        effacent le réseau et la sécurité en conservant vos équipements&nbsp;; **six** coupures
-       font un retour complet à l'état d'usine. Il n'y a pas de mode Récupération en v2.x&nbsp;:
+       font un retour complet à l'état d'usine. Il n'y a pas de firmware de secours en v2.x&nbsp;:
        la procédure se fait à l'aveugle, sans voyant. Voir
        [Factory Reset](../v2/maintenance/factory-reset.md).
     3. **Les journaux du port série**&nbsp;: quand plus rien ne répond par le réseau,

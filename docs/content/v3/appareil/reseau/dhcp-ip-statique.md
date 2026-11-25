@@ -43,13 +43,13 @@ format s'ils sont renseignés).
     injoignable sur le réseau, sans message d'erreur visible : il applique simplement une
     configuration invalide.
 
-    **Si l'interface est devenue injoignable**, le [mode Récupération](../systeme/recuperation.md) permet
-    de s'en sortir sans rien perdre d'autre : déclenchez-le par trois coupures d'alimentation
-    rapprochées, connectez-vous au réseau Wi-Fi ouvert `ESPSomfy-RECOVERY`, puis activez
-    uniquement l'interrupteur **Réseau** (Wi-Fi, adresse IP, Ethernet et mot de passe du point
-    d'accès) et cliquez sur **Appliquer**. L'appareil repart avec une configuration réseau
-    d'origine ; vos équipements, groupes et plannings restent intacts. Voir
-    [Réinitialisation ciblée](../systeme/recuperation.md#réinitialisation-ciblée).
+    **Si l'interface est devenue injoignable**, le [firmware de secours](../systeme/firmware-de-secours.md)
+    permet de s'en sortir sans rien perdre d'autre : déclenchez-le par trois coupures d'alimentation
+    rapprochées, connectez-vous au réseau Wi-Fi ouvert `ESPSomfy-RESCUE`, choisissez
+    `Réinitialiser`, cochez uniquement **Réseau** (Wi-Fi, adresse IP, Ethernet et mot de passe du
+    point d'accès) et confirmez. L'appareil repart avec une configuration réseau d'origine ; vos
+    équipements, groupes et plannings restent intacts. Voir
+    [Réinitialiser](../systeme/firmware-de-secours.md#reinitialiser).
 
 ## Enregistrement
 

@@ -114,7 +114,7 @@ Vous préférez un appareil déjà assemblé et préconfiguré&nbsp;? Voir les
 
     ---
 
-    Mode Récupération, journaux, restauration d'une sauvegarde.
+    Firmware de secours, journaux, restauration d'une sauvegarde.
 
 </div>
 

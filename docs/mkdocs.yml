@@ -214,11 +214,10 @@ nav:
           - Système:
               - v3/appareil/systeme/index.md
               - Mises à jour du firmware: v3/appareil/systeme/mises-a-jour.md
-              - Mode installation: v3/appareil/systeme/mode-installation.md
+              - Firmware de secours: v3/appareil/systeme/firmware-de-secours.md
               - Témoin LED de statut: v3/appareil/systeme/led-de-statut.md
               - Restaurer le système: v3/appareil/systeme/restaurer.md
               - Anatomie du fichier de sauvegarde: v3/appareil/systeme/anatomie-sauvegarde.md
-              - Mode Récupération: v3/appareil/systeme/recuperation.md
 
   - Boîtiers:
       - boitiers/index.md

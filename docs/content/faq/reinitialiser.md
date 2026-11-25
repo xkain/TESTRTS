@@ -6,12 +6,12 @@ version.
 
 === "v3.x et +"
 
-    Le geste ouvre le **mode Récupération** : un réseau Wi-Fi `ESPSomfy-RECOVERY`, sans mot de
+    Le geste mène au **firmware de secours** : un réseau Wi-Fi `ESPSomfy-RESCUE`, sans mot de
     passe, qui sert une page où **vous choisissez ce qu'il faut effacer** (réseau, sécurité,
-    équipements, plannings, codes tournants, ou tout). Rien n'est effacé tant que vous n'avez pas
-    validé, et **Annuler** redémarre l'appareil sans rien toucher.
+    radio, équipements et plannings, ou tout). Rien n'est effacé tant que vous n'avez pas
+    confirmé, et `Revenir au firmware` redémarre l'appareil sans rien toucher.
 
-    Voir [Mode Récupération](../v3/appareil/systeme/recuperation.md).
+    Voir [Firmware de secours](../v3/appareil/systeme/firmware-de-secours.md#reinitialiser).
 
 === "v2.x"
 

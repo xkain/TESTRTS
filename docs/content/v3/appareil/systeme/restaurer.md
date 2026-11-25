@@ -11,8 +11,8 @@ Réinstalle tout ou partie d'une configuration à partir d'un fichier `.backup` 
 
     Si c'est l'**interface web elle-même** qui est endommagée (pas seulement la
     configuration), cette fenêtre ne peut pas vous aider : elle fait partie de cette même
-    interface. Voir [Mode Récupération](recuperation.md#interface-web) pour ce
-    cas de figure.
+    interface. L'interface fait partie du firmware : réinstallez-le depuis le
+    [firmware de secours](firmware-de-secours.md#installer).
 
 ## Ce qu'on peut restaurer
 

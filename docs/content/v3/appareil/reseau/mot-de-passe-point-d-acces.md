@@ -38,8 +38,8 @@ Un commutateur à deux positions :
 
     Si vous oubliez ce mot de passe **et** que votre connexion principale échoue un jour, vous
     ne pourrez plus reconfigurer l'appareil à distance : il faudra passer par le
-    [Mode Récupération](../systeme/recuperation.md)) (trois coupures d'alimentation
-    rapprochées), qui ouvre son propre point d'accès indépendant, toujours sans mot de passe.
+    [firmware de secours](../systeme/firmware-de-secours.md) (trois coupures d'alimentation
+    rapprochées), qui ouvre son propre réseau `ESPSomfy-RESCUE`, toujours sans mot de passe.
 
 ## Enregistrement
 

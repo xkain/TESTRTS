@@ -2,7 +2,7 @@
 
 Le témoin de statut est une LED que l'appareil allume pour montrer ce qu'il fait, sans avoir à
 ouvrir l'interface : un bref flash à chaque trame radio émise ou reçue, ou à chaque commande
-envoyée, et des signaux propres au démarrage et au [Mode Récupération](recuperation.md#signal-visuel).
+envoyée, et le signal des [trois coupures d'alimentation](firmware-de-secours.md#trois-coupures) au démarrage.
 
 Il se règle depuis l'onglet **État du système** de la page **Appareil › Système** (voir
 [Système](index.md#status)), avec le bouton
@@ -117,8 +117,8 @@ aussi, qu'en **Réglages manuels**.
 
 !!! note "Une LED RGB s'allume en bleu au démarrage"
 
-    Au démarrage et en [Mode Récupération](recuperation.md#signal-visuel), une LED RGB
-    s'allume en **bleu**, quelle que soit la couleur d'activité choisie. Cette couleur n'est pas
+    Au démarrage, pendant la fenêtre des [trois coupures](firmware-de-secours.md#trois-coupures), une
+    LED RGB s'allume en **bleu**, quelle que soit la couleur d'activité choisie. Cette couleur n'est pas
     réglable : c'est le seul retour visuel disponible quand plus rien d'autre ne répond, et elle
     distingue d'un coup d'œil ces phases du fonctionnement normal.
 
@@ -175,5 +175,5 @@ tant que vous n'avez rien modifié. Un réglage de broche ou de polarité s'appl
 après l'enregistrement, sans redémarrage : l'ancienne broche est relâchée proprement.
 
 Dès qu'une broche est configurée (boîtier officiel ou carte générique réglée ici), le témoin
-affiche aussi deux signaux supplémentaires, propres au mode de secours de l'appareil : voir
-[Mode Récupération](recuperation.md#signal-visuel) pour leur signification.
+affiche aussi le signal des coupures d'alimentation qui mènent au firmware de secours : voir
+[Trois coupures d'alimentation](firmware-de-secours.md#trois-coupures) pour sa signification.
