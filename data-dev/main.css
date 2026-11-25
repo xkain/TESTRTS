@@ -2482,6 +2482,9 @@ span.fw-upd-new svg {
 .fw-tile-foot {
     margin-top: auto;
 }
+.fw-upd-other {
+    border-top: 1px solid var(--divider);
+}
 .fw-channel[data-channel="stable"] .fw-channel-dev,
 .fw-channel[data-channel="dev"] .fw-channel-stable {
     display: none;

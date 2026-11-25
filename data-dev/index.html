@@ -565,6 +565,13 @@
                                                 <button type="button" class="gen-btn gen-btn-primary fw-upd-new" onclick="firmware.updateGithub();"><svg><use href="#svg-cloudDownload"></use></svg><span id="spanFwInstall"></span></button>
                                                 <button type="button" class="gen-btn" onclick="firmware.checkNow();"><svg><use href="#svg-refresh"></use></svg><span tr="FW_CHECK_NOW"></span></button>
                                             </div>
+                                            <div class="fw-acts fw-upd-other">
+                                                <button type="button" class="fw-act" onclick="firmware.updateGithub();">
+                                                    <span class="fw-act-ico"><svg><use href="#svg-cloudDownload"></use></svg></span>
+                                                    <span class="gen-row-text"><b tr="FW_OTHER_VERSION"></b><span tr="FW_OTHER_VERSION_DESC"></span></span>
+                                                    <svg class="fw-act-chev"><use href="#svg-arrowRight"></use></svg>
+                                                </button>
+                                            </div>
                                         </div>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="FW_TILE_AUTOCHECK"></h3>
@@ -589,12 +596,8 @@
                                         </div>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="FW_TILE_OTHER"></h3>
+                                            <p class="gen-tile-desc" tr="FW_TILE_OTHER_DESC"></p>
                                             <div class="fw-acts">
-                                                <button type="button" class="fw-act" onclick="firmware.updateGithub();">
-                                                    <span class="fw-act-ico"><svg><use href="#svg-cloudDownload"></use></svg></span>
-                                                    <span class="gen-row-text"><b tr="FW_OTHER_VERSION"></b><span tr="FW_OTHER_VERSION_DESC"></span></span>
-                                                    <svg class="fw-act-chev"><use href="#svg-arrowRight"></use></svg>
-                                                </button>
                                                 <button type="button" class="fw-act" onclick="firmware.updateManual();">
                                                     <span class="fw-act-ico"><svg><use href="#svg-upload"></use></svg></span>
                                                     <span class="gen-row-text"><b tr="FW_UPDATE_FILE"></b><span id="spanFwFileDesc"></span></span>
