@@ -1863,6 +1863,11 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     border-radius: var(--r-5) 0 0 var(--r-5);
 }
 .genmod-side { --hc: #475569; }
+.hero-skin { --lip: color-mix(in srgb, var(--g) 70%, #000000); }
+:root[data-theme="dark"] .hero-skin { --lip: color-mix(in srgb, var(--g) 45%, #000000); }
+@media (min-width: 1000px) {
+    :is(.genmod-side, .wiz-side).hero-skin { border-right: 4px solid var(--lip); }
+}
 /* Pastille ronde des pages, couleur de l'objet ([data-obj] de la section, base.css). */
 .genmod-side-icon {
     --hero-ring: color-mix(in srgb, color-mix(in srgb, currentColor 60%, #ffffff) 40%, transparent);
@@ -1904,11 +1909,6 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     max-width: 320px;
     padding: 14px 16px;
     border-radius: var(--r-4);
-.hero-skin { --lip: color-mix(in srgb, var(--g) 70%, #000000); }
-:root[data-theme="dark"] .hero-skin { --lip: color-mix(in srgb, var(--g) 45%, #000000); }
-@media (min-width: 1000px) {
-    :is(.genmod-side, .wiz-side).hero-skin { border-right: 4px solid var(--lip); }
-}
     background: var(--surface);
 }
 .genmod-state-key {
@@ -2058,6 +2058,7 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
         text-align: left;
         border-radius: var(--r-5) var(--r-5) 0 0;
     }
+    .genmod-side.hero-skin { border-bottom: 4px solid var(--lip); }
     .genmod-side .modalHeader-handle { grid-column: 1 / -1; justify-self: stretch; }
     .genmod-side-icon { width: 48px; height: 48px; padding: 11px; box-shadow: 0 0 0 4px var(--hero-ring); }
     .genmod-side-title { font-size: var(--fs-5); }
@@ -2099,7 +2100,6 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     }
     .genmod-side { gap: 10px 12px; padding: 0 16px 14px; }
     .genmod-state { gap: 8px; margin: 2px -16px -14px; padding: 8px 16px; }
-    .genmod-side.hero-skin { border-bottom: 4px solid var(--lip); }
     .genmod-state-val { font-size: var(--fs-4); }
     .genmod-head { display: none; }
     .genmod-body { padding: 12px 16px 14px; }
