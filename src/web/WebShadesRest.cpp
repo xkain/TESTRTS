@@ -83,7 +83,7 @@ namespace WebShadesRest {
     // route alimente une intégration domotique, pour qui une liste d'équipements amputée en silence
     // est pire qu'une erreur franche : un équipement manquant y passe pour un équipement supprimé.
     if(!st->em.endItem()) {
-      Serial.printf("[CHUNKED] /shades: element tronque (tampon de %u octets depasse), reponse interrompue\n",
+      Serial.printf("[CHUNKED] /shades: item truncated (%u-byte buffer exceeded), response cut short\n",
         (unsigned)CHUNKED_ITEM_BUF);
       st->em.discardItem();
       st->phase = SH_DONE;
@@ -117,7 +117,7 @@ namespace WebShadesRest {
               continue;
             }
             if(!shadesProduceNext(st.get())) {
-              ConfigSettings::reportAsyncTcpStackLow("/shades (serialisation chunked)");
+              ConfigSettings::reportAsyncTcpStackLow("/shades (chunked serialization)");
               break;
             }
           }
@@ -190,7 +190,7 @@ namespace WebShadesRest {
     }
     // Même filet que /shades : un élément tronqué n'est pas expédié et la réponse s'arrête là.
     if(!st->em.endItem()) {
-      Serial.printf("[CHUNKED] /groups: element tronque (tampon de %u octets depasse), reponse interrompue\n",
+      Serial.printf("[CHUNKED] /groups: item truncated (%u-byte buffer exceeded), response cut short\n",
         (unsigned)CHUNKED_ITEM_BUF);
       st->em.discardItem();
       st->phase = GR_DONE;
@@ -217,7 +217,7 @@ namespace WebShadesRest {
               continue;
             }
             if(!groupsProduceNext(st.get())) {
-              ConfigSettings::reportAsyncTcpStackLow("/groups (serialisation chunked)");
+              ConfigSettings::reportAsyncTcpStackLow("/groups (chunked serialization)");
               break;
             }
           }

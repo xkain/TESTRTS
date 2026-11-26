@@ -80,7 +80,7 @@ static void sendFrameFanOut(WebSocketsServer *srv, uint8_t num, const char *payl
     if(num < WEBSOCKETS_SERVER_CLIENT_MAX) {
       if(srv->sendTXT(num, payload)) g_writeFailures[num] = 0;
       else if(++g_writeFailures[num] >= SOCK_WRITE_FAIL_LIMIT) {
-        Serial.printf("Socket [%u]: %u emissions incompletes consecutives, deconnexion\n",
+        Serial.printf("Socket [%u]: %u incomplete sends in a row, disconnecting\n",
           num, (unsigned)SOCK_WRITE_FAIL_LIMIT);
         srv->disconnect(num);
         g_writeFailures[num] = 0;
@@ -95,7 +95,7 @@ static void sendFrameFanOut(WebSocketsServer *srv, uint8_t num, const char *payl
     wdtReset();
     if(srv->sendTXT(i, payload)) g_writeFailures[i] = 0;
     else if(++g_writeFailures[i] >= SOCK_WRITE_FAIL_LIMIT) {
-      Serial.printf("Socket [%u]: %u emissions incompletes consecutives, deconnexion\n",
+      Serial.printf("Socket [%u]: %u incomplete sends in a row, disconnecting\n",
         i, (unsigned)SOCK_WRITE_FAIL_LIMIT);
       srv->disconnect(i);
       g_writeFailures[i] = 0;
@@ -296,7 +296,7 @@ void JsonFormatter::_safecat(const char *val, bool escape) {
   if(escape) len += 2;
   if(len >= this->buffSize) {
     this->_overflowed = true;
-    Serial.printf("JsonFormatter: depassement du tampon (%u octets), reponse abandonnee\n",
+    Serial.printf("JsonFormatter: buffer overflow (%u bytes), response dropped\n",
       (unsigned)this->buffSize);
     return;
   }

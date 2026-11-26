@@ -742,7 +742,7 @@ void SSDPClass::_processRequest(AsyncUDPPacket &p) {
   if(pkt.valid && pkt.method == SEARCH) {
     if(this->_isFlooding(p.remoteIP())) {
       #ifdef DEBUG_SSDP
-      DEBUG_SSDP.println("SSDP: rafale de M-SEARCH pour cette source, requête ignorée");
+      DEBUG_SSDP.println("SSDP: M-SEARCH burst from this source, request ignored");
       #endif
       return;
     }

@@ -570,7 +570,7 @@ static void clampRadioFloat(JsonObject& obj, const char *key, float &dest, float
   if(!obj.containsKey(key)) return;
   float v = obj[key].as<float>();
   if(isnan(v) || isinf(v) || v < lo || v > hi) {
-    Serial.printf("Radio: %s=%g hors bornes [%g..%g], valeur ignoree\n", key, v, lo, hi);
+    Serial.printf("Radio: %s=%g out of range [%g..%g], value ignored\n", key, v, lo, hi);
     return;
   }
   dest = v;
@@ -613,7 +613,7 @@ static void setRadioPin(JsonObject& obj, const char *key, uint8_t &dest, radio_p
   int v = obj[key].as<int>();
   const char *fault = radioPinFault(v, role);
   if(fault) {
-    Serial.printf("Radio: %s=%d %s, valeur ignoree\n", key, v, radioPinFaultText(fault));
+    Serial.printf("Radio: %s=%d %s, value ignored\n", key, v, radioPinFaultText(fault));
     return;
   }
   dest = (uint8_t)v;
@@ -637,7 +637,7 @@ void transceiver_config_t::fromJSON(JsonObject& obj) {
       // Seules longueurs de trame que le codec sait produire et décoder (cf. encodeFrame/
       // sendFrame) : toute autre valeur ferait émettre une trame tronquée ou lire hors bornes.
       if(t == 56 || t == 80) this->type = t;
-      else Serial.printf("Radio: type=%u invalide (56 ou 80 attendu), valeur ignoree\n", t);
+      else Serial.printf("Radio: type=%u invalid (56 or 80 expected), value ignored\n", t);
     }
     setRadioPin(obj, "CSNPin", this->CSNPin, radio_pin_role::spi_out);
     setRadioPin(obj, "MISOPin", this->MISOPin, radio_pin_role::spi_in);
@@ -659,7 +659,7 @@ void transceiver_config_t::fromJSON(JsonObject& obj) {
       bool ok = false;
       for(uint8_t i = 0; i < sizeof(allowed); i++) if(allowed[i] == p) { ok = true; break; }
       if(ok) this->txPower = (int8_t)p;
-      else Serial.printf("Radio: txPower=%d hors table, valeur ignoree\n", p);
+      else Serial.printf("Radio: txPower=%d not in table, value ignored\n", p);
     }
     if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
     jget(obj, "radioBoardType", this->radioBoardType);

@@ -282,12 +282,12 @@ bool MQTTClass::connect() {
   int st = mqttClient.state();
   if(st != this->lastConnState) {
     this->lastConnState = st;
-    Serial.printf("MQTT: connexion a %s:%u echouee (state=%d)%s\n",
+    Serial.printf("MQTT: connection to %s:%u failed (state=%d)%s\n",
       settings.MQTT.hostname, (unsigned)settings.MQTT.port, st,
-      (st == MQTT_CONNECT_FAILED) ? " -- hote/port injoignable ou courtier attendant du TLS (non supporte)" :
-      (st == MQTT_CONNECTION_TIMEOUT) ? " -- pas de reponse du courtier" :
-      (st == MQTT_CONNECT_BAD_CREDENTIALS) ? " -- identifiants refuses" :
-      (st == MQTT_CONNECT_UNAUTHORIZED) ? " -- non autorise par le courtier" : "");
+      (st == MQTT_CONNECT_FAILED) ? " -- host/port unreachable or broker expecting TLS (not supported)" :
+      (st == MQTT_CONNECTION_TIMEOUT) ? " -- no answer from the broker" :
+      (st == MQTT_CONNECT_BAD_CREDENTIALS) ? " -- credentials refused" :
+      (st == MQTT_CONNECT_UNAUTHORIZED) ? " -- not authorized by the broker" : "");
   }
   return false;
 }
@@ -390,7 +390,7 @@ bool MQTTClass::publishDisco(const char *topic, JsonObject &obj, bool retain) {
   size_t n = serializeJson(obj, g_content, sizeof(g_content));
   // Tronquée, la fiche serait un JSON invalide chez le courtier : mieux vaut ne rien publier.
   if(n >= sizeof(g_content) - 1) {
-    Serial.printf("[MQTT] fiche %s trop grande (%u octets), non publiee\n", topic, (unsigned)n);
+    Serial.printf("[MQTT] discovery config %s too large (%u bytes), not published\n", topic, (unsigned)n);
     return false;
   }
   bool ok = this->publishBuffer(topic, (uint8_t *)g_content, n, retain, true);

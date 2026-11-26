@@ -69,7 +69,7 @@ bool ConfigFile::begin(const char* filename, bool readOnly) {
   this->_opened = (bool)this->file;
   if(!this->_opened) {
     this->failed = true;
-    Serial.printf("[CFG] ouverture de %s refusee\n", filename);
+    Serial.printf("[CFG] opening %s refused\n", filename);
   }
   return this->_opened;
 }
@@ -100,7 +100,7 @@ bool ConfigFile::end() {
   }
   else if(fs.exists(this->path)) fs.remove(this->path);
   if(!fs.rename(this->tmpPath, this->path)) {
-    Serial.printf("[CFG] renommage de %s refuse\n", this->path);
+    Serial.printf("[CFG] renaming %s refused\n", this->path);
     fs.remove(this->tmpPath);
     ok = false;
   }
@@ -632,7 +632,7 @@ bool ShadeConfigFile::load(SomfyShadeController *s, const char *filename) {
   if(success || strcmp(filename, "/shades.cfg") != 0) return success;
   // Fichier absent ou refusé : l'exemplaire précédent (cf. ConfigFile::end) le remplace, et
   // isDirty fait réécrire un shades.cfg sain au tour suivant.
-  Serial.println("[CFG] shades.cfg illisible, repli sur shades.cfg.bak");
+  Serial.println("[CFG] shades.cfg unreadable, falling back to shades.cfg.bak");
   ShadeConfigFile bak;
   success = bak.begin("/shades.cfg.bak", true) && bak.loadFile(s, "/shades.cfg.bak");
   bak.end();
@@ -776,7 +776,7 @@ bool ShadeConfigFile::skipRecord(const char *what, uint16_t declaredSize) {
   if(!this->seekChar(CFG_REC_END)) return false;
   uint32_t actual = this->file.position() - startPos;
   if(actual != declaredSize)
-    Serial.printf("[CFG] enregistrement %s : %u octets annonces, %u reellement lus -- resynchronise\n",
+    Serial.printf("[CFG] record %s: %u bytes declared, %u actually read -- resynced\n",
       what, (unsigned)declaredSize, (unsigned)actual);
   return true;
 }
@@ -1369,7 +1369,7 @@ bool ScheduleConfigFile::loadFile(ScheduleController *s, const char *filename) {
 bool ScheduleConfigFile::load(ScheduleController *s, const char *filename) {
   ScheduleConfigFile file;
   if(file.loadFile(s, filename) || strcmp(filename, "/schedules.cfg") != 0) return true;
-  Serial.println("[CFG] schedules.cfg illisible, repli sur schedules.cfg.bak");
+  Serial.println("[CFG] schedules.cfg unreadable, falling back to schedules.cfg.bak");
   ScheduleConfigFile bak;
   bool success = bak.loadFile(s, "/schedules.cfg.bak");
   if(success) s->isDirty = true;
@@ -1390,7 +1390,7 @@ bool ShadeConfigFile::readScheduleBlock() {
       count = recCount;
     }
     else {
-      Serial.printf("[CFG] bloc plannings illisible (version %u, taille %u, nombre %u) -- ignore\n",
+      Serial.printf("[CFG] schedules block unreadable (version %u, size %u, count %u) -- skipped\n",
         (unsigned)version, (unsigned)recSize, (unsigned)recCount);
       this->file.seek(pos, SeekSet);
     }
@@ -1401,7 +1401,7 @@ bool ShadeConfigFile::readScheduleBlock() {
     for(uint8_t i = 0; i < count; i++) this->readScheduleRecord(&schedule.schedules[i]);
   }
   else {
-    Serial.println("[CFG] sauvegarde sans bloc plannings -- plannings de l'appareil effaces");
+    Serial.println("[CFG] backup has no schedules block -- device schedules cleared");
   }
   schedule.isDirty = true;
   schedule.unlock();
@@ -1459,13 +1459,13 @@ bool ShadeConfigFile::readListenerBlock(SomfyShadeController *s, bool restoring)
       count = recCount;
     }
     else {
-      Serial.printf("[CFG] bloc telecommandes ecoutees illisible (version %u, taille %u, nombre %u) -- ignore\n",
+      Serial.printf("[CFG] listened-remotes block unreadable (version %u, size %u, count %u) -- skipped\n",
         (unsigned)version, (unsigned)recSize, (unsigned)recCount);
       this->file.seek(pos, SeekSet);
     }
   }
   if(!present && restoring) {
-    Serial.println("[CFG] sauvegarde sans bloc telecommandes ecoutees -- liste de l'appareil conservee");
+    Serial.println("[CFG] backup has no listened-remotes block -- device list kept");
     return true;
   }
   // linkListener() ci-dessous marque la config à réécrire : inutile au simple chargement, où l'on
@@ -1544,7 +1544,7 @@ bool ShadeConfigFile::readRemoteNameBlock(SomfyShadeController *s) {
   uint16_t recSize = this->readUInt16(0);
   uint8_t recCount = this->readUInt8(255);
   if(version == 0 || version > REMOTE_NAME_HDR_VER || recSize == 0 || recSize > 255 || recCount > SOMFY_MAX_REMOTE_NAMES) {
-    Serial.printf("[CFG] bloc noms des telecommandes illisible (version %u, taille %u, nombre %u) -- ignore\n",
+    Serial.printf("[CFG] remote names block unreadable (version %u, size %u, count %u) -- skipped\n",
       (unsigned)version, (unsigned)recSize, (unsigned)recCount);
     this->file.seek(pos, SeekSet);
     return false;
@@ -1568,7 +1568,7 @@ bool ShadeConfigFile::readRepeaterNameBlock(SomfyShadeController *s) {
   uint16_t recSize = this->readUInt16(0);
   uint8_t recCount = this->readUInt8(255);
   if(version == 0 || version > REPEATER_NAME_HDR_VER || recSize == 0 || recSize > 255 || recCount > SOMFY_MAX_REPEATERS) {
-    Serial.printf("[CFG] bloc noms des repeteurs illisible (version %u, taille %u, nombre %u) -- ignore\n",
+    Serial.printf("[CFG] repeater names block unreadable (version %u, size %u, count %u) -- skipped\n",
       (unsigned)version, (unsigned)recSize, (unsigned)recCount);
     this->file.seek(pos, SeekSet);
     return false;

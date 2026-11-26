@@ -271,7 +271,7 @@ void SocketEmitter::loop() {
     portEXIT_CRITICAL(&g_deferMux);
     for(uint8_t i = 0; i < WEBSOCKETS_SERVER_CLIENT_MAX; i++) {
       if((pending & (1u << i)) == 0) continue;
-      Serial.printf("Socket [%u]: connexion non authentifiee, deconnexion\n", i);
+      Serial.printf("Socket [%u]: unauthenticated connection, disconnecting\n", i);
       sockServer.disconnect(i);
     }
   }
@@ -302,7 +302,7 @@ JsonSockEvent *SocketEmitter::beginEmit(const char *evt) {
       // ou des échos d'évènement dont la disparition est cosmétique.
       g_droppedEmits++;
       if((g_droppedEmits % 50) == 1)
-        Serial.printf("Emission socket differee abandonnee (aucun emplacement libre, total %lu)\n",
+        Serial.printf("Deferred socket send dropped (no free slot, total %lu)\n",
           (unsigned long)g_droppedEmits);
       g_discardSink.beginDiscard();
       return &g_discardSink;

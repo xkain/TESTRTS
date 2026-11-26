@@ -361,7 +361,7 @@ bool ConfigSettings::save() {
   ok &= nvsPutOk(pref.putString("pendingLang", this->pendingLang), this->pendingLang);
   ok &= nvsPutOk(pref.putBool("onboardingDone", this->onboardingDone));
   pref.end();
-  if(!ok) Serial.println("[NVS] ConfigSettings::save : au moins une valeur n'a PAS ete persistee");
+  if(!ok) Serial.println("[NVS] ConfigSettings::save: at least one value was NOT persisted");
   return ok;
 }
 void ConfigSettings::toJSON(JsonFormatter &json) {
@@ -467,7 +467,7 @@ bool MQTTSettings::ensureRootTopic() {
   // même courtier ne se marchent jamais dessus. C'est aussi ce qui identifie déjà l'appareil dans
   // les fiches de découverte Home Assistant (mqtt_espsomfyrts_<serverId>).
   snprintf(this->rootTopic, sizeof(this->rootTopic), "espsomfy-%s", settings.serverId);
-  Serial.printf("MQTT: topic racine vide, defaut applique : %s\n", this->rootTopic);
+  Serial.printf("MQTT: empty root topic, default applied: %s\n", this->rootTopic);
   return true;
 }
 bool MQTTSettings::begin() {
@@ -529,7 +529,7 @@ bool MQTTSettings::save() {
   ok &= nvsPutOk(pref.putString("discoTopic", this->discoTopic), this->discoTopic);
   ok &= nvsPutOk(pref.putString("clientId", this->clientId), this->clientId);
   pref.end();
-  if(!ok) Serial.println("[NVS] MQTTSettings::save() : au moins une valeur n'a PAS ete persistee");
+  if(!ok) Serial.println("[NVS] MQTTSettings::save(): at least one value was NOT persisted");
   return ok;
 }
 bool MQTTSettings::load() {
@@ -561,9 +561,9 @@ bool MQTTSettings::load() {
   char legacyProtocol[10] = "";
   if(pref.getString("protocol", legacyProtocol, sizeof(legacyProtocol)) > 0 &&
      strcmp(legacyProtocol, MQTTSettings::protocol) != 0) {
-    Serial.printf("MQTT: reglage herite \"%s\" abandonne -- ce firmware ne fait QUE du MQTT en clair\n", legacyProtocol);
+    Serial.printf("MQTT: legacy setting \"%s\" dropped -- this firmware only speaks plain MQTT\n", legacyProtocol);
     if(this->port == 8883) {
-      Serial.println("MQTT: port 8883 (TLS) ramene a 1883 -- cette combinaison ne pouvait pas aboutir");
+      Serial.println("MQTT: port 8883 (TLS) changed to 1883 -- that combination could never connect");
       this->port = 1883;
       pref.putShort("port", this->port);
     }
@@ -585,7 +585,7 @@ bool NTPSettings::save() {
   ok &= nvsPutOk(pref.putString("ntpServer", this->ntpServer), this->ntpServer);
   ok &= nvsPutOk(pref.putString("posixZone", this->posixZone), this->posixZone);
   pref.end();
-  if(!ok) Serial.println("[NVS] NTPSettings::save : au moins une valeur n'a PAS ete persistee");
+  if(!ok) Serial.println("[NVS] NTPSettings::save: at least one value was NOT persisted");
   return ok && (this->apply());
 }
 bool NTPSettings::load() {
@@ -680,7 +680,7 @@ bool IPSettings::save() {
   ok &= nvsPutOk(pref.putString("dns1", this->dns1.toString()), this->dns1.toString());
   ok &= nvsPutOk(pref.putString("dns2", this->dns2.toString()), this->dns2.toString());
   pref.end();
-  if(!ok) Serial.println("[NVS] IPSettings::save : au moins une valeur n'a PAS ete persistee");
+  if(!ok) Serial.println("[NVS] IPSettings::save: at least one value was NOT persisted");
   return ok;
 }
 bool IPSettings::load() {
@@ -751,7 +751,7 @@ bool SecuritySettings::save() {
   ok &= nvsPutOk(pref.putString("pin", this->pin), this->pin);
   ok &= nvsPutOk(pref.putChar("permissions", this->permissions));
   pref.end();
-  if(!ok) Serial.println("[NVS] SecuritySettings::save : au moins une valeur n'a PAS ete persistee");
+  if(!ok) Serial.println("[NVS] SecuritySettings::save: at least one value was NOT persisted");
   return ok;
 }
 bool SecuritySettings::load() {
@@ -828,7 +828,7 @@ bool WifiSettings::save() {
   ok &= nvsPutOk(pref.putBool("roaming", this->roaming));
   ok &= nvsPutOk(pref.putBool("hidden", this->hidden));
   pref.end();
-  if(!ok) Serial.println("[NVS] WifiSettings::save : au moins une valeur n'a PAS ete persistee");
+  if(!ok) Serial.println("[NVS] WifiSettings::save: at least one value was NOT persisted");
   return ok;
 }
 bool WifiSettings::load() {
@@ -961,7 +961,7 @@ bool EthernetSettings::save() {
   ok &= nvsPutOk(pref.putChar("MDCPin", this->MDCPin));
   ok &= nvsPutOk(pref.putChar("MDIOPin", this->MDIOPin));
   pref.end();
-  if(!ok) Serial.println("[NVS] EthernetSettings::save : au moins une valeur n'a PAS ete persistee");
+  if(!ok) Serial.println("[NVS] EthernetSettings::save: at least one value was NOT persisted");
   return ok;
 }
 bool EthernetSettings::load() {
@@ -1009,7 +1009,7 @@ void ConfigSettings::reportAsyncTcpStackLow(const char *label) {
   static UBaseType_t lowest = (UBaseType_t)-1;
   if(hwm >= lowest) return;
   lowest = hwm;
-  Serial.printf("[ASYNC-STACK] nouveau minimum apres %s : %u octets libres sur %u -- pic d'utilisation %u\n",
+  Serial.printf("[ASYNC-STACK] new low after %s: %u bytes free of %u -- peak use %u\n",
     label, (unsigned)hwm, (unsigned)CONFIG_ASYNC_TCP_STACK_SIZE,
     (unsigned)(CONFIG_ASYNC_TCP_STACK_SIZE - hwm));
 }
@@ -1019,7 +1019,7 @@ void ConfigSettings::dumpHeapBlocks(const char *label) {
   heap_caps_get_info(&info, MALLOC_CAP_8BIT);
   // En-tête sur une seule ligne, avec le libellé : c'est elle qui permet de retrouver et d'apparier
   // les deux dumps dans un long journal série avant de les comparer.
-  Serial.printf("[HEAP-DUMP] ==== DEBUT %s ==== largest=%u free_total=%u blocs_libres=%u blocs_alloues=%u min_free=%u\n",
+  Serial.printf("[HEAP-DUMP] ==== BEGIN %s ==== largest=%u free_total=%u free_blocks=%u alloc_blocks=%u min_free=%u\n",
     label, (unsigned)info.largest_free_block, (unsigned)info.total_free_bytes,
     (unsigned)info.free_blocks, (unsigned)info.allocated_blocks, (unsigned)info.minimum_free_bytes);
   // Récapitulatif par région : montre laquelle porte réellement du libre (les autres, buffers
@@ -1035,7 +1035,7 @@ void ConfigSettings::dumpHeapBlocks(const char *label) {
   multi_heap_info_t after;
   heap_caps_get_info(&after, MALLOC_CAP_8BIT);
   if(after.largest_free_block != info.largest_free_block)
-    Serial.printf("[HEAP-DUMP] (le tas a bouge pendant le dump : largest %u -> %u)\n",
+    Serial.printf("[HEAP-DUMP] (heap moved during the dump: largest %u -> %u)\n",
       (unsigned)info.largest_free_block, (unsigned)after.largest_free_block);
   // PAS de heap_caps_dump() ici : la fonction parcourt le tas en TENANT SON VERROU pendant toute
   // l'impression -- plusieurs centaines de lignes, soit plusieurs secondes à 115200 bauds -- ce qui
@@ -1045,5 +1045,5 @@ void ConfigSettings::dumpHeapBlocks(const char *label) {
   // récapitulatif par région ci-dessus fournit déjà alloc_blocks/free_blocks/largest_free_block,
   // suffisant pour identifier une grosse réservation contiguë transitoire qui échoue en altitude
   // de petites allocations permanentes. Ne pas le réintroduire sans couper le réseau au préalable.
-  Serial.printf("[HEAP-DUMP] ==== FIN %s ====\n", label);
+  Serial.printf("[HEAP-DUMP] ==== END %s ====\n", label);
 }

@@ -170,7 +170,7 @@ void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len,
   // par celle du handler.
   if(total > ASYNC_MAX_BODY_BYTES) {
     if(index == 0)
-      Serial.printf("Rejet du corps de %s: %u octets > plafond %u\n",
+      Serial.printf("Body of %s rejected: %u bytes > limit %u\n",
         request->url().c_str(), (unsigned)total, (unsigned)ASYNC_MAX_BODY_BYTES);
     return;
   }
@@ -274,7 +274,7 @@ bool Web::waitForFileReaders(uint32_t timeoutMs) {
       // Volontairement non bloquant au-delà du budget : mieux vaut poursuivre l'OTA (risque résiduel
       // identique à l'existant) que de figer la tâche principale sur un transfert qui ne se termine
       // pas -- un client disparu sans FIN garderait sinon le compteur à 1 jusqu'au timeout TCP.
-      Serial.printf("Attente des lecteurs de fichiers expirée (%u encore en cours)\n",
+      Serial.printf("Timed out waiting for file readers (%u still running)\n",
         (unsigned)g_asyncFileReaders);
       return false;
     }

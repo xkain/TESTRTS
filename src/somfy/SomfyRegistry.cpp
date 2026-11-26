@@ -194,7 +194,7 @@ void SomfyShadeController::commit() {
   // Sur échec le drapeau reste levé : nouvel essai au tour suivant plutôt qu'une perte silencieuse.
   this->isDirty = !ok;
   this->lastCommit = millis();
-  if(!ok) Serial.println("[CFG] shades.cfg non ecrit, nouvel essai au prochain tour");
+  if(!ok) Serial.println("[CFG] shades.cfg not written, retrying next loop");
 }
 bool SomfyShadeController::writeBackup() {
   // Le verrou du filesystem est tenu par l'appelant (handleBackup), qui est l'écrivain async.
@@ -845,7 +845,7 @@ void SomfyShadeController::loop() {
       this->restorePending = false;
       bool ok = ShadeConfigFile::restore(this, "/shades.tmp", this->restoreOpts);
       fsLocked = false;
-      Serial.printf("[CFG] restauration %s\n", ok ? "appliquee" : "refusee");
+      Serial.printf("[CFG] restore %s\n", ok ? "applied" : "refused");
       this->commit();
       rebootDelay.rebootTime = millis() + 1000;
       rebootDelay.reboot = true;
@@ -857,7 +857,7 @@ void SomfyShadeController::loop() {
       this->loadPending = false;
       bool ok = ShadeConfigFile::load(this, "/shades.tmp");
       fsLocked = false;
-      Serial.printf("[CFG] shades.tmp %s\n", ok ? "charge" : "refuse");
+      Serial.printf("[CFG] shades.tmp %s\n", ok ? "loaded" : "refused");
       if(ok) this->commit();
     }
   }

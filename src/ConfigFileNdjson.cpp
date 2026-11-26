@@ -36,7 +36,7 @@ extern ScheduleController schedule;
 bool ShadeConfigFile::writeNdjsonLine(JsonFormatter &fmt, char *buff, const char *what) {
   fmt.endObject();
   if(fmt.overflowed()) {
-    Serial.printf("[CFG] ligne %s trop longue pour le tampon NDJSON -- omise\n", what);
+    Serial.printf("[CFG] line %s too long for the NDJSON buffer -- omitted\n", what);
     return false;
   }
   size_t len = strlen(buff);
@@ -513,14 +513,14 @@ bool ShadeConfigFile::restoreNdjson(SomfyShadeController *s, restore_options_t &
     if(n == NDJSON_LINE_BUF - 1) {
       // Ligne plus longue que le tampon : tronquée elle serait du JSON invalide, on la jette
       // entière et on se recale sur la fin de ligne. Le reste du fichier est intact.
-      Serial.println("[CFG] ligne NDJSON plus longue que le tampon -- ignoree");
+      Serial.println("[CFG] NDJSON line longer than the buffer -- skipped");
       this->seekChar(CFG_REC_END);
       continue;
     }
     DeserializationError err = deserializeJson(*doc, line, n);
     if(err) {
       if(!metaSeen) { failed = true; break; }   // première ligne illisible = fichier refusé
-      Serial.printf("[CFG] ligne NDJSON illisible (%s) -- ignoree\n", err.c_str());
+      Serial.printf("[CFG] unreadable NDJSON line (%s) -- skipped\n", err.c_str());
       continue;
     }
     JsonObject obj = doc->as<JsonObject>();
@@ -616,7 +616,7 @@ bool ShadeConfigFile::restoreNdjson(SomfyShadeController *s, restore_options_t &
   }
 
   if(failed) {
-    Serial.println("[CFG] sauvegarde NDJSON sans ligne meta lisible -- restauration refusee");
+    Serial.println("[CFG] NDJSON backup has no readable meta line -- restore refused");
     free(line);
     delete doc;
     return false;

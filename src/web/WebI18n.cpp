@@ -372,7 +372,7 @@ namespace WebI18n {
     }
     if(check) check.close();
     if(!validGzip) {
-      Serial.println("uploadLang: contenu rejete -- ce n'est pas un flux gzip valide (en-tete ou taille)");
+      Serial.println("uploadLang: content rejected -- not a valid gzip stream (header or size)");
       LittleFS.remove(tempPath);
       fsLockGive();
       request->send(400, _encoding_json, "{\"error\":\"invalid gzip content\"}");
@@ -385,11 +385,11 @@ namespace WebI18n {
     bool renamed = LittleFS.rename(tempPath, finalPath);
     fsLockGive();
     if(!renamed) {
-      Serial.printf("uploadLang: renommage vers %s refuse par LittleFS\n", finalPath);
+      Serial.printf("uploadLang: rename to %s refused by LittleFS\n", finalPath);
       request->send(500, _encoding_json, "{\"error\":\"rename failed\"}");
       return;
     }
-    Serial.printf("uploadLang: %s installe\n", finalPath);
+    Serial.printf("uploadLang: %s installed\n", finalPath);
     request->send(200, _encoding_json, "{\"status\":\"ok\"}");
   }
 
@@ -422,9 +422,9 @@ namespace WebI18n {
         state->rejected = state->full = true;
       request->_tempObject = state;
       if(state->rejected)
-        Serial.printf("uploadLang: refuse (%s)\n", state->full ? "plafond de langues atteint" : state->factory ? "langue d'usine" : fsLocked ? "filesystem occupe" : "non authentifie");
+        Serial.printf("uploadLang: refused (%s)\n", state->full ? "language limit reached" : state->factory ? "factory language" : fsLocked ? "filesystem busy" : "not authenticated");
       else
-        Serial.println("uploadLang: debut de reception");
+        Serial.println("uploadLang: receiving");
       // GitOTA a déjà la main sur le filesystem (firmware/langue en cours) : on n'écrit rien,
       // handleUploadLang() retombera sur "Upload failed" via state->success resté false.
       if(state->rejected) return;
@@ -450,7 +450,7 @@ namespace WebI18n {
       // Le filesystem d'usine est vide : /locale n'existe qu'après le premier pack.
       LittleFS.mkdir("/locale");
       if(!fsUploadLockAcquire("/locale/upload.json.gz.tmp")) {
-        Serial.println("uploadLang: impossible d'ouvrir le fichier temporaire (filesystem occupe ou plein)");
+        Serial.println("uploadLang: cannot open the temporary file (filesystem busy or full)");
         state->rejected = true;
         return;
       }
@@ -462,15 +462,15 @@ namespace WebI18n {
       // Une seule ligne, au PREMIER échec : la suite du transfert continuerait d'en produire une
       // par paquet, ce qui noierait le motif initial.
       if(!state->writeFailed)
-        Serial.printf("uploadLang: ECHEC d'ecriture apres %u octets (tas ou filesystem)\n", (unsigned)state->written);
+        Serial.printf("uploadLang: write FAILED after %u bytes (heap or filesystem)\n", (unsigned)state->written);
       state->writeFailed = true;
     }
     else state->written += len;
     if (final) {
       state->success = !state->writeFailed;
       fsUploadLockRelease();
-      Serial.printf("uploadLang: reception terminee, %u octets, %s\n",
-        (unsigned)state->written, state->success ? "ok" : "EN ECHEC");
+      Serial.printf("uploadLang: received, %u bytes, %s\n",
+        (unsigned)state->written, state->success ? "ok" : "FAILED");
     }
   }
 

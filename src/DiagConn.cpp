@@ -113,7 +113,7 @@ void DiagConn::resetPeaks() {
   s_minLargest = 0xFFFFFFFF;
   s_minLargestAt = 0;
   s_maxAllocBlocks = 0;
-  Serial.printf("[CONN] pics remis a zero a t=%lums\n", (unsigned long)millis());
+  Serial.printf("[CONN] peaks reset at t=%lums\n", (unsigned long)millis());
 }
 
 static uint16_t censusEstTotal(const conn_census_t *c) {
@@ -126,7 +126,7 @@ static void printCensus(const char *label, const conn_census_t *c) {
   Serial.printf("[CONN] %s t=%lums ws=%u |", label, (unsigned long)millis(), (unsigned)c->wsClients);
   for(uint8_t i = 0; i < DIAGCONN_PORTS; i++)
     Serial.printf(" :%u=%u+%u", (unsigned)DiagConn::ports[i], (unsigned)c->est[i], (unsigned)c->transit[i]);
-  Serial.printf(" | sortantes=%u TW=%u actifs=%u postes=%u\n",
+  Serial.printf(" | outgoing=%u TW=%u active=%u peers=%u\n",
     (unsigned)c->otherPort, (unsigned)c->timeWait, (unsigned)c->activeTotal, (unsigned)c->peers);
 }
 
@@ -142,7 +142,7 @@ static void printHeapLine(const char *label) {
     s_minLargestAt = millis();
   }
   if(info.allocated_blocks > s_maxAllocBlocks) s_maxAllocBlocks = info.allocated_blocks;
-  Serial.printf("[CONN] %s tas: largest=%u free=%u blocs_alloues=%u blocs_libres=%u\n",
+  Serial.printf("[CONN] %s heap: largest=%u free=%u alloc_blocks=%u free_blocks=%u\n",
     label, (unsigned)info.largest_free_block, (unsigned)info.total_free_bytes,
     (unsigned)info.allocated_blocks, (unsigned)info.free_blocks);
 }
@@ -151,12 +151,12 @@ void DiagConn::report(const char *label, bool force) {
   (void)force;
   conn_census_t c;
   if(!DiagConn::snapshot(&c)) {
-    Serial.printf("[CONN] %s : pile reseau non demarree, releve sans objet\n", label);
+    Serial.printf("[CONN] %s: network stack not started, nothing to report\n", label);
     return;
   }
   printCensus(label, &c);
   printHeapLine(label);
-  Serial.printf("[CONN] %s pics: etablies_max=%u actifs_max=%u TW_max=%u (a t=%lums) -- largest_min=%u (a t=%lums) blocs_alloues_max=%u\n",
+  Serial.printf("[CONN] %s peaks: established_max=%u active_max=%u TW_max=%u (at t=%lums) -- largest_min=%u (at t=%lums) alloc_blocks_max=%u\n",
     label, (unsigned)s_peakEst, (unsigned)s_peakActive, (unsigned)s_peakTimeWait,
     (unsigned long)s_peakAt, (unsigned)(s_minLargest == 0xFFFFFFFF ? 0 : s_minLargest),
     (unsigned long)s_minLargestAt, (unsigned)s_maxAllocBlocks);
@@ -169,12 +169,12 @@ static void handleSerialCommands() {
     int ch = Serial.read();
     switch(ch) {
       case 'm':
-        DiagConn::report("MARQUE", true);
+        DiagConn::report("MARK", true);
         break;
       case 'M':
-        DiagConn::report("MARQUE+DUMP", true);
+        DiagConn::report("MARK+DUMP", true);
         // Volumineux (~140 lignes) et conditionné à enableDebugLogs à l'intérieur.
-        ConfigSettings::dumpHeapBlocks("marque de palier");
+        ConfigSettings::dumpHeapBlocks("step mark");
         break;
       case 'r':
         DiagConn::resetPeaks();
@@ -219,6 +219,6 @@ void DiagConn::loop() {
   lastEstTotal = estTotal;
   lastWs = c.wsClients;
   lastPrint = millis();
-  printCensus(changed ? "composition" : "battement", &c);
-  printHeapLine(changed ? "composition" : "battement");
+  printCensus(changed ? "change" : "heartbeat", &c);
+  printHeapLine(changed ? "change" : "heartbeat");
 }

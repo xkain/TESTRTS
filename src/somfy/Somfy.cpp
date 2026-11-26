@@ -103,7 +103,7 @@ void SomfyShade::applyGpioModes() {
     if(*pins[i] == 255) continue;
     if(i == 2 && this->proto != radio_proto::GP_Remote) continue;
     if(!isUsableOutputPin(*pins[i])) {
-      Serial.printf("[CFG] equipement %u : broche %u inutilisable, ecartee\n", this->getShadeId(), *pins[i]);
+      Serial.printf("[CFG] device %u: pin %u unusable, discarded\n", this->getShadeId(), *pins[i]);
       *pins[i] = 255;
       continue;
     }

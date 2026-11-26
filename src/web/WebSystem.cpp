@@ -290,7 +290,7 @@ namespace WebSystem {
     // explicite : expédier la troncature telle quelle valait un 200 dont le navigateur ne tirait
     // qu'un `null` muet, et le bandeau de chargement tournait indéfiniment.
     if(!st->em.endItem()) {
-      Serial.printf("[CHUNKED] /controller: element tronque en phase %u (tampon de %u octets depasse), reponse interrompue\n",
+      Serial.printf("[CHUNKED] /controller: item truncated in phase %u (%u-byte buffer exceeded), response cut short\n",
         (unsigned)st->phase, (unsigned)CHUNKED_ITEM_BUF);
       st->em.emitRaw(st->abortTail);
       st->phase = CTL_DONE;
@@ -344,7 +344,7 @@ namespace WebSystem {
               // sérialisation ne s'exécute plus dans handleController() mais dans ce callback,
               // appelé par la bibliothèque au fil des ACK -- toujours sur async_tcp, mais bien plus
               // profond dans sa pile d'appels. Mesurer côté handler ne verrait plus que l'amorce.
-              ConfigSettings::reportAsyncTcpStackLow("/controller (serialisation chunked)");
+              ConfigSettings::reportAsyncTcpStackLow("/controller (chunked serialization)");
               break;
             }
           }
@@ -499,7 +499,7 @@ namespace WebSystem {
     }
     // Même filet que controllerProduceNext() -- s'y reporter pour le pourquoi.
     if(!st->em.endItem()) {
-      Serial.printf("[CHUNKED] /discovery: element tronque en phase %u (tampon de %u octets depasse), reponse interrompue\n",
+      Serial.printf("[CHUNKED] /discovery: item truncated in phase %u (%u-byte buffer exceeded), response cut short\n",
         (unsigned)st->phase, (unsigned)CHUNKED_ITEM_BUF);
       st->em.emitRaw(st->abortTail);
       st->phase = DISC_DONE;
@@ -546,7 +546,7 @@ namespace WebSystem {
               continue;
             }
             if(!discoveryProduceNext(st.get())) {
-              ConfigSettings::reportAsyncTcpStackLow("/discovery (serialisation chunked)");
+              ConfigSettings::reportAsyncTcpStackLow("/discovery (chunked serialization)");
               break;
             }
           }

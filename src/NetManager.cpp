@@ -725,7 +725,7 @@ void NetManager::emitHeap(uint8_t num) {
   // l'est que dans la branche broadcast) pour ne rater aucune chute entre deux tics.
   static uint32_t _lastMaxHeapTick = 0;
   if(settings.enableDebugLogs && _lastMaxHeapTick != 0 && maxHeap + 1000 < _lastMaxHeapTick) {
-    Serial.printf("[HEAP-DEBUG] Max Heap chute de %u -> %u (-%u) à t=%lums\n",
+    Serial.printf("[HEAP-DEBUG] Max heap dropped %u -> %u (-%u) at t=%lums\n",
       _lastMaxHeapTick, maxHeap, _lastMaxHeapTick - maxHeap, millis());
   }
   // Contrepartie de la ligne "chute" ci-dessus : sans elle, un silence dans le log après une chute
@@ -733,7 +733,7 @@ void NetManager::emitHeap(uint8_t num) {
   // par ailleurs qu'un statut broadcast au mieux toutes les ~10-15s). Même seuil (1000) que la
   // chute, pour rester symétrique.
   else if(settings.enableDebugLogs && _lastMaxHeapTick != 0 && maxHeap > _lastMaxHeapTick + 1000) {
-    Serial.printf("[HEAP-DEBUG] Max Heap reprise de %u -> %u (+%u) à t=%lums\n",
+    Serial.printf("[HEAP-DEBUG] Max heap recovered %u -> %u (+%u) at t=%lums\n",
       _lastMaxHeapTick, maxHeap, maxHeap - _lastMaxHeapTick, millis());
   }
   // Détecteur de PLATEAU. Le dump détaillé de GitOTA ne se déclenche que par le franchissement du
@@ -761,10 +761,10 @@ void NetManager::emitHeap(uint8_t num) {
     }
     else if((uint32_t)(millis() - _plateauSince) >= PLATEAU_SETTLE_MS) {
       _plateauDumped = true;
-      Serial.printf("[HEAP] PLATEAU confirme : %u -> %u (-%u) toujours non resorbe apres %us\n",
+      Serial.printf("[HEAP] PLATEAU confirmed: %u -> %u (-%u) still not recovered after %us\n",
         (unsigned)_plateauFrom, (unsigned)maxHeap, (unsigned)(_plateauFrom - maxHeap),
         (unsigned)(PLATEAU_SETTLE_MS / 1000));
-      ConfigSettings::dumpHeapBlocks("plateau confirme");
+      ConfigSettings::dumpHeapBlocks("plateau confirmed");
       _plateauFrom = 0;
     }
   }

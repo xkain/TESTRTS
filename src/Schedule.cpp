@@ -858,7 +858,7 @@ void ScheduleController::executeAction(const pending_action_t &act) {
   if(act.targetType == schedule_target_t::SHADE) {
     SomfyShade *shade = somfy.getShadeById(act.targetId);
     if(!shade) {
-      DBG_PRINTF("Schedule %u: shade %u disparu avant emission, ignore\n", act.ruleId, act.targetId);
+      DBG_PRINTF("Schedule %u: shade %u gone before sending, skipped\n", act.ruleId, act.targetId);
       return;
     }
     if(isMy) {
@@ -878,7 +878,7 @@ void ScheduleController::executeAction(const pending_action_t &act) {
   else {
     SomfyGroup *group = somfy.getGroupById(act.targetId);
     if(!group) {
-      DBG_PRINTF("Schedule %u: group %u disparu avant emission, ignore\n", act.ruleId, act.targetId);
+      DBG_PRINTF("Schedule %u: group %u gone before sending, skipped\n", act.ruleId, act.targetId);
       return;
     }
     if(isMy) {

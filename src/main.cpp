@@ -204,7 +204,7 @@ void loop() {
       if (heapBaselineSince == 0) heapBaselineSince = millis();
       else if ((int32_t)(millis() - heapBaselineSince) >= 3000) {
         heapBaselineDone = true;
-        ConfigSettings::dumpHeapBlocks("reference post-boot reseau");
+        ConfigSettings::dumpHeapBlocks("post-boot network baseline");
       }
     }
 
