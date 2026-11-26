@@ -709,12 +709,12 @@ class Firmware {
     // retiré, elle devient la feuille montante des fenêtres au lieu du plein écran.
     renderGitInstallProgress(div, verName) {
         div.classList.remove('genmod-task');
-        div.removeAttribute('data-mode');
+        if (div.getAttribute('data-mode') !== 'dev') div.removeAttribute('data-mode');
         const step = (n, k, d) => `<div class="genmod-step git-istep" data-istep="${n}">
             <div class="genmod-step-rail"><span class="genmod-step-num">${n}</span><span class="genmod-step-line"></span></div>
             <div class="genmod-step-body"><b>${tr(k)}</b><span>${tr(d)}</span></div></div>`;
         div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
-            id: 'gitInst', icon: 'svg-cloudDownload', titleKey: 'FIRMWARE_OTA_TITLE', descKey: 'GIT_INSTALL_DESC',
+            id: 'gitInst', icon: 'svg-cloudDownload', titleKey: 'FIRMWARE_OTA_TITLE', descKey: 'GIT_INSTALL_DESC', skin: 'fw',
             stateKey: tr('FIRMWARE_MT_INSTALLED'), stateValue: `v${escHtml(this.fwInfo?.appVersion?.name || '')}`,
             sideExtra: `<div class="genmod-state">${genModalState(tr('GIT_INSTALL_NEW'), escHtml(verName))}</div>`,
             sectionKey: 'GIT_RELEASE_TITLE', hintKey: 'GIT_INSTALL_HINT', footId: 'gitInstFoot',
