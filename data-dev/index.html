@@ -546,8 +546,8 @@
                             <div class="gen-body">
                                 <nav id="fwTabs" class="gen-tabs" role="tablist">
                                     <button type="button" class="gen-tab selected" role="tab" data-tab="0" data-slug="update" tr="FW_UPDATE_GIT"></button>
-                                    <button type="button" class="gen-tab" role="tab" data-tab="1" data-slug="status" tr="FW_TAB_STATUS"></button>
                                     <button type="button" class="gen-tab" role="tab" data-tab="2" data-slug="backup" tr="FW_TAB_BACKUP"></button>
+                                    <button type="button" class="gen-tab" role="tab" data-tab="1" data-slug="status" tr="FW_TAB_STATUS"></button>
                                     <button type="button" class="gen-tab" role="tab" data-tab="3" data-slug="troubleshoot" tr="FW_TILE_TROUBLESHOOT"></button>
                                     <button type="button" class="gen-tab" role="tab" data-tab="4" data-slug="about" tr="FW_TAB_ABOUT"></button>
                                 </nav>
@@ -614,6 +614,29 @@
                                         </div>
                                     </div>
 
+                                    <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="FIRMWARE_MT_SAVE_BACKUP"></h3>
+                                            <p class="gen-tile-desc" tr="FW_BACKUP_DESC"></p>
+                                            <p class="fw-bk-sub" tr="FW_BACKUP_HAS"></p>
+                                            <ul class="fw-bk-chips"><li tr="RESTORE_DEVICES_GROUPS"></li><li tr="SUBTAB_SCHEDULES"></li><li tr="RESTORE_REPEATERS"></li><li tr="RESTORE_LISTENERS"></li><li tr="RESTORE_SYSTEM_SETTINGS"></li><li tr="RESTORE_NETWORK_SETTINGS"></li><li tr="RESTORE_MQTT_SETTINGS"></li><li tr="RESTORE_RADIO_SETTINGS"></li></ul>
+                                            <p class="fw-bk-sub" tr="RESTORE_NEVER_TITLE"></p>
+                                            <p class="gen-tile-desc" tr="RESTORE_NEVER"></p>
+                                            <div class="gen-btn-row fw-tile-foot"><button type="button" class="gen-btn gen-btn-primary" onclick="firmware.backup();"><svg><use href="#svg-download"></use></svg><span tr="FW_BACKUP"></span></button></div>
+                                        </div>
+                                        <div class="gen-tile">
+                                            <h3 class="gen-tile-title" tr="RESTORE_TITLE"></h3>
+                                            <p class="gen-tile-desc" tr="FW_RESTORE_DESC"></p>
+                                            <p class="gen-tile-desc" tr="FW_RESTORE_FORMATS"></p>
+                                            <div class="gen-btn-row fw-tile-foot"><button type="button" class="gen-btn" onclick="firmware.restore();"><svg><use href="#svg-upload"></use></svg><span tr="FW_RESTORE"></span></button></div>
+                                        </div>
+                                        <div class="gen-tile gen-tile-danger">
+                                            <h3 class="gen-tile-title" tr="FW_TILE_FACTORY"></h3>
+                                            <p class="gen-tile-desc" tr="FW_FACTORY_DESC"></p>
+                                            <button type="button" class="gen-btn gen-btn-danger" onclick="firmware.factoryReset();"><svg><use href="#svg-trash"></use></svg><span tr="BT_FACTORY_RESET"></span></button>
+                                        </div>
+                                    </div>
+
                                     <div class="gen-grid" role="tabpanel" data-tab="1" hidden>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="FW_TITLE_INFO"></h3>
@@ -674,24 +697,6 @@
                                         </div>
                                     </div>
 
-                                    <div class="gen-grid" role="tabpanel" data-tab="2" hidden>
-                                        <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="FIRMWARE_MT_SAVE_BACKUP"></h3>
-                                            <p class="gen-tile-desc" tr="FW_BACKUP_DESC"></p>
-                                            <p class="fw-bk-sub" tr="FW_BACKUP_HAS"></p>
-                                            <ul class="fw-bk-chips"><li tr="RESTORE_DEVICES_GROUPS"></li><li tr="SUBTAB_SCHEDULES"></li><li tr="RESTORE_REPEATERS"></li><li tr="RESTORE_LISTENERS"></li><li tr="RESTORE_SYSTEM_SETTINGS"></li><li tr="RESTORE_NETWORK_SETTINGS"></li><li tr="RESTORE_MQTT_SETTINGS"></li><li tr="RESTORE_RADIO_SETTINGS"></li></ul>
-                                            <p class="fw-bk-sub" tr="RESTORE_NEVER_TITLE"></p>
-                                            <p class="gen-tile-desc" tr="RESTORE_NEVER"></p>
-                                            <div class="gen-btn-row fw-tile-foot"><button type="button" class="gen-btn gen-btn-primary" onclick="firmware.backup();"><svg><use href="#svg-download"></use></svg><span tr="FW_BACKUP"></span></button></div>
-                                        </div>
-                                        <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="RESTORE_TITLE"></h3>
-                                            <p class="gen-tile-desc" tr="FW_RESTORE_DESC"></p>
-                                            <p class="gen-tile-desc" tr="FW_RESTORE_FORMATS"></p>
-                                            <div class="gen-btn-row fw-tile-foot"><button type="button" class="gen-btn" onclick="firmware.restore();"><svg><use href="#svg-upload"></use></svg><span tr="FW_RESTORE"></span></button></div>
-                                        </div>
-                                    </div>
-
                                     <div class="gen-grid fw-trouble" role="tabpanel" data-tab="3" hidden>
                                         <div class="gen-tile fw-log">
                                             <h3 class="gen-tile-title" tr="FW_TILE_LOG"></h3>
@@ -718,7 +723,7 @@
                                             <h3 class="gen-tile-title" tr="FW_TILE_CRASH"></h3>
                                         </div>
                                         <div class="gen-tile">
-                                            <h3 class="gen-tile-title" tr="FW_TILE_DEBUG"></h3>
+                                            <h3 class="gen-tile-title" tr="FW_TILE_BROWSER"></h3>
                                             <div class="fw-acts">
                                                 <button type="button" class="fw-act" onclick="general.reload();">
                                                     <span class="fw-act-ico"><svg><use href="#svg-clear"></use></svg></span>
@@ -726,11 +731,6 @@
                                                     <svg class="fw-act-chev"><use href="#svg-arrowRight"></use></svg>
                                                 </button>
                                             </div>
-                                        </div>
-                                        <div class="gen-tile gen-tile-danger">
-                                            <h3 class="gen-tile-title" tr="FW_TILE_FACTORY"></h3>
-                                            <p class="gen-tile-desc" tr="FW_FACTORY_DESC"></p>
-                                            <button type="button" class="gen-btn gen-btn-danger" onclick="firmware.factoryReset();"><svg><use href="#svg-trash"></use></svg><span tr="BT_FACTORY_RESET"></span></button>
                                         </div>
                                     </div>
 
