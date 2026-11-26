@@ -591,10 +591,10 @@ class Firmware {
         if (info.checkForUpdate === false && !force) return this.setUpdateState('off');
         let latest = null;
         try {
-            const rel = await this.loadReleases(false);
+            const rel = await this.loadReleases(this.isPreRelease(info.appVersion));
             const current = this.verNum(info.appVersion);
             for (const r of rel.releases) {
-                if (!r.asset || r.preRelease || r.main) continue;
+                if (!r.asset || r.main) continue;
                 if (this.verNum(r.version) > current && (!latest || this.verNum(r.version) > this.verNum(latest.version))) latest = r;
             }
         } catch (e) {
@@ -742,8 +742,8 @@ class Firmware {
     // ESP32, ne peut de toute façon plus être interrompu (aucune route /cancelInstallGit). La
     // confirmation doit donc se faire ICI, avant, pendant qu'il est encore temps de reculer.
     async confirmInstallGitRelease(div) {
-        // Même comparaison que gitReleaseSelected() (data-vernum de l'option sélectionnée vs
-        // data-currentvernum posé sur le conteneur) -- recalculée ici plutôt que mémorisée :
+        // Même comparaison que gitReleaseSelected() (data-installed, puis data-vernum de l'option
+        // sélectionnée vs data-currentvernum posé sur le conteneur) -- recalculée ici plutôt que mémorisée :
         // l'utilisateur peut changer la version sélectionnée entre le rendu du bouton et ce clic.
         // Trois cas ici contre deux pour le libellé du bouton, qui reste "Mettre à jour" sur une
         // version antérieure faute de place pour un troisième texte : c'est donc cette fenêtre
@@ -758,7 +758,7 @@ class Firmware {
         // passerait le contrôle sans être vu, et la fenêtre afficherait le nom de la clé.
         // La version de dev (data-vernum -1) n'a pas de numéro comparable : ni réinstallation ni retour arrière.
         const isDevBuild = opt && opt.getAttribute('data-devbuild') === 'true';
-        const reinstall = !isDevBuild && (!opt || vernum === currentVerNum);
+        const reinstall = !isDevBuild && (!opt || opt.getAttribute('data-installed') === 'true');
         const downgrade = !isDevBuild && !reinstall && vernum < currentVerNum;
         const ok = await ui.confirm({
             level: downgrade ? 'danger' : 'warn',
@@ -855,7 +855,12 @@ class Firmware {
     }
 
     // --- Catalogue Pages (cf. OTA_CATALOG_URL) ---
-    verNum(v) { return ((v?.major || 0) * 1000000) + ((v?.minor || 0) * 1000) + (v?.build || 0); }
+    verNum(v) {
+        const m = /^(alpha|beta|rc)\.?(\d*)$/.exec(v?.suffix || '');
+        return (v?.major || 0) * 1e10 + (v?.minor || 0) * 1e7 + (v?.build || 0) * 1e4
+            + (m ? ['alpha', 'beta', 'rc'].indexOf(m[1]) + 1 : 4) * 1000 + (m ? Math.min(+m[2] || 0, 999) : 0);
+    }
+    isPreRelease(v) { return /^(alpha|beta|rc)\b/.test(v?.suffix || ''); }
     async loadCatalog() {
         // Gardé cinq minutes : le badge et l'écran de sélection le relisent sans refaire la requête.
         if (this._catalog && Date.now() - this._catalogAt < 300000) return this._catalog;
@@ -880,10 +885,10 @@ class Firmware {
         const board = this.boardKey();
         const layout = this.fwInfo?.layout;
         const parse = tag => {
-            const m = /^v?(\d+)\.(\d+)\.(\d+)/.exec(tag || '');
-            return m ? { name: tag, major: +m[1], minor: +m[2], build: +m[3] } : { name: tag, major: 0, minor: 0, build: 0 };
+            const m = /^v?(\d+)\.(\d+)\.(\d+)(?:[-.+](.+))?/.exec(tag || '');
+            return m ? { name: tag, major: +m[1], minor: +m[2], build: +m[3], suffix: m[4] || '' } : { name: tag, major: 0, minor: 0, build: 0, suffix: '' };
         };
-        const releases = (cat.versions || []).filter(v => includeDev || !v.dev).map(v => {
+        const releases = (cat.versions || []).filter(v => includeDev || (!v.dev && !v.prerelease)).map(v => {
             const a = (v.boards || {})[board];
             return {
                 name: v.name || v.tag,
@@ -1031,7 +1036,7 @@ class Firmware {
     }
 
     updateGithub() {
-        this.catalogFetch(false, (err, rel) => {
+        this.catalogFetch(true, (err, all) => {
             if (err) {
                 if (typeof err.error !== 'undefined') {
                     let e = errors.find(x => x.code === err.error) || { desc: tr('ERR_UNSPECIFIED') };
@@ -1041,18 +1046,10 @@ class Firmware {
             }
 
 
-            rel.releases.sort((a, b) => a.preRelease === b.preRelease && b.draft === a.draft ? 0 : a.preRelease ? 1 : -1);
+            all.releases.sort((a, b) => a.preRelease === b.preRelease && b.draft === a.draft ? 0 : a.preRelease ? 1 : -1);
+            const rel = { ...all, releases: all.releases.filter(r => !r.preRelease) };
 
-            // Comparaison numérique major/minor/build (déjà fournis par /getReleases, pas besoin de
-            // parser la chaîne "name") : sert à reconnaître la release DÉJÀ INSTALLÉE parmi les
-            // options (libellé "Réinstaller" plutôt que "Mettre à jour", cf. gitReleaseSelected()).
-            // Elle ne filtre plus rien -- une v3 antérieure reste proposée, le seul plancher est
-            // la majeure 3 ci-dessous. Indispensable car les "name" ne sont PAS comparables :
-            // le tag GitHub garde son préfixe ("v3.0.0", cf. GitRelease::setReleaseProperty) alors
-            // que /appversion en est dépouillé au build (cf. build.yaml, "${TAG#v}") -- appVersion.name
-            // vaut donc "3.0.0" sans le "v".
-            const verNum = v => ((v?.major || 0) * 1000000) + ((v?.minor || 0) * 1000) + (v?.build || 0);
-            const currentVerNum = verNum(rel.appVersion);
+            const currentVerNum = this.verNum(rel.appVersion);
 
 
             // --- FILTRAGE DES OPTIONS DU SÉLECTEUR ---
@@ -1076,7 +1073,8 @@ class Firmware {
                 if (targetMajor < 3) return '';
 
                 // Nom et version viennent du JSON GitHub : distant, donc échappés comme le reste.
-                return `<option value="${escAttr(r.version.name)}" data-prerelease="${r.preRelease}" data-vernum="${verNum(r.version)}">${escHtml(r.name)}${r.preRelease ? ' - Pre' : ''}</option>`;
+                const installed = r.version.name.replace(/^v/i, '') === rel.appVersion.name;
+                return `<option value="${escAttr(r.version.name)}" data-prerelease="${r.preRelease}" data-installed="${installed}" data-vernum="${this.verNum(r.version)}">${escHtml(r.name)}${r.preRelease ? ' - Pre' : ''}</option>`;
             }).join('');
             };
             const optsHtml = buildOpts(rel);
@@ -1194,22 +1192,18 @@ class Firmware {
                 this.gitReleaseSelected(div);
                 updateNotes();
             };
-            // Production : la liste déjà chargée suffit (le firmware y a vidé la case de la version de dev).
-            // Développeur : un second appel, seul à payer la poignée de main TLS de /releases/tags/dev.
             div.setGitMode = mode => {
                 if (mode !== 'dev') return applyMode('prod', rel);
-                this.catalogFetch(true, (err, devRel) => {
-                    if (err) return ui.serviceError(err);
-                    if (!devRel.releases.some(r => r.main && isCompatible(r))) ui.errorMessage(tr('FIRMWARE_DEV_NONE'));
-                    applyMode('dev', devRel);
-                });
+                if (!all.releases.some(r => r.preRelease && isCompatible(r))) ui.errorMessage(tr('FIRMWARE_DEV_NONE'));
+                applyMode('dev', all);
             };
+            if (all.appVersion?.suffix) applyMode('dev', all);
         });
     }
     // Les versions en tuiles (gabarit icon-pack-*) ; le <select> caché reste la source
     // de vérité pour gitReleaseSelected(), confirmInstallGitRelease() et ui.fromElement().
     renderGitTiles(div) {
-        const sel = div.querySelector('#selVersion'), cur = div.getAttribute('data-currentvernum');
+        const sel = div.querySelector('#selVersion');
         const opts = [...sel.options];
         const stable = opts.filter(o => o.getAttribute('data-prerelease') !== 'true').map(o => Number(o.getAttribute('data-vernum')));
         const latest = stable.length ? Math.max(...stable) : null;
@@ -1218,9 +1212,10 @@ class Firmware {
             const dev = o.getAttribute('data-devbuild') === 'true', pre = o.getAttribute('data-prerelease') === 'true';
             const vn = Number(o.getAttribute('data-vernum'));
             const m = /^v?(\d+)\.(\d+)/.exec(o.value);
-            const badge = String(vn) === cur ? `<span class="lang-catalog-badge active">${tr('INSTALLED')}</span>`
+            const inst = o.getAttribute('data-installed') === 'true';
+            const badge = inst ? `<span class="lang-catalog-badge active">${tr('INSTALLED')}</span>`
                 : vn === latest ? `<span class="lang-catalog-badge">${tr('FIRMWARE_OTA_TAG_LATEST')}</span>` : '';
-            return `<div class="icon-pack-tile${String(vn) === cur ? ' is-default' : ''}" data-ver="${escAttr(o.value)}">
+            return `<div class="icon-pack-tile${inst ? ' is-default' : ''}" data-ver="${escAttr(o.value)}">
             <span class="lang-catalog-code">${dev ? 'dev' : m ? `${m[1]}.${m[2]}` : '?'}</span>
             <div class="icon-pack-name">${escHtml(o.value)}</div>
             <div class="icon-pack-meta">${tr(dev ? 'CHANNEL_DEV' : pre ? 'FIRMWARE_OTA_TAG_PRE' : 'CHANNEL_STABLE')}</div>
@@ -1243,10 +1238,9 @@ class Firmware {
             // Version sélectionnée = version déjà installée (cf. verNum >= currentVerNum dans
             // updateGithub, qui garde volontairement l'entrée courante dans le sélecteur pour
             // permettre une réinstallation) : le libellé "Mettre à jour" serait trompeur, on
-            // bascule sur "Réinstaller". Comparaison sur data-vernum/data-currentvernum (numérique)
-            // et non sur les "name" -- ceux-ci ne sont pas directement comparables entre eux, cf.
-            // commentaire dans updateGithub().
-            const isReinstall = opt.getAttribute('data-vernum') === div.getAttribute('data-currentvernum');
+            // bascule sur "Réinstaller". Comparaison sur le nom exact (data-installed) : deux
+            // pré-releases d'une même version ont le même major/minor/build.
+            const isReinstall = opt.getAttribute('data-installed') === 'true';
             btnUpdate.textContent = tr(isReinstall ? 'BT_REINSTALL' : 'BT_UPDATE');
         }
 

@@ -65,7 +65,11 @@ def carte(nom, motif=RE_FIRMWARE):
 
 
 def numero(tag):
-    return tuple(int(n) for n in re.findall(r"\d+", tag)[:4]) or (0,)
+    m = re.match(r"v?(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta|rc)\.?(\d*))?", tag)
+    if not m:
+        return (0,)
+    rang = ("alpha", "beta", "rc").index(m[4]) + 1 if m[4] else 4
+    return (int(m[1]), int(m[2]), int(m[3]), rang, int(m[5] or 0))
 
 
 def lister_releases(repo):
@@ -96,12 +100,15 @@ def main():
     ap.add_argument("--site", required=True)
     ap.add_argument("--cache", default="")
     ap.add_argument("--nombre", type=int, default=5)
+    ap.add_argument("--pre", type=int, default=3)
     args = ap.parse_args()
 
     releases = lister_releases(args.repo)
-    stables = [r for r in releases if r["tag"] != DEV_TAG][:args.nombre]
+    hors_dev = [r for r in releases if r["tag"] != DEV_TAG]
+    stables = [r for r in hors_dev if not r["pre"]][:args.nombre]
+    pre = [r for r in hors_dev if r["pre"]][:args.pre]
     dev = [r for r in releases if r["tag"] == DEV_TAG][:1]
-    retenues = stables + dev
+    retenues = stables + pre + dev
 
     racine = os.path.join(args.site, "ota")
     os.makedirs(os.path.join(racine, "notes"), exist_ok=True)
