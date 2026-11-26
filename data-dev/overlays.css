@@ -1904,6 +1904,11 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     max-width: 320px;
     padding: 14px 16px;
     border-radius: var(--r-4);
+.hero-skin { --lip: color-mix(in srgb, var(--g) 70%, #000000); }
+:root[data-theme="dark"] .hero-skin { --lip: color-mix(in srgb, var(--g) 45%, #000000); }
+@media (min-width: 1000px) {
+    :is(.genmod-side, .wiz-side).hero-skin { border-right: 4px solid var(--lip); }
+}
     background: var(--surface);
 }
 .genmod-state-key {
@@ -2094,6 +2099,7 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     }
     .genmod-side { gap: 10px 12px; padding: 0 16px 14px; }
     .genmod-state { gap: 8px; margin: 2px -16px -14px; padding: 8px 16px; }
+    .genmod-side.hero-skin { border-bottom: 4px solid var(--lip); }
     .genmod-state-val { font-size: var(--fs-4); }
     .genmod-head { display: none; }
     .genmod-body { padding: 12px 16px 14px; }
@@ -2254,9 +2260,9 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     .genmod-body .fw-id .help-container { display: none; }
 }
 /* Mode Développeur validé : la colonne d'identité se teinte, on ne l'oublie pas en cours de route. */
-#divGitInstall[data-mode="dev"] .genmod-side { --hc: var(--danger); background: color-mix(in srgb, var(--danger) 9%, var(--panel)); }
+#divGitInstall[data-mode="dev"] .genmod-side { --hc: #b3261e; --g: #8a1c1c; }
 #divGitInstall[data-mode="dev"] .genmod-state-note { color: var(--danger); }
-#divGitInstall[data-mode="dev"] .genmod-seg input:checked + span { background: var(--danger); color: var(--danger-bg); }
+#divGitInstall[data-mode="dev"] .genmod-seg input:checked + span { background: var(--danger); color: var(--on-fill-text); }
 /* Tablette et mobile : l'état passe en ligne ; celui du canal garde le sélecteur et sa note
    sous le titre au lieu de les serrer côte à côte. */
 @media (max-width: 999px) {

@@ -1079,7 +1079,7 @@ class Firmware {
             };
             const optsHtml = buildOpts(rel);
             const div = this.taskWindow('divGitInstall', {
-                id: 'git', icon: 'svg-cloudDownload', footId: 'gitFoot',
+                id: 'git', icon: 'svg-cloudDownload', footId: 'gitFoot', skin: 'fw',
                 titleKey: 'FIRMWARE_OTA_TITLE', descKey: 'FIRMWARE_OTA_TITLE_DESC',
                 stateKey: tr('FIRMWARE_MT_INSTALLED'), stateValue: `v${escHtml(rel.appVersion.name || '')}`,
                 sideExtra: `
@@ -1340,7 +1340,7 @@ class Firmware {
     // envoyer à part, ni de /updateApplication.
     updateManual() {
         const div = this.createFileUploader('/updateFirmware', {
-            titleKey: 'FIRMWARE_MA_UPDATE_TITLE', descKey: 'FIRMWARE_MA_FIRMWARE_DESC', icon: 'svg-upload',
+            titleKey: 'FIRMWARE_MA_UPDATE_TITLE', descKey: 'FIRMWARE_MA_FIRMWARE_DESC', icon: 'svg-upload', skin: 'fw',
             stateKey: tr('FIRMWARE_MT_INSTALLED'), stateValue: get('spanFwVersion').innerText || '?.?.?',
             sectionKey: 'FW_UPDATE_FILE', hintKey: 'FIRMWARE_MA_HINT'
         });

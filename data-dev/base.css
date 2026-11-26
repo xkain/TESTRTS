@@ -1699,7 +1699,7 @@ button:disabled:active {
 :root[data-cat-colors="full"] :is(.hero, .hero-skin)[data-obj="groupe"] { --g: #654bad; }
 :root[data-cat-colors="full"] :is(.hero, .hero-skin)[data-obj="piece"] { --g: #08736b; }
 :root[data-cat-colors="full"] :is(.hero, .hero-skin)[data-obj="planning"] { --g: #8e3b1f; }
-:is(.hero, .hero-skin)[data-sys] { --g: #2f343c; }
+:is(.hero, .hero-skin)[data-sys], .hero-skin[data-obj="fw"] { --g: #2f343c; }
 .hero[data-tone="warn"] { --hc: #c2410c; }
 .hero[data-tone="bad"] { --hc: #b3261e; }
 .hero[data-tone="off"] { --hc: #64748b; }
