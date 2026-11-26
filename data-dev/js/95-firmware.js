@@ -12,7 +12,8 @@ class Firmware {
         // de sa durée de vie, et il n'y a ainsi rien à retirer quand l'overlay est détruit.
         window.addEventListener('resize', () => this.fitFileName());
         const page = get('divFirmware');
-        this._tabs = bindGenTabs({ tabs: 'fwTabs', panels: 'fwPanels', pager: 'fwPager', prev: 'btnFwPrev', next: 'btnFwNext', route: 'divFirmware' });
+        this._tabs = bindGenTabs({ tabs: 'fwTabs', panels: 'fwPanels', pager: 'fwPager', prev: 'btnFwPrev', next: 'btnFwNext', route: 'divFirmware', onShow: () => this.pollLog() });
+        setInterval(() => this.pollLog(), 2000);
         // Rien à enregistrer sur cette page : chaque réglage part tout de suite (setOption), il ne
         // doit donc pas marquer la page « modifiée » auprès de watchDirty (#divSystemSettings).
         page.addEventListener('change', (e) => e.stopPropagation());
@@ -38,6 +39,70 @@ class Firmware {
     checkNow() {
         this._catalog = null;
         this.refreshUpdateBadge(true);
+    }
+    _log = { pos: null, text: '', paused: false, busy: false, dec: new TextDecoder() };
+    async pollLog() {
+        const lg = this._log;
+        if (lg.busy || lg.paused || document.hidden || currentLeafId !== 'divFirmware' || !this._tabs || this._tabs.current() !== 3) return;
+        lg.busy = true;
+        try {
+            const r = await fetch(baseUrl + '/log' + (lg.pos === null ? '' : '?from=' + lg.pos), { cache: 'no-store', headers: { apikey: security.apiKey || '' } });
+            if (!r.ok) { noteAuthFailure({ htmlError: r.status }); return; }
+            const start = parseInt(r.headers.get('X-Log-Start'), 10) || 0;
+            const bytes = new Uint8Array(await r.arrayBuffer());
+            if (lg.pos !== null && start !== lg.pos) lg.text += '\n\u0001' + tr(start > lg.pos ? 'FW_LOG_GAP' : 'FW_LOG_REBOOT') + '\n';
+            else if (lg.pos !== null && !bytes.length) return;
+            lg.pos = start + bytes.length;
+            lg.text = (lg.text + lg.dec.decode(bytes, { stream: true }).replace(/\r/g, '')).slice(-65536);
+            this.renderLog();
+        }
+        catch (e) { }
+        finally { lg.busy = false; }
+    }
+    renderLog() {
+        const pre = get('preFwLog');
+        const atEnd = pre.scrollHeight - pre.scrollTop - pre.clientHeight < 40;
+        pre.innerHTML = this._log.text.split('\n').map(l => {
+            const cls = l.startsWith('\u0001') ? 'is-mark' : /^(E \(|\[E\])/.test(l) ? 'is-err' : /^(W \(|\[W\])/.test(l) ? 'is-warn' : '';
+            const txt = escHtml(l.replace('\u0001', ''));
+            return cls ? `<span class="${cls}">${txt}</span>` : txt;
+        }).join('\n');
+        if (atEnd) pre.scrollTop = pre.scrollHeight;
+    }
+    toggleLogPause() {
+        const lg = this._log;
+        lg.paused = !lg.paused;
+        const btn = get('btnFwLogPause');
+        btn.setAttribute('aria-pressed', lg.paused);
+        btn.querySelector('use').setAttribute('href', lg.paused ? '#svg-play' : '#svg-stop');
+        const label = btn.querySelector('span');
+        label.setAttribute('tr', lg.paused ? 'BT_RESUME' : 'BT_PAUSE');
+        label.textContent = tr(lg.paused ? 'BT_RESUME' : 'BT_PAUSE');
+        if (!lg.paused) this.pollLog();
+    }
+    logPlainText() {
+        return this._log.text.replace(/\u0001/g, '');
+    }
+    logToClipboard() {
+        const text = this.logPlainText();
+        if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text);
+        else {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+        }
+    }
+    downloadLog() {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([this.logPlainText()], { type: 'text/plain' }));
+        a.download = 'ESPSomfyRTS ' + new Date().toISOString().slice(0, 19).replace(/:/g, '_') + '.log';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     }
     // Un build de développement porte le sha après la version (v3.0.0-6e58fe6, cf. build.yaml) ;
     // un build local garde FW_VERSION nu et passe donc pour stable.

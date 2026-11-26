@@ -692,7 +692,20 @@
                                         </div>
                                     </div>
 
-                                    <div class="gen-grid" role="tabpanel" data-tab="3" hidden>
+                                    <div class="gen-grid fw-trouble" role="tabpanel" data-tab="3" hidden>
+                                        <div class="gen-tile fw-log">
+                                            <h3 class="gen-tile-title" tr="FW_TILE_LOG"></h3>
+                                            <p class="gen-tile-desc" tr="FW_LOG_DESC"></p>
+                                            <div class="lg-tools">
+                                                <button id="btnFwLogPause" class="gen-btn lg-chip" type="button" aria-pressed="false" onclick="firmware.toggleLogPause();"><svg><use href="#svg-stop"></use></svg><span tr="BT_PAUSE"></span></button>
+                                                <span class="lg-tools-end">
+                                                    <button class="gen-btn" type="button" onclick="firmware.logToClipboard();"><svg><use href="#svg-clipboard"></use></svg><span tr="BT_COPY"></span></button>
+                                                    <button class="gen-btn" type="button" onclick="firmware.downloadLog();"><svg><use href="#svg-download"></use></svg><span tr="BT_DOWNLOAD"></span></button>
+                                                </span>
+                                            </div>
+                                            <pre id="preFwLog" class="fw-log-pre"></pre>
+                                            <p class="lg-foot" tr="FW_LOG_FOOT"></p>
+                                        </div>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="FW_TILE_DEBUG"></h3>
                                             <div class="gen-row">

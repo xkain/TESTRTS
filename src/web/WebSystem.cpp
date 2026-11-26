@@ -27,6 +27,7 @@
 #include "WebCommon.h"
 #include "WebChunkedJson.h"
 #include "WebSystem.h"
+#include "LogTee.h"
 
 extern ConfigSettings settings;
 extern SSDPClass SSDP;
@@ -602,6 +603,28 @@ namespace WebSystem {
     request->send(response);
   }
 
+  void handleLog(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    uint32_t first = 0;
+    uint32_t end = LogRing::span(&first);
+    uint32_t from = first;
+    if(request->hasArg("from")) {
+      uint32_t asked = strtoul(request->arg("from").c_str(), nullptr, 10);
+      if(asked > first && asked <= end) from = asked;
+    }
+    auto pos = std::make_shared<uint32_t>(from);
+    AsyncWebServerResponse *response = request->beginChunkedResponse(_encoding_text,
+      [pos, end](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+        return LogRing::read(pos.get(), end, (char *)buffer, maxLen);
+      });
+    response->addHeader("Cache-Control", "no-store");
+    response->addHeader("X-Log-Start", String(from).c_str());
+    response->addHeader("X-Log-End", String(end).c_str());
+    response->addHeader("Access-Control-Expose-Headers", "X-Log-Start, X-Log-End");
+    request->send(response);
+  }
+
   void handleReboot(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
@@ -994,6 +1017,7 @@ namespace WebSystem {
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateInstallBody(request, filename, index, data, len, final); });
     server.on("/updateShadeConfig", AsyncHttp::POST, handleUpdateShadeConfig,
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateShadeConfigBody(request, filename, index, data, len, final); });
+    server.on("/log", AsyncHttp::ANY, handleLog);
     server.on("/reboot", AsyncHttp::ANY, handleReboot);
     server.on("/factoryReset", AsyncHttp::ANY, handleFactoryReset, nullptr, asyncBodyHandler);
   }

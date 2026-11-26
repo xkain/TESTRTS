@@ -1632,7 +1632,7 @@ class General {
                 }
                 actions += `<button type="button" class="gen-btn gen-btn-primary" onclick="general.useLang('${sel}')">${tr('LANG_MODAL_USE_LANG')}</button>`;
             } else if (entry.downloadable && !full) {
-                actions = `<button type="button" class="gen-btn gen-btn-primary" onclick="general.downloadLang('${sel}')">${tr('LANG_MODAL_DOWNLOAD')}</button>`;
+                actions = `<button type="button" class="gen-btn gen-btn-primary" onclick="general.downloadLang('${sel}')">${tr('BT_DOWNLOAD')}</button>`;
             }
         }
         get('langFoot').innerHTML = actions;
