@@ -11,5 +11,6 @@
 // Uniquement enregistrées sur le serveur principal (port 80) -- pas de mirroring sur apiServer.
 namespace WebI18n {
   void registerRoutes(AsyncWebServer &server);
+  void activateFlashLang();
 }
 #endif

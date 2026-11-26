@@ -232,7 +232,6 @@ class Security {
                     // d'hôte actuel, pré-rempli dans la modale de confirmation réseau qui conclut
                     // l'assistant (cf. Wifi.networkConfirmationOverlay()).
                     window.__onboardingDone = !!ctx.onboardingDone;
-                    checkFlashLangActivation();
                     window.__currentHostname = ctx.hostname || '';
                     // Disponible dès ce tout premier appel (avant l'ouverture du Wizard) pour que
                     // le panneau Réseau connaisse le profil matériel sans dépendre d'un fetch séparé

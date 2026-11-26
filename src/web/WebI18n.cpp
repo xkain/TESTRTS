@@ -474,6 +474,25 @@ namespace WebI18n {
     }
   }
 
+  void activateFlashLang() {
+    if(settings.onboardingDone || settings.pendingLang[0] || !isFactoryLang(settings.language)) return;
+    File dir = LittleFS.open("/locale");
+    if(!dir || !dir.isDirectory()) return;
+    String found;
+    for(File entry = dir.openNextFile(); entry; entry = dir.openNextFile()) {
+      String code = packCode(entry);
+      entry.close();
+      if(!code.length()) continue;
+      if(found.length() || !isValidLangCode(code)) { dir.close(); return; }
+      found = code;
+    }
+    dir.close();
+    if(!found.length()) return;
+    strlcpy(settings.language, found.c_str(), sizeof(settings.language));
+    settings.save();
+    Serial.printf("Language %s from the installer image activated\n", found.c_str());
+  }
+
   void registerRoutes(AsyncWebServer &server) {
     server.on("/lang", AsyncHttp::GET, handleLang);
     server.on("/langDefault", AsyncHttp::GET, handleLangDefault);

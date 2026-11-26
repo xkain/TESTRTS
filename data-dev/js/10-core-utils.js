@@ -376,35 +376,6 @@ function checkBrowserLangSuggestion(activeLang) {
     })
     .catch(err => logger.error('Failed to check browser language suggestion:', err));
 }
-// Phase 6 i18n : langue choisie au flash (installateur web, image fs de la langue choisie).
-// Sur un appareil neuf (assistant jamais terminé, langue active = langue d'usine), une unique
-// autre langue installée ne peut venir que de là : on l'active — elle prime sur la langue du
-// navigateur, qui peut différer de celle du PC qui a flashé.
-let flashLangActivationChecked = false;
-function checkFlashLangActivation() {
-    if (flashLangActivationChecked) return;
-    if (typeof security !== 'undefined' && security.type !== 0 && !security.authenticated) return;
-    if (window.__onboardingDone || window.__pendingLangCode) return;
-    const activeLang = window.__activeLangCode;
-    const defaultLang = window.__defaultLangCode;
-    if (!activeLang || !defaultLang || activeLang !== defaultLang) return;
-    flashLangActivationChecked = true;
-    let dejaFait = null;
-    try { dejaFait = sessionStorage.getItem('flashLangActivated'); } catch (err) { /* stockage indisponible */ }
-    if (dejaFait) return;
-    deviceFetch('/getInstalledLangs')
-    .then(installed => {
-        const autres = (installed || []).filter(c => c && c !== defaultLang);
-        if (autres.length !== 1) return;
-        return deviceFetch('/setLang?lang=' + autres[0])
-        .then(resp => {
-            if (resp.status !== "ok") throw new Error('unexpected /setLang response: ' + JSON.stringify(resp));
-            try { sessionStorage.setItem('flashLangActivated', autres[0]); } catch (err) { /* stockage indisponible */ }
-            window.location.reload();
-        });
-    })
-    .catch(err => logger.error('Failed to activate flash-chosen language:', err));
-}
 // --- Relais navigateur (Phase 4 i18n) : en mode AP, l'ESP32 n'a aucune route Internet, donc
 // /downloadLang échouerait systématiquement. Si le navigateur du client a sa propre connectivité
 // (4G/5G en parallèle du WiFi de config, cas fréquent sur smartphone -- jamais garanti sur PC),

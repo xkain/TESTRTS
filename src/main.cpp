@@ -11,6 +11,7 @@
 #include "ConfigFile.h"
 #include "NetManager.h"
 #include "web/Web.h"
+#include "web/WebI18n.h"
 #include "Sockets.h"
 #include "Utils.h"
 #include "somfy/Somfy.h"
@@ -60,6 +61,7 @@ void setup() {
   CfgStore::begin();
 
   settings.begin();
+  WebI18n::activateFlashLang();
   FwInfo::rememberBoard();
   FwInfo::inspectInstall();
 
