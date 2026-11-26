@@ -937,7 +937,7 @@ class General {
         div.innerHTML = `
         <div class="message-content genmod-window" id="divLedPopupContent">
         ${genModalShell({
-            id: 'led', icon: 'svg-led', footId: 'ledFoot',
+            id: 'led', icon: 'svg-led', footId: 'ledFoot', skin: 'fw',
             titleKey: 'FW_LED_TITLE', descKey: 'LED_MODAL_DESC',
             stateKey: tr('LED_MODAL_LED'),
             stateValue: tr(isGeneric ? (enabled ? 'ENABLED' : 'IS_DISABLED') : 'INTEGRATED'),
