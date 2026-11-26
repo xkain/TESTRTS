@@ -60,7 +60,7 @@ RE_V3 = re.compile(r"^ESPSomfyRTS_.+_factory_(.+)\.zip$")
 # v2 : SomfyController.onboard.<carte>.bin.zip
 RE_V2 = re.compile(r"^SomfyController\.onboard\.(.+)\.bin\.zip$")
 
-RE_FS_LANGS = re.compile(r"^ESPSomfyRTS_.+_fs_langs\.json$")
+RE_FS_LANGS = re.compile(r"^installer_.+_fs_langs\.json$")
 
 
 def carte_v3(nom):

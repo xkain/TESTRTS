@@ -215,9 +215,11 @@ ESPSomfyRTS_[1: vX.X.X]_ota_[2: carte][3: suffixe].bin
 
     * `ESPSomfyRTS_vX.X.X_factory_….zip` : les images complètes de l'[Installateur
       Web](../../../outils/installateur-web.md), pour une première installation par USB ;
-    * `ESPSomfyRTS_vX.X.X_fs_<langue>_4mb.zip` et `…_c6.zip`, avec leur index
-      `ESPSomfyRTS_vX.X.X_fs_langs.json` : les images de langue que l'Installateur Web écrit à la
-      suite du firmware quand vous choisissez une langue.
+    * `installer_vX.X.X_fs_<langue>_4mb.zip`, avec leur index `installer_vX.X.X_fs_langs.json` :
+      les images de langue que l'Installateur Web écrit à la suite du firmware quand vous
+      choisissez une langue ;
+    * `symbols_vX.X.X_elf.zip` : de quoi décoder un plantage relevé dans l'onglet Dépannage ;
+    * `translation_vX.X.X_<code>.json.gz` : les packs de langue, à importer à la main.
 
     Le fichier `ESPSomfyRTS_vX.X.X_rescue_<carte>.bin` est accepté lui aussi : il ne remplace
     que le [firmware de secours](firmware-de-secours.md#mettre-a-jour), sans toucher au firmware principal.

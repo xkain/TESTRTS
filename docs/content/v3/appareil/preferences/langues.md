@@ -43,7 +43,7 @@ celui du projet sur GitHub pour les langues ajoutées depuis votre dernière mis
 
 Le pack téléchargé est un fichier d'une **release GitHub** du projet : l'appareil récupère le
 fichier de langue lié à **la version de firmware qu'il exécute**, nommé
-`ESPSomfyRTS_<version>_lang_<code>.json.gz` (par exemple `…_lang_de.json.gz` pour l'allemand).
+`translation_<version>_<code>.json.gz` (par exemple `translation_v3.0.0_de.json.gz` pour l'allemand).
 Vous obtenez ainsi toujours une traduction qui correspond exactement à votre interface, même si le
 projet a avancé depuis. Vous pouvez aussi trouver ces fichiers dans la liste des fichiers joints
 de chaque release, sur la page [Releases](https://github.com/xkain/ESPSomfy-RTS/releases) du

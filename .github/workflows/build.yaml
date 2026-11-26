@@ -132,9 +132,9 @@ jobs:
           for code in $(python3 -c "import json; print(' '.join(sorted(json.load(open('locales/manifest.json'))['langs'])))"); do
             [ "$code" = "en" ] && continue
             ESPSOMFY_EXTRA_LANG="$code" pio run -e esp32 -t buildfs
-            cp .pio/build/esp32/littlefs.bin "ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_4mb.bin"
-            zip -j "fs_langs/ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_4mb.zip" \
-              "ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_fs_${code}_4mb.bin"
+            cp .pio/build/esp32/littlefs.bin "installer_${{ steps.safe_ref.outputs.name }}_fs_${code}_4mb.bin"
+            zip -j "fs_langs/installer_${{ steps.safe_ref.outputs.name }}_fs_${code}_4mb.zip" \
+              "installer_${{ steps.safe_ref.outputs.name }}_fs_${code}_4mb.bin"
           done
 
       - name: Write language filesystem descriptor
@@ -152,9 +152,9 @@ jobs:
           desc = {
               "offsets": {"4mb": spiffs_offset("partitions_common_4mb.csv")},
               "natives": {c: cat[c].get("native", c) for c in langs},
-              "langs": {c: {"4mb": f"ESPSomfyRTS_{tag}_fs_{c}_4mb.zip"} for c in langs},
+              "langs": {c: {"4mb": f"installer_{tag}_fs_{c}_4mb.zip"} for c in langs},
           }
-          with open(f"fs_langs/ESPSomfyRTS_{tag}_fs_langs.json", "w") as f:
+          with open(f"fs_langs/installer_{tag}_fs_langs.json", "w") as f:
               json.dump(desc, f, indent=1)
           EOF
 
@@ -195,7 +195,7 @@ jobs:
         run: |
           for f in dist_langs/*.json.gz; do
             code=$(basename "$f" .json.gz)
-            asset="ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_lang_${code}.json.gz"
+            asset="translation_${{ steps.safe_ref.outputs.name }}_${code}.json.gz"
             cp "$f" "$asset"
             gh release upload "${{ github.ref_name }}" "$asset" --clobber
           done
@@ -206,7 +206,7 @@ jobs:
           python tools/lang/package_langs.py
           mkdir -p devbuild
           for f in dist_langs/*.json.gz; do
-            cp "$f" "devbuild/ESPSomfyRTS_dev_lang_$(basename "$f" .json.gz).json.gz"
+            cp "$f" "devbuild/translation_dev_$(basename "$f" .json.gz).json.gz"
           done
 
       - name: Upload language assets (dev build)
@@ -432,21 +432,17 @@ jobs:
           path: devbuild/
           retention-days: 5
 
+      - name: Name ${{ matrix.name }} ELF
+        run: |
+          mkdir -p elf
+          cp .pio/build/${{ matrix.env }}/firmware.elf "elf/$(echo "${{ matrix.fwname }}" | sed 's/_ota_/_elf_/; s/\.bin$/.elf/')"
+
       - name: Upload ${{ matrix.name }} ELF
         uses: actions/upload-artifact@v4
         with:
           name: elf-${{ matrix.env }}
-          path: .pio/build/${{ matrix.env }}/firmware.elf
+          path: elf/
           retention-days: 90
-
-      - name: Upload ELF to Release
-        if: github.event_name == 'release'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          NAME=$(echo "${{ matrix.fwname }}" | sed 's/_ota_/_elf_/; s/\.bin$/.elf/')
-          cp .pio/build/${{ matrix.env }}/firmware.elf "$NAME"
-          gh release upload "${{ github.ref_name }}" "$NAME" --clobber
 
       # CAS 2 : Si c'est une RELEASE (Firmware applicatif)
       - name: Upload firmware to Release
@@ -530,6 +526,31 @@ jobs:
           name: manifest-fragment-${{ matrix.env }}
           path: manifest-fragment-${{ matrix.env }}.json
           retention-days: 90
+
+  elf:
+    name: Publish ELF archive
+    needs: [littlefs, arduino]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Get ELF files
+        uses: actions/download-artifact@v4
+        with:
+          pattern: elf-*
+          path: elf
+          merge-multiple: true
+
+      - name: Upload ELF archive to Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NAME="symbols_${{ needs.littlefs.outputs.safe_ref }}_elf.zip"
+          zip -j -9 "$NAME" elf/*.elf
+          ls -l "$NAME"
+          gh release upload "${{ github.ref_name }}" "$NAME" --repo "$GITHUB_REPOSITORY" --clobber
 
   # =======================================================================
   # JOB 3 : Publication de la pré-release "dev" (push sur main / lancement manuel)

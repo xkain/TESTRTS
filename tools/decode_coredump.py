@@ -8,7 +8,7 @@ Usage : decode_coredump.py <coredump.bin> <firmware.elf> [tâche] [--addr2line C
 
 Sans tâche : toutes les tâches du dump. Pour chacune, les adresses de code trouvées dans sa pile,
 traduites par addr2line : des appelants probables, pas un déroulé exact de la pile. L'ELF doit être
-celui dont l'empreinte figure dans le nom du fichier (artefact CI elf-<env> ou asset _elf_ de release).
+celui dont l'empreinte figure dans le nom du fichier (artefact CI elf-<env> ou archive symbols_<version>_elf.zip de release).
 Dépendance : pyelftools.
 """
 import glob
