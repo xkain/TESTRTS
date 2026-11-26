@@ -696,6 +696,14 @@
                                         <div class="gen-tile fw-log">
                                             <h3 class="gen-tile-title" tr="FW_TILE_LOG"></h3>
                                             <p class="gen-tile-desc" tr="FW_LOG_DESC"></p>
+                                            <div class="gen-row">
+                                                <span class="gen-row-text"><b tr="FW_DEBUG_LOGS"></b><span tr="FW_DEBUG_LOGS_DESC"></span></span>
+                                                <span class="gen-seg gen-seg-bool">
+                                                    <input id="cbEnableDebugLogs" type="checkbox" data-bind="general.enableDebugLogs" onchange="firmware.setOption('enableDebugLogs', this);">
+                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
+                                                    <span class="gen-seg-no" tr="BT_NO"></span>
+                                                </span>
+                                            </div>
                                             <div class="lg-tools">
                                                 <button id="btnFwLogPause" class="gen-btn lg-chip" type="button" aria-pressed="false" onclick="firmware.toggleLogPause();"><svg><use href="#svg-stop"></use></svg><span tr="BT_PAUSE"></span></button>
                                                 <span class="lg-tools-end">
@@ -708,14 +716,6 @@
                                         </div>
                                         <div class="gen-tile">
                                             <h3 class="gen-tile-title" tr="FW_TILE_DEBUG"></h3>
-                                            <div class="gen-row">
-                                                <span class="gen-row-text"><b tr="FW_DEBUG_LOGS"></b><span tr="FW_DEBUG_LOGS_DESC"></span></span>
-                                                <span class="gen-seg gen-seg-bool">
-                                                    <input id="cbEnableDebugLogs" type="checkbox" data-bind="general.enableDebugLogs" onchange="firmware.setOption('enableDebugLogs', this);">
-                                                    <span class="gen-seg-yes" tr="BT_YES"></span>
-                                                    <span class="gen-seg-no" tr="BT_NO"></span>
-                                                </span>
-                                            </div>
                                             <div class="fw-acts">
                                                 <button type="button" class="fw-act" onclick="general.reload();">
                                                     <span class="fw-act-ico"><svg><use href="#svg-clear"></use></svg></span>

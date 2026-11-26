@@ -433,7 +433,6 @@ bool Web::checkAuth(AsyncWebServerRequest *request, bool cfg) {
   return secureEquals(token, request->header("apikey").c_str());
 }
 bool Web::isAuthenticated(AsyncWebServerRequest *request, bool cfg) {
-  DBG_PRINTLN("Checking authentication");
   if(this->checkAuth(request, cfg)) return true;
   if(this->fromForeignSite(request)) {
     request->send(403, _encoding_text, "Forbidden");
@@ -442,7 +441,7 @@ bool Web::isAuthenticated(AsyncWebServerRequest *request, bool cfg) {
   // Une clé présente mais invalide DOIT répondre comme une clé absente : sans ce send(), la
   // requête restait sans réponse et le client attendait son timeout au lieu de voir un refus
   // explicite (et donc de redemander une authentification).
-  DBG_PRINTLN("Not authenticated...");
+  DBG_PRINTF("Not authenticated: %s\n", request->url().c_str());
   request->send(401, _encoding_text, "Unauthorized API Key");
   return false;
 }
