@@ -10,14 +10,28 @@ disponible même quand le firmware principal est abîmé, effacé ou incapable d
 
 ## Pourquoi il existe
 
-Le firmware principal ne s'écrit jamais lui-même. Chaque mise à jour passe par le firmware de
-secours : l'appareil y redémarre, reçoit l'image, l'écrit, puis redémarre sur le nouveau firmware.
-Votre configuration (réseau, sécurité, équipements, plannings) n'est pas touchée.
+Il prend la suite de la réinitialisation par coupures d'alimentation apparue en v2.5.0, et va
+plus loin sur trois points.
 
-Si quelque chose tourne mal (envoi coupé, image refusée, nouveau firmware qui plante au démarrage),
-l'appareil revient sur le firmware de secours au lieu de rester sans rien. Et quand c'est la
-configuration qui pose problème (Wi-Fi erroné, code PIN oublié, réglage qui bloque l'interface), le
-même firmware permet d'effacer précisément ce qu'il faut, sans dépendre du firmware principal.
+**Plus de place pour le firmware.** Une mise à jour en ligne classique (OTA) réserve deux
+emplacements de même taille : le firmware tourne dans l'un pendant que le suivant s'écrit dans
+l'autre. Sur une mémoire flash de 4 Mo, chacun ne disposait que de 1 792 Ko, et l'un des deux
+restait vide la plupart du temps. Ici, le firmware principal n'a plus qu'un emplacement, et
+c'est le firmware de secours, bien plus petit, qui l'écrit. Le firmware principal dispose
+ainsi de 2 368 Ko, soit 576 Ko de plus (un tiers), sans renoncer aux mises à jour en ligne.
+
+**Une mise à jour qui ne laisse jamais l'appareil sans rien.** Le firmware principal ne s'écrit
+jamais lui-même. Chaque mise à jour passe par le firmware de secours : l'appareil y redémarre,
+reçoit l'image, l'écrit, puis redémarre sur le nouveau firmware. Votre configuration (réseau,
+sécurité, équipements, plannings) n'est pas touchée. Si quelque chose tourne mal (envoi coupé,
+image refusée, nouveau firmware qui plante au démarrage), l'appareil revient sur le firmware de
+secours au lieu de rester inutilisable.
+
+**Un dépannage qui ne dépend pas du firmware en panne.** L'ancienne réinitialisation vivait
+dans le firmware principal : s'il ne démarrait plus, elle disparaissait avec lui. Le firmware
+de secours est rangé à part. Wi-Fi erroné, code PIN oublié, réglage qui bloque l'interface :
+il efface précisément ce qu'il faut, même quand le firmware principal ne démarre plus. Le
+firmware principal s'en trouve allégé d'environ 16 Ko.
 
 Il est différent du **point d'accès de secours** habituel, celui qui s'ouvre quand l'appareil n'a
 pas ou plus de Wi-Fi : voir [la comparaison plus bas](#point-d-acces).
