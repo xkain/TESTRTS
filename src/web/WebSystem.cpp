@@ -28,6 +28,9 @@
 #include "WebChunkedJson.h"
 #include "WebSystem.h"
 #include "LogTee.h"
+#include "SysDiag.h"
+#include <esp_core_dump.h>
+#include <esp_flash.h>
 
 extern ConfigSettings settings;
 extern SSDPClass SSDP;
@@ -625,6 +628,25 @@ namespace WebSystem {
     request->send(response);
   }
 
+  static void handleCrash(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if(method == AsyncHttp::GET && request->hasParam("raw")) {
+      size_t addr = 0, size = 0;
+      if(esp_core_dump_image_get(&addr, &size) != ESP_OK) { request->send(404, "text/plain", "No core dump"); return; }
+      AsyncWebServerResponse *r = request->beginResponse("application/octet-stream", size, [addr, size](uint8_t *out, size_t maxLen, size_t index) -> size_t {
+        size_t n = std::min(std::min(size - index, maxLen), (size_t)1024);
+        return esp_flash_read(NULL, out, addr + index, n) == ESP_OK ? n : 0;
+      });
+      request->send(r);
+      return;
+    }
+    if(method == AsyncHttp::POST || method == AsyncHttp::PUT) SysDiag::eraseCrash();
+    char buf[384];
+    SysDiag::crashJSON(buf, sizeof(buf));
+    request->send(200, "application/json", buf);
+  }
   void handleReboot(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
@@ -1018,6 +1040,7 @@ namespace WebSystem {
     server.on("/updateShadeConfig", AsyncHttp::POST, handleUpdateShadeConfig,
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateShadeConfigBody(request, filename, index, data, len, final); });
     server.on("/log", AsyncHttp::ANY, handleLog);
+    server.on("/crash", AsyncHttp::ANY, handleCrash);
     server.on("/reboot", AsyncHttp::ANY, handleReboot);
     server.on("/factoryReset", AsyncHttp::ANY, handleFactoryReset, nullptr, asyncBodyHandler);
   }

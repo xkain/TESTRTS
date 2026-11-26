@@ -10,5 +10,8 @@
 namespace SysDiag {
   void begin();
   const char *resetReason();
+  void readCrash();
+  size_t crashJSON(char *out, size_t len);
+  void eraseCrash();
 }
 #endif

@@ -12,7 +12,7 @@ class Firmware {
         // de sa durée de vie, et il n'y a ainsi rien à retirer quand l'overlay est détruit.
         window.addEventListener('resize', () => this.fitFileName());
         const page = get('divFirmware');
-        this._tabs = bindGenTabs({ tabs: 'fwTabs', panels: 'fwPanels', pager: 'fwPager', prev: 'btnFwPrev', next: 'btnFwNext', route: 'divFirmware', onShow: () => this.pollLog() });
+        this._tabs = bindGenTabs({ tabs: 'fwTabs', panels: 'fwPanels', pager: 'fwPager', prev: 'btnFwPrev', next: 'btnFwNext', route: 'divFirmware', onShow: () => { this.pollLog(); this.loadCrash(); } });
         setInterval(() => this.pollLog(), 2000);
         // Rien à enregistrer sur cette page : chaque réglage part tout de suite (setOption), il ne
         // doit donc pas marquer la page « modifiée » auprès de watchDirty (#divSystemSettings).
@@ -84,7 +84,9 @@ class Firmware {
         return this._log.text.replace(/\u0001/g, '');
     }
     logToClipboard() {
-        const text = this.logPlainText();
+        this.copyText(this.logPlainText());
+    }
+    copyText(text) {
         if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text);
         else {
             const ta = document.createElement('textarea');
@@ -95,10 +97,47 @@ class Firmware {
             ta.remove();
         }
     }
+    loadCrash() {
+        if (currentLeafId !== 'divFirmware' || !this._tabs || this._tabs.current() !== 3) return;
+        getJSON('/crash', (err, c) => { if (!err) this.renderCrash(c); });
+    }
+    renderCrash(c) {
+        const tile = get('fwCrashTile');
+        tile.querySelectorAll(':scope > :not(.gen-tile-title)').forEach(el => el.remove());
+        this._crash = c;
+        if (!c.present) return tile.insertAdjacentHTML('beforeend', `<p class="gen-tile-desc is-ok">${tr('FW_CRASH_NONE')}</p>`);
+        const fact = (k, v) => `<div class="fw-fact"><dt>${tr(k)}</dt><dd>${escHtml(v)}</dd></div>`;
+        tile.insertAdjacentHTML('beforeend', `<p class="gen-tile-desc is-warning">${tr('FW_CRASH_DESC')}</p>
+            <dl class="fw-facts">${fact('FW_CRASH_TASK', c.task)}${fact('FW_CRASH_PC', c.pc)}${fact('FW_CRASH_VERSION', tr(c.sameElf ? 'FW_CRASH_THIS_VERSION' : 'FW_CRASH_OTHER_VERSION'))}</dl>
+            <pre class="fw-log-pre fw-crash-trace">${escHtml(c.bt)}</pre>
+            <p class="gen-tile-desc">${tr('FW_CRASH_HINT')}</p>
+            <div class="lg-tools">
+            <button type="button" class="gen-btn" onclick="firmware.crashToClipboard();"><svg><use href="#svg-clipboard"></use></svg><span>${tr('BT_COPY')}</span></button>
+            <button type="button" class="gen-btn" onclick="firmware.downloadCrash();"><svg><use href="#svg-download"></use></svg><span>${tr('BT_DOWNLOAD')}</span></button>
+            <button type="button" class="gen-btn" onclick="firmware.eraseCrash();"><svg><use href="#svg-trash"></use></svg><span>${tr('BT_CLEAR')}</span></button>
+            </div>`);
+    }
+    crashToClipboard() {
+        const c = this._crash;
+        const ver = c.sameElf ? document.querySelector('.fw-version').textContent : '?';
+        this.copyText(`ESPSomfy-RTS ${ver}  elf ${c.elf}\ntask ${c.task}  pc ${c.pc}  cause ${c.cause}${c.corrupted ? '  (corrupted)' : ''}\nBacktrace: ${c.bt}`);
+    }
+    async eraseCrash() {
+        if (!await ui.confirm({ level: 'danger', icon: 'svg-trash', title: tr('PROMPT_CRASH_CLEAR'), confirm: tr('BT_CLEAR') })) return;
+        putJSONSync('/crash', {}, (err, c) => err ? ui.serviceError(err) : this.renderCrash(c));
+    }
+    async downloadCrash() {
+        const r = await fetch(baseUrl + '/crash?raw=1', { cache: 'no-store', headers: { apikey: security.apiKey || '' } });
+        if (!r.ok) { noteAuthFailure({ htmlError: r.status }); return this.loadCrash(); }
+        this.saveBlob(await r.blob(), `ESPSomfyRTS coredump ${this._crash.elf}.bin`);
+    }
     downloadLog() {
+        this.saveBlob(new Blob([this.logPlainText()], { type: 'text/plain' }), 'ESPSomfyRTS ' + new Date().toISOString().slice(0, 19).replace(/:/g, '_') + '.log');
+    }
+    saveBlob(blob, name) {
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([this.logPlainText()], { type: 'text/plain' }));
-        a.download = 'ESPSomfyRTS ' + new Date().toISOString().slice(0, 19).replace(/:/g, '_') + '.log';
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
         document.body.appendChild(a);
         a.click();
         a.remove();

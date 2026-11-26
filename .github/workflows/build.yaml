@@ -432,6 +432,22 @@ jobs:
           path: devbuild/
           retention-days: 5
 
+      - name: Upload ${{ matrix.name }} ELF
+        uses: actions/upload-artifact@v4
+        with:
+          name: elf-${{ matrix.env }}
+          path: .pio/build/${{ matrix.env }}/firmware.elf
+          retention-days: 90
+
+      - name: Upload ELF to Release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NAME=$(echo "${{ matrix.fwname }}" | sed 's/_ota_/_elf_/; s/\.bin$/.elf/')
+          cp .pio/build/${{ matrix.env }}/firmware.elf "$NAME"
+          gh release upload "${{ github.ref_name }}" "$NAME" --clobber
+
       # CAS 2 : Si c'est une RELEASE (Firmware applicatif)
       - name: Upload firmware to Release
         if: github.event_name == 'release'

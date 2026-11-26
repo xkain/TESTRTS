@@ -39,6 +39,7 @@ void setup() {
   Serial.println("Startup/Boot....");
 
   SysDiag::begin();
+  SysDiag::readCrash();
 
   // Arme la détection des coupures d'alim successives (et la LED si LED_PIN != -1). Ne bloque pas :
   // le montage du filesystem et le chargement des réglages ci-dessous se font PENDANT la fenêtre de
