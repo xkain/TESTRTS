@@ -11,10 +11,9 @@ static char s_ring[LOG_RING_SIZE];
 static uint32_t s_total = 0;
 static uint32_t s_dropped = 0;
 static char s_line[192];
+static bool s_bol = true;
 static SemaphoreHandle_t s_mx = nullptr;
 static vprintf_like_t s_prevVprintf = nullptr;
-
-static bool s_bol = true;
 
 static void stampLocked() {
   char ts[16];
@@ -46,14 +45,14 @@ static void putLocked(const char *p, size_t n) {
 
 static void flushDroppedLocked() {
   if(!s_dropped) return;
-  int k = snprintf(s_line, sizeof(s_line), "\n... %u write(s) dropped\n", (unsigned)s_dropped);
+  int k = snprintf(s_line, sizeof(s_line), s_bol ? "... %u write(s) dropped\n" : "\n... %u write(s) dropped\n", (unsigned)s_dropped);
   if(k > 0) putLocked(s_line, (size_t)k);
   s_dropped = 0;
 }
 
 static void ringPut(const char *p, size_t n) {
   if(!n || !s_mx) return;
-  if(xPortInIsrContext() || xSemaphoreTake(s_mx, 0) != pdTRUE) { s_dropped++; return; }
+  if(xPortInIsrContext() || xSemaphoreTake(s_mx, pdMS_TO_TICKS(2)) != pdTRUE) { s_dropped++; return; }
   flushDroppedLocked();
   putLocked(p, n);
   xSemaphoreGive(s_mx);
@@ -63,7 +62,7 @@ static int logVprintf(const char *fmt, va_list ap) {
   va_list ap2;
   va_copy(ap2, ap);
   int r = s_prevVprintf ? s_prevVprintf(fmt, ap) : vprintf(fmt, ap);
-  if(s_mx && !xPortInIsrContext() && xSemaphoreTake(s_mx, 0) == pdTRUE) {
+  if(s_mx && !xPortInIsrContext() && xSemaphoreTake(s_mx, pdMS_TO_TICKS(2)) == pdTRUE) {
     flushDroppedLocked();
     int k = vsnprintf(s_line, sizeof(s_line), fmt, ap2);
     if(k > 0) putLocked(s_line, (size_t)k < sizeof(s_line) ? (size_t)k : sizeof(s_line) - 1);
