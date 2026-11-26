@@ -14,13 +14,33 @@ static char s_line[192];
 static SemaphoreHandle_t s_mx = nullptr;
 static vprintf_like_t s_prevVprintf = nullptr;
 
+static bool s_bol = true;
+
+static void stampLocked() {
+  char ts[16];
+  int k;
+  time_t now = time(nullptr);
+  if(now > 1700000000) {
+    struct tm t;
+    localtime_r(&now, &t);
+    k = snprintf(ts, sizeof(ts), "%02d:%02d:%02d ", t.tm_hour, t.tm_min, t.tm_sec);
+  }
+  else {
+    uint32_t ms = millis();
+    k = snprintf(ts, sizeof(ts), "+%u.%us ", (unsigned)(ms / 1000), (unsigned)(ms / 100 % 10));
+  }
+  for(int i = 0; i < k; i++) s_ring[s_total++ % LOG_RING_SIZE] = ts[i];
+}
+
 static void putLocked(const char *p, size_t n) {
   for(size_t i = 0; i < n; i++) {
     if(p[i] == '\x1b') {
       while(i < n && !((p[i] >= 'A' && p[i] <= 'Z') || (p[i] >= 'a' && p[i] <= 'z'))) i++;
       continue;
     }
+    if(s_bol && p[i] != '\n' && p[i] != '\r') stampLocked();
     s_ring[s_total++ % LOG_RING_SIZE] = p[i];
+    if(p[i] != '\r') s_bol = p[i] == '\n';
   }
 }
 

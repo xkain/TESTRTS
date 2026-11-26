@@ -2750,6 +2750,7 @@ button.fw-act:hover .fw-act-chev {
 .fw-log-pre .is-err { color: var(--danger); }
 .fw-log-pre .is-warn { color: var(--warn); }
 .fw-log-pre .is-mark { color: var(--text-3); font-style: italic; }
+.fw-log-pre .fw-log-ts { color: var(--text-3); }
 .fw-crash-trace { height: auto; white-space: pre-wrap; }
 .fw-contributors {
     display: flex;

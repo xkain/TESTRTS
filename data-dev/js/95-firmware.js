@@ -63,9 +63,10 @@ class Firmware {
         const pre = get('preFwLog');
         const atEnd = pre.scrollHeight - pre.scrollTop - pre.clientHeight < 40;
         pre.innerHTML = this._log.text.split('\n').map(l => {
-            const cls = l.startsWith('\u0001') ? 'is-mark' : /^(E \(|\[E\])/.test(l) ? 'is-err' : /^(W \(|\[W\])/.test(l) ? 'is-warn' : '';
-            const txt = escHtml(l.replace('\u0001', ''));
-            return cls ? `<span class="${cls}">${txt}</span>` : txt;
+            const ts = (l.match(/^(\d\d:\d\d:\d\d|\+\d+\.\ds) /) || [''])[0], b = l.slice(ts.length);
+            const cls = b.startsWith('\u0001') ? 'is-mark' : /^(E \(|\[E\])/.test(b) ? 'is-err' : /^(W \(|\[W\])/.test(b) ? 'is-warn' : '';
+            const txt = escHtml(b.replace('\u0001', ''));
+            return (ts ? `<span class="fw-log-ts">${ts}</span>` : '') + (cls ? `<span class="${cls}">${txt}</span>` : txt);
         }).join('\n');
         if (atEnd) pre.scrollTop = pre.scrollHeight;
     }
