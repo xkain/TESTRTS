@@ -565,17 +565,12 @@ class Wifi {
             return b;
         }));
     }
-    // Sous 768 px il n'y a plus d'onglets : on descend jusqu'à la section.
     _goTab(i) {
         const tab = get('netTabs').querySelector(`[data-tab="${i}"]`);
         if (!tab || tab.hidden) return;
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-        if (window.matchMedia('(max-width: 767px)').matches) {
-            get('netPanels').querySelector(`:scope > [data-tab="${i}"]`).scrollIntoView({ block: 'start', behavior: reduce });
-            return;
-        }
         this._tabs.show(i);
-        get('netTabs').scrollIntoView({ block: 'start', behavior: reduce });
+        window.scrollTo({ top: 0, behavior: reduce });
     }
     // Chaque réglage modifié, avec son groupe : chacun part par sa propre route.
     _netFields() {
