@@ -137,9 +137,8 @@ class Somfy {
         // un orange demandé en sortait vert, ce que la permutation des deux premiers octets prédit
         // exactement. Rien dans le protocole du pixel ne révèle son câblage, c'est donc au
         // préréglage de le porter, au même titre que la broche.
-        // Le préréglage du XIAO ESP32-C6 (GPIO15, actif bas) a été retiré avec le support des
-        // cartes C6 de 4 Mo.
         { val: 4, label: 'ESP32-C6-Zero', pin: 8, addressable: true, order: 1, chips: ['c6'] },
+        { val: 6, label: 'XIAO ESP32-C6', pin: 15, activeLow: true, chips: ['c6'] },
         // Waveshare ESP32-S3 Zero : WS2812 adressable sur GPIO21, la même broche que la LED simple
         // du XIAO ESP32-S3 -- c'est le type qui les départage à la relecture. Ordre GRB standard,
         // contrairement à la C6-Zero : éprouvé sur la carte le 27/10/2026.
