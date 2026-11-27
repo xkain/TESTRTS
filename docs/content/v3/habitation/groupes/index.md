@@ -1,151 +1,137 @@
-# Groupes (Groups)
+# Groupes
 
-ESPSomfy-RTS permet de créer des groupes d'équipements. Contrairement à une exécution
-séquentielle (un équipement après l'autre), un groupe utilise une **adresse radio unique**
-partagée : la commande Haut/Ma Position/Bas part en **une seule trame**, reçue
-simultanément par tous les moteurs membres.
+Un groupe commande plusieurs équipements d'un seul geste. La page **Groupes** les liste, permet
+d'en créer et ouvre la fiche de chacun. Elle se lit en un bandeau, une barre d'outils et une liste
+de tuiles.
 
-## Liste des groupes
+![Page Groupes](v3/img/groupes-page){ .on-glb }
 
-Tant qu'aucun groupe n'existe, un message invite à cliquer sur **Ajouter un groupe**. Une fois
-plusieurs créés, chacun s'affiche en carte cliquable (ouvre sa fiche), composée de gauche à
-droite :
+## Ce qu'est un groupe { #principe }
 
-* une **poignée** ⠿ pour réordonner la liste par glisser-déposer (souris ou tactile) — le
-    nouvel ordre est enregistré **immédiatement** au relâchement ;
-* le **nom** du groupe, avec la **pièce** assignée juste en dessous si elle est définie ;
-* à droite : l'**ID** du groupe, une icône **télécommande** qui ouvre directement la
-    [télécommande virtuelle](../equipements/telecommande-virtuelle.md) de ce groupe, et une icône
-    **poubelle** qui le supprime.
+Un groupe a **sa propre adresse radio**, comme une télécommande de plus. Chaque moteur du groupe
+apprend cette adresse **en plus** de la sienne et de celles de ses télécommandes : c'est
+l'appairage au groupe, qui se fait équipement par équipement avec le bouton Prog (voir
+[Créer un groupe](creer-un-groupe.md)).
 
-!!! note "Note"
+Une commande du groupe part alors en **une seule trame**, avec l'adresse du groupe, et tous les
+moteurs qui la connaissent la reçoivent en même temps.
 
-    Le nombre d'équipements membres ne s'affiche **pas** sur cette carte de liste.
+| Commande | Ce que l'appareil envoie |
+|---|---|
+| `Ouvrir`, **My**, `Fermer` (fiche, tableau de bord, télécommande virtuelle) | une seule trame, avec l'adresse du groupe ; l'appareil met ensuite à jour l'état de chaque membre |
+| Une position en pourcentage (planning, Home Assistant) | une commande **par membre**, chacun avec sa propre adresse : chaque équipement part de sa position et rejoint la cible pour son compte |
 
-## Créer un groupe
+Le réglage **Commandes inversées** du groupe vaut pour **tout le groupe** : il échange Haut et Bas
+dans la trame du groupe. Il n'existe pas de réglage d'inversion par membre.
 
-**Ajouter un groupe** ouvre un assistant en **deux étapes**, qui enregistre chaque liaison dès
-qu'elle est confirmée. Le **mode expert** ouvre toujours le formulaire complet.
+Un même équipement peut appartenir à plusieurs groupes. Un équipement qui appartient à un groupe
+ne peut pas être supprimé : retirez-le d'abord du groupe.
 
-### Étape 1 sur 2 : nom et équipements
+!!! note "Des adresses toujours uniques"
 
-Donnez un **nom** (et une **pièce**), puis cochez les **équipements que ce groupe doit commander**.
-Chaque équipement coché sera lié au groupe à l'étape suivante, **un par un**. Vous pourrez en
-ajouter d'autres plus tard. S'il n'y a aucun équipement, l'assistant le dit : créez d'abord un
-équipement.
+    Chaque équipement et chaque groupe doit avoir son propre ID : sinon les deux répondent à la
+    même commande. L'interface refuse un ID déjà pris, en nommant l'équipement ou le groupe qui
+    le porte.
 
-Les **options avancées** rappellent que le groupe a sa **propre adresse radio**, distincte de
-celle de chaque équipement.
+**14 groupes** au plus. Un groupe peut réunir tous vos équipements.
 
-### Étape 2 sur 2 : lier chaque équipement
+## Le bandeau
 
-Pour **chaque** équipement coché, une tâche « **Lier** *nom* » se déroule en deux temps. Elle est
-décrite dans [Lier un équipement au groupe](lier-un-equipement.md).
+Le bandeau est à gauche sur ordinateur, en haut de la page sur tablette et téléphone (sous
+1000 px).
 
-Une dernière tâche, **Options**, règle :
+| Élément | Contenu |
+|---|---|
+| **Surtitre** | *Habitation* |
+| **Titre** | **Groupes** |
+| **Description** | *Un groupe commande plusieurs équipements d'un seul geste, avec sa propre adresse radio.* |
+| **Jauge** | les groupes créés, *n sur 14*, et *N places libres* (*1 place libre* au singulier), avec une barre de remplissage, orange quand les 14 places sont prises |
+| **Aide** | le bouton **?** (*Aide sur cette page*) ouvre cette page de documentation |
 
-- le **sens des commandes** : **Normal** ou **Inversé**, à inverser seulement si tous les
-  équipements du groupe partent dans le mauvais sens quand le groupe monte ;
-- la **portée radio** : **Normale**, ou **Renforcée**, qui répète chaque commande pour un groupe
-  dont un équipement est éloigné ;
-- le **clignotement de la LED d'état** à chaque commande du groupe (bleue sur un boîtier
-  Wi-Fi, verte sur un boîtier Ethernet).
+Tant que la liste est vide, les outils et le menu ⋮ du bandeau sont masqués.
 
-À la fin, « **nom** est prêt » : tous les équipements répondent au groupe. Si des liaisons sont
-restées de côté, les équipements non liés ne font pas partie du groupe : ajoutez-les plus tard
-avec **Associer un équipement** sur la fiche du groupe.
+Ce que montre le bandeau dépend de l'écran :
 
-## Caractéristiques techniques
+| Écran | Bandeau | Outils (recherche, tri, filtre) |
+|---|---|---|
+| **Ordinateur** | surtitre, titre, description, jauge complète | barre au-dessus de la liste ; le filtre est derrière un bouton ⋮ (`Filtrer`) au bout de la barre |
+| **Tablette** (768 à 999 px) | sur une ligne : icône, titre et jauge ; surtitre et description masqués | comme sur ordinateur |
+| **Téléphone** (sous 768 px) | icône, jauge réduite à *n sur 14* (sans les places libres) et un bouton ⋮ (`Rechercher et trier`) ; le titre est masqué | dans le panneau qu'ouvre le ⋮ du bandeau : recherche, **Trier**, puis les filtres à plat |
 
-* **Capacité** : jusqu'à **14 groupes**. Un groupe peut contenir au plus **30 équipements**
-    — ce n'est pas un plafond propre au groupe, mais le nombre maximal d'équipements que
-    l'appareil peut gérer au total (voir [EQUIPEMENTS](../equipements/index.md#capacité)) :
-    un groupe ne peut jamais en contenir plus qu'il n'en existe.
-* **Synchronisation native** : une seule commande radio est diffusée pour Haut/Ma
-    Position/Bas. Tous les moteurs la reçoivent au même instant.
-* **Performance radio** : réduit considérablement le trafic sur la fréquence 433,xx MHz,
-    comparé à l'envoi d'une commande par équipement.
-* **Positionnement en pourcentage** : le tableau de bord d'un groupe n'offre que Haut, Ma
-    Position (My) et Bas — pas de curseur de position, les différences de timing entre moteurs ne
-    permettant pas une seule trame de position valable pour tous. Un groupe reste néanmoins
-    une **cible valide pour une [programmation](../plannings.md)** visant un pourcentage
-    précis : dans ce cas, chaque équipement membre reçoit alors sa propre commande de
-    positionnement et rejoint la cible indépendamment des autres — ce n'est plus une seule
-    trame partagée, mais le résultat reste pratique à programmer.
+Une pastille sur le ⋮ signale qu'un réglage masque une partie de la liste : sur le ⋮ du bandeau
+(téléphone) quand une recherche ou un filtre est actif, sur le ⋮ `Filtrer` (ordinateur, tablette)
+quand un filtre autre que **Toutes** est choisi.
 
+## Rechercher, trier, filtrer { #outils }
 
-## La fiche du groupe
+| Outil | Effet |
+|---|---|
+| **Recherche** (*Rechercher un groupe…*) | garde les groupes dont le nom, la pièce ou le nom d'un membre contient le texte tapé |
+| **Tri** `A → Z` | une seule liste, dans l'ordre alphabétique des noms |
+| **Tri** `Par pièce` | les groupes rangés sous un intertitre par pièce (nom de la pièce, nombre de groupes), pièces dans l'ordre du tableau de bord, Accueil en tête ; sous chaque pièce, l'ordre alphabétique. Sans aucune pièce créée, pas d'intertitre |
+| **Filtre** **Pièces** | `Toutes`, puis chaque pièce qui contient au moins un groupe, chacune avec son nombre |
 
-La fiche reprend la présentation en **blocs** de la fiche d'un équipement : **Informations
-générales**, **Communication**, **Équipements associés au groupe**, **Contrôle du Groupe**,
-**Options** et **Plannings**.
+Le tri choisi est retenu par le navigateur. Par défaut, c'est `A → Z`. Un second clic sur le
+filtre actif revient à `Toutes`.
 
-!!! note "Note"
+Si la recherche et le filtre ne laissent rien, la liste affiche **Rien ne correspond** — *Videz la
+recherche ou choisissez un autre filtre.* — et un bouton `Tout afficher` qui efface les deux.
 
-    **Contrôle du Groupe** et **Plannings** restent **masqués tant que le groupe n'a pas été
-    enregistré une première fois**. Le bloc **Options**, lui, reste visible dès la création.
+## La liste { #liste }
 
-## Informations générales
+### Liste vide
 
-* **Nom** : identifiant du groupe (ex : *Groupe Salon*). Limité à **20 caractères**.
-* **Pièce** : assigne le groupe à une zone (par défaut : **Accueil**) — voir
-    [Pièces (Rooms)](../pieces.md)). Le bouton **+** juste à côté du sélecteur permet d'en
-    créer une nouvelle sans quitter cette fiche.
+Sans aucun groupe, la page affiche **Aucun groupe pour l'instant** — *Réunissez plusieurs
+équipements dans un groupe pour les commander d'un seul geste.* — et la seule tuile d'ajout.
 
-## Communication
+### La tuile d'ajout
 
-* **Protocole** : `RTS`, `RTW` ou `RTV` — pas de protocole GPIO (`IO-Relay`/`IO_Remote`)
-    pour un groupe, voir [EQUIPEMENTS](../equipements/index.md#communication) pour le détail de ces
-    protocoles.
-* **Bit** : **56-bit** ou **80-bit**, même logique de préréglage que pour un équipement.
-* **ID Équipement** : identifiant unique de 24 bits, généré par défaut à partir de
-    l'adresse MAC de votre ESP32. Ne le modifiez jamais après avoir associé des équipements.
+Toujours en tête de liste : `Ajouter Groupe`, avec *Choisissez ensuite ses équipements* (ce
+sous-titre est masqué sur téléphone). Elle ouvre l'assistant
+[Créer un groupe](creer-un-groupe.md).
 
-## Équipements associés au groupe
+| Cas | Ce qui se passe |
+|---|---|
+| Les 14 groupes existent déjà | la tuile est grisée |
+| Aucun équipement n'existe | l'assistant s'ouvre, mais s'arrête au choix des équipements : *Aucun équipement à ajouter : créez d'abord un équipement.* |
 
-Ce bloc a **le sien** : en haut, le bouton **Associer un équipement** lance la procédure de
-[liaison](lier-un-equipement.md). Dessous, chaque équipement membre s'affiche dans une carte,
-sur le modèle des télécommandes liées, avec :
+### La tuile d'un groupe
 
-* une **icône** représentant le type de l'équipement ;
-* son **nom** et son **ID** ;
-* un bouton **Retirer du groupe** pour le délier.
+| Zone | Contenu |
+|---|---|
+| **Icônes** | celles du type des trois premiers membres, suivies de *+n* au-delà ; l'icône des groupes tant qu'il n'a aucun membre |
+| **Menu ⋮** (**Options**) | `Supprimer` |
+| **Nom** | le nom du groupe, et dessous le nombre de membres : *n équipement(s)* |
+| **Pied** | la pièce du groupe (*Accueil* s'il n'est rangé nulle part) et son ID radio |
 
-Délier et lier passent par les **mêmes tâches guidées** que lors de la création. La liste n'a
-pas d'état vide dédié : elle reste masquée tant qu'elle est vide.
+Un clic sur la tuile ouvre la [fiche du groupe](fiche-du-groupe.md). Si une autre fiche a des
+modifications non enregistrées, l'interface demande d'abord confirmation.
 
-## Contrôle du Groupe
+### Supprimer un groupe { #supprimer }
 
-*Visible uniquement une fois le groupe enregistré une première fois.*
+`Supprimer`, dans le menu ⋮ de la tuile, fait la même chose que le bouton
+`Supprimer le groupe…` de la fiche :
 
-Ce bloc ne garde que les boutons **Haut / My / Bas** (grisés tant qu'aucun équipement n'est
-associé).
+| Cas | Ce qui se passe |
+|---|---|
+| Le groupe a encore des membres | refus : *Vous ne pouvez pas supprimer ce groupe tant que tous les équipements n'en ont pas été retirés.* |
+| Le groupe est vide | confirmation **Supprimer « nom » ?** — *Cette action est définitive.* —, avec en plus *n horaire(s) qui le visent seront aussi supprimés.* s'il est la cible de plannings ; le bouton `Supprimer le groupe` le supprime |
 
-## Options
+Retirer les membres passe par une vraie commande radio à chaque moteur, pour qu'il oublie
+l'adresse du groupe (voir [Retirer un équipement](fiche-du-groupe.md#retirer)). Supprimer le
+groupe ne supprime pas ses équipements.
 
-* **Commandes** : inverse le sens Haut/Bas envoyé — même logique que pour un équipement
-    individuel.
-* **Répéter commandes** : de **0** à **7** — une borne plus basse que pour un équipement
-    seul (0 à 20), volontaire : un groupe de 8 membres répété plusieurs fois produirait
-    autant d'éclats radio supplémentaires pour une seule action.
-* **Retour lumineux** : fait clignoter la LED de statut **une fois par commande de
-    groupe** envoyée, pas séparément pour chaque équipement membre. N'apparaît que si une
-    LED de statut est configurée sur votre appareil — même condition que pour un équipement.
+## Pour aller plus loin
 
-## Plannings
+* [Créer un groupe](creer-un-groupe.md) : l'assistant, du nom à l'appairage de chaque équipement.
+* [La fiche du groupe](fiche-du-groupe.md) : ses réglages, ses membres et ses plannings.
 
-*Visible uniquement une fois le groupe enregistré une première fois.*
+## Pages liées
 
-Comme pour un équipement, un bloc dédié liste les plannings déjà associés à ce groupe
-avec un bouton **Ajouter une programmation** — voir [Plannification](../plannings.md).
-
-## Procédures liées
-
-- [Lier un équipement au groupe](lier-un-equipement.md) — lier ou délier un équipement, par les
-    tâches guidées de l'assistant ou depuis la fiche.
-- [Pièces (Rooms)](../pieces.md) — créer une pièce à la volée via le bouton **+** du champ Pièce.
-- [Plannification](../plannings.md) — programmer des déclenchements
-    automatiques ; a aussi son propre onglet **Plannings**.
-- [Télécommande Virtuelle (Virtual Remote)](../equipements/telecommande-virtuelle.md) — icône sur chaque
-    carte de la [liste](#liste-des-groupes) ; **absente de cette fiche**, accessible depuis la
-    liste et le tableau de bord.
+* [Équipements](../equipements/index.md)
+* [Pièces](../pieces.md)
+* [Plannings](../plannings.md)
+* [Tableau de bord](../../tableau-de-bord/index.md) : la colonne **Groupes** et la carte de chaque
+  groupe
+* [Entités Home Assistant](../../../home-assistant/entites.md) : un groupe y devient un appareil
+  avec son entité `cover`

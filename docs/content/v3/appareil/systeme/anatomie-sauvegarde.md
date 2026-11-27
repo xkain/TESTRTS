@@ -527,7 +527,7 @@ Un enregistrement par groupe (jusqu'à 16, dont 14 réellement atteignables depu
     Capacité réelle : le nombre maximum d'équipements sur l'appareil (30, voir la note
     plus haut) étant inférieur au nombre d'emplacements membre du format (32), au moins deux de
     ces 32 emplacements sont toujours vides — voir
-    [Groupes](../../habitation/groupes/index.md#caractéristiques-techniques) pour la limite effective.
+    [Groupes](../../habitation/groupes/index.md#principe) pour la limite effective.
 
     À la relecture, les emplacements vides sont compactés : si les membres d'un groupe sont
     dispersés dans la liste, ils se retrouvent regroupés en tête. L'ordre des identifiants dans

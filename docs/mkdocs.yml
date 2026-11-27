@@ -174,7 +174,8 @@ nav:
               - Télécommande virtuelle: v3/habitation/equipements/telecommande-virtuelle.md
           - Groupes:
               - v3/habitation/groupes/index.md
-              - Lier un équipement au groupe: v3/habitation/groupes/lier-un-equipement.md
+              - Créer un groupe: v3/habitation/groupes/creer-un-groupe.md
+              - La fiche d'un groupe: v3/habitation/groupes/fiche-du-groupe.md
           - Pièces: v3/habitation/pieces.md
           - Plannings: v3/habitation/plannings.md
       - Domotique:
