@@ -10,7 +10,7 @@ groupe liste ses plannings et permet d'**en ajouter un rapidement**.
 !!! tip "Astuce"
 
     Si vous disposez déjà d'un système domotique (Home Assistant via l'intégration
-    **ESPSomfy-RTS Enhanced** — voir [Home Assistant](../domotique/home-assistant/index.md) — ou
+    **ESPSomfy-RTS Enhanced** — voir [Home Assistant](../../home-assistant/index.md) — ou
     équivalent), préférez-lui vos automatisations : il n'a aucune des limites décrites plus
     bas (30 horaires au total, pas de condition supplémentaire, pas de scène croisant plusieurs
     appareils) et ouvre des possibilités bien plus riches. Les programmations de cette page

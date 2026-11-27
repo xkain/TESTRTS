@@ -39,7 +39,7 @@ la protection, et c'est le réglage le plus important de cette page.
     l'intégration.** Elle les demande à l'installation, et vous redemande de vous identifier
     d'elle-même si la clé cesse d'être valable. Sans eux, elle reçoit une erreur `401` sur chacune
     de ses requêtes et sa connexion temps réel est refusée en boucle : l'appareil continue de
-    fonctionner, mais il disparaît de Home Assistant — voir [Home Assistant](../../commun/home-assistant.md).
+    fonctionner, mais il disparaît de Home Assistant — voir [Home Assistant](../../home-assistant/index.md).
 
     Cette authentification demande l'intégration **v2.6.0 ou plus récente**. Les versions
     antérieures ne savaient pas présenter de clé et étaient coupées net dès qu'une sécurité était

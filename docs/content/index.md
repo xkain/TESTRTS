@@ -71,8 +71,8 @@ Vous préférez un appareil déjà assemblé et préconfiguré&nbsp;? Voir les
     pilotage à la voix, automatisations, et des services propres au protocole
     RTS. L'intégration s'installe par le Marketplace (anciennement HACS).
 
-    [:octicons-arrow-right-24: Installer l'intégration](commun/home-assistant.md#installation-via-le-marketplace-anciennement-hacs)
-    [:octicons-arrow-right-24: Documentation de l'intégration](v3/domotique/home-assistant/index.md)
+    [:octicons-arrow-right-24: Installer l'intégration](home-assistant/installation.md#marketplace)
+    [:octicons-arrow-right-24: Documentation de l'intégration](home-assistant/index.md)
 
 </div>
 

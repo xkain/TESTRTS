@@ -25,7 +25,7 @@ pas de la version du firmware.
     Les télécommandes, capteurs et accessoires radio vus fonctionner (ou non) avec
     ESPSomfy-RTS, et comment distinguer une version RTS d'une version io.
 
--   :material-home-assistant:{ .lg .middle } **[Home Assistant](home-assistant.md)**
+-   :material-home-assistant:{ .lg .middle } **[Home Assistant](../home-assistant/index.md)**
 
     ---
 

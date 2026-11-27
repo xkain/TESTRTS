@@ -87,8 +87,8 @@ Le détail des cases à cocher est sur la page
 
 - **Vérifiez vos équipements** dans l'interface&nbsp;: positions, noms, etc.
 - Si vous utilisez **Home Assistant**, consultez la page de l'
-  [intégration dédiée](domotique/home-assistant/index.md) et son
-  [installation par le Marketplace (anciennement HACS)](../commun/home-assistant.md#installation-via-le-marketplace-anciennement-hacs).
+  [intégration dédiée](../home-assistant/index.md) et son
+  [installation par le Marketplace (anciennement HACS)](../home-assistant/installation.md#marketplace).
 - En cas de souci, [l'aide](../aide/index.md) rassemble les pages de diagnostic.
 
 La [documentation v2.x](../v2/index.md) reste disponible tant que vous avez des

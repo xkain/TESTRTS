@@ -8,7 +8,7 @@ Le **paramétrage** du courtier (adresse, port, identifiants) se fait dans l'int
 !!! tip "Astuce"
 
     Vous cherchez plutôt l'API HTTP ou Home Assistant ? Voir
-    [Intégrations](index.md#interface-rest-api) et [Home Assistant](../../commun/home-assistant.md).
+    [Intégrations](index.md#interface-rest-api) et [Home Assistant](../../home-assistant/index.md).
 
 ESPSomfy-RTS publie des attributs sur votre broker MQTT et s'abonne à des sujets (topics) qui vous permettent de contrôler les volets. Pour activer votre broker, connectez-le dans les pages de configuration sous la section MQTT. Cela lancera le rapport d'état des volets vers votre broker sous le sujet que vous avez assigné.
 
@@ -131,5 +131,5 @@ ESPSomfy RTS prend en charge l'auto-découverte MQTT. Cependant, si vous utilise
 ---
 
 **Pages liées :** [Intégrations](index.md) pour l'API REST et les WebSockets ·
-[Home Assistant](../../commun/home-assistant.md) pour l'intégration dédiée.
+[Home Assistant](../../home-assistant/index.md) pour l'intégration dédiée.
 

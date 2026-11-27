@@ -1,74 +1,30 @@
-# Home Assistant / MQTT — Vue d'ensemble
+# Home Assistant
 
-<img src="../../../assets/banniere-ha.webp" alt="ESPSomfy-RTS enhanced" width="100%">
+La page **Home Assistant** de l'interface présente l'intégration **ESPSomfy-RTS Enhanced** et
+dit comment l'installer. Elle ne règle rien sur l'appareil : tout se passe ensuite dans Home
+Assistant. L'intégration a sa propre documentation, dans l'onglet
+[Intégration Home Assistant](../../../home-assistant/index.md).
 
-Cette documentation décrit l'intégration qui accompagne le firmware
-[ESPSomfy-RTS](https://github.com/xkain/ESPSomfy-RTS) : les services, entités, attributs
-et événements exposés dans Home Assistant.
+![Page Home Assistant de l'interface](v3/img/ha-page-appareil){ .on-glb }
 
-Le domaine de l'intégration est `espsomfy_rts_enhanced`. Tous les services décrits ici
-s'appellent donc sous la forme `espsomfy_rts_enhanced.<service>`.
+## Le bandeau
 
-Les services standard de Home Assistant (`cover.open_cover`, `cover.set_cover_position`,
-`cover.stop_cover`…) fonctionnent également sur toutes les entités `cover` de
-l'intégration. Les services propres documentés ici n'existent que pour ce que le
-protocole RTS sait faire et que le domaine `cover` ne couvre pas.
+Le bandeau, à gauche sur ordinateur et en haut de la page sur tablette et téléphone, rappelle que
+l'appareil fonctionne parfaitement seul et que l'intégration est optionnelle. Son bouton
+`Open in Marketplace on MY` ouvre directement l'intégration dans le Marketplace de votre Home
+Assistant. Dessous, le prérequis : *Home Assistant 2026.11 ou plus récent. Sur une version plus
+ancienne, passez par HACS.*
 
-## Découvrir
+## Les tuiles
 
-| Page | Contenu |
+| Tuile | Ce qu'elle montre ou permet |
 |---|---|
-| [Entités exposées](entites.md) | ce que l'intégration crée dans Home Assistant : équipements, groupes, capteurs, boutons |
-| [Diagnostics](diagnostics.md) | les 12 capteurs de l'appareil : réseau, Wi-Fi, Ethernet, mémoire — contenu, cadence, alertes |
-| [Attributs en template](attributs.md) | lire une position, la position MY, la dernière commande — et la convention de position qui s'inverse |
-| [Événements](evenements.md) | le bus `espsomfy-rts_event`, sa charge utile, et comment réagir à une télécommande physique |
+| **À quoi sert cette intégration ?** | ce qu'elle apporte (vos équipements en entités `cover`, une position suivie même avec une télécommande physique, le pilotage à la voix et partout) et trois exemples d'automatisations |
+| **Comment l'installer depuis le Marketplace ?** | les trois étapes : ouvrir l'intégration dans le Marketplace, la télécharger puis redémarrer Home Assistant, et trouver l'appareil dans **Paramètres › Appareils et services**. Un lien mène au dépôt GitHub de l'intégration. |
+| **Autre méthode : la découverte MQTT** | pour une installation qui passe déjà par un courtier MQTT. La ligne **Découverte MQTT** dit si la découverte est publiée et ouvre la page [MQTT](../mqtt/index.md). |
 
-## Agir
+Quand vous êtes connecté au point d'accès de l'appareil, la tuile d'installation et le bouton du
+Marketplace sont masqués : il faut d'abord relier l'appareil à votre réseau.
 
-| Page | Contenu |
-|---|---|
-| [Services](services.md) | les 15 services : mouvement, inclinaison, recalage, capteurs soleil et vent, commandes brutes RTS, appareil |
-| [Recettes d'automatisation](automatisations.md) | 10 automatisations complètes, commentées |
-| [Pièges et limites](pieges-et-limites.md) | ce que le protocole RTS ne permet pas, et ce qu'il faut anticiper |
-
-## Vue d'ensemble des services
-
-| Service | Cible | Paramètres |
-|---|---|---|
-| [`open_shade`](services.md#open_shade--close_shade--stop_shade) | `cover` | — |
-| [`close_shade`](services.md#open_shade--close_shade--stop_shade) | `cover` | — |
-| [`stop_shade`](services.md#open_shade--close_shade--stop_shade) | `cover` | — |
-| [`set_shade_position`](services.md#set_shade_position) | `cover` | `position` |
-| [`tilt_open`](services.md#tilt_open--tilt_close) | `cover` | — |
-| [`tilt_close`](services.md#tilt_open--tilt_close) | `cover` | — |
-| [`set_tilt_position`](services.md#set_tilt_position) | `cover` | `tilt_position` |
-| [`set_current_position`](services.md#set_current_position) | `cover` | `position` |
-| [`set_current_tilt_position`](services.md#set_current_tilt_position) | `cover` | `tilt_position` |
-| [`set_sunny`](services.md#set_sunny) | `cover` | `sunny` |
-| [`set_windy`](services.md#set_windy) | `cover` | `windy` |
-| [`send_command`](services.md#send_command) | `cover` | `command`, `repeat` |
-| [`send_step_command`](services.md#send_step_command) | `cover` | `direction`, `step_size`, `repeat` |
-| [`reboot`](services.md#reboot) | `button` | — |
-| [`backup`](services.md#backup) | `button` | — |
-
-## Lire une valeur en un coup d'œil
-
-| Ce que vous cherchez | Template |
-|---|---|
-| position actuelle | `{{ state_attr('cover.salon', 'current_position') }}` |
-| position favorite MY | `{{ state_attr('cover.salon', 'my_pos') }}` |
-| inclinaison actuelle | `{{ state_attr('cover.veranda', 'current_tilt_position') }}` |
-| dernière commande reçue | `{{ state_attr('cover.salon', 'last_cmd') }}` |
-| origine de cette commande | `{{ state_attr('cover.salon', 'cmd_source') }}` |
-| état (ouvert, fermé, en mouvement) | `{{ states('cover.salon') }}` |
-| adresse IP de l'appareil | `{{ states('sensor.<appareil>_adresse_ip') }}` |
-| canal Wi-Fi | `{{ states('sensor.<appareil>_canal_wi_fi') }}` |
-| mémoire libre | `{{ states('sensor.<appareil>_memoire_libre') }}` |
-
-Les valeurs de diagnostic sont des **entités** à part entière, pas des attributs : elles
-se lisent avec `states()`. Leurs identifiants dépendent du nom donné à l'appareil — voir
-[Diagnostics](diagnostics.md#lire-les-valeurs).
-
-!!! warning "Convention de position"
-    `my_pos` et `target` sont livrés dans la convention ESPSomfy-RTS, l'inverse de
-    `current_position`. Voir [Attributs en template](attributs.md#convention-de-position).
+Pour aller plus loin : [Installation et connexion](../../../home-assistant/installation.md),
+[Présentation de l'intégration](../../../home-assistant/index.md).

@@ -7,8 +7,8 @@ WebSockets, **MQTT** et l'**intégration Home Assistant dédiée**.
   naturelle. Vos équipements y sont reconnus comme des entités `cover`
   standard, pilotables à la voix et utilisables dans vos automatisations, avec
   en plus des services propres au protocole RTS. Voir
-  [Intégration Home Assistant](../v3/domotique/home-assistant/index.md) et son
-  [installation](../commun/home-assistant.md#installation-via-le-marketplace-anciennement-hacs).
+  [Intégration Home Assistant](../home-assistant/index.md) et son
+  [installation](../home-assistant/installation.md#marketplace).
 - **Vous utilisez un autre système**, ou vous avez déjà un courtier MQTT&nbsp;: la
   page [MQTT](../v3/domotique/mqtt/topics.md) décrit la connexion bidirectionnelle
   (commande et retour d'état).

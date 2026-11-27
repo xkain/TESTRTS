@@ -1,101 +1,85 @@
-# Paramètres MQTT
+# MQTT
 
-Cet onglet (`Réseau → MQTT`, à côté de [Connexion réseau](../../appareil/reseau/index.md)) relie l'appareil à un
-**courtier MQTT**. C'est ce qui permet à une plateforme domotique (Home Assistant, Jeedom,
-Node-RED…) de **lire l'état** de vos équipements et de **les piloter**, sans passer par
-l'interface web. Il est facultatif : sans MQTT, l'appareil fonctionne normalement.
+La page **MQTT** relie l'appareil à un **courtier MQTT**. C'est ce qui permet à un système
+domotique (Home Assistant, Jeedom, Node-RED…) de **lire l'état** de vos équipements et de **les
+piloter**, sans passer par l'interface web. Elle est facultative : sans MQTT, l'appareil fonctionne
+normalement.
 
-Cette page décrit les réglages. Pour ce que l'appareil publie et écoute une fois connecté, voir
-la page [MQTT](topics.md).
+La page n'a pas d'onglets : elle se lit en trois parties, **Courtier**, **Topics** et
+**Découverte**. Pour ce que l'appareil publie et écoute une fois connecté, voir
+[Topics publiés et commandes](topics.md).
 
-![parametres mqtt 1](v3/img/parametres-mqtt-1){ .on-glb }
+![Page MQTT](v3/img/mqtt-page){ .on-glb }
 
-La page est organisée en quatre blocs:
+## Le bandeau
 
-## Client MQTT
+Le bandeau, à gauche sur ordinateur et en haut de la page sur tablette et téléphone, porte
+l'interrupteur **Client MQTT** `Oui` / `Non`, et son état : *Activé* ou *Désactivé*. Il résume
+aussi les réglages en cours de saisie, avant même l'enregistrement :
 
-Ce bloc contient les deux interrupteurs qui décident **si** et **comment** l'appareil parle MQTT.
+| Ligne | Ce qu'elle dit |
+|---|---|
+| **Courtier** | l'adresse complète, `mqtt://<hôte>:<port>` |
+| **Topic racine** | le préfixe de tous les messages |
+| **Découverte** | *publiée sous* le topic de découverte, ou *non publiée* |
+| **Identifiants** | *compte « … »*, ou *Aucun* |
 
-- **Activer le client MQTT** : l'interrupteur principal. Tant qu'il est désactivé, l'appareil
-  ne publie rien et n'écoute rien, même si le reste du formulaire est rempli.
-- **Publier découverte** : l'appareil envoie, en plus, des **fiches de description** de chacun de
-  ses équipements. Une plateforme compatible (Home Assistant en tête) les lit et **crée toute
-  seule** les entités correspondantes, sans que vous ayez à les déclarer une par une. Voir
-  [Auto-découverte MQTT](topics.md#auto-découverte-mqtt) pour le détail de ce qui
-  est publié. Activer cet interrupteur fait apparaître le champ **Discovery Topic**, dans le bloc
-  Topics.
+Ces lignes sont affichées directement sur ordinateur, et derrière **Détails** sur tablette. Sur
+téléphone, le bandeau ne garde qu'une ligne de résumé : son menu ⋮ propose **Détails**, qui ouvre
+ces informations dans un panneau, et **Aide sur cette page**.
 
-Quand le client est **désactivé**, les blocs suivants sont **grisés mais restent modifiables** :
-les réglages sont enregistrés dans tous les cas.
+Client à `Non`, une note le rappelle en haut de la page : *ces réglages sont gardés mais rien
+n'est envoyé au courtier*. Les tuiles sont grisées mais restent modifiables et s'enregistrent quand
+même.
 
-## Courtier
+## Courtier { #courtier }
 
-Ce bloc dit **où** se trouve le courtier, et **comment s'y identifier**.
-
-- **Adresse du courtier** : une seule ligne composée de `mqtt://`, de l'**hôte** (le nom ou
-  l'adresse IP de la machine qui héberge votre courtier), de deux-points, puis du **port**
-  (`1883` par défaut). Un port hors de la plage valide (1 à 65535) est refusé à l'enregistrement.
-- **Identifiant** et **Mot de passe** : à renseigner seulement si votre courtier exige une
-  authentification (32 caractères au maximum chacun). Laissez-les vides pour un courtier ouvert.
-  Le mot de passe ne s'affiche jamais en clair, sauf avec l'icône œil pendant la saisie ; un champ
-  laissé tel quel signifie « je n'y touche pas », car l'appareil ne renvoie jamais le mot de passe
-  déjà enregistré.
+| Tuile | Ce qu'elle montre ou permet |
+|---|---|
+| **Adresse du courtier** | le **Protocole**, toujours `mqtt://`, l'**Hôte** (adresse IP ou nom du serveur, 64 caractères) et le **Port** (1 à 65535, `1883` d'habitude). L'hôte est obligatoire quand le client est à `Oui`. |
+| **Identifiants** | le **Nom d'utilisateur** et le **Mot de passe**, 32 caractères chacun, à laisser vides pour un courtier ouvert. Un mot de passe enregistré n'est jamais renvoyé par l'appareil : le champ masqué veut dire « inchangé ». |
 
 !!! warning "La liaison n'est pas chiffrée"
 
-    `mqtt://` n'est pas un choix : ESPSomfy-RTS ne sait parler qu'en MQTT **non chiffré**.
-    L'identifiant et le mot de passe circulent donc **en clair** sur le réseau. Utilisez un
-    courtier de votre réseau local, jamais exposé sur Internet. À partir de **1600 px** de large,
-    un encart de la page le rappelle. Voir [MQTT](topics.md#activer-la-connexion)
-    pour le pourquoi.
+    ESPSomfy-RTS ne parle que le MQTT **non chiffré** : identifiant et mot de passe circulent en
+    clair. Utilisez un courtier de votre réseau local, jamais exposé sur Internet, et un compte
+    dédié. Voir [pourquoi](topics.md#activer-la-connexion).
 
-## Topics
+## Topics { #topics }
 
-Un *topic* (sujet) est l'« adresse » d'un message MQTT. Ce bloc règle comment l'appareil
-**range** les siens.
+Un *topic* est l'« adresse » d'un message MQTT.
 
-- **Root Topic** (sujet racine) : le préfixe sous lequel **tout** ce que publie et écoute
-  l'appareil est rangé, par exemple `espsomfy-CF8CF4/shades/1/position`. Il isole l'appareil des
-  autres clients du même courtier : si vous avez deux boîtiers, chacun a sa propre racine. Il est
-  rempli par défaut avec `espsomfy-` suivi de l'identifiant de l'appareil. Voir
-  [Le sujet racine](topics.md#le-sujet-racine).
-- **Identifiant client** : le nom sous lequel l'appareil se présente au courtier. **Laissez-le
-  vide** pour un identifiant unique, dérivé de l'appareil. Ne le renseignez que si votre courtier
-  fonde ses règles d'accès sur cet identifiant, ou si vous préférez un nom lisible. Deux clients
-  ne doivent jamais porter le même.
-- **Discovery Topic** : visible seulement quand **Publier découverte** est activé. C'est le chemin
-  sous lequel sont publiées les fiches de découverte. Sa valeur par défaut, `homeassistant`, est
-  celle que Home Assistant écoute : ne la changez que si votre plateforme en attend une autre.
-  
-  ![parametres mqtt 2](v3/img/parametres-mqtt-2){ .on-glb }
+| Tuile | Ce qu'elle montre ou permet |
+|---|---|
+| **Nommage** | le **Topic racine**, préfixe de tout ce que l'appareil publie et écoute (64 caractères), et l'**Identifiant client**, le nom sous lequel il se présente au courtier |
+| **Aperçu des topics** | le résultat, en direct pendant la saisie, pour l'équipement 1 : **État de l'appareil** (`<racine>/status`), **Position de l'équipement 1** (`<racine>/shades/1/position`) et **Commande de l'équipement 1** (`<racine>/shades/1/target/set`) |
 
-!!! important "Le Root Topic est vérifié même si MQTT est désactivé"
+Le **Topic racine** isole l'appareil des autres clients du courtier : deux appareils doivent en
+avoir deux différents. Par défaut, c'est `espsomfy-` suivi de l'identifiant de l'appareil. Il ne
+peut pas être vide, contenir `+` ou `#`, ni commencer par `/` ou `$` : une valeur refusée est
+remise à celle en vigueur, sélectionnée pour être corrigée. Ce contrôle a lieu même client à
+`Non`. Voir [Le sujet racine](topics.md#le-sujet-racine).
 
-    Il ne peut pas être vide, ne peut pas contenir de joker (`+` ou `#`) et ne peut pas commencer
-    par `/` ou `$`. Si vous saisissez une valeur refusée, le champ est remis à la valeur réellement
-    en vigueur sur l'appareil, et sélectionné pour une correction immédiate.
+L'**Identifiant client**, laissé vide, est fabriqué à partir de l'adresse de l'appareil. Ne le
+remplissez que si votre courtier fonde ses droits dessus ; deux clients ne doivent jamais porter le
+même.
 
-## Aperçu des topics
+## Découverte { #decouverte }
 
-Ce bloc latéral ne se règle pas : il **vous montre le résultat**. Il se met à jour **en direct
-pendant la saisie**, à partir du Root Topic et du Discovery Topic, et affiche les topics de
-l'**équipement 1** comme exemple :
+| Tuile | Ce qu'elle montre ou permet |
+|---|---|
+| **Découverte automatique** | **Publier la découverte** : à `Oui`, l'appareil publie une fiche par équipement, et votre système domotique les crée tout seul. Le **Topic de découverte**, `homeassistant` pour Home Assistant, n'est modifiable qu'avec la découverte à `Oui`. |
+| **Aperçu** | le topic de la **Fiche de l'équipement 1**, `<découverte>/cover/1/config`, ou *Découverte désactivée : rien n'est publié sous ce topic.* |
 
-| Ligne | Topic | À quoi il sert |
-|---|---|---|
-| **État de l'appareil** | `<racine>/status` | indique `online` ou `offline` : si l'appareil est joignable |
-| **Position de l'équipement 1** | `<racine>/shades/1/position` | où se trouve l'équipement (à lire) |
-| **Commande de l'équipement 1** | `<racine>/shades/1/target/set` | où vous lui demandez d'aller (à écrire) |
-| **Découverte de l'équipement 1** | `<découverte>/cover/1/config` | sa fiche de découverte, si **Publier découverte** est activé |
-
-C'est le moyen le plus rapide de vérifier qu'une racine est bien celle que votre plateforme
-attend, avant d'enregistrer. Les mêmes topics existent pour chaque équipement, groupe, pièce et
-planning : voir [MQTT](topics.md).
+Après un changement de topic, votre système domotique peut demander un redémarrage pour voir les
+nouvelles fiches. Le détail des fiches publiées est dans
+[Auto-découverte MQTT](topics.md#auto-découverte-mqtt).
 
 ## Enregistrer
 
-Le bouton **Enregistrer** envoie tout le formulaire en une fois, puis ferme et rouvre la
-connexion au courtier avec les nouveaux réglages.
+La barre d'enregistrement liste chaque réglage modifié, avec l'ancienne et la nouvelle valeur ;
+`Annuler` remet la page dans l'état enregistré. `Enregistrer` envoie tous les réglages, puis
+l'appareil coupe la connexion au courtier et la rouvre avec les nouveaux.
 
 ## Bon à savoir : comment fonctionne MQTT
 
@@ -123,3 +107,9 @@ connexion au courtier avec les nouveaux réglages.
 
     Pour voir ce qui circule, un outil comme [MQTT Explorer](http://mqtt-explorer.com/) affiche
     l'arborescence du courtier en direct.
+
+## Pages liées
+
+* [Topics publiés et commandes](topics.md)
+* [Déclencheurs](../declencheurs.md)
+* [Home Assistant](../home-assistant/index.md)

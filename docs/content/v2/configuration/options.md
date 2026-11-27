@@ -17,7 +17,7 @@ eux-mêmes.
     activation de la radio. Il est réservé aux boîtiers prêts à l'emploi — voir
     [Boîtiers préassemblés](../materiel/boitiers-preassembles.md).
 * **Home Assistant** — rappelle à quoi sert l'intégration et comment l'installer via le Marketplace (anciennement HACS). Le
-    détail est sur la page [Home Assistant](../../commun/home-assistant.md).
+    détail est sur la page [Home Assistant](../../home-assistant/index.md).
 
 !!! note "Note"
 

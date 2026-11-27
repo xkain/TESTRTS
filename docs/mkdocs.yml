@@ -179,15 +179,7 @@ nav:
           - Plannings: v3/habitation/plannings.md
       - Domotique:
           - v3/domotique/index.md
-          - Home Assistant:
-              - v3/domotique/home-assistant/index.md
-              - Entités exposées: v3/domotique/home-assistant/entites.md
-              - Attributs en template: v3/domotique/home-assistant/attributs.md
-              - Services: v3/domotique/home-assistant/services.md
-              - Événements: v3/domotique/home-assistant/evenements.md
-              - Recettes d'automatisation: v3/domotique/home-assistant/automatisations.md
-              - Diagnostics: v3/domotique/home-assistant/diagnostics.md
-              - Pièges et limites: v3/domotique/home-assistant/pieges-et-limites.md
+          - Home Assistant: v3/domotique/home-assistant/index.md
           - MQTT:
               - v3/domotique/mqtt/index.md
               - Topics publiés et commandes: v3/domotique/mqtt/topics.md
@@ -214,6 +206,20 @@ nav:
               - Restaurer le système: v3/appareil/systeme/restaurer.md
               - Anatomie du fichier de sauvegarde: v3/appareil/systeme/anatomie-sauvegarde.md
 
+  - Intégration Home Assistant:
+      - home-assistant/index.md
+      - Installation et connexion: home-assistant/installation.md
+      - Le panneau ESPSomfy RTS: home-assistant/panneau.md
+      - Entités: home-assistant/entites.md
+      - Diagnostics: home-assistant/diagnostics.md
+      - Attributs en template: home-assistant/attributs.md
+      - Plannings: home-assistant/plannings.md
+      - Sauvegardes et mises à jour: home-assistant/sauvegardes-et-mises-a-jour.md
+      - Télécommandes écoutées: home-assistant/telecommandes-ecoutees.md
+      - Services: home-assistant/services.md
+      - Événements: home-assistant/evenements.md
+      - Recettes d'automatisation: home-assistant/automatisations.md
+      - Pièges et limites: home-assistant/pieges-et-limites.md
   - Boîtiers:
       - boitiers/index.md
 
@@ -225,7 +231,6 @@ nav:
       - commun/index.md
       - Composants: commun/composants.md
       - Télécommandes compatibles: commun/telecommandes-compatibles.md
-      - Home Assistant: commun/home-assistant.md
 
   - Outils en ligne:
       - outils/index.md

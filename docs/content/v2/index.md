@@ -239,11 +239,11 @@ Connecter vos équipements à vos serveurs et applications.
     et
     [auto-découverte](integrations/mqtt.md#auto-découverte-mqtt-auto-discovery).
 
--   :material-home-assistant:{ .lg .middle } **[Home Assistant](../commun/home-assistant.md)**
+-   :material-home-assistant:{ .lg .middle } **[Home Assistant](../home-assistant/index.md)**
 
     ---
 
-    [Installation via le Marketplace (anciennement HACS)](../commun/home-assistant.md#installation-via-le-marketplace-anciennement-hacs)
+    [Installation via le Marketplace (anciennement HACS)](../home-assistant/installation.md#marketplace)
     de l'intégration dédiée, et compatibilité avec celle de rstrouse.
 
 </div>

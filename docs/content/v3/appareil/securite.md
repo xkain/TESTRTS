@@ -57,7 +57,7 @@ le firmware de secours.* En détail :
 | Accès | Protégé |
 |---|---|
 | L'interface web | oui |
-| L'API HTTP de l'appareil, qu'utilisent l'[intégration Home Assistant](../domotique/home-assistant/index.md) et tout script ou autre logiciel domotique | oui : il faut d'abord se connecter avec le code ou le mot de passe |
+| L'API HTTP de l'appareil, qu'utilisent l'[intégration Home Assistant](../../home-assistant/index.md) et tout script ou autre logiciel domotique | oui : il faut d'abord se connecter avec le code ou le mot de passe |
 | La connexion en temps réel (WebSocket), qui transmet l'état des équipements | oui |
 | Le [firmware de secours](systeme/firmware-de-secours.md) | oui, sauf après les trois coupures d'alimentation |
 | Les commandes reçues par [MQTT](../domotique/mqtt/index.md) | **non** : seuls les identifiants de votre courtier MQTT les protègent |

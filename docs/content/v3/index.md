@@ -234,7 +234,7 @@ Activer la radio et vérifier que vos télécommandes sont reconnues : si toutes
 
     API REST, MQTT et Home Assistant&nbsp;: vue d'ensemble.
 
--   :material-home-assistant:{ .lg .middle } **[Intégration Home Assistant](domotique/home-assistant/index.md)**
+-   :material-home-assistant:{ .lg .middle } **[Intégration Home Assistant](../home-assistant/index.md)**
 
     ---
 
