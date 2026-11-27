@@ -121,6 +121,7 @@ class Somfy {
         // À éviter ici : 0 (BOOT), 19/20 (USB D-/D+), 21 (LED RGB adressable) et 26 à 37 (flash et
         // PSRAM du S3FH4R2). Éprouvé sur la carte le 27/10/2026.
         { val: 10, label: 'ESP32-S3 Zero', showGPIO: false, chips: ['s3'], pins: { SCKPin: 7, CSNPin: 6, MOSIPin: 9, MISOPin: 8, TXPin: 3, RXPin: 4 } },
+        { val: 11, label: 'XIAO-ESP32-C6', showGPIO: false, chips: ['c6'], pins: { SCKPin: 19, CSNPin: 21, MOSIPin: 18, MISOPin: 20, TXPin: 1, RXPin: 2 } },
         { val: 255, label: 'MANUAL_SETTINGS', showGPIO: true }
     ];
     ledBoardTypes = [
