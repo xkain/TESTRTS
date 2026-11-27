@@ -149,6 +149,36 @@ Les mêmes tuiles et la même fenêtre se retrouvent à deux autres endroits. La
 
 Supprimer un équipement ou un groupe supprime aussi les horaires qui le visent.
 
+## Créer une programmation, pas à pas { #pas-a-pas }
+
+L'exemple ci-dessous ouvre le salon à 7 h 30 et le ferme un quart d'heure avant le coucher du
+soleil, tous les jours.
+
+1. **Ouvrir la fenêtre.** Cliquez sur `Ajouter une programmation`, en tête de la liste. La fenêtre
+    **Créer une programmation** s'ouvre sans horaire ni jour coché.
+
+    ![Étape 1 : la fenêtre Créer une programmation, vide](v3/img/plannings-etape-1){ .on-glb }
+
+2. **Choisir la cible, le nom et les jours.** Ici, la cible **Salon**, le nom *Salon* et
+    `Tous les jours`. Le côté de la fenêtre rappelle la cible choisie.
+
+    ![Étape 2 : cible, nom et jours renseignés](v3/img/plannings-etape-2){ .on-glb }
+
+3. **Ajouter les horaires.** `Ajouter un horaire` ouvre la fenêtre **Nouvel horaire**. Pour le
+    soir : **Référence horaire** `Au coucher du soleil`, **Décalage** à `Oui` et `-15` minutes (la
+    phrase dessous donne l'heure qui en résulte aujourd'hui), position `Fermer`, puis
+    `Confirmer`. Recommencez pour le matin : `Heure fixe` à 07:30 et `Ouvrir`.
+
+    ![Étape 3 : un horaire au coucher du soleil, 15 minutes avant](v3/img/plannings-etape-3){ .on-glb }
+
+4. **Créer.** Les deux horaires apparaissent dans l'ordre de la journée, et le pied de la
+    fenêtre indique les horaires qui resteront disponibles. `Créer` envoie la programmation à
+    l'appareil : rien ne part avant ce clic.
+
+    ![Étape 4 : deux horaires, prêts à être créés](v3/img/plannings-etape-4){ .on-glb }
+
+La nouvelle programmation apparaît aussitôt dans la liste. Le détail de chaque champ suit.
+
 ## La fenêtre de programmation { #programmation }
 
 Titre **Créer une programmation** (*Définissez un ou plusieurs déclenchements horaires pour un
