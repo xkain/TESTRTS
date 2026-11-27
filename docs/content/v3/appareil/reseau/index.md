@@ -2,7 +2,8 @@
 
 La page **Réseau** relie l'appareil à votre réseau local, en Wi-Fi, en Ethernet ou les deux, et
 règle comment on le retrouve : nom d'hôte, adresse IP et réseau de secours. Elle se lit en quatre
-onglets ; **Ethernet** et **Wi-Fi** n'apparaissent que si le type de connexion choisi s'en sert.
+onglets ; **Wi-Fi** et **Ethernet** n'apparaissent que si le type de connexion choisi s'en sert.
+
 !!! tip "Première installation"
 
     Pour une première mise en réseau, l'[assistant de connexion](assistant-de-connexion.md) est
@@ -62,6 +63,33 @@ n'apparaît pas : il n'y a rien à choisir.
     choisi : renseignez l'onglet **Wi-Fi de secours** avant d'enregistrer. Les deux partent dans
     le même enregistrement.
 
+## Wi-Fi { #wifi }
+
+![Réseau, onglet Wi-Fi](v3/img/reseau-wifi){ .on-glb }
+
+| Tuile | Ce qu'elle montre ou permet |
+|---|---|
+| **Réseaux à proximité** | `Chercher un réseau Wi-Fi` liste les réseaux que capte l'appareil, du plus fort au plus faible, avec la qualité du signal ; un réseau émis par plusieurs bornes n'apparaît qu'une fois. Toucher un réseau remplit son nom et passe au mot de passe. `+ Mon réseau n'apparaît pas (réseau caché)` vide le nom pour le saisir à la main, `Chercher à nouveau` relance la recherche. |
+| **Wi-Fi** | le **SSID du réseau** (32 caractères) et son **Mot de passe**. Un mot de passe enregistré n'est jamais renvoyé par l'appareil : le champ masqué veut dire « inchangé ». |
+| **Options Wi-Fi** | **Réseau Wi-Fi caché** et **Itinérance**, ci-dessous |
+
+La recherche ne part jamais seule : elle dure quelques secondes, pendant lesquelles l'appareil ne
+répond plus.
+
+### Réseau Wi-Fi caché { #reseau-cache }
+
+Pour un réseau qui ne diffuse pas son nom. L'appareil s'y connecte en visant directement ce nom,
+sans chercher les bornes autour de lui. Passer ce réglage à `Oui` met **Itinérance** à `Non` et la
+grise : elle repose sur une recherche que ce réseau ne permet pas.
+
+### Itinérance { #itinerance }
+
+Pour un réseau à plusieurs bornes (Mesh, répéteurs) qui diffusent le même nom. À `Oui`, l'appareil
+cherche toutes les **30 secondes** les bornes de son réseau, et change de borne quand une autre
+capte au moins **10 dBm** mieux que la sienne. Le changement coupe le Wi-Fi le temps de se
+reconnecter. Laissez-la à `Non` avec une seule borne, ou si votre box attache l'appareil à une borne
+précise.
+
 ## Ethernet { #ethernet }
 
 ![Réseau, onglet Ethernet](v3/img/reseau-ethernet){ .on-glb }
@@ -94,33 +122,6 @@ Sur un [boîtier officiel](../../materiel/boitiers-officiels.md), la carte est f
 Ethernet n'apparaît pas. Cinq clics sur le titre du bandeau le font apparaître pour un dépannage,
 jusqu'au prochain rechargement de la page.
 
-## Wi-Fi { #wifi }
-
-![Réseau, onglet Wi-Fi](v3/img/reseau-wifi){ .on-glb }
-
-| Tuile | Ce qu'elle montre ou permet |
-|---|---|
-| **Réseaux à proximité** | `Chercher un réseau Wi-Fi` liste les réseaux que capte l'appareil, du plus fort au plus faible, avec la qualité du signal ; un réseau émis par plusieurs bornes n'apparaît qu'une fois. Toucher un réseau remplit son nom et passe au mot de passe. `+ Mon réseau n'apparaît pas (réseau caché)` vide le nom pour le saisir à la main, `Chercher à nouveau` relance la recherche. |
-| **Wi-Fi** | le **SSID du réseau** (32 caractères) et son **Mot de passe**. Un mot de passe enregistré n'est jamais renvoyé par l'appareil : le champ masqué veut dire « inchangé ». |
-| **Options Wi-Fi** | **Réseau Wi-Fi caché** et **Itinérance**, ci-dessous |
-
-La recherche ne part jamais seule : elle dure quelques secondes, pendant lesquelles l'appareil ne
-répond plus.
-
-### Réseau Wi-Fi caché { #reseau-cache }
-
-Pour un réseau qui ne diffuse pas son nom. L'appareil s'y connecte en visant directement ce nom,
-sans chercher les bornes autour de lui. Passer ce réglage à `Oui` met **Itinérance** à `Non` et la
-grise : elle repose sur une recherche que ce réseau ne permet pas.
-
-### Itinérance { #itinerance }
-
-Pour un réseau à plusieurs bornes (Mesh, répéteurs) qui diffusent le même nom. À `Oui`, l'appareil
-cherche toutes les **30 secondes** les bornes de son réseau, et change de borne quand une autre
-capte au moins **10 dBm** mieux que la sienne. Le changement coupe le Wi-Fi le temps de se
-reconnecter. Laissez-la à `Non` avec une seule borne, ou si votre box attache l'appareil à une borne
-précise.
-
 ## Accès { #advanced }
 
 ![Réseau, onglet Accès](v3/img/reseau-advanced){ .on-glb }
@@ -142,6 +143,8 @@ adresse, réservez-la dans votre box, avec l'**Adresse MAC** du bandeau, plutôt
 `Fixe` ouvre les champs **Adresse IP statique**, **Masque sous-réseau** et **Passerelle**
 (obligatoires), **Nom serveur DNS 1** et **DNS 2** (facultatifs), au format `XXX.XXX.XXX.XXX`. Ils
 ne s'appliquent qu'au prochain redémarrage de l'appareil.
+
+![Tuile Adresse IP en adressage fixe](v3/img/reseau-ip-fixe){ .on-glb }
 
 !!! warning "Une adresse fixe fausse rend l'appareil injoignable"
 

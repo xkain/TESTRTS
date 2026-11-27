@@ -1,9 +1,10 @@
 # Assistant de connexion
 
-L'assistant relie l'appareil à votre réseau en trois étapes : le type de connexion, ses réglages,
-puis où retrouver l'appareil. Il s'ouvre tout seul au premier démarrage, quand vous êtes connecté
-au [point d'accès](../../../aide/point-d-acces.md) de l'appareil. Il se relance à tout moment depuis
-le bandeau de la page [Réseau](index.md), avec `Relancer l'assistant de première connexion`.
+L'assistant est la première chose que vous voyez au tout premier démarrage : en vous connectant au
+[point d'accès](../../../aide/point-d-acces.md) de l'appareil, c'est lui qui s'affiche, avant toute
+autre page. Il relie l'appareil à votre réseau en trois étapes : le type de connexion, ses
+réglages, puis où retrouver l'appareil. Il se relance à tout moment depuis le bandeau de la page
+[Réseau](index.md), avec `Relancer l'assistant de première connexion`.
 
 La colonne de gauche suit les étapes. Sur le point d'accès, elle rappelle aussi que vous êtes
 connecté directement à l'appareil, sur `192.168.4.1`, et qu'il faudra revenir sur votre réseau
