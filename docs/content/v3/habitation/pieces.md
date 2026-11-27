@@ -1,85 +1,93 @@
-# Pièces (Rooms)
+# Pièces
 
-L'onglet **Pièces** est l'outil d'organisation principal de l'ESPSomfy-RTS. Il permet de
-segmenter vos équipements par zones pour une navigation plus claire.
+Les pièces rangent vos équipements et vos groupes en sections sur le
+[tableau de bord](../tableau-de-bord/index.md). Une pièce n'a qu'un nom : ce qu'elle contient,
+c'est la pièce choisie sur chaque équipement et chaque groupe. Un élément n'est que dans une pièce
+à la fois.
 
-### Pourquoi organiser votre installation ?
+![Page Pièces](v3/img/pieces-page){ .on-glb }
 
-Si vous possédez de nombreux équipements, l'affichage sur une seule page peut vite devenir
-confus. Créer des pièces offre plusieurs avantages :
+Ranger par pièce permet aussi des noms courts : dans la pièce **Cuisine**, un équipement peut
+s'appeler simplement *Évier* plutôt que *Volet cuisine évier*, les noms étant limités à 20
+caractères.
 
-* **Clarté de l'interface** : Sur l'écran d'accueil, une barre de sélection des pièces
-    apparaît. En choisissant "Cuisine", seuls les équipements de cette zone s'affichent.
-* **Optimisation des noms** : Les noms des équipements sont limités à **20 caractères**.
-    * *Exemple* : En assignant un équipement à la pièce `Cuisine`, vous pouvez simplement le
-        nommer `Gauche` au lieu de `Volet Cuisine Gauche`.
-* **Filtrage intelligent** : Les groupes peuvent également être assignés à des pièces pour
-    simplifier la gestion — voir [GROUPES (Groups)](groupes/index.md)).
+## La pièce Accueil
 
-## Caractéristiques techniques
+Tout ce qui n'est rangé dans aucune pièce est dans **Accueil**. Cette pièce existe toujours, ne se
+renomme pas et ne se supprime pas : elle n'apparaît donc pas dans la liste.
 
-* **Capacité** : jusqu'à **30 pièces** personnalisées (la même logique de réserve que pour
-    les [équipements](equipements/index.md#capacité) : 32 emplacements internes, 2 toujours
-    soustraits). Au-delà de 14 pièces, un firmware plus ancien (v2.x ou v3 antérieure)
-    refuse toute la configuration : ni retour en arrière, ni restauration de la sauvegarde
-    sur ces versions.
-* **Gestion de l'accueil** : Tous les équipements et groupes non assignés à une pièce
-    spécifique sont regroupés par défaut dans la pièce principale **Accueil**, toujours
-    présente et non supprimable.
-* **Flexibilité** : Chaque nom de pièce accepte de **1 à 20 caractères**.
+## Le bandeau
 
-## Liste des pièces
+Le bandeau, à gauche sur ordinateur et en haut de la page sur tablette et téléphone, porte le
+surtitre *Habitation*, le titre **Pièces**, la description *Les pièces rangent équipements et
+groupes en sections sur le tableau de bord.* et la jauge : *n sur 30* et les places libres. Sur
+tablette et téléphone, la description disparaît ; sur téléphone, la recherche et le filtre passent
+derrière le bouton ⋮ du bandeau.
 
-<a href="../img/pieces-rooms-1.png"><img src="../img/pieces-rooms-1.png" alt="Liste des pièces"></a>
+**30 pièces** au plus, sans compter Accueil.
 
-Tant qu'aucune pièce personnalisée n'existe, un message *« Aucune pièce personnalisée n'a
-été créée »* invite à cliquer sur **Ajouter Pièce**. Une fois créées, chaque pièce
-s'affiche dans une carte plus simple que celle d'un équipement ou d'un groupe : une
-**poignée** ⠿ pour la réordonner par glisser-déposer (souris ou tactile, ordre enregistré
-immédiatement au relâchement), une icône fixe, puis seulement le **nom** — pas d'ID ni de
-télécommande virtuelle, une pièce n'en a pas — et une icône **poubelle**.
+## Rechercher et filtrer { #outils }
 
-!!! note "Note"
+| Outil | Effet |
+|---|---|
+| **Recherche** (*Rechercher une pièce…*) | garde les pièces dont le nom contient le texte tapé |
+| **Filtre** **Contenu** | `Toutes`, `Avec contenu` ou `Vides`, chacun avec son nombre |
 
-    Le nombre d'équipements/groupes qu'une pièce contient ne s'affiche pas sur cette carte :
-    il apparaît en pastille chiffrée sur les sélecteurs de pièces en haut des pages
-    Équipements et Groupes.
+Les pièces sont toujours rangées dans l'ordre alphabétique. Leur ordre sur le tableau de bord se
+règle ailleurs, dans la fenêtre **Ordre du tableau de bord** (voir
+[Tableau de bord](../tableau-de-bord/index.md)).
 
-## Page d'édition
+## La liste { #liste }
 
-<a href="../img/pieces-rooms-2.png"><img src="../img/pieces-rooms-2.png" alt="Ajouter une pièce"></a>
+Sans aucune pièce, la page affiche **Aucune pièce pour l'instant** — *Créez des pièces pour ranger
+vos équipements et groupes par zone sur le tableau de bord.*
 
-Cliquer sur **Ajouter Pièce**, ou sur une pièce existante dans la liste, ouvre cette
-fenêtre — exactement le même composant dans les deux cas, seuls le titre, la description
-et le libellé du bouton changent (**Ajouter une pièce** / **Créer** à la création,
-**Modifier la pièce** / **Enregistrer** en édition).
+La liste commence par la tuile `Ajouter Pièce` (*Un nom suffit*), grisée quand les 30 places sont
+prises. Suit une tuile par pièce : son nom, le nombre d'équipements et de groupes qu'elle contient,
+et un menu ⋮ avec `Supprimer`. Un clic sur la tuile ouvre la fenêtre de la pièce.
 
-Un seul champ réel : le **Nom** (1 à 20 caractères). Huit suggestions rapides apparaissent
-en dessous — Salon, Cuisine, Chambre, Bureau, Terrasse, Garage, Extérieur, Jardin —
-cliquer dessus remplit le nom directement, pratique pour une installation standard.
+## La fenêtre d'une pièce { #fenetre }
 
-Une fois créées, ces pièces sont disponibles dans les menus déroulants lors de la
-configuration de vos [équipements](equipements/index.md#informations-générales) ou de vos
-[groupes](groupes/index.md)).
+![Fenêtre Ajouter une pièce, deux éléments cochés](v3/img/pieces-fen-ajouter){ .on-glb }
 
-!!! tip "Astuce"
+La même fenêtre sert à créer et à modifier : **Ajouter une pièce** (*Un nom suffit. Vous pouvez y
+ranger tout de suite des équipements et des groupes.*) ou **Modifier la pièce**.
 
-    **Créer une pièce sans quitter la fiche en cours :** un petit bouton **+** juste à côté du
-    sélecteur **Pièce**, dans la fiche d'un équipement ou d'un groupe, ouvre directement
-    l'écran "Ajouter une pièce" — exactement le même que celui de l'onglet Pièces. La fiche en
-    cours d'édition reste ouverte derrière, vos modifications en attente ne sont pas perdues,
-    et la pièce fraîchement créée se retrouve automatiquement sélectionnée dans le menu
-    déroulant une fois l'opération terminée.
+| Élément | Contenu |
+|---|---|
+| **Nom** | de 1 à 20 caractères (*Entrer un nom de pièce*). À la création, huit suggestions le remplissent d'un clic : Salon, Cuisine, Chambre, Bureau, Terrasse, Garage, Extérieur, Jardin |
+| **Dans cette pièce** | tous vos équipements et groupes, à cocher : *Cochez pour ranger ici. Un élément n'est que dans une pièce à la fois.* Sous chaque nom, son type et ce qui va se passer : *Ici*, *Viendra ici*, *Quittera Salon*, *Dans Cuisine*, *Retourne dans Accueil* |
+| **Côté de la fenêtre** | à la création, le nombre de pièces sur 30 ; en modification, le contenu (*n équipement(s) · n groupe(s)*), qui suit les cases cochées |
 
-## Supprimer une pièce
+Le pied de la fenêtre résume l'effet avant d'enregistrer : *Donnez-lui un nom pour continuer.*,
+*n élément(s) y seront rangés*, *Vous pourrez y ranger des équipements plus tard.*, *n
+modification(s) à enregistrer* ou *Aucune modification*. Le bouton principal reste grisé tant qu'il
+n'y a pas de nom, ou rien à enregistrer.
 
-Les équipements et groupes qui lui étaient assignés **ne disparaissent pas** : ils basculent
-automatiquement dans la pièce **Accueil**. Un message vous le rappelle avant de confirmer la
-suppression.
+| Bouton | Effet |
+|---|---|
+| `Créer` | crée la pièce, puis y range les éléments cochés |
+| `Enregistrer` | enregistre le nom et les éléments déplacés ; un élément décoché retourne dans Accueil |
+| `Supprimer` | en modification : supprime la pièce, après confirmation |
+| `Annuler` (à la création) ou la croix | ferme ; s'il y a des modifications, l'interface demande confirmation |
 
-## Procédures liées
+### Créer une pièce depuis une fiche { #depuis-une-fiche }
 
-- [EQUIPEMENTS](equipements/index.md) et [GROUPES (Groups)](groupes/index.md)) — la pièce assignée à
-    un équipement ou un groupe se change aussi directement depuis sa propre fiche, sans
-    passer par cette page.
+Le bouton **+** à côté du choix de la pièce, dans la fiche d'un
+[équipement](equipements/index.md) ou d'un [groupe](groupes/index.md), ouvre la même fenêtre,
+réduite au nom : *« … » rejoindra cette pièce dès sa création. Sa fiche reste ouverte derrière, avec
+ses modifications en cours.* `Créer et choisir` crée la pièce et la sélectionne dans la fiche.
 
+## Supprimer une pièce { #supprimer }
+
+Par le menu ⋮ de la tuile ou le bouton `Supprimer` de la fenêtre. La confirmation le rappelle :
+*Les équipements et groupes qu'elle contient passent dans la pièce « Accueil ».* Rien d'autre n'est
+supprimé.
+
+## Pages liées
+
+* [Tableau de bord](../tableau-de-bord/index.md)
+* [Équipements](equipements/index.md)
+* [Groupes](groupes/index.md)
+* [Entités Home Assistant](../../home-assistant/entites.md) : la pièce devient la zone proposée dans
+  Home Assistant
