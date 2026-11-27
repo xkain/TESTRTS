@@ -2714,7 +2714,7 @@ class Somfy {
             div.id = 'divRadioWizard';
             div.className = 'modal-overlay genmod-overlay wiz-overlay';
             div.innerHTML = `<div class="message-content wiz-window">${wizCloseHtml('close')}
-            <aside class="wiz-side hero-skin" data-obj="radio">
+            <aside class="wiz-side hero-skin" data-obj="radio" data-sys>
             <div class="wiz-sum"><span class="wiz-sum-icon"><svg><use href="#svg-remote"></use></svg></span><span class="wiz-sum-text"><h2 class="wiz-title">${tr('RADIO_WIZ_TITLE')}</h2>
             <b>${win ? `${win.min.toFixed(3)} – ${win.max.toFixed(3)} ${tr('UNIT_MHZ')}` : '—'}</b><span>${tr('RADIO_WIZ_WINDOW')}</span><small class="wiz-now"></small></span></div>
             <ol class="wiz-steps"></ol><div class="wiz-pbar" aria-hidden="true"></div>
@@ -6096,7 +6096,7 @@ class Somfy {
         div.id = id;
         div.className = 'modal-overlay genmod-overlay genmod-task';
         div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
-            id, icon: o.icon, obj: 'radio', titleKey: o.titleKey, descKey: o.descKey,
+            id, icon: o.icon, skin: 'radio', sys: o.sys, titleKey: o.titleKey, descKey: o.descKey,
             stateKey: tr(o.countKey), stateValue: '', sectionKey: 'LINK_HEAD_LISTEN', hintKey: '', footId: id + 'Foot', bodyHtml: '',
             sideExtra: o.warnKey ? `<p class="rx-link-warn"><svg><use href="#svg-warning"></use></svg><span>${tr(o.warnKey)}</span></p>` : ''
         })}</div>`;
@@ -6153,7 +6153,7 @@ class Somfy {
             ui.errorMessage(tr('REPEAT_REMOTE_TITLE'), tr('ERR_REPEATER_FULL'));
             return;
         }
-        const div = this._rxLinkWin('divLinkRepeater', { icon: 'svg-repeater', titleKey: 'REPEATER_WIN_TITLE', descKey: 'REPEATER_WIN_DESC',
+        const div = this._rxLinkWin('divLinkRepeater', { icon: 'svg-repeater', sys: true, titleKey: 'REPEATER_WIN_TITLE', descKey: 'REPEATER_WIN_DESC',
             countKey: 'REPEATER_LIST_TITLE', count: list.length, max, warnKey: 'REPEATER_WIN_WARN' });
         shOverlay(div);
         this._repeaterListen(div);

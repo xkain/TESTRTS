@@ -1706,7 +1706,7 @@ function genModalShell(o) {
     const close = () => `<button type="button" class="genmod-close" data-genmod-close
     aria-label="${tr('BT_CLOSE')}"><svg><use href="#svg-closeOverlay"></use></svg></button>`;
     return `
-    <section class="genmod-side${o.skin ? ' hero-skin" data-obj="' + o.skin : o.obj ? '" data-obj="' + o.obj : ''}">
+    <section class="genmod-side${o.skin ? ' hero-skin" data-obj="' + o.skin : o.obj ? '" data-obj="' + o.obj : ''}"${o.sys ? ' data-sys' : ''}>
     <div class="modalHeader-handle" onclick="handleMobileDismiss(this)"></div>
     <svg class="genmod-side-icon"><use href="#${o.icon}"></use></svg>
     <div>

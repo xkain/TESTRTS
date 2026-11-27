@@ -1895,7 +1895,7 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     overflow-wrap: anywhere;
 }
 .genmod-side-desc {
-    margin: 8px 0 0;
+    margin: 8px auto 0;
     max-width: 34ch;
     font-size: var(--fs-3);
     line-height: 1.45;
@@ -2536,7 +2536,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
    nom, type · pièce ; la croix (tablette, mobile) en coin. Sur PC le pied ne court que sous le contenu. */
 .wiz-side.hero-skin { position: relative; gap: 26px; }
 .hero-skin .wiz-side-head { position: absolute; top: 16px; right: 20px; z-index: 1; }
-.wiz-sum { display: flex; flex-direction: column; align-items: center; gap: 14px; padding-bottom: 26px; border-bottom: 1px solid var(--divider); text-align: center; }
+.wiz-sum { display: flex; flex-direction: column; align-items: center; gap: calc(14px + clamp(4px, 1vw, 12px)); padding-bottom: 26px; border-bottom: 1px solid var(--divider); text-align: center; }
 .wiz-sum-icon { display: grid; place-items: center; flex: none; width: clamp(96px, min(9vw, 17vh), 132px); aspect-ratio: 1; border-radius: 50%; background: color-mix(in srgb, var(--hc) 12%, #ffffff); color: var(--hc); box-shadow: 0 0 0 clamp(4px, 1vw, 12px) var(--hero-ring); }
 :root[data-theme="dark"] .wiz-sum-icon { background: color-mix(in srgb, var(--hc) 35%, #12161c); color: color-mix(in srgb, var(--hc) 45%, #ffffff); }
 .wiz-sum-icon svg { width: 58%; height: 58%; fill: currentColor; --shade-position: 100; --fpos: 100%; }
