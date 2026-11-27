@@ -1,103 +1,89 @@
 # Gérer les langues
 
-Un véritable gestionnaire de packs de langue, pas un simple sélecteur. Depuis **Général**, le
-bouton **Gérer les langues** l'ouvre — voir [Général](index.md).
+L'appareil garde jusqu'à **trois langues installées**, sa langue d'origine comprise. Dans
+l'onglet **Langue & région** de la page [Préférences](index.md#region), le bouton
+`Gérer les langues` ouvre la fenêtre qui les installe, les active et les supprime.
 
-![gerer langues 1](v3/img/gerer-langues-1){ .on-glb }
+![Fenêtre Gérer les langues](v3/img/preferences-fen-langues){ .on-glb }
 
-!!! note "Note"
+!!! note "La langue d'origine"
 
-    La langue d'origine embarquée dans le firmware n'est jamais supprimable — c'est le filet de
-    sécurité qui garantit que l'interface affiche toujours quelque chose, quoi qu'il arrive aux
-    autres packs.
-
-    Cette langue d'origine dépend de votre appareil :
+    La langue d'origine est compilée dans le firmware : elle ne se supprime pas, et garantit que
+    l'interface affiche toujours quelque chose, quoi qu'il arrive aux autres langues. Elle dépend
+    de votre appareil :
 
     - **l'anglais** sur une [carte générique](../systeme/led-de-statut.md#boitier-ou-carte-generique) ;
     - **le français** sur l'un de mes [boîtiers officiels](../../materiel/boitiers-officiels.md).
 
-    Dans les deux cas, elle ne peut pas être supprimée : elle n'a pas de bouton **Supprimer**.
+## La fenêtre
 
-## La liste des langues
+La colonne de gauche rappelle la **Langue active**, ou la **Langue choisie** quand vous en
+sélectionnez une autre. À droite, le compteur (`2/3 installées`, par exemple) puis une tuile par
+langue proposée, avec son nom dans la langue elle-même et en anglais :
 
-Une ligne par langue disponible, avec un badge d'état :
+| Badge | Sens |
+|---|---|
+| **Active** | la langue affichée en ce moment |
+| **Installée** | présente sur l'appareil, prête à être utilisée |
+| **En attente** | choisie pour plus tard, voir [Si le navigateur n'a pas Internet](#hors-ligne) |
+| *(aucun, bordure pointillée)* | proposée au téléchargement |
 
-* **Active** : c'est la langue actuellement affichée.
-* **Installée** : le pack est présent sur l'appareil, prêt à être utilisé.
-* **En attente** : un téléchargement a été mis en file, voir plus bas.
+Une langue se sélectionne d'un clic sur sa tuile ; le pied de la fenêtre propose alors l'action
+qui lui correspond. Quand trois langues sont déjà installées, un message le signale et les langues
+à télécharger sont grisées : supprimez-en une d'abord.
 
 ## Changer de langue active
 
-Bouton **Utiliser** sur une langue déjà installée — bascule l'interface dessus
-immédiatement.
+Sélectionnez une langue **Installée**, puis `Utiliser`. Comme le rappelle le pied de la fenêtre, la
+langue choisie s'applique après un rechargement de la page.
 
 ## Installer une nouvelle langue
 
-Bouton **Télécharger** sur une langue pas encore installée, avec une barre de progression par
-ligne.
+Sélectionnez une langue sans badge, puis `Télécharger` : une barre de progression s'affiche sur sa
+tuile, puis la langue est installée et activée. Ne fermez pas la fenêtre pendant l'opération.
 
-### D'où vient le fichier de langue
+C'est **votre navigateur** qui télécharge le fichier de langue sur GitHub, puis l'envoie à
+l'appareil : l'appareil lui-même ne se connecte pas à Internet. Le fichier est pris à **la version
+du firmware installé**, pour que la traduction corresponde exactement à votre interface, et à
+défaut dans la dernière version du projet.
 
-La liste des langues proposées vient d'un petit catalogue embarqué dans l'appareil, complété par
-celui du projet sur GitHub pour les langues ajoutées depuis votre dernière mise à jour.
+### Si le navigateur n'a pas Internet { #hors-ligne }
 
-Le pack téléchargé est un fichier d'une **release GitHub** du projet : l'appareil récupère le
-fichier de langue lié à **la version de firmware qu'il exécute**, nommé
-`translation_<version>_<code>.json.gz` (par exemple `translation_v3.0.0_de.json.gz` pour l'allemand).
-Vous obtenez ainsi toujours une traduction qui correspond exactement à votre interface, même si le
-projet a avancé depuis. Vous pouvez aussi trouver ces fichiers dans la liste des fichiers joints
-de chaque release, sur la page [Releases](https://github.com/xkain/ESPSomfy-RTS/releases) du
-projet.
+Quand le navigateur n'atteint pas GitHub (téléphone connecté au
+[point d'accès de secours](../../../aide/point-d-acces.md), par exemple), la tuile de la langue
+propose deux solutions :
 
-### Si l'appareil n'a pas d'accès Internet
+* **Ouvrir le fichier sur GitHub** : un lien vers le fichier de langue du projet. Ouvrez-le avec un
+  appareil qui a Internet, enregistrez le fichier, puis déposez-le dans la zone d'import qui
+  s'affiche juste en dessous.
+* `Appliquer dès que possible` : la langue passe **En attente**. Le premier navigateur qui ouvrira
+  l'interface avec un accès à Internet, hors point d'accès de secours, la téléchargera et
+  l'appliquera ; un message le confirme au chargement suivant. `Annuler la mise en attente`
+  retire ce choix.
 
-Deux filets de secours, dans l'ordre :
+## Importer un fichier { #importer-un-fichier-manuellement }
 
-1. **Relais par le navigateur** : la page tente de télécharger le pack elle-même (puisque
-    *votre* ordinateur a probablement un accès Internet, même si l'appareil n'en a pas) et de
-    le transmettre à l'appareil.
-2. **Si ça échoue aussi** (par exemple l'appareil est en point d'accès isolé) : l'interface
-    bascule sur un import manuel, avec un lien **Ouvrir le fichier sur GitHub**. Il mène au
-    fichier de langue du projet (dossier `locales`) : téléchargez-le avec un appareil qui a
-    Internet, puis importez-le (voir plus bas). Vous pouvez aussi choisir **Appliquer dès que
-    possible** : la langue est alors marquée **En attente** et sera récupérée automatiquement dès
-    que l'appareil retrouvera un accès Internet. **Annuler la mise en attente** retire cette file
-    d'attente si vous changez d'avis.
+La zone **Choisir un pack de langue (ex. fr.json)**, sous les tuiles, accepte un fichier `.json` ou
+`.json.gz` que vous avez récupéré vous-même. La page se recharge à la fin de l'import.
 
-## Importer un fichier manuellement
-
-**Importer un fichier de langue (.json, .json.gz)** accepte un fichier que vous avez
-téléchargé vous-même — utile en dernier recours, ou si vous préférez ne pas dépendre du
-téléchargement automatique.
-
-Selon l'endroit où vous le récupérez, vous obtenez l'un ou l'autre format, tous deux acceptés :
-
-| Où le chercher | Fichier | Format |
-|---|---|---|
-| Le lien **Ouvrir le fichier sur GitHub** de la fenêtre | `<code>.json` (par exemple `de.json`) | `.json` |
-| Le dossier `locales` du [dépôt du projet](https://github.com/xkain/ESPSomfy-RTS/tree/main/locales) | `<code>.json` | `.json` |
-| Les fichiers joints d'une [release](https://github.com/xkain/ESPSomfy-RTS/releases) | `ESPSomfyRTS_<version>_lang_<code>.json.gz` | `.json.gz` |
+| Où le trouver | Fichier |
+|---|---|
+| Le lien **Ouvrir le fichier sur GitHub** de la fenêtre, ou le dossier `locales` du [dépôt du projet](https://github.com/xkain/TESTRTS/tree/main/locales) | `<code>.json` (par exemple `de.json`) |
+| Les fichiers joints d'une [release](https://github.com/xkain/TESTRTS/releases) | `translation_<version>_<code>.json.gz` |
 
 Dans le dossier `locales`, ouvrez le fichier de la langue voulue, puis utilisez le bouton de
-téléchargement de GitHub (**Download raw file**). Une fois le fichier sur votre ordinateur, cliquez
-sur la zone **Choisir un pack de langue** de la ligne concernée et sélectionnez-le : la page se
-recharge à la fin de l'import.
+téléchargement de GitHub (**Download raw file**).
 
-!!! tip "Astuce"
+!!! tip "Créer et proposer une nouvelle langue"
 
-    **Créer et proposer une nouvelle langue** : cette même méthode d'import permet de tester
-    votre propre traduction avant de la proposer au projet. Partez d'un fichier de langue
-    existant comme modèle (même structure de clés, seules les valeurs changent), traduisez-le,
-    puis importez-le ici pour vérifier le rendu directement dans l'interface — aucun besoin de
-    reflasher ou de recompiler.
+    Cette même méthode d'import permet de tester votre propre traduction. Partez d'un fichier de
+    langue existant (même structure de clés, seules les valeurs changent), traduisez-le, puis
+    importez-le pour vérifier le rendu dans l'interface, sans reflasher.
 
-    Si vous avez réalisé votre propre fichier de langue, vous pouvez le **proposer au projet par
-    une *pull request*** sur GitHub : ajoutez votre fichier dans le dossier `locales` du dépôt.
-    Une fois intégrée, la nouvelle langue sera proposée à tous les utilisateurs directement depuis
-    l'interface.
+    Vous pouvez ensuite le **proposer au projet par une *pull request*** sur GitHub, en ajoutant
+    votre fichier dans le dossier `locales` du dépôt.
 
 ## Supprimer une langue installée
 
-Bouton **Supprimer** sur chaque langue installée (sauf la langue d'origine du firmware, qui
-reste toujours disponible).
-
+Sélectionnez une langue **Installée** autre que la langue active, puis `Supprimer`. La langue
+d'origine n'a pas ce bouton.

@@ -85,7 +85,7 @@ créé, cette page ne s'affiche plus** : le [tableau de bord](tableau-de-bord/in
    équipement](habitation/equipements/mise-en-service.md).
    
 **Configuration.**  Ajustez l'appareil à votre usage :
-   langue, sécurité d'accès, apparence, mises à jour et sauvegarde. Tout se trouve dans
-   **Système → Général** : voir la page [Général](appareil/preferences/index.md).
+   langue, sécurité d'accès, apparence, mises à jour et sauvegarde : voir notamment la page
+   [Préférences](appareil/preferences/index.md).
 
    

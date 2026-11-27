@@ -144,7 +144,7 @@ Voir `GET /shades` et `GET /groups` pour le détail des objets qu'il contient.
 !!! note "Note"
 
     Le champ `deviation`, présent dans d'anciennes versions, n'existe plus dans cette sortie —
-    voir [Configurer la Radio](../appareil/radio/index.md#pourquoi-la-déviation-de-fréquence-a-disparu-en-v300)
+    voir [Configurer la Radio](../appareil/radio/index.md#deviation)
     pour l'explication complète.
 
 ---

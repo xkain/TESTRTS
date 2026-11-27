@@ -1,103 +1,99 @@
-# Général
+# Préférences
 
-Cet onglet (`Système → Général`) regroupe l'identité de l'appareil, ses services réseau, ses
-préférences de langue et d'apparence, la sécurité et les mises à jour. Il est organisé en
-**blocs**, dans cet ordre :
+La page **Préférences** règle la langue de l'interface, l'heure et la position de l'appareil, et
+l'apparence de l'interface. Elle se lit en deux onglets.
 
-![general 1](v3/img/general-1){ .on-glb }
+Le nom d'hôte et la diffusion SSDP se trouvent dans [Connexion réseau](../reseau/index.md), la
+vérification des mises à jour dans [Système](../systeme/index.md#update), et la sécurité de l'accès
+dans [Sécurité de l'appareil](../securite.md).
 
-| Bloc | Contenu |
+## Le bandeau
+
+Le bandeau, à gauche sur ordinateur et en haut de la page sur tablette et téléphone, rappelle le
+nom de l'appareil et son adresse `.local` ; sur ordinateur, il ajoute la description de la page.
+Il résume aussi la **Langue**, le **Fuseau horaire** et le **Thème** en service : directement sur
+ordinateur, derrière le bouton **Détails** sur tablette et téléphone.
+
+## Langue & région { #region }
+
+![Préférences, onglet Langue & région](v3/img/preferences-region){ .on-glb }
+
+| Tuile | Ce qu'elle montre ou permet |
 |---|---|
-| **Identité & services** | nom d'hôte, serveur NTP, diffusion uPnP (SSDP) |
-| **Langue & région** | gérer les langues, fuseau horaire, position géographique |
-| **Apparence** | mode d'affichage, couleur d'accentuation, retours tactiles & visuels, tableau de bord |
-| **Sécurité & mises à jour** | sécurité de l'appareil, vérification des mises à jour, côte à côte |
-| **Intégration** | la carte Home Assistant, en colonne latérale |
+| **Langue** | la langue de l'interface ; `Gérer les langues` ouvre le gestionnaire des langues, voir [Gérer les langues](langues.md) |
+| **Date et heure** | le **Fuseau horaire**, dont dépend aussi le passage à l'heure d'été, et le **Serveur NTP**, qui donne l'heure exacte aux [plannings](../../habitation/plannings.md) (`pool.ntp.org` par défaut) |
+| **Position géographique** | **Latitude** et **Longitude** de votre domicile, pour les plannings au lever ou au coucher du soleil, voir [Position géographique](#position) |
 
-Plusieurs réglages plus détaillés (sécurité, langues, retours tactiles & visuels, tableau de bord,
-géolocalisation) s'ouvrent depuis des boutons dédiés, dans des fenêtres séparées documentées sur
-leur propre page. Les boutons affichent parfois un **état** sous leur titre : la langue active, un
-badge de sécurité (`Désactivé`, `Code Pin` ou `Mot de Passe`), ou les coordonnées enregistrées
-(`Non configurée` tant que la position n'est pas réglée).
+Pour aller plus loin : [Gérer les langues](langues.md).
 
-La barre **Enregistrer** est **fixée en bas** de la page. Le bouton **Redémarrer** s'y ajoute sur
-un écran étroit (téléphone) ; sur un grand écran, il se trouve en bas du menu latéral. Un bloc
-modifié mais pas encore enregistré est signalé visuellement.
+### Position géographique { #position }
 
-## Intégration Home Assistant
+Un [planning](../../habitation/plannings.md) peut se déclencher au lever ou au coucher du soleil
+plutôt qu'à heure fixe. Ces deux instants dépendent de l'endroit où vous êtes, et l'appareil n'a
+aucun moyen de le deviner : il lui faut une latitude et une longitude. Une seule fois suffit, sauf
+déménagement, et le nom de votre commune est assez précis. Inutile si vous ne programmez qu'à
+heure fixe.
 
-Dans la colonne latérale, une carte **Home Assistant** ouvre une fenêtre de présentation — elle ne
-configure rien ici, mais explique l'intégration **ESPSomfy-RTS Enhanced** et comment
-l'installer.
+La tuile n'apparaît pas tant que l'appareil est sur son
+[point d'accès de secours](../../../aide/point-d-acces.md).
 
-Votre appareil fonctionne de façon totalement autonome : cette intégration est optionnelle,
-réservée à ceux qui possèdent déjà un serveur Home Assistant. Une fois installée, elle
-remonte automatiquement tous vos équipements (volets, stores, portails…) sous forme
-d'entités `cover` standard — position suivie en temps réel même pilotés par une télécommande
-physique, contrôle à la voix, intégration dans vos propres automatisations.
+!!! note "Vie privée : vos coordonnées restent dans l'appareil"
 
-Elle s'installe via le [Marketplace](https://www.hacs.xyz/docs/marketplace/) de Home Assistant
-(anciennement HACS, prérequis) en cherchant « ESPSomfy-RTS Enhanced », ou directement depuis son
-[dépôt GitHub](https://github.com/xkain/ESPSomfy-RTS-enhanced). Une fois téléchargée et Home
-Assistant redémarré, votre appareil est découvert automatiquement dans **Paramètres →
-Appareils et services**.
+    Elles sont **arrondies à 2 décimales** (environ 1 km) avant d'être enregistrées : assez pour
+    un calcul à la minute près, sans garder votre adresse exacte. Elles ne servent qu'au calcul
+    local du lever et du coucher du soleil, et l'appareil ne les envoie nulle part : ni sur
+    Internet, ni vers MQTT.
 
-À partir de **1600 px** de large, cette colonne s'élargit d'un encart **« Bon à savoir »** : le
-nouveau **nom d'hôte** s'applique tout de suite au réseau, mais la **nouvelle adresse `.local` ne
-répond qu'après un redémarrage**.
+Trois façons de remplir les champs, de la plus simple à la plus manuelle :
 
-!!! info "Sur le point d'accès"
+| Méthode | Comment | Ce qui sort de votre navigateur |
+|---|---|---|
+| `Localisation via assistant GitHub` | ouvre l'[assistant de géolocalisation](../../../outils/geolocalisation.md) dans un nouvel onglet, servi en HTTPS : détection par le navigateur ou recherche par ville. La position choisie revient remplir les champs de la tuile, et l'onglet de l'assistant se referme | rien avec la détection ; avec la recherche, le nom de la ville ou le code postal tapé, envoyé à OpenStreetMap |
+| `Localisation via Navigateur` | lit la position sur place. Ce bouton n'apparaît que si la page est servie en HTTPS ou depuis `localhost` : ce n'est pas le cas de l'appareil, servi en HTTP sur le réseau local | rien |
+| Saisie ou collage | une paire `latitude, longitude` collée d'un coup, copiée depuis une carte par exemple, se répartit dans les deux champs | rien |
 
-    Quand vous êtes connecté au [point d'accès de secours](../../../aide/point-d-acces.md), la carte
-    Home Assistant, l'encart et la **position géographique** sont **masqués** : ils n'ont
-    pas de sens tant que l'appareil n'a rejoint aucun réseau.
+Les champs remplis par l'assistant ou le navigateur le sont comme une saisie : vérifiez-les, puis
+enregistrez. Pour retirer la position, videz les deux champs et enregistrez : les plannings au
+lever ou au coucher du soleil restent alors inactifs.
 
-## Identité & services { #identite }
+| Message | Ce qu'il veut dire |
+|---|---|
+| *Votre navigateur ne prend pas en charge la géolocalisation.* | le navigateur n'a pas l'interface requise |
+| *Accès à la position refusé ou indisponible. Saisissez les coordonnées manuellement.* | vous avez refusé l'autorisation, ou le système n'a pas su localiser la machine |
+| *La latitude doit être comprise entre -90 et 90.* / *La longitude doit être comprise entre -180 et 180.* | une valeur hors plage a été saisie ; l'appareil la refuse aussi |
 
-* **Nom d'hôte** : donnez un nom unique à votre appareil (ex: `espsomfy-salon`), jusqu'à
-    **31 caractères**. L'appareil est ensuite joignable à l'adresse `nom-d-hôte.local`. Si vous
-    possédez plusieurs boîtiers sur le même réseau, chaque nom doit être différent pour éviter
-    les conflits DNS.
-* **Serveur NTP** : synchronisation automatique de l'heure via Internet. Par défaut,
-    l'appareil utilise `pool.ntp.org`, mais vous pouvez indiquer votre propre serveur local.
-* **Diffusion uPnP (SSDP)** : si activée, l'appareil s'annonce sur le réseau local et
-    apparaît automatiquement dans les périphériques réseau de systèmes comme l'Explorateur de
-    fichiers Windows.
+## Apparence { #appearance }
 
-## Langue, région et apparence
+![Préférences, onglet Apparence](v3/img/preferences-appearance){ .on-glb }
 
-### Langue & région
+| Tuile | Ce qu'elle montre ou permet |
+|---|---|
+| **Mode d'affichage** | `Automatique` (suit le réglage clair ou sombre du navigateur), `Clair` ou `Sombre` |
+| **Couleur d'accentuation** | six teintes au choix, ou `Autre…` pour n'importe quelle couleur |
+| **Catégories en couleur** | `Non`, `Icônes` ou `Icônes et bloc de titre` : donne une couleur à chaque catégorie de l'Habitation (équipements, groupes, pièces, plannings), sur les icônes des listes, et au besoin sur le bloc de titre des pages et des fenêtres |
+| **Retours tactiles & visuels** | les confirmations d'appui, propres à ce navigateur, voir [Retours tactiles & visuels](#retours) |
 
-* **Langue** : ouvre le gestionnaire de packs de langue, et rappelle la langue active — voir
-    [Gérer les langues](langues.md).
-* **Fuseau horaire** : sélection dans une liste de zones nommées — détermine l'heure locale
-    utilisée par vos [programmations](../../habitation/plannings.md).
-* **Position géographique** : ouvre la fenêtre de réglage des coordonnées GPS, utilisées pour
-    calculer les heures de lever et de coucher du soleil des plannings. Le bouton affiche les
-    coordonnées enregistrées, ou **Non configurée** — voir
-    [Position Géographique](position-geographique.md).
+### Retours tactiles & visuels { #retours }
 
-### Apparence
+Ces réglages sont enregistrés **dans votre navigateur**, pas sur l'appareil : ils ne valent que
+pour le navigateur où vous les réglez.
 
-* **Mode d'affichage** : **Dépend du navigateur** (suit vos préférences système),
-    **Mode sombre** ou **Mode clair** forcé.
-* **Couleur d'accentuation** : personnalise la couleur des boutons et menus via un
-    sélecteur de couleur natif.
-* **Retours tactiles & visuels** : ouvre les réglages de confirmation d'interaction — voir
-    [Retours tactiles & visuels](retours-tactiles-et-visuels.md).
-* **Tableau de bord** : ouvre les préférences d'affichage du tableau de bord (ordre des colonnes,
-    en-tête mobile, indicateurs visuels) — voir [Tableau de bord](../../tableau-de-bord/personnaliser.md).
+| Réglage | Effet |
+|---|---|
+| **Boutons de contrôle** | `Enfoncement`, `Flash / Lueur` ou `Aucun` à l'appui sur les boutons de commande (haut, bas, My, bascule et [télécommande virtuelle](../../habitation/equipements/telecommande-virtuelle.md)) ; utile si l'indicateur d'activité radio est désactivé |
+| **Navigation & cartes** | le même choix pour les boutons généraux, les cartes et les autres éléments interactifs |
+| **Formulaires & réglages** | `Oui` / `Non` : met en valeur le champ, le menu ou l'option que vous sélectionnez |
+| **Vibration au toucher** | `Oui` / `Non` : une brève vibration à chaque interaction, sur écran tactile seulement ; grisé avec « Non pris en charge par cet appareil ou ce navigateur. » ailleurs |
 
-## Sécurité & mises à jour
+## Enregistrer
 
-* **Sécurité de l'appareil** : ouvre la fenêtre de configuration de l'accès à l'interface,
-    avec un badge indiquant l'état actuel — voir [Sécurité de l'appareil](../securite.md).
-* **Mises à jour** : active la vérification automatique de nouvelle version. ESPSomfy-RTS
-    consulte alors périodiquement GitHub et affiche une alerte dans l'interface (et dans Home
-    Assistant) si une mise à jour est disponible.
+Une modification fait apparaître la barre d'enregistrement en bas de l'écran, avec le nombre de
+modifications en attente ; son bouton de liste les détaille, avant et après. `Enregistrer` les
+applique, `Annuler` les abandonne. Les retours tactiles & visuels passent par la même barre, mais
+sont enregistrés dans ce navigateur plutôt que sur l'appareil.
 
-!!! important "Important"
+## Pages liées
 
-    N'oubliez pas de cliquer sur **Enregistrer** en bas de page une fois vos réglages
-    terminés — y compris pour la couleur d'accentuation, qui reviendrait sinon à sa valeur par
-    défaut au prochain chargement.
+* [Gérer les langues](langues.md)
+* [Assistant de géolocalisation](../../../outils/geolocalisation.md)
+* [Réglages du tableau de bord](../../tableau-de-bord/personnaliser.md)

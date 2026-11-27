@@ -540,7 +540,7 @@ version 21. Longueur totale : **77 octets**.
 
 | Nom | Longueur | Commentaire | Depuis la version |
 | --- | --- | --- | --- |
-| Adresse répéteur 1 à 7 | 10 chacune | 0 = emplacement inutilisé. Voir [Répéteurs](../radio/repeteur.md) | 21+ |
+| Adresse répéteur 1 à 7 | 10 chacune | 0 = emplacement inutilisé. Voir [Répéteurs](../radio/index.md#repeater) | 21+ |
 
 ### Enregistrement Réglages
 
@@ -554,7 +554,7 @@ si la case **Paramètres** est cochée — voir [Restaurer le système](restaure
 | Nom d'hôte | Texte variable | | 14+ |
 | Serveur NTP | Texte variable | | 14+ |
 | Fuseau horaire | Texte variable | Au format POSIX | 14+ |
-| Couleur d'accentuation | Texte variable | Code couleur hexadécimal, `#1a5fb4` par défaut — voir [Apparence](../preferences/index.md#apparence) | 26+, et 25 venant du firmware v2.5.1+ |
+| Couleur d'accentuation | Texte variable | Code couleur hexadécimal, `#1a5fb4` par défaut — voir [Apparence](../preferences/index.md#appearance) | 26+, et 25 venant du firmware v2.5.1+ |
 | Diffusion uPnP (SSDP) | 5 | `true`/`false` | 14+ |
 | Vérification des mises à jour | 5 | `true`/`false` | 20+ |
 | Langue | 3 | 0=anglais, 1=français, 2=allemand, 3=espagnol — voir la note ci-dessous | 25+ |
@@ -657,7 +657,7 @@ version 14. Longueur totale : **68 octets**.
 | Activé | 5 | `true`/`false` | 14+ |
 | Protocole | 3 | 0=RTS, 1=RTW, 2=RTV | 14+ |
 | Longueur de trame | 3 | 56 ou 80 bits | 14+ |
-| Préréglage de carte | 3 | Numéro du modèle de carte choisi — voir [Assignation GPIO](../radio/index.md#assignation-gpio). Vaut 0 à la relecture d'un fichier d'avant la version 25 | 25+ |
+| Préréglage de carte | 3 | Numéro du modèle de carte choisi — voir [Assignation GPIO](../radio/index.md#hardware). Vaut 0 à la relecture d'un fichier d'avant la version 25 | 25+ |
 | Broche SCK | 3 | | 14+ |
 | Broche CSN | 3 | | 14+ |
 | Broche MOSI | 3 | | 14+ |
@@ -706,7 +706,7 @@ Suivi d'un enregistrement par planning. Longueur totale : **79 octets**.
 | Activé | 5 | `true`/`false` |
 | Tentatives | 3 | Nombre de relances en cas d'échec |
 | Mode de position | 3 | 0=Position, 1=My, 2=Inclinaison seule |
-| Référence temporelle | 3 | 0=Heure fixe, 1=Lever du soleil, 2=Coucher du soleil — voir [Position géographique](../preferences/position-geographique.md) |
+| Référence temporelle | 3 | 0=Heure fixe, 1=Lever du soleil, 2=Coucher du soleil — voir [Position géographique](../preferences/index.md#position) |
 | Décalage solaire | 6 | En minutes, signé — utilisé si la référence est le lever ou le coucher du soleil |
 
 !!! note "Note"

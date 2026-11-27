@@ -2,11 +2,16 @@
 
 ESPSomfy-RTS doit **reconnaître le signal de vos télécommandes** pour piloter vos équipements. Ce
 test le vérifie, **une télécommande après l'autre**. Pour celles qui ne sont pas reconnues, il
-**mesure leur fréquence** et propose un réglage.
+**mesure leur fréquence** et propose un réglage. **Si toutes vos télécommandes sont reconnues,
+aucun réglage radio n'est nécessaire.**
 
-Il se lance depuis **Radio → Configuration**, bloc **Vos télécommandes**, par la carte **Tester
-mes télécommandes physiques**. **Si toutes vos télécommandes sont reconnues, aucun réglage radio
-n'est nécessaire.**
+Il s'ouvre depuis l'onglet [Réception](index.md#reception) de la page Radio, tuile **Assistant de
+réception**, par `Tester mes télécommandes physiques`. La radio doit être activée et enregistrée.
+
+![Fenêtre Test des télécommandes](v3/img/radio-fen-test){ .on-glb }
+
+La colonne de gauche (en haut sur téléphone) rappelle la **Fenêtre d'écoute actuelle** et les trois
+étapes : **Préparer**, **Tester**, **Réglages**.
 
 !!! note "Quand l'utiliser"
 
@@ -15,45 +20,57 @@ n'est nécessaire.**
 
 ## Déroulement
 
-1. **Munissez-vous de toutes vos télécommandes.** Vous allez appuyer sur chacune, une par une, à
-   portée du boîtier. Celles que ESPSomfy-RTS reconnaît déjà n'ont besoin de rien ; pour les
-   autres, il mesurera leur fréquence.
-2. **Télécommande 1 — appuyez sur un bouton.** N'importe quel bouton, à portée du boîtier ; une
-   **brève pression** suffit. L'assistant **écoute avec les réglages actuels**.
-3. Il affiche le résultat, puis demande si vous avez **une autre télécommande** (**Oui, une
-   autre**, ou **Je n'en ai pas d'autre**), et ainsi de suite.
+1. **Munissez-vous de toutes vos télécommandes**, puis `Commencer`. Celles que ESPSomfy-RTS
+   reconnaît déjà n'ont besoin de rien ; pour les autres, il mesurera leur fréquence. Rien n'est
+   enregistré sans votre accord.
+2. **Télécommande 1 — appuyez sur un bouton.** N'importe quel bouton, à portée de l'appareil ; une
+   **brève pression** suffit. L'assistant écoute avec les réglages actuels, **12 secondes** par
+   télécommande.
+3. Il affiche le résultat, puis demande *Avez-vous une autre télécommande ?* : `Oui, une autre` ou
+   `Non, j'ai terminé`, et ainsi de suite. Sous le résultat, la liste **Télécommandes testées**
+   s'allonge.
 
 ### Ce que peut répondre le test
 
 | Résultat | Signification |
 |---|---|
-| **Télécommande N reconnue** | elle est décodée avec les réglages actuels : l'assistant donne son **ID** et son **signal** (en dBm). Elle fonctionne telle quelle. |
-| **Cette télécommande a déjà été testée** | vous avez appuyé deux fois sur la même ; appuyez sur une télécommande que vous n'avez pas encore testée. |
-| **Fréquence à ajuster** | rien n'a été décodé dans les **12 secondes** : l'assistant **mesure sa fréquence**. Elle émet **hors de la fenêtre d'écoute actuelle** (« elle émet sur … MHz »), la fréquence devra être ajustée. |
-| **Non reconnue** | la fréquence est **déjà dans la fenêtre d'écoute** : elle n'est pas en cause. Vérifiez le **protocole** et la **longueur de trame** (bloc *Communication*), la **pile** ou la **portée**. |
+| *Télécommande N reconnue* | elle est décodée avec les réglages actuels : l'assistant donne son **ID** et son **signal** (en dBm). Elle fonctionne telle quelle |
+| *Cette télécommande a déjà été testée* | vous avez appuyé sur une télécommande déjà testée ; appuyez sur une autre |
+| *Télécommande N non reconnue* | rien n'a été décodé : vérifiez la pile et la portée, `Réessayer`, ou `Mesurer sa fréquence` |
 
-Pour **mesurer la fréquence** d'une télécommande non reconnue, **maintenez un bouton enfoncé**
-pendant la mesure. Il y a **« Mesurer sa fréquence »**, et **« Arrêter ici »** pour s'interrompre.
+Pour **mesurer la fréquence**, **maintenez un bouton enfoncé**, à un mètre environ ; s'il
+s'arrête, relâchez et réappuyez. `Passer` saute cette télécommande. La mesure dit ensuite :
+
+| Mesure | Signification |
+|---|---|
+| *émet sur … MHz, hors de la fenêtre d'écoute* | la fréquence devra être ajustée |
+| *émet sur … MHz, déjà dans la fenêtre d'écoute* | la fréquence n'est pas en cause : vérifiez le **décodage** (tuile **Décodage** de l'onglet Réception), la pile ou la portée |
+| *Aucun signal n'a été reçu* | maintenez bien un bouton enfoncé, vérifiez la pile, rapprochez-vous |
+| un signal trop bref | réappuyez en maintenant le bouton jusqu'à ce que la mesure s'affiche |
+
+![Test des télécommandes, étape Tester : une télécommande reconnue, une autre mesurée hors de la fenêtre d'écoute](v3/img/radio-fen-test-2){ .on-glb }
 
 ### La fin du test
 
-- **Toutes reconnues** : « Vos *N* télécommandes sont reconnues ». **Inutile de modifier les
-  fréquences.**
-- **Certaines à ajuster** : « Reconnues : *x*, à ajuster : *y* ». L'assistant propose des
-  réglages qui **les couvrent toutes**. **Enregistrez-les**, puis **refaites le test** pour
-  confirmer.
-- **Seulement des non reconnues** : changer la fréquence n'y changerait rien, puisqu'elles
-  émettent déjà dans la fenêtre d'écoute.
+- **Toutes reconnues** : *Vos N télécommandes sont reconnues*. Inutile de modifier les
+  fréquences.
+- **Certaines à ajuster** : *Reconnues : x, à ajuster : y*, et les **Réglages proposés** (fréquence
+  d'écoute et largeur de bande, avec leur valeur actuelle), sur un graphique des **Fréquences
+  mesurées** : fenêtre actuelle, fenêtre proposée. La fréquence d'émission vers vos équipements ne
+  change pas. `Enregistrer` les applique ; refaites ensuite le test pour confirmer.
+- **Seulement des non reconnues** : changer la fréquence n'y changerait rien, puisqu'elles émettent
+  déjà dans la fenêtre d'écoute.
+
+![Test des télécommandes, étape Réglages : les réglages proposés](v3/img/radio-fen-test-3){ .on-glb }
 
 ## Le résultat reste affiché
 
-Le bloc **Vos télécommandes** **garde le résultat pour la session** : *Télécommande 1, 2, 3* avec
-leur ID et leur signal, puis « toutes reconnues », ou le réglage proposé à un clic (**Voir les
-réglages proposés**), ou un test **interrompu** que l'on peut **continuer** (« Télécommandes
-testées jusqu'ici : *n* »). **Fermer l'assistant ne fait plus rien perdre.**
+La tuile **Assistant de réception** garde le résultat pour la session : la liste des télécommandes
+testées, puis *Toutes vos télécommandes sont reconnues*, ou `Voir les réglages proposés`, ou un test
+interrompu que l'on peut reprendre (`Continuer le test`). Fermer la fenêtre ne fait rien perdre.
 
-Enregistrer de nouveaux réglages radio **efface ce résultat** et propose de **refaire le test**,
-pour confirmer que toutes vos télécommandes sont reconnues avec les nouveaux réglages.
+Enregistrer de nouveaux réglages radio **efface ce résultat** : refaites le test pour confirmer que
+toutes vos télécommandes sont reconnues avec les nouveaux réglages.
 
 ## Comment la mesure est faite
 
@@ -76,14 +93,14 @@ flancs et retient leur milieu, une mesure bien plus répétable.
 Si une des mesures est très éloignée des autres, l'assistant le signale avant de conclure :
 l'inclure obligerait à élargir la bande au point de dégrader la réception de **toutes** les
 autres télécommandes, pour un signal qui est probablement un appareil tiers capté par erreur
-plutôt qu'une vraie télécommande à vous. Vous choisissez de la retirer ou de tout annuler —
+plutôt qu'une vraie télécommande à vous. `Retirer cette mesure` ou `Annuler` :
 l'assistant ne décide jamais seul.
 
 ## Le calcul
 
 Une fois les mesures retenues :
 
-* **Fréquence de base** = milieu entre la mesure la plus basse et la plus haute (et non leur
+* **Fréquence d'écoute** = milieu entre la mesure la plus basse et la plus haute (et non leur
     moyenne, qui se laisserait influencer par un groupe de mesures proches au détriment d'un
     cas isolé).
 * **Largeur de bande RX** = l'écart entre la plus basse et la plus haute, plus une marge de
@@ -97,7 +114,7 @@ Une fois les mesures retenues :
 !!! note "Note"
 
     Élargir la bande n'est jamais gratuit : une fenêtre plus large capte aussi plus de bruit
-    ambiant — voir [Configurer la radio](index.md#comprendre-la-fenêtre-de-réception). Si l'écart
+    ambiant — voir [Comprendre la fenêtre d'écoute](index.md#fenetre-ecoute). Si l'écart
     entre vos télécommandes dépasse ce que le CC1101 peut couvrir, l'assistant vous le signale
     plutôt que de proposer un réglage qui dégraderait toute la réception pour rien — dans ce cas
     rare, vérifiez qu'il ne s'agit pas en réalité de deux émetteurs différents.

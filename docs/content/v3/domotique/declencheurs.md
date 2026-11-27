@@ -63,7 +63,7 @@ L'enregistrement est refusé, avec un message d'erreur, quand :
 | Refus | Raison |
 |---|---|
 | la liste est **pleine** | les 14 emplacements sont occupés |
-| la télécommande est un **répéteur** | une même télécommande ne peut pas être à la fois répétée et écoutée (voir [Répéteurs](../appareil/radio/repeteur.md)) |
+| la télécommande est un **répéteur** | une même télécommande ne peut pas être à la fois répétée et écoutée (voir [Répéteurs](../appareil/radio/index.md#repeater)) |
 | l'adresse est celle d'un **équipement ou d'un groupe** du boîtier | c'est une adresse que le boîtier émet lui-même, pas une télécommande physique |
 
 ## La page Télécommandes

@@ -56,7 +56,6 @@ format s'ils sont renseignés).
 Contrairement à un changement de réseau Wi-Fi ou de type de connexion, enregistrer ici ne
 redémarre **pas** l'appareil automatiquement — un bandeau d'information le précise dans la
 fenêtre : les nouveaux réglages IP ne prendront effet qu'au **prochain redémarrage**, qu'il
-vous faudra déclencher vous-même (bouton **Redémarrer**, à côté d'**Enregistrer** sur la page
-[Général](../preferences/index.md)) si vous voulez les voir appliqués tout de suite. L'état actuel (DHCP ou IP Statique) s'affiche en badge sur le
+vous faudra déclencher vous-même (bouton `Redémarrer`) si vous voulez les voir appliqués tout de suite. L'état actuel (DHCP ou IP Statique) s'affiche en badge sur le
 bouton **DHCP / IP Statique**, dans la page Connexion, sans avoir à rouvrir cette fenêtre.
 

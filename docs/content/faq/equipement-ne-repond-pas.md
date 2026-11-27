@@ -16,5 +16,5 @@ Procédez dans cet ordre&nbsp;:
 
 Le détail complet est sur la page
 [Dépannage radio](../v3/appareil/radio/depannage.md). Pour comprendre ce que l'appareil
-reçoit et émet, le [journal radio](../v3/appareil/radio/journal.md) est l'outil de
+reçoit et émet, le [journal radio](../v3/appareil/radio/index.md#log) est l'outil de
 référence.

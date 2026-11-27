@@ -4,9 +4,10 @@ La page **Appareil › Système** dit quelle version du firmware tourne sur l'ap
 état il se trouve, et rassemble tout ce qui sert à l'entretenir : mise à jour, sauvegarde,
 dépannage. Elle se lit en cinq onglets.
 
-## En haut de la page
+## Le bandeau
 
-Le bandeau de gauche (en haut sur téléphone) reste affiché quel que soit l'onglet :
+Le bandeau, à gauche sur ordinateur et en haut de la page sur tablette et téléphone, reste
+affiché quel que soit l'onglet :
 
 * la **version installée**, en grand, avec une pastille d'état :
 
@@ -17,11 +18,11 @@ Le bandeau de gauche (en haut sur téléphone) reste affiché quel que soit l'on
     | **Vérification désactivée** | la vérification automatique est coupée |
     | **Impossible de vérifier** | le navigateur n'atteint pas la liste des versions publiées |
 
-* le bouton `Vérifier maintenant`, qui relance la recherche d'une mise à jour (absent sur
-    téléphone, où le même bouton se trouve dans l'onglet Mises à jour) ;
-* **Détails**, à déplier : le canal (stable ou développement), la durée de fonctionnement, la
-    raison du dernier redémarrage, la mémoire libre et la version du
-    [firmware de secours](firmware-de-secours.md).
+* le bouton `Vérifier maintenant`, qui relance la recherche d'une mise à jour (sur ordinateur
+    seulement : sur tablette et téléphone, le même bouton se trouve dans l'onglet Mises à jour) ;
+* le canal (stable ou développement), la durée de fonctionnement, la raison du dernier
+    redémarrage, la mémoire libre et la version du [firmware de secours](firmware-de-secours.md)
+    (directement sur ordinateur, derrière **Détails** sur tablette et téléphone).
 
 ## Mises à jour { #update }
 

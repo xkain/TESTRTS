@@ -141,7 +141,7 @@ connecte après coup lit immédiatement le dernier état, sans attendre un proch
 | `hour`, `minute`, `sunOffset` | Heure fixe, ou décalage en minutes si lever/coucher du soleil |
 | `positionMode` | `position`, `my` ou `tiltonly` |
 | `retries` | Tentatives de relance configurées |
-| `nextTime` | Heure effective du prochain déclenchement (`HH:MM`) — absent si elle n'est pas calculable (ex. lever/coucher du soleil sans [position géographique](../../appareil/preferences/position-geographique.md) configurée) |
+| `nextTime` | Heure effective du prochain déclenchement (`HH:MM`) — absent si elle n'est pas calculable (ex. lever/coucher du soleil sans [position géographique](../../appareil/preferences/index.md#position) configurée) |
 | `lastRun` | Horodatage ISO 8601 du dernier déclenchement effectif |
 
 ## Sujets d'abonnement (pilotage)

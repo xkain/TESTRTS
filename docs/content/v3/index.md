@@ -149,7 +149,7 @@ Activer la radio et vérifier que vos télécommandes sont reconnues : si toutes
 
     Retrouver la fréquence exacte de vos télécommandes.
 
--   :material-text-box-search-outline:{ .lg .middle } **[Journal radio](appareil/radio/journal.md)**
+-   :material-text-box-search-outline:{ .lg .middle } **[Journal radio](appareil/radio/index.md#log)**
 
     ---
 
@@ -186,7 +186,7 @@ Activer la radio et vérifier que vos télécommandes sont reconnues : si toutes
 
     Organiser la maison par zones.
 
--   :material-repeat:{ .lg .middle } **[Répéteurs](appareil/radio/repeteur.md)**
+-   :material-repeat:{ .lg .middle } **[Répéteurs](appareil/radio/index.md#repeater)**
 
     ---
 
@@ -210,11 +210,11 @@ Activer la radio et vérifier que vos télécommandes sont reconnues : si toutes
 
 <div class="grid cards" markdown>
 
--   :material-cog-outline:{ .lg .middle } **[Général](appareil/preferences/index.md)**
+-   :material-cog-outline:{ .lg .middle } **[Préférences](appareil/preferences/index.md)**
 
     ---
 
-    Identité et services, langue et région, apparence, sécurité et mises à jour.
+    Langue, fuseau horaire, position géographique et apparence de l'interface.
 
 -   :material-memory:{ .lg .middle } **[Firmware](appareil/systeme/index.md)**
 

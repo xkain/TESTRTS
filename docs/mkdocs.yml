@@ -202,15 +202,12 @@ nav:
               - v3/appareil/radio/index.md
               - Test des télécommandes: v3/appareil/radio/assistant-de-reglages.md
               - Balayage de fréquence: v3/appareil/radio/balayage-frequence.md
-              - Journal radio: v3/appareil/radio/journal.md
-              - Répéteur: v3/appareil/radio/repeteur.md
+              - Répéter une télécommande: v3/appareil/radio/repeter-une-telecommande.md
               - Dépannage radio: v3/appareil/radio/depannage.md
           - Sécurité: v3/appareil/securite.md
           - Préférences:
               - v3/appareil/preferences/index.md
               - Gérer les langues: v3/appareil/preferences/langues.md
-              - Position géographique: v3/appareil/preferences/position-geographique.md
-              - Retours tactiles et visuels: v3/appareil/preferences/retours-tactiles-et-visuels.md
           - Système:
               - v3/appareil/systeme/index.md
               - Mises à jour du firmware: v3/appareil/systeme/mises-a-jour.md

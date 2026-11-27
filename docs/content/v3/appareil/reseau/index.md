@@ -194,8 +194,8 @@ une fois le basculement effectué.
 ![reseau 7](v3/img/reseau-7){ .on-glb }
 
 * `http://<nom-d-hôte>.local` (fonctionne nativement sur la plupart des systèmes récents) ;
-* `http://<nom-d-hôte>` directement, si **Diffusion uPnP (SSDP)** est activée (voir
-    [Général](../preferences/index.md#identite)) ;
+* `http://<nom-d-hôte>` directement, si **Diffusion uPnP (SSDP)** est activée (onglet **Accès**
+    de cette page) ;
 * ou l'adresse IP attribuée par votre routeur, visible dans son interface d'administration.
 
 !!! warning "Avertissement"

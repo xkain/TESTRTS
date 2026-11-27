@@ -10,7 +10,7 @@ groupe liste ses plannings et permet d'**en ajouter un rapidement**.
 !!! tip "Astuce"
 
     Si vous disposez déjà d'un système domotique (Home Assistant via l'intégration
-    **ESPSomfy-RTS Enhanced** — voir [Général](../appareil/preferences/index.md#intégration-home-assistant) — ou
+    **ESPSomfy-RTS Enhanced** — voir [Home Assistant](../domotique/home-assistant/index.md) — ou
     équivalent), préférez-lui vos automatisations : il n'a aucune des limites décrites plus
     bas (30 horaires au total, pas de condition supplémentaire, pas de scène croisant plusieurs
     appareils) et ouvre des possibilités bien plus riches. Les programmations de cette page
@@ -44,7 +44,7 @@ interceptent leur propre clic :
     Contrairement aux listes Équipements/Groupes/Pièces, celle-ci ne se réordonne pas par
     glisser-déposer : l'ordre suit automatiquement l'**heure effective de déclenchement** de
     chaque programmation (lever/coucher du soleil résolu en heure locale) — une règle solaire
-    sans [position géographique](../appareil/preferences/position-geographique.md) configurée est reléguée en fin de liste.
+    sans [position géographique](../appareil/preferences/index.md#position) configurée est reléguée en fin de liste.
 
 ## Éditeur de programmation
 
@@ -91,7 +91,7 @@ HH:MM. »*
     Les déclencheurs solaires exigent que la position géographique de l'appareil soit
     configurée (latitude/longitude). Sans elle, l'interface affiche un avertissement et une
     mention *« non configuré »* à côté des options concernées — voir
-    [Position Géographique](../appareil/preferences/position-geographique.md). Un
+    [Position géographique](../appareil/preferences/index.md#position). Un
     horaire solaire sans position configurée est tout simplement ignoré par le firmware à
     chaque vérification, sans erreur visible.
 

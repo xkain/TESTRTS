@@ -12,7 +12,7 @@ la version **installée**.
 |---|---|
 | **Votre système est à jour** | rien à faire ; l'heure de la dernière vérification est affichée |
 | **Mise à jour disponible** *(en rouge)* | la version installée, une flèche, puis la version proposée ; un lien **notes de version** en ouvre le texte |
-| **Recherche automatique désactivée** | l'interrupteur **Mises à jour** de la page [Général](../preferences/index.md#sécurité--mises-à-jour) est coupé : aucune vérification n'est faite |
+| **Recherche automatique désactivée** | **Me prévenir des mises à jour** est à `Non` dans la tuile **Vérification automatique** (voir [Système](index.md#update)) : aucune vérification n'est faite |
 | **Impossible de vérifier** | ce navigateur n'atteint pas la liste des versions publiées en ligne |
 
 Quand une mise à jour est disponible, un rappel apparaît aussi **hors de cette page** : une

@@ -1,14 +1,14 @@
 # Réglages du tableau de bord
 
 Ajuste l'affichage du [tableau de bord](index.md) et de l'en-tête à vos habitudes — essentiellement des
-réglages de confort visuel, sans impact sur le fonctionnement de l'appareil. Depuis
-**Général**, le bouton **Tableau de bord** ouvre cette fenêtre — voir [Général](../appareil/preferences/index.md).
+réglages de confort visuel, sans impact sur le fonctionnement de l'appareil. Sur le tableau de
+bord, `Personnaliser` puis `Affichage` ouvre cette fenêtre.
 
 ![reglages tableau de bord 1](v3/img/reglages-tableau-de-bord-1){ .on-glb }
 
 !!! note "Note"
 
-    Contrairement aux [retours tactiles & visuels](../appareil/preferences/retours-tactiles-et-visuels.md) (qui vivent
+    Contrairement aux [retours tactiles & visuels](../appareil/preferences/index.md#retours) (qui vivent
     dans votre navigateur), ces préférences sont enregistrées **sur l'appareil** : elles
     s'appliquent donc à tous les écrans qui s'y connectent, pas seulement au vôtre.
 
@@ -29,7 +29,7 @@ deux ne vous intéresse au quotidien, vous pouvez les retirer.
 ## Indicateur d'activité
 
 Deux réglages indépendants qui aident à voir, d'un coup d'œil, que quelque chose se passe —
-utiles si vous avez désactivé le [retour visuel sur les boutons de commande](../appareil/preferences/retours-tactiles-et-visuels.md#retour-visuel) et voulez quand même une confirmation à l'écran.
+utiles si vous avez désactivé le [retour visuel sur les boutons de commande](../appareil/preferences/index.md#retours) et voulez quand même une confirmation à l'écran.
 
 * **Activité radio / mouvement** : une icône radio dans l'en-tête s'anime à chaque signal
     radio RTS émis ou reçu, ou dès qu'un équipement/groupe est en mouvement — une façon rapide
