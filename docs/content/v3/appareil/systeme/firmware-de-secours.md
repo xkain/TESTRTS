@@ -108,6 +108,8 @@ firmware de secours, le nom de l'appareil et son adresse.
 
 ## 5. Installer un firmware { #installer }
 
+![Firmware de secours, écran Installer un firmware](v3/img/firmware-de-secours-installer){ .on-glb }
+
 | Élément | Rôle |
 | :--- | :--- |
 | **Le fichier qui correspond à votre appareil** | le nom du fichier à choisir, la partie propre à votre carte en couleur, comme dans [Reconnaître le bon fichier](mises-a-jour.md#mise-a-jour-manuelle-fichier-local) |
@@ -127,6 +129,8 @@ fichier.
     l'interface, voir [Version et mise à jour](#mettre-a-jour).
 
 ## 6. Réinitialiser { #reinitialiser }
+
+![Firmware de secours, écran Réinitialiser](v3/img/firmware-de-secours-reinitialiser){ .on-glb }
 
 Cochez ce qu'il faut effacer, puis `Réinitialiser et redémarrer` : le bouton passe au rouge et
 devient `Confirmer l'effacement`. **Rien n'est effacé avant ce second clic.** L'appareil revient

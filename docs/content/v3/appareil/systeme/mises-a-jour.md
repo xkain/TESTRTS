@@ -3,8 +3,6 @@
 Les mises à jour se font depuis l'onglet **Mises à jour** de la page **Appareil › Système** — voir
 [Système](index.md#update). Il montre où en est votre appareil et permet de lancer une mise à jour.
 
-![mise à jour 1](v3/img/mise-a-jour-1){ .on-glb }
-
 ## Le bloc « Mises à jour »
 
 En haut du bloc, à gauche, une ligne indique l'**état** de votre version ; à droite, le numéro de
@@ -52,7 +50,7 @@ l'interface est mise à jour du même coup. Vos équipements, groupes, pièces, 
 publiées sur le projet. Seules sont proposées celles qui existent **pour votre carte** et pour la
 **table de partitions** de votre appareil.
 
-![mise à jour 2](v3/img/mise-a-jour-2){ .on-glb }
+![Fenêtre Mise à jour Logicielle](v3/img/systeme-fen-github){ .on-glb }
 
 !!! info "Il faut un accès à Internet, mais depuis votre navigateur"
 
@@ -70,48 +68,65 @@ publiées sur le projet. Seules sont proposées celles qui existent **pour votre
 | Type | Tag / Nom | Utilisation recommandée |
 | :--- | :--- | :--- |
 | **Stable** | `vX.Y.Z` | Officielle, testée pour un usage quotidien. |
-| **Bêta** | `vX.Y.Z-PRE` | Pour essayer les correctifs avant la sortie officielle. |
+| **Pré-version** | `vX.Y.Z-beta.N`, `vX.Y.Z-rc.N` | Pour essayer les correctifs avant la sortie officielle. |
 
-La liste en ligne garde les **cinq dernières versions stables**. Elle n'est pas limitée aux versions
-plus récentes : revenir à une version antérieure est proposé aussi (sans descendre en dessous de la
-v3.0.0), et la fenêtre de confirmation le signale alors comme un retour en arrière. Réinstaller la
-version déjà en place est également possible : le bouton s'intitule alors **Réinstaller**. Seules les
-versions stables déclenchent le rappel de « mise à jour disponible » : une bêta ne s'obtient que
-volontairement, depuis cette fenêtre.
+La liste en ligne garde les **cinq dernières versions stables**, les **trois dernières
+pré-versions** et la version de développement. Elle n'est pas limitée aux versions plus récentes :
+revenir à une version antérieure est proposé aussi (sans descendre en dessous de la v3.0.0), et la
+fenêtre de confirmation le signale alors comme un retour en arrière. Réinstaller la version déjà en
+place est également possible : sa tuile porte le badge **Installée** et le bouton s'intitule alors
+`Réinstaller`.
+
+Le rappel de « mise à jour disponible » dépend de ce qui est installé :
+
+| Version installée | Rappel pour |
+| :--- | :--- |
+| **Stable** ou **développement** | une version stable plus récente |
+| **Pré-version** (bêta, rc) | une pré-version ou une version stable plus récente |
+
+Une pré-version se classe avant la version finale du même numéro (`beta` < `rc` < finale) : un
+appareil en `v3.0.0-beta.1` est donc prévenu de la sortie de la `v3.0.0`.
 
 Les notes de version s'affichent sous le sélecteur, avec un lien pour les lire sur GitHub. Elles sont
-elles aussi publiées avec cette liste.
+elles aussi publiées avec cette liste. Quand une mise à jour est disponible, le lien de la tuile
+**Version installée** ouvre les notes de la version proposée dans un panneau latéral.
 
-### Mode Production ou mode Développeur
+![Panneau Notes de version](v3/img/systeme-fen-notes){ .on-glb }
 
-En haut de cette fenêtre, un **menu à trois points verticaux** propose deux modes :
+### Canal Production ou Développeur
 
-![mise à jour 3](v3/img/mise-a-jour-3){ .on-glb }
+Dans la colonne de gauche de la fenêtre, le choix **Canal** propose deux listes (sur téléphone, un
+menu déroulant) :
 
-| Mode | Ce que la liste propose |
+![Choix du canal](v3/img/systeme-fen-canal){ .on-glb }
+
+| Canal | Ce que la liste propose |
 | :--- | :--- |
-| **Production** *(par défaut)* | les versions **Stable** et **Bêta** publiées sur le dépôt |
-| **Développeur** | en plus, la **dernière version de développement**, construite automatiquement |
+| `Production` | les versions **stables** seulement |
+| `Développeur` | en plus, les **pré-versions** et, en tête, la **dernière version de développement**, construite automatiquement |
 
-Le mode **Développeur** n'est **jamais mémorisé** : à chaque ouverture de la fenêtre, vous repartez
-en mode Production. Pour l'activer, l'interface demande **à chaque fois une confirmation**, car
-cette version peut rendre l'appareil inutilisable et exiger un **reflash par USB** : vous en assumez
-seul la responsabilité. Si aucune version de développement n'existe pour votre appareil, un message
-vous le dit. Une version de développement n'a pas de numéro comparable aux autres : elle ne propose
-ni réinstallation ni retour en arrière.
+La fenêtre s'ouvre sur le canal de la version installée : `Production` pour une version stable,
+`Développeur` pour une pré-version ou une version de développement, sans confirmation. Installer
+ensuite une version stable ramène l'appareil sur `Production`.
 
-!!! warning "Une version de développement n'est pas une bêta"
+Le canal n'est **jamais mémorisé**. Passer de `Production` à `Développeur` demande **à chaque fois
+une confirmation**, car ces versions peuvent rendre l'appareil inutilisable et exiger un **reflash
+par USB** : vous en assumez seul la responsabilité. Si aucune pré-version ni version de
+développement n'existe pour votre appareil, un message vous le dit. Une version de développement n'a
+pas de numéro comparable aux autres : elle ne propose ni réinstallation ni retour en arrière.
 
-    | | **Bêta** (`vX.Y.Z-PRE`) | **Développeur** |
+!!! warning "Une version de développement n'est pas une pré-version"
+
+    | | **Pré-version** (`vX.Y.Z-beta.N`, `-rc.N`) | **Développement** |
     | :--- | :--- | :--- |
     | **Origine** | une version **publiée** sur le dépôt, destinée à être essayée avant la sortie officielle | un **build automatique** du code le plus récent, refait à chaque modification du firmware |
     | **Test** | pas entièrement testée, mais **identifiée et annoncée** avec ses notes de version | **jamais testée** : elle peut contenir un travail en cours |
-    | **Identifiant** | un numéro de version portant le suffixe `-PRE` | la version de base suivie du **code court du commit** |
-    | **Où la trouver** | mode Production et mode Développeur | **mode Développeur uniquement** |
+    | **Identifiant** | un numéro de version portant le suffixe `-beta.N` ou `-rc.N` | la version de base suivie du **code court du commit** |
+    | **Où la trouver** | canal `Développeur` | canal `Développeur`, en tête de liste |
     | **Avertissement** | « version bêta préliminaire qui n'a pas été entièrement testée » | « version de développement non testée : sauvegardez votre configuration avant d'installer » |
     | **Notes de version** | la page de la release | les notes publiées avec cette version de développement |
 
-    Une bêta est un **jalon que vous pouvez suivre** : elle reste en ligne et porte un numéro. La
+    Une pré-version est un **jalon que vous pouvez suivre** : elle reste en ligne et porte un numéro. La
     version de développement est une **photo mouvante** du travail en cours : elle change à chaque
     nouveau build, et elle n'est utile que pour essayer un correctif précis ou aider à tester.
     **Sauvegardez votre configuration avant de l'installer**, et préférez la Stable pour un usage
@@ -125,8 +140,8 @@ ni réinstallation ni retour en arrière.
     c'est risquer de découvrir le changement a posteriori, une fois un équipement ou un réglage
     visiblement différent de ce que vous attendiez, sans savoir pourquoi.
 
-Un bandeau d'avertissement apparaît aussi si la version sélectionnée est une bêta ou une version
-de développement.
+Un bandeau d'avertissement apparaît aussi si la version sélectionnée est une pré-version ou une
+version de développement.
 
 ### Le déroulement de l'installation
 
@@ -143,6 +158,8 @@ alors **trois étapes**, avec une seule barre de progression qui repart de zéro
 | **1. Téléchargement** | le navigateur récupère l'image de votre carte et en vérifie la taille |
 | **2. Installation** | l'appareil redémarre sur le [firmware de secours](firmware-de-secours.md), qui reçoit l'image et l'écrit |
 | **3. Redémarrage** | l'appareil redémarre sur la nouvelle version ; la barre cède la place à un message d'attente |
+
+![Écran d'installation](v3/img/systeme-fen-installation){ .on-glb }
 
 À l'étape 3, l'interface attend le retour de l'appareil, puis **renvoie le pack de la langue
 active** (et celui de la langue d'origine), car les libellés d'une langue téléchargée peuvent ne
@@ -176,7 +193,7 @@ n'est plus listée. **Installer depuis un fichier** ouvre la fenêtre **Mise à 
 vous y déposez le fichier **Firmware**, le programme complet de l'appareil — radio, réseau, MQTT,
 plannings, et l'interface web qu'il contient.
 
-![mise à jour 4](v3/img/mise-a-jour-4){ .on-glb }
+![Fenêtre Mise à jour manuelle](v3/img/systeme-fen-manuelle){ .on-glb }
 
 !!! note "Il n'y a plus de fichier « Littlefs / application »"
 

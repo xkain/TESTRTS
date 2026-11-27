@@ -4,7 +4,7 @@ Réinstalle tout ou partie d'une configuration à partir d'un fichier `.backup` 
 **Sauvegarder**. Depuis **Firmware**, le bouton **Restaurer le système** ouvre cette fenêtre
 — voir [Firmware](index.md).
 
-![restaurer systeme](v3/img/restaurer-systeme){ .on-glb }
+![Fenêtre Restauration](v3/img/systeme-fen-restauration){ .on-glb }
 
 
 !!! note "Note"

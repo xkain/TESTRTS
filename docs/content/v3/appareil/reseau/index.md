@@ -113,12 +113,15 @@ forcée sur votre routeur pour fixer l'appareil sur une borne précise.
 
 ![reseau 4](v3/img/reseau-4){ .on-glb }
 
-!!! danger "Attention"
+!!! danger "Une broche fausse peut bloquer ou abîmer la carte"
 
-    De nombreuses cartes ESP32 ne protègent pas le microcontrôleur si le câblage vers la puce
-    Ethernet est mal déclaré. Un mauvais réglage de broche peut endommager physiquement le
-    matériel — et contrairement aux broches radio, **rien ne vous avertit d'un conflit avec une
-    broche déjà utilisée ailleurs sur la carte** : vérifiez vous-même avant d'enregistrer.
+    Une broche déjà reliée à un autre composant (flash, Ethernet, radio…) peut empêcher
+    l'appareil de démarrer, ou être abîmée si deux composants la pilotent en même temps.
+    Comparez chaque broche à la documentation du fabricant.
+
+Contrairement aux broches de la radio, **rien ne détecte un conflit avec une broche déjà utilisée
+ailleurs sur la carte**. Avant l'enregistrement, un panneau **Confirmation critique** reprend cet
+avertissement et récapitule la carte et les broches choisies : comparez-les avant de continuer.
 
 ### Type de carte
 

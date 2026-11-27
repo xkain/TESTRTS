@@ -75,6 +75,8 @@ puis deux boutons, actifs une fois la case de confirmation cochée :
 * `Garder réseau et radio` : l'appareil redémarre et revient sur votre réseau ;
 * `Tout effacer` : l'appareil redémarre sur son point d'accès de secours.
 
+![Panneau Remettre l'appareil à zéro](v3/img/systeme-fen-remise-a-zero){ .on-glb }
+
 !!! danger "Rien ne pourra être annulé"
 
     Seule une sauvegarde faite avant permet de revenir en arrière.

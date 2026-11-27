@@ -2,10 +2,10 @@
 
 !!! note "Note"
 
-    Cette page documente le fichier `.backup` produit par **Sauvegarder** (voir
-    [Maintenance](index.md#backup)). Elle s'adresse à qui veut inspecter, éditer à la main
-    ou scripter un fichier de sauvegarde — ce n'est pas un pré-requis pour utiliser
-    [Restaurer le système](restaurer.md) au quotidien.
+    Cette page documente le fichier `.backup` produit par le bouton `Sauvegarder` de l'onglet
+    **Sauvegarde** de la page **Appareil › Système** (voir [Système](index.md#backup)). Elle
+    s'adresse à qui veut inspecter, éditer à la main ou scripter un fichier de sauvegarde — ce
+    n'est pas un pré-requis pour utiliser [Restaurer le système](restaurer.md) au quotidien.
 
 Depuis la v3.0.0, la sauvegarde est écrite au format **NDJSON** : une ligne par élément (un
 équipement, un groupe, un planning…), chaque ligne étant un petit objet JSON complet. Le fichier
@@ -41,18 +41,19 @@ faite sur une v2.x.x se restaure telle quelle. Sa description est conservée plu
 
 ```json
 {"rec":"meta","fmt":1,"fw":"v3.0.0","serverId":"A1B2C3","chip":"ESP32-D0WD-V3","profile":"GENERIC","created":"2026-11-17T21:14:45.492+0000"}
-{"rec":"settings","hostname":"ESPSomfyRTS","ntpServer":"pool.ntp.org","posixZone":"CET-1CEST,M3.5.0,M10.5.0/3","accentColor":"#2563eb","ssdpBroadcast":true,"checkForUpdate":true,"language":"fr","headerMobileDisplay":0,"reverseDashboardColumns":false,"defaultMobileTab":"groups","showRadioActivity":false,"themeMode":0,"showMovementIndicator":true,"ledPin":2,"ledActiveLow":false,"ledAddressable":false,"ledColorOrder":0,"ledColorActivity":"#ffffff","ledRfBlink":true,"dashCompact":0,"geoLat":48.85,"geoLon":2.35}
+{"rec":"settings","hostname":"ESPSomfyRTS","ntpServer":"pool.ntp.org","posixZone":"CET-1CEST,M3.5.0,M10.5.0/3","accentColor":"#2563eb","ssdpBroadcast":true,"checkForUpdate":true,"language":"fr","headerMobileDisplay":0,"reverseDashboardColumns":false,"defaultMobileTab":"groups","showRadioActivity":false,"themeMode":0,"catColors":1,"showMovementIndicator":true,"ledPin":2,"ledActiveLow":false,"ledAddressable":false,"ledColorOrder":0,"ledColorActivity":"#ffffff","ledRfBlink":true,"dashCompact":0,"dashOrder":0,"geoLat":48.85,"geoLon":2.35}
 {"rec":"room","roomId":1,"name":"Salon","sortOrder":0}
 {"rec":"shade","shadeId":1,"paired":true,"shadeType":4,"remoteAddress":100101,"name":"Volet Salon","tiltType":0,"proto":0,"bitLength":56,"upTime":30000,"downTime":26300,"tiltTimeUp":7000,"tiltTimeDown":7000,"stepSize":100,"flags":0,"myPos":-1,"myTiltPos":-1,"currentPos":0,"currentTiltPos":0,"flipCommands":false,"flipPosition":false,"repeats":1,"sortOrder":0,"gpioUp":0,"gpioDown":0,"gpioMy":0,"gpioFlags":0,"roomId":1,"ledFeedback":true,"tiltFirstOnOpen":true,"tiltFirstOnClose":true,"slackUp":400,"slackDown":250,"upMidTime":17200,"downMidTime":11000,"outputMode":0,"pulseTime":200,"stateVocab":0,"setupSteps":7,"lastRollingCode":247,"linkedRemotes":[200301]}
 {"rec":"group","groupId":1,"groupType":0,"remoteAddress":100201,"name":"Rez-de-chaussée","proto":0,"bitLength":56,"repeats":1,"sortOrder":0,"flipCommands":false,"roomId":0,"ledFeedback":false,"lastRollingCode":18,"linkedShades":[1]}
+{"rec":"remoteName","address":200301,"name":"Télécommande salon"}
 {"rec":"schedule","scheduleId":1,"name":"Fermeture soir","dayMask":127,"hour":21,"minute":30,"targetType":0,"targetId":1,"targetPos":100,"targetTilt":-1,"enabled":true,"retries":1,"positionMode":0,"timeRef":0,"sunOffset":0}
 ```
 
 Dans cet exemple, l'équipement 1 est un volet roulant avec un
 [tassement des lames](../../habitation/equipements/calibration.md#le-tassement-des-lames) de 0,4 s à la
 montée et 0,25 s à la descente, et une [vitesse variable](../../habitation/equipements/calibration.md#vitesse-variable)
-réglée (`upMidTime`, `downMidTime`). Il est lié à une télécommande et membre du groupe 1, que le
-planning 1 ferme chaque soir à 21 h 30.
+réglée (`upMidTime`, `downMidTime`). Il est lié à une télécommande, nommée « Télécommande salon »,
+et membre du groupe 1, que le planning 1 ferme chaque soir à 21 h 30.
 
 ### Ordre des lignes
 
@@ -65,12 +66,13 @@ L'appareil écrit les lignes dans cet ordre, de haut en bas :
 | `net` | 1 | Wi-Fi/Ethernet, adressage IP | Paramètres réseau |
 | `mqtt` | 1 | Connexion au courtier | Paramètres MQTT |
 | `radio` | 1 | Module radio : broches, fréquences, puissance | Paramètres radio |
-| `room` | 0 à 30 | Pièces | Équipements, groupes, pièces et plannings |
-| `shade` | 0 à 30 | Équipements | Équipements, groupes, pièces et plannings |
-| `group` | 0 à 14 | Groupes | Équipements, groupes, pièces et plannings |
+| `room` | 0 à 30 | Pièces | Équipements, groupes et pièces |
+| `shade` | 0 à 30 | Équipements | Équipements, groupes et pièces |
+| `group` | 0 à 14 | Groupes | Équipements, groupes et pièces |
+| `remoteName` | 0 à 32 | Noms donnés aux télécommandes liées | Équipements, groupes et pièces |
 | `repeater` | 0 à 7 | Répéteurs | Répéteurs |
 | `listener` | 0 à 14 | Télécommandes écoutées | Télécommandes écoutées |
-| `schedule` | 0 à 30 | Plannings | Équipements, groupes, pièces et plannings |
+| `schedule` | 0 à 30 | Plannings | Plannings, qui suivent les équipements |
 
 ### Ligne `meta`
 
@@ -89,13 +91,14 @@ fichier ? ».
 
 | `rec` | Clés |
 | --- | --- |
-| `settings` | `hostname`, `ntpServer`, `posixZone`, `accentColor`, `ssdpBroadcast`, `checkForUpdate`, `language`, `headerMobileDisplay`, `reverseDashboardColumns`, `defaultMobileTab`, `showRadioActivity`, `themeMode`, `showMovementIndicator`, `ledPin`, `ledActiveLow`, `ledAddressable`, `ledColorOrder`, `ledColorActivity`, `ledRfBlink`, `dashCompact`, `geoLat`, `geoLon` |
+| `settings` | `hostname`, `ntpServer`, `posixZone`, `accentColor`, `ssdpBroadcast`, `checkForUpdate`, `language`, `headerMobileDisplay`, `reverseDashboardColumns`, `defaultMobileTab`, `showRadioActivity`, `themeMode`, `catColors` (0 = sans couleur, 1 = icônes, 2 = icônes et bloc de titre), `showMovementIndicator`, `ledPin`, `ledActiveLow`, `ledAddressable`, `ledColorOrder`, `ledColorActivity`, `ledRfBlink`, `dashCompact`, `dashOrder` (bit 0 = ordre alphabétique, bit 1 = équipements à la suite, sans titre de pièce), `geoLat`, `geoLon` |
 | `net` | `connType`, `dhcp`, `ip`, `gateway`, `subnet`, `dns1`, `dns2`, `ethBoardType`, `ethPhyType`, `ethCLKMode`, `ethPhyAddress`, `ethPWRPin`, `ethMDCPin`, `ethMDIOPin` |
 | `mqtt` | `enabled`, `hostname`, `port`, `pubDisco`, `rootTopic`, `discoTopic`, `clientId` |
 | `radio` | `enabled`, `proto`, `type`, `radioBoardType`, `SCKPin`, `CSNPin`, `MOSIPin`, `MISOPin`, `TXPin`, `RXPin`, `frequency`, `rxFrequency`, `rxBandwidth`, `txPower` |
 | `room` | `roomId`, `name`, `sortOrder` |
 | `shade` | `shadeId`, `paired`, `shadeType`, `remoteAddress`, `name`, `tiltType`, `proto`, `bitLength`, `upTime`, `downTime`, `tiltTimeUp`, `tiltTimeDown`, `stepSize`, `flags`, `myPos`, `myTiltPos`, `currentPos`, `currentTiltPos`, `flipCommands`, `flipPosition`, `repeats`, `sortOrder`, `gpioUp`, `gpioDown`, `gpioMy`, `gpioFlags`, `roomId`, `ledFeedback`, `tiltFirstOnOpen`, `tiltFirstOnClose`, `slackUp`, `slackDown`, `upMidTime`, `downMidTime`, `outputMode`, `pulseTime`, `stateVocab`, `setupSteps`, `lastRollingCode`, `remoteModel` (seulement si une télécommande virtuelle est choisie), `linkedRemotes` (tableau d'adresses, 15 au plus) |
 | `group` | `groupId`, `groupType`, `remoteAddress`, `name`, `proto`, `bitLength`, `repeats`, `sortOrder`, `flipCommands`, `roomId`, `ledFeedback`, `lastRollingCode`, `remoteModel` (même règle), `linkedShades` (tableau d'identifiants d'équipements) |
+| `remoteName` | `address`, `name` : une ligne par télécommande liée qui porte un nom |
 | `repeater` | `address`, `name` (seulement si le répéteur est nommé) |
 | `listener` | `address`, `name` |
 | `schedule` | `scheduleId`, `name`, `dayMask`, `hour`, `minute`, `targetType` (0 = équipement, 1 = groupe), `targetId`, `targetPos`, `targetTilt` (-1 = aucune), `enabled`, `retries`, `positionMode` (0 = position, 1 = My, 2 = inclinaison seule), `timeRef` (0 = heure fixe, 1 = lever, 2 = coucher du soleil), `sunOffset` (minutes) |
@@ -120,8 +123,9 @@ le même que dans l'ancien format : voir
 * **Une clé absente laisse la valeur en place.** Retirer une clé d'une ligne ne remet pas le
   réglage à zéro ; pour le changer, il faut écrire la nouvelle valeur.
 * **Le fichier fait foi pour les listes.** Si la case correspondante est cochée, les répéteurs,
-  les télécommandes écoutées et les plannings de l'appareil sont d'abord vidés, puis remplis avec
-  les lignes du fichier : aucune ligne `schedule` veut dire « aucun planning ».
+  les télécommandes écoutées, les noms de télécommandes et les plannings de l'appareil sont
+  d'abord vidés, puis remplis avec les lignes du fichier : aucune ligne `schedule` veut dire
+  « aucun planning ».
 * **La configuration Ethernet** (`eth…`) n'est restaurée que si `serverId` est celui de
   l'appareil : des broches propres à une autre carte rendraient le réseau muet.
 * **Un code tournant ne recule jamais.** L'appareil garde le plus grand des deux : celui du

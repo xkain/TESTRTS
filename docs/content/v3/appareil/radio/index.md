@@ -53,14 +53,15 @@ des cartes qui embarquent aussi un contrôleur Ethernet : leurs broches sont cho
 jamais entrer en conflit avec lui. **Définir manuellement** (le bouton **Modifier les
 broches**) est réservé à un câblage non standard : les six broches sont résumées en pastilles,
 et leurs champs, avec l'interrupteur de sécurité, se trouvent dans un volet qui **s'ouvre de
-lui-même tant que l'interrupteur est éteint**. Cet interrupteur se lit **« J'ai vérifié mon
-câblage, broche par broche. »** — aucune broche saisie à la main n'est enregistrée sans lui.
+lui-même tant que l'interrupteur est sur `Non`**. Cet interrupteur, **J'ai vérifié mon câblage,
+broche par broche.**, suit un avertissement rouge : tant qu'il n'est pas sur `Oui`, aucune broche
+saisie à la main n'est enregistrée.
 
-!!! danger "Activez la radio après avoir vérifié le câblage"
+!!! danger "Une broche fausse peut bloquer ou abîmer la carte"
 
-    N'activez la radio et n'enregistrez qu'**une fois ce câblage vérifié** : une broche mal
-    attribuée empêche la radio de fonctionner, peut bloquer le démarrage de la carte, et peut
-    même **endommager définitivement** l'ESP32 ou le module radio.
+    Une broche déjà reliée à un autre composant (flash, Ethernet, radio…) peut empêcher
+    l'appareil de démarrer, ou être abîmée si deux composants la pilotent en même temps.
+    Comparez chaque broche à la documentation du fabricant.
 
 !!! danger "Attention"
 
