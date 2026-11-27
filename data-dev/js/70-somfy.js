@@ -532,17 +532,27 @@ class Somfy {
 
                     const init = res.config.radioInit,
                             cb = get('cbEnableRadio');
-
-                            this.radioOff = !init;
-                            setSidebarRadioState(!!init);
-                            get('divRadioEnableColor').classList.toggle('radioOn', !!init);
-                            this.updateWelcomeSteps();
-
-                            // Comparaison simple et directe avec l'état de la checkbox d'origine
-                            if (cb) {
-                                this.setRadioEnabled(cb.checked);
-                                this.renderRadioFleet();
-                            }
+                    const show = (on) => {
+                        this.radioOff = !on;
+                        setSidebarRadioState(!!on);
+                        get('divRadioEnableColor').classList.toggle('radioOn', !!on);
+                        this.updateWelcomeSteps();
+                        if (cb) {
+                            this.setRadioEnabled(cb.checked);
+                            this.renderRadioFleet();
+                        }
+                    };
+                    show(init);
+                    // La radio est appliquée par loopTask APRÈS la réponse : à l'activation, celle-ci
+                    // dit encore radioInit:false. On relit l'état jusqu'à ce que la radio soit montée.
+                    if (cb && cb.checked && !init) {
+                        let n = 0;
+                        const poll = () => getJSON('/getRadio', (e, r) => {
+                            if (!e && r && r.config && r.config.radioInit) return show(true);
+                            if (++n < 6) setTimeout(poll, 500);
+                        });
+                        setTimeout(poll, 500);
+                    }
                 });
             };
 
