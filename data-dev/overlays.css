@@ -1312,7 +1312,7 @@ button[line].fw-sidebar-button:hover {
 .rw-dot.is-shift { background: var(--warn); }
 .rw-dot.is-no { background: var(--danger); }
 .rw-dot.is-cur { box-shadow: inset 0 0 0 2px var(--color-accent); }
-.rw-none { font-size: var(--fs-3); color: var(--text-3); }
+.rw-none { display: block; margin-top: 6px; font-size: var(--fs-3); color: var(--text-3); }
 .rw-body { display: flex; flex-direction: column; gap: 16px; }
 .rw-title { margin: 0; font-size: var(--fs-6); font-weight: 800; color: var(--text); }
 .rw-desc { margin: 0; max-width: 640px; font-size: var(--fs-4); line-height: 1.55; color: var(--text-2); }
