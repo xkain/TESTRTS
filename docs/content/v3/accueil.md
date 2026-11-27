@@ -1,91 +1,94 @@
 # Page d'accueil
 
-L'interface de l'appareil se lit en trois parties : la **barre du haut**, le **menu** à gauche, et
-le **contenu** de la page. Ce chapitre les présente dans cet ordre, puis décrit la page d'accueil
-proprement dite, qui s'affiche tant que rien n'a été créé.
+Tant qu'aucune pièce, aucun équipement et aucun groupe n'existe, l'interface s'ouvre sur une
+**page d'accueil** qui guide la mise en service en quatre étapes. Cette page présente d'abord
+l'ossature de l'interface, la même sur toutes les pages, puis l'accueil lui-même.
 
-![page-accueil-1](v3/img/page-accueil-1){ .on-glb }
+![Page d'accueil de l'interface](v3/img/accueil-page){ .on-glb }
 
+## L'ossature de l'interface
 
-## La barre du haut
+### Sur ordinateur : le menu de gauche { #menu }
 
-Sur ordinateur, la barre du haut porte, de gauche à droite :
+Le menu de gauche porte, de haut en bas :
 
-- le **fil d'Ariane**, **absent de la page d'accueil et du tableau de bord** : il n'apparaît que
-  dans les autres sections. Il indique la section, la sous-section et, quand vous éditez un
-  élément, son nom (par exemple *Radio › Configuration*, ou *Somfy › Équipements › Volet salon*).
-  Quand la sous-section porte le même nom que la section, un seul niveau s'affiche. Un clic sur
-  un niveau précédent permet de **revenir en arrière** ;
-- l'**indicateur d'activité radio / mouvement** : une icône radio qui **s'anime à chaque signal
-  radio** émis ou reçu, ou dès qu'un équipement ou un groupe **est en mouvement**. Il se règle dans
-  les [réglages du tableau de bord](tableau-de-bord/personnaliser.md) ;
-- l'**état de la connexion** : trois pastilles **WIFI**, **LAN** et **POE**, dont **celle du mode
-  actif est allumée**. En survol : « Connexion Wi-Fi », « Connexion filaire Ethernet », « Connexion
-  Ethernet avec alimentation PoE ». Sur le [point d'accès de secours](../aide/point-d-acces.md),
-  la pastille **WIFI** est remplacée par **AP** (« Point d'accès de secours actif ») ;
-- la **durée de fonctionnement** : un petit compteur « jours / heures / minutes / secondes »,
-  avec au survol le détail **Appareil** (depuis le dernier démarrage) et **Réseau** (depuis la
-  connexion réseau actuelle, remise à zéro si le Wi-Fi ou l'Ethernet se reconnecte sans que
-  l'appareil redémarre).
+* le **logo** et le nom ESPSomfy-RTS ;
+* trois **indicateurs d'état** :
 
-Sur **téléphone**, la barre du haut change de forme : le **logo** et le nom, puis l'icône
-d'**activité radio**, une icône de **statut réseau** avec un point de couleur, une icône
-d'**uptime** (avec la même infobulle), et un bouton **engrenage** qui ouvre la section
-**Système**. Ce qui s'affiche se règle dans les [réglages du tableau de
-bord](tableau-de-bord/personnaliser.md#en-tête-mobile).
+    | Indicateur | Ce qu'il montre |
+    |---|---|
+    | **Réseau** | l'icône et le nom du mode actif, **WIFI**, **LAN** ou **POE** ; un point vert ou rouge dit si le lien est établi. Sur le [point d'accès de secours](../aide/point-d-acces.md), le mode s'appelle **AP**. |
+    | **Durée de fonctionnement** | depuis le dernier démarrage ; au survol, le détail **Appareil** (depuis le démarrage) et **Réseau** (depuis la connexion actuelle) |
+    | **Radio** | un point qui s'allume à chaque trame radio émise ou reçue |
 
-Sur téléphone, une **bannière** apparaît en haut quand une **mise à jour** du firmware est disponible ; sur ordinateur, c'est le bouton du bas du menu (voir ci-dessous).
+* **Tableau de bord**, l'écran principal, avec un résumé de vos équipements dessous ;
+* trois sections, dans l'ordre où l'on s'en sert :
 
-## Le menu
+    | Section | Pages |
+    |---|---|
+    | **Habitation** | [Équipements](habitation/equipements/index.md), [Groupes](habitation/groupes/index.md), [Pièces](habitation/pieces.md), [Plannings](habitation/plannings.md) |
+    | **Domotique** | [Home Assistant](domotique/home-assistant/index.md), [MQTT](domotique/mqtt/index.md), [Déclencheurs](domotique/declencheurs.md) |
+    | **Appareil** | [Réseau](appareil/reseau/index.md), [Radio](appareil/radio/index.md), [Sécurité](appareil/securite.md), [Préférences](appareil/preferences/index.md), [Système](appareil/systeme/index.md) |
 
-Le menu de gauche (et la barre d'onglets du téléphone) se lit de haut en bas comme une **feuille
-de route**, **dans l'ordre où l'on s'en sert** :
+* en bas, un bouton de **mise à jour du firmware**, visible seulement quand une version est
+    disponible, et `Redémarrer`.
 
-| Entrée | Contenu | Pourquoi à cette place |
+### Sur téléphone : l'en-tête et le menu { #telephone }
+
+Sous 768 px, le menu de gauche disparaît :
+
+* **en haut**, l'en-tête montre le titre de la page et une flèche de retour. Sur le tableau de
+    bord, il porte à la place les commandes de toute la maison (monter, arrêter, descendre) et
+    un menu ⋮ : `Ajouter`, `Trier`, `Personnaliser`. L'indicateur d'**activité radio**, s'il est
+    activé dans les [réglages du tableau de bord](tableau-de-bord/personnaliser.md), y clignote à
+    chaque trame ;
+* **en bas**, deux onglets : **Tableau de bord** et **Menu**. La page **Menu** commence par une
+    carte d'identité de l'appareil (nom, version, adresse, réseau, signal, durée de
+    fonctionnement), qui ouvre l'état détaillé, puis reprend les trois sections en tuiles, avec
+    `Aide` et `Redémarrer` en bas.
+
+Quand le réseau mérite votre attention, un **bandeau** s'affiche sous l'en-tête et mène à la page
+[Réseau](appareil/reseau/index.md) : point d'accès de secours actif, câble Ethernet débranché avec
+bascule en Wi-Fi, ou signal Wi-Fi faible (sous -80 dBm).
+
+## L'accueil : quatre étapes { #etapes }
+
+*Prêt à démarrer ? Suivez le guide.* Le bouton principal mène toujours à l'étape à faire :
+`Configurer le réseau`, `Régler vos préférences`, `Configurer la radio`, puis `Ajouter mon
+premier équipement`. Dessous, deux liens : `Restaurer une sauvegarde`, si vous remplacez un
+ancien appareil, et `Voir le guide`, qui ouvre cette page.
+
+| Étape | Ce qu'elle demande | Quand elle est faite |
 |---|---|---|
-| **Tableau de bord** | vos équipements et groupes, une fois créés : voir [Tableau de bord](tableau-de-bord/index.md) | l'écran principal |
-| **Réseau** | *Connexion*, *MQTT* | la première étape depuis le [point d'accès de secours](../aide/point-d-acces.md) |
-| **Radio** | *Configuration* (dont l'onglet *Journal*) | L'appairage, les télécommandes liées, les répéteurs et les plannings passent tous par elle |
-| **Somfy** | *Équipements*, *Groupes*, *Pièces*, *Répéteur*, *Plannings* | la gestion de l'installation |
-| **Système** | *Général*, *Firmware* | en bas du menu, à côté du bouton de redémarrage |
+| **1. Se connecter** | relier l'appareil à votre box, en Wi-Fi ou en Ethernet | *C'est fait : l'appareil a rejoint le réseau Wi-Fi* (avec son nom), ou *relié à votre réseau en Ethernet* |
+| **2. Régler vos préférences** (*Recommandé*) | l'heure et la position pour vos plannings, le thème et la couleur | le fuseau de l'appareil est celui du navigateur et la position est renseignée |
+| **3. Régler la radio** | choisir le module radio et l'activer | *La radio est activée* |
+| **4. Ajouter un équipement** | appairer votre premier équipement avec sa télécommande en main | — |
 
-Un badge **désactivé** apparaît à côté de **Radio** tant que la radio est désactivée.
+Chaque carte ouvre la page qui la règle. L'étape en cours est mise en avant ; une étape faite
+affiche **Fait**.
 
-En **bas du menu** : un bouton de **mise à jour du firmware**, visible seulement quand une version
-est disponible, et le bouton **Redémarrer**.
+* Tant que l'appareil n'est pas relié à votre réseau, les préférences attendent : *Disponible une
+    fois l'appareil relié à internet, d'où il tire l'heure.*
+* Les préférences sont conseillées, jamais bloquantes : la radio reste accessible avant elles.
+* L'étape 4 ne s'ouvre qu'une fois la radio activée.
 
-## Le contenu : un parcours en trois étapes
+Les états se mettent à jour tout seuls, à chaque changement de réseau ou de radio et à chaque
+affichage de la page. En bas, **Et ensuite ?** donne trois idées : ouvrir au lever du soleil, tout
+fermer d'un seul geste, piloter depuis Home Assistant.
 
-Tant qu'**aucune pièce, aucun équipement et aucun groupe** n'a été créé, le tableau de bord
-n'est pas vide : il affiche un **parcours numéroté en trois étapes**, avec une barre de
-progression 1-2-3. L'étape à faire en premier est mise en évidence, sur la barre et sur sa carte.
+!!! note "Note"
 
-| Étape | Ce qu'elle demande | État affiché |
-|---|---|---|
-| **1. Réseau** | Relier l'appareil à votre box internet, en Wi-Fi ou en Ethernet. | **Connecté** (avec le nom du réseau Wi-Fi, ou « Ethernet »), ou **À faire** |
-| **2. Radio** | Activer la radio, puis vérifier que vos télécommandes sont bien reconnues. | **Radio activée**, **Radio désactivée**, ou **Après la radio** tant que le réseau n'est pas fait |
-| **3. Ajouter un équipement** | Appairer votre premier équipement : volet, store, portail ou porte de garage. | **Prêt**, ou **Après la radio** |
+    Dès qu'une pièce, un équipement ou un groupe existe, l'accueil ne s'affiche plus : le
+    [tableau de bord](tableau-de-bord/index.md) prend sa place.
 
-Une dernière carte en pointillés, **« Plus tard, si vous le souhaitez »**, renvoie vers
-**Système** : langue, sécurité d'accès, apparence et maintenance. Elle ne fait pas partie du
-parcours mais vous pouvez y faire un détours pour changer la langue par exemple.
+## Pas à pas { #pas-a-pas }
 
-Les états se mettent à jour tout seuls : à chaque changement de réseau, à l'enregistrement de
-la radio et à chaque affichage de la page. **Dès qu'une pièce, un équipement ou un groupe est
-créé, cette page ne s'affiche plus** : le [tableau de bord](tableau-de-bord/index.md) prend sa place.
-
-### Pas à pas
-
-1. **Réseau.** Reliez l'appareil à votre box : voir l'[assistant de
-   connexion](appareil/reseau/assistant-de-connexion.md) et la page [Connexion réseau](appareil/reseau/index.md).
-2. **Radio.** Activez-la et testez vos télécommandes : voir [Configurer la
-   radio](appareil/radio/index.md) et le [test des télécommandes](appareil/radio/assistant-de-reglages.md). Si
-   toutes vos télécommandes sont reconnues, **aucun réglage radio n'est nécessaire**.
-3. **Premier équipement.** Voir la [mise en service d'un
-   équipement](habitation/equipements/mise-en-service.md).
-   
-**Configuration.**  Ajustez l'appareil à votre usage :
-   langue, sécurité d'accès, apparence, mises à jour et sauvegarde : voir notamment la page
-   [Préférences](appareil/preferences/index.md).
-
-   
+1. **Réseau** : l'[assistant de connexion](appareil/reseau/assistant-de-connexion.md), ou la page
+    [Réseau](appareil/reseau/index.md).
+2. **Préférences** : la page [Préférences](appareil/preferences/index.md), onglet Région.
+3. **Radio** : la page [Radio](appareil/radio/index.md) et le
+    [test des télécommandes](appareil/radio/assistant-de-reglages.md). Si toutes vos télécommandes
+    sont reconnues, aucun réglage radio n'est nécessaire.
+4. **Premier équipement** : la [mise en service d'un
+    équipement](habitation/equipements/mise-en-service.md).
