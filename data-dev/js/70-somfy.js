@@ -3531,9 +3531,12 @@ class Somfy {
                 name: target, group: g,
                 filters: [...new Set(g.steps.map(({ sc }) => sc.timeRef === 'sunrise' || sc.timeRef === 'sunset' ? 'sun' : 'time'))],
                 text: `${target} ${g.name} ${g.steps.map(({ effectiveMinutes }) => formatMinutesOfDay(effectiveMinutes).main).join(' ')}`,
-                html: () => this.scheduleTileHtml(g)
+                html: (withTarget) => this.scheduleTileHtml(g, undefined, withTarget)
             };
         });
+    }
+    _cfgUsed(kind, items) {
+        return kind === 'schedule' ? (this.schedules || []).length : (items || this._cfgItems(kind)).length;
     }
     _cfgFilters(kind, items) {
         const count = (key) => items.filter(it => it.filters.includes(key)).length;
@@ -3549,7 +3552,7 @@ class Somfy {
         const az = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
         const head = (label, n, icon, roomId) => `<div class="cfg-tiles-title"${roomId == null ? '' : ` data-roomid="${roomId}"`}>${icon ? `<svg><use href="${icon}"></use></svg>` : ''}${escHtml(label)}<span>${n}</span></div>`;
         if (kind === 'schedule') {
-            if (mode === 'time') return items.map(it => it.html()).join('');
+            if (mode === 'time') return items.map(it => it.html(true)).join('');
             const byTarget = new Map();
             items.forEach(it => { if (!byTarget.has(it.name)) byTarget.set(it.name, []); byTarget.get(it.name).push(it); });
             return [...byTarget.keys()].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })).map(name => {
@@ -3575,23 +3578,23 @@ class Somfy {
         const q = st.q.trim().toLowerCase();
         const vis = items.filter(it => (st.filter === 'all' || it.filters.includes(st.filter)) && (!q || it.text.toLowerCase().includes(q)));
         const mode = this.syncCfgSort(kind);
-        const n = items.length, max = conf.max;
+        const n = items.length, used = this._cfgUsed(kind, items), max = conf.max;
         const body = n && !vis.length
             ? `<div class="cfg-nomatch"><b>${tr('LIST_NOMATCH_TITLE')}</b><span>${tr('LIST_NOMATCH_DESC')}</span><button type="button" class="gen-btn" onclick="somfy.resetCfgFilters('${kind}');">${tr('BT_SHOW_ALL')}</button></div>`
             : this._cfgBody(kind, vis, mode);
-        list.innerHTML = this.cfgAddTileHtml(kind, max && n >= max) + body;
+        list.innerHTML = this.cfgAddTileHtml(kind, max && used >= max) + body;
         list.classList.toggle('cfg-sort-az', mode === 'az');
         root.classList.toggle('is-empty', n === 0);
 
-        const left = Math.max(0, max - n);
-        root.querySelector('.gen-cap-n').innerHTML = max ? `${n} <small>${tr('LIST_CAP_OF').replace('{MAX}', max)}</small>` : `${n}`;
+        const left = Math.max(0, max - used);
+        root.querySelector('.gen-cap-n').innerHTML = max ? `${used} <small>${tr('LIST_CAP_OF').replace('{MAX}', max)}</small>` : `${n}`;
         root.querySelector('.gen-cap-left').textContent = max ? tr(left === 1 ? 'LIST_CAP_FREE_ONE' : 'LIST_CAP_FREE_MANY').replace('{N}', left) : '';
         root.querySelector('.gen-cap').classList.toggle('is-full', !!max && left === 0);
-        root.querySelector('.gen-meter i').style.width = max ? `${Math.min(100, Math.round(n / max * 100))}%` : '0';
+        root.querySelector('.gen-meter i').style.width = max ? `${Math.min(100, Math.round(used / max * 100))}%` : '0';
         root.querySelector('.gen-filters-list').innerHTML = filters.map(f => `<button type="button" class="gen-filter${f.warn ? ' is-warn' : ''}${st.filter === f.key ? ' on' : ''}" data-dot="${f.key === 'all' ? 'all' : f.dot || ''}" aria-pressed="${st.filter === f.key}" onclick="somfy.setCfgFilter('${kind}', '${f.key}');"><i class="gen-filter-dot"></i>${escHtml(f.label)}<span class="gen-filter-n">${f.n}</span></button>`).join('');
         // Plannings : la note n'a de sens que tant que la position géographique manque.
         if (kind === 'schedule') root.querySelector('.gen-hero-note').hidden = !!this._sunTimesToday();
-        root.querySelector('.gen-hero-menu').classList.toggle('has-query', !!q);
+        root.querySelector('.gen-hero-menu').classList.toggle('has-query', !!q || st.filter !== 'all');
         root.querySelector('.tools-more-btn').classList.toggle('has-query', st.filter !== 'all');
     }
     setCfgFilter(kind, key) {

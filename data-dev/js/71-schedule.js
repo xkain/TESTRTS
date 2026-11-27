@@ -225,7 +225,7 @@ class _SomfySchedule {
         this.renderCfgPage('schedule');
         this._syncScheduleIndicators();
     }
-    scheduleTileHtml(group, openFn = 'openEditScheduleGroup') {
+    scheduleTileHtml(group, openFn = 'openEditScheduleGroup', withTarget = false) {
         const key = group.key;
         const steps = group.steps.length > 2 ? group.steps.slice(0, 1) : group.steps;
         const hours = steps.map(({ sc, effectiveMinutes }) => {
@@ -246,7 +246,7 @@ class _SomfySchedule {
         <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="${this._scheduleTargetIcon(group)}"></use></svg></span>
         ${this.cfgTileMenu(`somfy.deleteScheduleGroup('${key}')`, `<div class="dropdown-item" onclick="this.parentElement.classList.remove('show'); somfy.toggleScheduleGroup('${key}', ${!group.enabled});"><svg><use href="#svg-${group.enabled ? 'stop' : 'play'}"></use></svg>${tr(group.enabled ? 'BT_PAUSE' : 'BT_RESUME')}</div>`)}</div>
         <div class="cfg-tile-name"><span class="name-text">${escHtml(title)}</span>
-        <span class="sched-tile-meta">${group.enabled ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`}</span></div>
+        <span class="sched-tile-meta">${withTarget ? `<span class="sched-tile-for">${escHtml(this.scheduleTargetName(group))}</span>` : ''}${group.enabled ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`}</span></div>
         <div class="sched-tile-hours">${hours}</div>
         <div class="sched-tile-days">${days}</div>
         </div>`;
@@ -329,11 +329,11 @@ class _SomfySchedule {
         }
 
         if (isNew) {
-            const targetType = (presetTarget && presetTarget.targetType) || 'shade';
+            const targetType = (presetTarget && presetTarget.targetType) || ((this.shades || []).length ? 'shade' : 'group');
             let targetId = presetTarget ? presetTarget.targetId : undefined;
             if (typeof targetId === 'undefined') {
-                const firstShade = (this.shades && this.shades.length > 0) ? this.shades[0] : undefined;
-                targetId = firstShade ? firstShade.shadeId : undefined;
+                const first = targetType === 'shade' ? (this.shades || [])[0] : (this.groups || [])[0];
+                targetId = first ? (targetType === 'shade' ? first.shadeId : first.groupId) : undefined;
             }
             this.ScheduleOverlay({ key: undefined, name: '', targetType, targetId, dayMask: 0, steps: [] }, lockedTarget);
             return;
@@ -489,7 +489,7 @@ class _SomfySchedule {
         const targetBlock = lockedTarget
             ? `<div class="gen-field"><span class="gen-field-label">${tr('SCHEDULE_TARGET')}</span><div class="gen-input-box schedule-target-locked"><span class="gen-input">${escHtml(this.scheduleTargetName(model))}</span></div></div>`
             : `<div class="gen-field"><label class="gen-field-label" for="selScheduleTarget">${tr('SCHEDULE_TARGET')}</label><div class="gen-input-box dirty-target"><select id="selScheduleTarget" class="gen-input"></select></div></div>`;
-        const max = this.maxSchedules || 30, left = Math.max(0, max - (this.schedules || []).length);
+        const max = this.maxSchedules || 30;
         div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
             id: 'schedWin', icon: 'svg-schedule', skin: 'planning', titleKey, descKey, sectionKey: titleKey,
             stateKey: tr('SCHEDULE_TARGET'), stateValue: escHtml(this.scheduleTargetName(model)), hintKey: 'SCHEDULE_SLOTS_REMAINING', footId: 'schedWinFoot',
@@ -510,7 +510,6 @@ class _SomfySchedule {
             <div class="sw-hours"><div id="divScheduleHourList" class="sw-hours"></div>
             <button type="button" class="sw-add" id="rowScheduleAddHour"><svg><use href="#svg-add"></use></svg><span>${tr('SCHEDULE_HOUR_ADD')}</span></button></div>`
         })}</div>`;
-        div.querySelector('#schedWinHint').textContent = tr('SCHEDULE_SLOTS_REMAINING').replace('{n}', left);
         div.querySelector('#schedWinFoot').innerHTML = `<button id="btnScheduleGoBack" class="gen-btn" type="button">${tr('BT_CLOSE')}</button>
         <button id="btnSaveSchedule" class="gen-btn gen-btn-primary" type="button"><span id="btnSaveScheduleText">${buttonText}</span></button>`;
         div.addEventListener('click', (e) => { if (e.target.closest('[data-genmod-close]')) requestCloseOverlay(div); });
@@ -525,6 +524,8 @@ class _SomfySchedule {
                 const [tType, tIdStr] = (e.target.value || '').split(':');
                 div.setAttribute('data-targettype', tType);
                 div.setAttribute('data-targetid', tIdStr);
+                div.querySelector('#schedWinState .genmod-state-val').textContent =
+                    this.scheduleTargetName({ targetType: tType, targetId: parseInt(tIdStr, 10) });
             });
         }
         div.querySelector('#fldScheduleName').value = model.name;
@@ -566,6 +567,8 @@ class _SomfySchedule {
                 .map((step, i) => ({ step: step, index: i, eff: this._effectiveMinutesOf(step, sunTimes) }))
                 .sort((a, b) => (a.eff ?? 9999) - (b.eff ?? 9999));
             listEl.innerHTML = ordered.map(x => this._scheduleHourRowHtml(x.step, x.index, x.eff)).join('');
+            const used = (this.schedules || []).length - (group.steps || []).length + model.steps.length;
+            div.querySelector('#schedWinHint').textContent = tr('SCHEDULE_SLOTS_REMAINING').replace('{n}', Math.max(0, max - used));
             syncEnabledBadge();
             syncHoursSwitch();
         };

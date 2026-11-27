@@ -6022,6 +6022,7 @@ input.gen-input.mqtt-mono {
 .sched-tile .name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sched-tile-meta { display: flex; align-items: center; gap: 6px; min-height: 24px; overflow: hidden; }
 .sched-tile-meta .schedule-badge-off { flex: none; margin: 0; }
+.sched-tile-for { overflow: hidden; color: var(--text-3); font-size: var(--fs-2); text-overflow: ellipsis; white-space: nowrap; }
 .sched-tile-hours { display: flex; flex-direction: column; border-radius: var(--r-2); background: var(--surface-2); overflow: hidden; }
 .sched-tile-hour { display: grid; grid-template-columns: 18px 54px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-top: 1px solid var(--surface); }
 .sched-tile-hour:first-child { border-top: 0; }

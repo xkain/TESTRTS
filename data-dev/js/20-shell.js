@@ -1046,7 +1046,7 @@ const mobileNav = {
     syncMenu() {
         if (typeof somfy === 'undefined') return;
         document.querySelectorAll('#divSettingsPnl [data-cap]').forEach(el => {
-            const kind = el.getAttribute('data-cap'), n = somfy._cfgItems(kind).length, max = somfy._cfgConf(kind).max;
+            const kind = el.getAttribute('data-cap'), n = somfy._cfgUsed(kind), max = somfy._cfgConf(kind).max;
             el.textContent = max ? `${n}/${max}` : `${n}`;
         });
     },
@@ -1059,7 +1059,7 @@ const mobileNav = {
             ['schedule', 'svg-navSchedule', 'SUBTAB_SCHEDULES', 'SCHEDULE_ADD', 'divSomfySchedules'],
         ];
         const tile = ([kind, icon, title, addKey, page]) => {
-            const n = somfy._cfgItems(kind).length, max = somfy._cfgConf(kind).max;
+            const n = somfy._cfgUsed(kind), max = somfy._cfgConf(kind).max;
             const cap = max ? `${n} ${tr('LIST_CAP_OF').replace('{MAX}', max)}` : `${n}`;
             return `<div class="add-tile add-tile-${kind}"><button type="button" class="set-tile" data-page="${page}"><span class="set-tile-icon"><svg><use href="#${icon}"></use></svg></span><b>${tr(title)}<svg><use href="#svg-arrowRight"></use></svg></b><span class="set-tile-val">${cap}</span></button>`
                 + `<button type="button" class="add-tile-plus" data-add="${kind}" aria-label="${tr(addKey)}" title="${tr(addKey)}"${max && n >= max ? ' disabled' : ''}><svg><use href="#svg-add"></use></svg></button></div>`;
