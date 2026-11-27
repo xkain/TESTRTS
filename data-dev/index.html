@@ -2165,16 +2165,16 @@
                                                 <div class="gen-field"><label class="gen-field-label" for="selTransRXPin">RX</label>
                                                     <div class="gen-input-box gen-pin-box dirty-target"><select id="selTransRXPin" class="gen-input" name="transRX" data-bind="transceiver.config.RXPin" data-datatype="int"></select><input type="number" id="inputTransRXPin" class="gen-input" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--"><span class="gen-pin-steps"><button type="button" onclick="somfy.stepGpio('RXPin', -1)">−</button><button type="button" onclick="somfy.stepGpio('RXPin', 1)">+</button></span></div></div>
                                                 </div>
-                                                <div id="divManualSafety" class="manual-safety-block" style="display: none;">
-                                                    <div class="safety-label">
+                                                <div id="divManualSafety" class="pin-safety" style="display: none;">
+                                                    <div class="genmod-note is-danger"><svg><use href="#svg-warning"></use></svg><div><b tr="PIN_SAFETY_TITLE"></b><span tr="PIN_SAFETY_DESC"></span></div></div>
+                                                    <label class="gen-row" for="cbManualSafety">
+                                                        <span class="gen-row-text"><b tr="PIN_SAFETY_CHECK"></b><span tr="PIN_SAFETY_CHECK_DESC"></span></span>
                                                         <span class="gen-seg gen-seg-bool">
-                                                            <input id="cbManualSafety" name="enableRadio" type="checkbox" aria-labelledby="txtManualSafety">
+                                                            <input id="cbManualSafety" name="enableRadio" type="checkbox">
                                                             <span class="gen-seg-yes" tr="BT_YES"></span>
                                                             <span class="gen-seg-no" tr="BT_NO"></span>
                                                         </span>
-                                                        <span id="txtManualSafety" class="safety-text" tr="RADIO_SAFETY_TEXT"></span>
-                                                    </div>
-                                                    <p class="rd-safety-hint" tr="RADIO_SAFETY_HINT"></p>
+                                                    </label>
                                                 </div>
                                             </div>
                                         </div>

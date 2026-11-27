@@ -940,7 +940,7 @@ class Wifi {
         <aside class="side-panel is-danger" role="alertdialog" aria-modal="true" aria-labelledby="ethPanelTitle">
         ${panelHead({ icon: 'svg-ethernet', tone: 'bad', id: 'ethPanelTitle', title: tr('ETH_SETTINGS_TITLE'), desc: tr('ETH_CONFIRM_KICKER') })}
         <div class="side-panel-body">
-        <div class="genmod-note is-danger"><svg><use href="#svg-warning"></use></svg><div><b>${tr('ETH_SETTINGS_WARNING_DESC_1')}</b><span>${tr('ETH_CONFIRM_CHECK')}</span></div></div>
+        <div class="genmod-note is-danger"><svg><use href="#svg-warning"></use></svg><div><b>${tr('PIN_SAFETY_TITLE')}</b><span>${tr('PIN_SAFETY_DESC')}</span></div></div>
         ${this._ethSummaryHtml(obj.ethernet)}
         <p class="side-panel-q">${tr('ETH_CONFIRM_QUESTION')}</p>
         </div>

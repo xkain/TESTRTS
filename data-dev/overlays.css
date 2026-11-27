@@ -219,7 +219,7 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     position: relative;
 }
 .ui-pulse::before,
-.manual-safety-block .gen-seg-bool:has(input:not(:checked))::before {
+.pin-safety .gen-seg-bool:has(input:not(:checked))::before {
     content: '';
     position: absolute;
     inset: -2px;
@@ -2368,8 +2368,6 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
     color: var(--danger);
     font-size: var(--fs-3);
 }
-.led-safety { align-self: end; background: none; padding: 11px 0; }
-.led-pin-warn { grid-column: 1 / -1; }
 /* La moitié cochée doit suivre la case dans le HTML (.gen-seg input:checked + span) : GRB
    passe devant par l'ordre d'affichage seulement. */
 .led-order .gen-seg-no { order: -1; }

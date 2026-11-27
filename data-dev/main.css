@@ -3508,18 +3508,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
 .rdc-pins #divShowGpio {
     width: 100%;
 }
-.rdc-pins .manual-safety-block {
-    margin: 0;
-    padding: 14px;
-    border-radius: var(--r-3);
-    background: var(--warn-bg);
-}
-.rdc-pins .rd-safety-hint {
-    margin: 8px 0 0;
-    font-size: var(--fs-2);
-    line-height: 1.45;
-    color: var(--text-2);
-}
 #divRadioBoardType #divGPIOSummary {
     padding: 12px 14px;
     border-radius: var(--r-3);

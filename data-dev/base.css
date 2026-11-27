@@ -1105,19 +1105,10 @@ input[type="number"] {
 @media (max-width: 767px) {
     .gen-pin-grid { grid-template-columns: minmax(0, 1fr); }
 }
-.manual-safety-block {
-    padding:0 10px;
-}
-.safety-label {
+.pin-safety {
     display:flex;
-    align-items:center;
-    gap:12px;
-}
-.safety-text {
-    color:var(--color-text-secondary);
-    font-size:12px;
-    transition:color 0.2s ease,opacity 0.2s ease;
-    opacity:0.85;
+    flex-direction:column;
+    gap:10px;
 }
 fieldset {
     display:block;

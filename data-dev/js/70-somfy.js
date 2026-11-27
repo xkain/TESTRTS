@@ -277,7 +277,7 @@ class Somfy {
             }
         });
 
-        get('divManualSafety').style.display = isM ? 'block' : 'none';
+        get('divManualSafety').style.display = isM ? '' : 'none';
         divS.style.display = target ? 'block' : 'none';
         divG.style.display = target ? 'none' : '';
         this.updateRadioPins();
@@ -453,7 +453,7 @@ class Somfy {
             ap.radioBoardType === bv && pk.every(k => ap[k] === t.config[k]);
 
         if (isM && !pinsTrusted && !get('cbManualSafety')?.checked) {
-            return ui.errorMessage(d, tr('ERR_RADIO_SAFETY_REQUIRED'));
+            return ui.errorMessage(d, tr('ERR_PIN_SAFETY_REQUIRED'));
         }
 
         // Les curseurs portent data-setonly="true", donc ui.fromElement() les SAUTE à la lecture :

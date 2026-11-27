@@ -963,7 +963,8 @@ class General {
             </select>
             </div>
             </div>
-            <div id="divLedManualBlock" class="gen-pin-grid" style="display:${presetVal === String(MANUAL) ? '' : 'none'};">
+            <div id="divLedManualBlock" style="display:${presetVal === String(MANUAL) ? 'contents' : 'none'};">
+            <div class="gen-pin-grid">
             <div class="gen-field">
             <label class="gen-field-label" for="inputLedPinManual">GPIO</label>
             <div class="gen-input-box gen-pin-box dirty-target" id="divLedPinCustom">
@@ -974,8 +975,9 @@ class General {
             </span>
             </div>
             </div>
-            <label class="genmod-check led-safety"><input id="cbLedManualSafety" type="checkbox"><span>${tr('RADIO_SAFETY_TEXT')}</span></label>
-            <p class="gen-tile-desc is-warning led-pin-warn" id="ledPinWarn" style="display:none"></p>
+            </div>
+            <p class="gen-tile-desc is-warning" id="ledPinWarn" style="display:none"></p>
+            ${pinSafetyBlock('cbLedManualSafety')}
             </div>
             <p class="gen-tile-desc">${tr('LED_MODAL_PIN_DESC')}</p>
             </section>
@@ -1119,7 +1121,7 @@ class General {
 
             const syncPreset = () => {
                 const val = parseInt(presetSel.value, 10);
-                manualBlock.style.display = (val === MANUAL) ? '' : 'none';
+                manualBlock.style.display = (val === MANUAL) ? 'contents' : 'none';
                 // Le switch et le sélecteur décrivent la même chose : "aucune broche" ne peut pas
                 // coexister avec un témoin activé, dans un sens comme dans l'autre.
                 swEnabled.checked = (val !== NONE);
@@ -1161,7 +1163,7 @@ class General {
                         this._shakeLedPinInput();
                         return;
                     }
-                    if (!get('cbLedManualSafety')?.checked) { this._setLedPinError('ERR_LED_SAFETY_REQUIRED'); return; }
+                    if (!get('cbLedManualSafety')?.checked) { this._setLedPinError('ERR_PIN_SAFETY_REQUIRED'); return; }
                 }
                 const owner = this._ledPinConflict(pin);
                 if (owner) {
@@ -1260,7 +1262,7 @@ class General {
                 // Le switch ne bloque pas la saisie -- comme sur la page Radio -- seulement
                 // l'enregistrement, avec un message qui dit explicitement pourquoi.
                 if (!get('cbLedManualSafety')?.checked) {
-                    this._setLedPinError('ERR_LED_SAFETY_REQUIRED');
+                    this._setLedPinError('ERR_PIN_SAFETY_REQUIRED');
                     return;
                 }
                 this._lastValidLedPin = pin;

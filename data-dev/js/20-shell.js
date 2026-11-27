@@ -1690,6 +1690,14 @@ function genGridSpan(grid) {
 // qu'on lui demande. Partagée par les fenêtres de la page : un seul gabarit en mémoire plutôt
 // que des chaînes jumelles.
 // `id` sert de préfixe aux parties que le JS réécrit ensuite : <id>State, <id>Chips, <id>Hint.
+function pinSafetyBlock(id) {
+    return `<div class="pin-safety">
+    <div class="genmod-note is-danger"><svg><use href="#svg-warning"></use></svg><div><b>${tr('PIN_SAFETY_TITLE')}</b><span>${tr('PIN_SAFETY_DESC')}</span></div></div>
+    <label class="gen-row" for="${id}">
+    <span class="gen-row-text"><b>${tr('PIN_SAFETY_CHECK')}</b><span>${tr('PIN_SAFETY_CHECK_DESC')}</span></span>
+    <span class="gen-seg gen-seg-bool"><input id="${id}" type="checkbox"><span class="gen-seg-yes">${tr('BT_YES')}</span><span class="gen-seg-no">${tr('BT_NO')}</span></span>
+    </label></div>`;
+}
 function genModalState(keyLabel, value, note = '') {
     return `<span class="genmod-state-key">${keyLabel}</span>
     <span class="genmod-state-val">${value}${note ? `<small>${note}</small>` : ''}</span>`;
