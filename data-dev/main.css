@@ -3507,6 +3507,9 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
 }
 .rdc-pins #divShowGpio {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 #divRadioBoardType #divGPIOSummary {
     padding: 12px 14px;
