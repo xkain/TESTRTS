@@ -2539,7 +2539,7 @@ button.genmod-backup .genmod-backup-go { margin-left: auto; color: var(--text-3)
 .wiz-sum { display: flex; flex-direction: column; align-items: center; gap: calc(14px + clamp(4px, 1vw, 12px)); padding-bottom: 26px; border-bottom: 1px solid var(--divider); text-align: center; }
 .wiz-sum-icon { display: grid; place-items: center; flex: none; width: clamp(96px, min(9vw, 17vh), 132px); aspect-ratio: 1; border-radius: 50%; background: color-mix(in srgb, var(--hc) 12%, #ffffff); color: var(--hc); box-shadow: 0 0 0 clamp(4px, 1vw, 12px) var(--hero-ring); }
 :root[data-theme="dark"] .wiz-sum-icon { background: color-mix(in srgb, var(--hc) 35%, #12161c); color: color-mix(in srgb, var(--hc) 45%, #ffffff); }
-.wiz-sum-icon svg { width: 58%; height: 58%; fill: currentColor; --shade-position: 100; --fpos: 100%; }
+.wiz-sum-icon svg { width: 58%; height: auto; aspect-ratio: 1; fill: currentColor; --shade-position: 100; --fpos: 100%; }
 .wiz-sum-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .hero-skin .wiz-title { font-size: var(--fs-1); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
 .wiz-sum-text b { font-size: clamp(22px, 1.9vw, 30px); font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
