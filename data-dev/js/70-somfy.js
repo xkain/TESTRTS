@@ -1422,7 +1422,7 @@ class Somfy {
         div.id = 'divDashOrder';
         div.className = 'modal-overlay genmod-overlay';
         div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
-            id: 'dashOrder', icon: 'svg-sort', titleKey: 'DASH_ORDER_TITLE', descKey: 'DASH_ORDER_DESC',
+            id: 'dashOrder', icon: 'svg-sort', skin: 'fw', titleKey: 'DASH_ORDER_TITLE', descKey: 'DASH_ORDER_DESC',
             stateKey: tr('SUBTAB_ROOMS'), stateValue: String(work.room.length), sectionKey: 'DASH_ORDER_TITLE', hintKey: '', footId: 'dashOrderFoot',
             bodyHtml: ''
         })}</div>`;

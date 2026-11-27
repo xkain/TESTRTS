@@ -761,7 +761,7 @@ class General {
         div.id = 'divDashboardPrefsOverlay';
         div.className = 'modal-overlay genmod-overlay';
         div.innerHTML = `<div class="message-content genmod-window">${genModalShell({
-            id: 'dashPrefs', icon: 'svg-tabHome', titleKey: 'DASHB_PREFS_TITLE', descKey: 'DASHB_PREFS_MODAL_DESC',
+            id: 'dashPrefs', icon: 'svg-tabHome', skin: 'fw', titleKey: 'DASHB_PREFS_TITLE', descKey: 'DASHB_PREFS_MODAL_DESC',
             stateKey: tr('DASHB_PREFS_PREVIEW'), stateValue: '', sectionKey: 'DASHB_PREFS_SECTION', hintKey: '', footId: 'dashPrefsFoot',
             bodyHtml: `
             <h3 class="dp-sec">${tr('DASHB_PREFS_SECTION_HEADER_1')}</h3>
@@ -1432,6 +1432,7 @@ class General {
         <div class="message-content genmod-window">
         ${genModalShell({
             id: 'lang',
+            skin: 'fw',
             icon: 'svg-language',
             titleKey: 'GENERAL_LANGUAGE',
             descKey: 'LANG_MODAL_TITLE_DESC',
