@@ -29,7 +29,10 @@ quel que soit l'onglet :
   fenêtre d'écoute (**Fréq. min**, **Fréq. max**) et un graphique de cette fenêtre sur la bande
   433,000-434,399 MHz. Voir [Comprendre la fenêtre d'écoute](#fenetre-ecoute).
 * **Trames reçues**, **Dernier signal** et **Dernière trame** : un signe de vie de la réception,
-  affiché directement sur ordinateur, derrière le bouton **Détails** sur tablette et téléphone.
+  affiché directement sur ordinateur, derrière le bouton **Détails** sur tablette.
+
+Sur téléphone, le bandeau ne garde qu'une ligne de résumé : son menu ⋮ propose **Détails**, qui
+ouvre ces informations dans un panneau, et **Aide sur cette page**.
 
 ## Réception { #reception }
 

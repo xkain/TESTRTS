@@ -12,7 +12,10 @@ dans [Sécurité de l'appareil](../securite.md).
 Le bandeau, à gauche sur ordinateur et en haut de la page sur tablette et téléphone, rappelle le
 nom de l'appareil et son adresse `.local` ; sur ordinateur, il ajoute la description de la page.
 Il résume aussi la **Langue**, le **Fuseau horaire** et le **Thème** en service : directement sur
-ordinateur, derrière le bouton **Détails** sur tablette et téléphone.
+ordinateur, derrière le bouton **Détails** sur tablette.
+
+Sur téléphone, le bandeau ne garde qu'une ligne de résumé : son menu ⋮ propose **Détails**, qui
+ouvre ces informations dans un panneau, et **Aide sur cette page**.
 
 ## Langue & région { #region }
 

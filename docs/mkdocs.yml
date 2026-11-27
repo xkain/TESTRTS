@@ -196,8 +196,6 @@ nav:
           - Réseau:
               - v3/appareil/reseau/index.md
               - Assistant de connexion: v3/appareil/reseau/assistant-de-connexion.md
-              - DHCP et IP statique: v3/appareil/reseau/dhcp-ip-statique.md
-              - Mot de passe du point d'accès: v3/appareil/reseau/mot-de-passe-point-d-acces.md
           - Radio:
               - v3/appareil/radio/index.md
               - Test des télécommandes: v3/appareil/radio/assistant-de-reglages.md

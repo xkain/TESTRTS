@@ -105,13 +105,13 @@ Relier l'appareil à votre réseau, en Wi-Fi ou en Ethernet : c'est la première
 
     Le parcours guidé, depuis le point d'accès de secours.
 
--   :material-ip-network-outline:{ .lg .middle } **[DHCP et IP statique](appareil/reseau/dhcp-ip-statique.md)**
+-   :material-ip-network-outline:{ .lg .middle } **[DHCP et IP statique](appareil/reseau/index.md#adresse-ip)**
 
     ---
 
     Laisser votre box attribuer l'adresse, ou la fixer.
 
--   :material-wifi-lock:{ .lg .middle } **[Mot de passe du point d'accès](appareil/reseau/mot-de-passe-point-d-acces.md)**
+-   :material-wifi-lock:{ .lg .middle } **[Mot de passe du point d'accès](appareil/reseau/index.md#point-d-acces)**
 
     ---
 

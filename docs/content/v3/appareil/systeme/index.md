@@ -22,7 +22,10 @@ affiché quel que soit l'onglet :
     seulement : sur tablette et téléphone, le même bouton se trouve dans l'onglet Mises à jour) ;
 * le canal (stable ou développement), la durée de fonctionnement, la raison du dernier
     redémarrage, la mémoire libre et la version du [firmware de secours](firmware-de-secours.md)
-    (directement sur ordinateur, derrière **Détails** sur tablette et téléphone).
+    (directement sur ordinateur, derrière **Détails** sur tablette).
+
+Sur téléphone, le bandeau ne garde qu'une ligne de résumé : son menu ⋮ propose **Détails**, qui
+ouvre ces informations dans un panneau, et **Aide sur cette page**.
 
 ## Mises à jour { #update }
 

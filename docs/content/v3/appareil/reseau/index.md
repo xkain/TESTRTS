@@ -1,215 +1,208 @@
-# Connexion réseau
+# Réseau
 
-Cet onglet (`Réseau → Connexion`) relie l'appareil à votre réseau local, en Wi-Fi comme en
-Ethernet. Trois réglages annexes vivent sur leur propre page :
-[Assistant de Connexion](assistant-de-connexion.md) (parcours guidé),
-[DHCP / IP Statique](dhcp-ip-statique.md) et
-[Mot de passe du point d'accès](mot-de-passe-point-d-acces.md) (le point d'accès de secours
-de l'appareil, pas votre Wi-Fi domestique). L'onglet voisin **Réseau → MQTT** est documenté à
-part — voir [Paramètres MQTT](../../domotique/mqtt/index.md) pour sa configuration et [MQTT](../../domotique/mqtt/topics.md) pour ce
-qui se publie une fois connecté.
+La page **Réseau** relie l'appareil à votre réseau local, en Wi-Fi, en Ethernet ou les deux, et
+règle comment on le retrouve : nom d'hôte, adresse IP et réseau de secours. Elle se lit en quatre
+onglets ; **Ethernet** et **Wi-Fi** n'apparaissent que si le type de connexion choisi s'en sert.
+!!! tip "Première installation"
 
-![reseau 1](v3/img/reseau-1){ .on-glb }
+    Pour une première mise en réseau, l'[assistant de connexion](assistant-de-connexion.md) est
+    plus simple : il pose les mêmes réglages en trois étapes. Cette page sert à ajuster un réglage
+    précis une fois l'appareil sur votre réseau.
 
-!!! note "Note"
+## Le bandeau
 
-    Tant que vous êtes connecté au [point d'accès temporaire](../../../aide/point-d-acces.md) de l'appareil (`192.168.4.1`),
-    cette page s'ouvre sur un bandeau d'alerte et un raccourci direct vers l'[Assistant de Connexion](assistant-de-connexion.md) : rien d'autre n'a vraiment de sens avant
-    d'avoir rejoint votre réseau. Le reste de cette page décrit la configuration **manuelle**,
-    utile pour ajuster un réglage précis une fois déjà connecté, ou si vous préférez vous passer
-    de l'assistant.
+Le bandeau, à gauche sur ordinateur et en haut de la page sur tablette et téléphone, décrit ce que
+fait l'appareil **maintenant**, pas ce qui est réglé :
 
-## La page, bloc par bloc
+* l'icône : des ondes Wi-Fi, allumées et colorées selon le signal, la prise Ethernet, ou le point
+    d'accès quand vous êtes connecté au réseau de l'appareil ;
+* l'état : *Connecté en Wi-Fi*, *Connecté en Ethernet* ou *Point d'accès de l'appareil* ;
+* le nom du réseau Wi-Fi rejoint, *Ethernet*, ou le nom de l'appareil sur son point d'accès ;
+* la qualité : *Très bon signal*, *Signal moyen*, *Signal faible* (en Wi-Fi), *Lien actif* (en
+    Ethernet) ou *Déconnecté* ;
+* les faits : **Adresse IP**, **Adressage** (`Automatique` ou `Fixe`), **Canal** et signal en dBm
+    (en Wi-Fi), **Vitesse** (en Ethernet) et **Adresse MAC**, utile pour une réservation dans votre
+    box ;
+* le bouton `Relancer l'assistant de première connexion`, qui ouvre
+    l'[assistant de connexion](assistant-de-connexion.md).
 
-La page est organisée en **blocs** :
+Sur ordinateur, les faits et le bouton sont affichés directement, et derrière **Détails** sur
+tablette. Sur téléphone, le bandeau ne garde qu'une ligne de résumé : son menu ⋮ propose
+**Détails**, qui ouvre ces informations dans un panneau, et **Aide sur cette page**.
 
-| Bloc | Contenu |
+## Connexion { #summary }
+
+![Réseau, onglet Connexion](v3/img/reseau-connexion){ .on-glb }
+
+| Tuile | Ce qu'elle montre ou permet |
 |---|---|
-| **Configuration guidée** | le raccourci vers l'[assistant de connexion](assistant-de-connexion.md), en haut de page. Sur le point d'accès, il est masqué : le **bandeau orange** conduit déjà à l'assistant. |
-| **Type de connexion** | le choix **Wi-Fi** ou **Ethernet** |
-| **Connexion Wi-Fi** *(ou Ethernet)* | l'interface active : réseau, options et configuration matérielle |
-| **Adressage & secours** | les réglages IP (voir [DHCP et IP statique](dhcp-ip-statique.md)) et le [mot de passe du point d'accès](mot-de-passe-point-d-acces.md) |
-| **État de la connexion** | en colonne latérale : l'état du lien |
+| **Type de connexion** | trois choix : **Wi-Fi** (*Sans fil, par votre box*), **Ethernet + Wi-Fi de secours** (*Bascule en Wi-Fi si l'Ethernet ne répond plus*) et **Ethernet** (*Par la prise réseau de la carte*). La pastille *Actif* marque le type enregistré. |
+| **Récapitulatif** | ce qui partirait à l'enregistrement : nom d'hôte, réseau Wi-Fi et itinérance, carte Ethernet, adresse IP et réseau de secours. Une ligne à compléter passe en orange (*À renseigner*). Toucher une ligne ouvre l'onglet qui la règle. |
 
-À partir de **1600 px** de large, un encart rappelle le **point d'accès de secours** : si aucun
-réseau n'est joignable avant le délai, l'appareil ouvre son propre point d'accès, au nom de
-l'appareil, sur `192.168.4.1`, et c'est par là qu'on le reconfigure. La barre **Enregistrer** est
-fixée en bas de page.
+Choisir un type affiche ou masque aussitôt les onglets **Ethernet** et **Wi-Fi**, avant même
+l'enregistrement. En mode **Ethernet + Wi-Fi de secours**, l'onglet Wi-Fi s'appelle **Wi-Fi de
+secours**.
 
-### État de la connexion
+Quand vous êtes connecté au point d'accès de l'appareil, la tuile le rappelle : *Vous êtes connecté
+au point d'accès de l'appareil. Choisissez comment le relier à votre réseau.* Sur un
+[boîtier officiel](../../materiel/boitiers-officiels.md) Wi-Fi seul, la tuile **Type de connexion**
+n'apparaît pas : il n'y a rien à choisir.
 
-Force du signal Wi-Fi (réseau, canal, dBm) ou statut et vitesse Ethernet selon le mode actif,
-adresse IP actuelle, et adresse MAC de l'appareil — utile pour une réservation DHCP dans les
-paramètres de votre routeur (voir [DHCP et IP statique](dhcp-ip-statique.md#dhcp-par-défaut)).
+### Ce que fait chaque type { #types }
 
-## Type de connexion : Wi-Fi ou Ethernet
+| Type | L'appareil… | Sans réseau |
+|---|---|---|
+| **Wi-Fi** | rejoint le réseau Wi-Fi enregistré | ouvre son point d'accès au bout de 20 s |
+| **Ethernet** | n'utilise que le câble, le Wi-Fi est éteint | ouvre son point d'accès si le lien du câble est absent |
+| **Ethernet + Wi-Fi de secours** | utilise le câble ; si le lien tombe, rejoint le Wi-Fi enregistré, et revient au câble dès que le lien revient | ouvre son point d'accès si le Wi-Fi de secours ne répond pas non plus au bout de 20 s |
 
-Cliquer sur l'une des cartes fait basculer le type de connexion et affiche les options associées.
+!!! important "Le Wi-Fi de secours doit être enregistré"
 
-![reseau 2](v3/img/reseau-2){ .on-glb }
+    Le repli n'existe que si un réseau Wi-Fi est **enregistré**, pas seulement si le mode est
+    choisi : renseignez l'onglet **Wi-Fi de secours** avant d'enregistrer. Les deux partent dans
+    le même enregistrement.
 
-!!! note "Note"
+## Ethernet { #ethernet }
 
-    Sur un boîtier [**Édition Wi-Fi**](../../materiel/boitiers-officiels.md), ce choix n'existe
-    pas : le boîtier n'a aucune broche Ethernet, la page ne montre donc que la section Wi-Fi.
+![Réseau, onglet Ethernet](v3/img/reseau-ethernet){ .on-glb }
 
-## Connexion Wi-Fi
+| Tuile | Ce qu'elle montre ou permet |
+|---|---|
+| **Carte Ethernet** | le **Type de carte** : un préréglage par carte connue, ou `Définir manuellement (utilisateur avancé)` |
+| **Réglages de cette carte** | avec un préréglage : *Remplis d'après le modèle choisi : rien à régler.* `Voir le détail` affiche le type de puce PHY, l'adresse PHY, le mode d'horloge et les broches d'alimentation, MDC et MDIO. |
+| **Réglages manuels** | en définition manuelle seulement : **PHY**, **Clock**, **Adresse**, et les broches **Power**, **MDC** et **MDIO**, avec `−` / `+`. Le bouton à côté de **Power** passe la broche à *Aucune*. |
 
-![reseau 3](v3/img/reseau-3){ .on-glb }
+Les préréglages :
 
-### Rejoindre un réseau
-
-Deux boutons, qui ouvrent la même fenêtre sous deux formes :
-
-* **Chercher un réseau sans fil** : scanne les réseaux à portée et les affiche triés par
-    force de signal (les doublons — plusieurs bornes du même réseau maillé — sont fusionnés sur
-    le signal le plus fort). Toucher un réseau dans la liste passe directement à la saisie du
-    mot de passe.
-* **Ajouter un réseau manuellement** : saisie directe du SSID et du mot de passe, sans scan —
-    nécessaire pour un réseau caché (voir plus bas), ou pratique si vous connaissez déjà le nom
-    exact.
-
-Dans les deux cas, valider ouvre une fenêtre de confirmation récapitulant le nom d'hôte et
-les adresses pour retrouver l'appareil une fois basculé — voir
-[rejoindre le réseau après enregistrement](#rejoindre-le-réseau-après-enregistrement).
-
-### Réseau Wi-Fi caché
-
-La case **Réseau Wi-Fi caché** permet de rejoindre un réseau qui ne diffuse pas son nom. Elle
-change la façon dont l'appareil s'y connecte, pas seulement l'affichage :
-
-* Un SSID caché ne peut pas être découvert par un scan — vous devez forcément passer par
-    **Ajouter un réseau manuellement**.
-* L'appareil s'y connecte alors en **visant directement ce nom**, sans jamais scanner les
-    environs : ni pour la connexion initiale, ni en continu ensuite.
-* Cocher cette case **désactive et grise automatiquement l'itinérance** (ci-dessous) : les
-    deux mécanismes reposent sur un scan, impossible à faire sur un réseau qui ne se
-    laisse pas voir.
-
-!!! tip "Astuce"
-
-    Un SSID caché n'augmente pas réellement la sécurité de votre réseau — il force seulement vos
-    appareils à le chercher activement, ce qui peut au contraire les rendre plus identifiables.
-    Pour une sécurité accrue, privilégiez un mot de passe robuste et un chiffrement WPA2/WPA3
-    plutôt qu'un SSID masqué. Si la stabilité de la connexion compte pour vous, un SSID visible
-    reste préférable.
-
-### Itinérance (Roaming)
-
-**Désactivée par défaut.** Une fois activée, l'appareil reste connecté à votre réseau maillé
-(Mesh) en suivant la borne offrant le meilleur signal, sans jamais couper le Wi-Fi pour y
-parvenir :
-
-* Toutes les **30 secondes**, un scan recherche les autres bornes qui diffusent le même SSID.
-* L'appareil ne change de borne que si sa connexion actuelle est **totalement perdue**, ou si
-    une autre borne offre un signal supérieur d'au moins **10 dBm** — cet écart volontairement
-    généreux évite l'effet de « ping-pong » entre deux bornes de force proche.
-
-Laissez l'itinérance désactivée si votre installation ne comporte qu'un seul routeur/point
-d'accès, si votre réseau n'utilise pas de technologie Mesh, ou si vous utilisez une liaison AP
-forcée sur votre routeur pour fixer l'appareil sur une borne précise.
-
-## Connexion Ethernet
-
-![reseau 4](v3/img/reseau-4){ .on-glb }
+| Carte | Puce PHY | Power | MDC | MDIO |
+|---|---|---|---|---|
+| WT32-ETH01 - Wireless Tag | LAN8720 | GPIO16 | GPIO23 | GPIO18 |
+| EST-PoE-32 - Everything Smart | LAN8720 | GPIO12 | GPIO23 | GPIO18 |
+| ESP32-EVB - Olimex | LAN8720 | Aucune | GPIO23 | GPIO18 |
+| ESP32-POE - Olimex | LAN8720 | GPIO12 | GPIO23 | GPIO18 |
+| T-Internet POE - LILYGO | LAN8720 | GPIO16 | GPIO23 | GPIO18 |
+| wESP32 v7+ - Silicognition | RTL8201 | Aucune | GPIO16 | GPIO17 |
+| wESP32 < v7 - Silicognition | LAN8720 | Aucune | GPIO16 | GPIO17 |
 
 !!! danger "Une broche fausse peut bloquer ou abîmer la carte"
 
-    Une broche déjà reliée à un autre composant (flash, Ethernet, radio…) peut empêcher
-    l'appareil de démarrer, ou être abîmée si deux composants la pilotent en même temps.
-    Comparez chaque broche à la documentation du fabricant.
+    Rien ne détecte une broche déjà reliée à un autre composant (flash, radio…). Comparez chaque
+    broche à la documentation du fabricant : l'enregistrement les récapitule dans une
+    [confirmation critique](#confirmation-critique) avant d'envoyer quoi que ce soit.
 
-Contrairement aux broches de la radio, **rien ne détecte un conflit avec une broche déjà utilisée
-ailleurs sur la carte**. Avant l'enregistrement, un panneau **Confirmation critique** reprend cet
-avertissement et récapitule la carte et les broches choisies : comparez-les avant de continuer.
+Sur un [boîtier officiel](../../materiel/boitiers-officiels.md), la carte est fixe : l'onglet
+Ethernet n'apparaît pas. Cinq clics sur le titre du bandeau le font apparaître pour un dépannage,
+jusqu'au prochain rechargement de la page.
 
-### Type de carte
+## Wi-Fi { #wifi }
 
-Une liste déroulante propose des préréglages pour les cartes Ethernet/PoE les plus connues,
-qui remplissent automatiquement PHY, horloge, adresse et broches GPIO adaptées :
+![Réseau, onglet Wi-Fi](v3/img/reseau-wifi){ .on-glb }
 
-| Carte | PWR | MDC | MDIO |
-|---|---|---|---|
-| WT32-ETH01 — Wireless Tag | GPIO16 | GPIO23 | GPIO18 |
-| EST-PoE-32 — Everything Smart | GPIO12 | GPIO23 | GPIO18 |
-| ESP32-EVB — Olimex | Aucune | GPIO23 | GPIO18 |
-| ESP32-POE — Olimex | GPIO12 | GPIO23 | GPIO18 |
-| T-Internet POE — LilyGO | GPIO16 | GPIO23 | GPIO18 |
-| wESP32 v7+ — Silicognition | Aucune | GPIO16 | GPIO17 |
-| wESP32 < v7 — Silicognition | Aucune | GPIO16 | GPIO17 |
+| Tuile | Ce qu'elle montre ou permet |
+|---|---|
+| **Réseaux à proximité** | `Chercher un réseau Wi-Fi` liste les réseaux que capte l'appareil, du plus fort au plus faible, avec la qualité du signal ; un réseau émis par plusieurs bornes n'apparaît qu'une fois. Toucher un réseau remplit son nom et passe au mot de passe. `+ Mon réseau n'apparaît pas (réseau caché)` vide le nom pour le saisir à la main, `Chercher à nouveau` relance la recherche. |
+| **Wi-Fi** | le **SSID du réseau** (32 caractères) et son **Mot de passe**. Un mot de passe enregistré n'est jamais renvoyé par l'appareil : le champ masqué veut dire « inchangé ». |
+| **Options Wi-Fi** | **Réseau Wi-Fi caché** et **Itinérance**, ci-dessous |
 
-L'option **Configuration Manuelle** révèle à la place tous les champs (type de PHY, mode
-d'horloge, adresse, broches Power/MDC/MDIO) pour une carte qui n'est pas dans la liste —
-consultez alors sa documentation technique pour les renseigner vous-même.
+La recherche ne part jamais seule : elle dure quelques secondes, pendant lesquelles l'appareil ne
+répond plus.
 
-![reseau 5](v3/img/reseau-5){ .on-glb }
+### Réseau Wi-Fi caché { #reseau-cache }
 
-!!! note "Note"
+Pour un réseau qui ne diffuse pas son nom. L'appareil s'y connecte en visant directement ce nom,
+sans chercher les bornes autour de lui. Passer ce réglage à `Oui` met **Itinérance** à `Non` et la
+grise : elle repose sur une recherche que ce réseau ne permet pas.
 
-    Sur un boîtier [**Édition Ethernet & Wi-Fi**](../../materiel/boitiers-officiels.md), ce bloc entier
-    (type de carte comme réglages manuels) est **masqué** : le câblage est fixe et déjà validé
-    en usine (c'est un WT32-ETH01), rien à choisir. Si vous avez malgré tout besoin de le
-    consulter ou de le modifier, cliquez 5 fois sur le titre de la page — ce déverrouillage de
-    dépannage ne survit pas à un rechargement.
+### Itinérance { #itinerance }
 
-### Repli vers le Wi-Fi
+Pour un réseau à plusieurs bornes (Mesh, répéteurs) qui diffusent le même nom. À `Oui`, l'appareil
+cherche toutes les **30 secondes** les bornes de son réseau, et change de borne quand une autre
+capte au moins **10 dBm** mieux que la sienne. Le changement coupe le Wi-Fi le temps de se
+reconnecter. Laissez-la à `Non` avec une seule borne, ou si votre box attache l'appareil à une borne
+précise.
 
-La case **Secours Wi-Fi** (au-dessus de la section Wi-Fi tant qu'Ethernet est actif) fait
-basculer automatiquement sur votre réseau sans fil si le câble tombe ou que la connexion
-filaire échoue. Concrètement : l'appareil préfère **toujours** l'Ethernet tant que son lien
-est actif ; ce n'est que lorsque le lien tombe qu'il regarde si un réseau Wi-Fi a été
-renseigné pour basculer dessus — sinon, il rouvre son point d'accès de configuration.
+## Accès { #advanced }
 
-!!! important "Important"
+![Réseau, onglet Accès](v3/img/reseau-advanced){ .on-glb }
 
-    Ce repli n'existe que si un réseau Wi-Fi est **réellement enregistré** sur l'appareil — pas
-    seulement coché. Cochez **Secours Wi-Fi**, puis renseignez un réseau via les boutons de la
-    section Wi-Fi (restée accessible, elle ne se masque pas tant que ce repli est actif) **avant**
-    d'enregistrer : les deux parties partent dans le même enregistrement, pas besoin de deux
-    passages séparés.
+### Nom et découverte { #nom }
 
-Sans ce repli configuré, un câble débranché laisse l'appareil retenter indéfiniment la
-connexion filaire, sans jamais rouvrir de point d'accès pour le reconfigurer à distance.
+Le **Nom d'hôte** donne l'adresse locale de l'appareil, `http://<nom>.local` : 31 caractères au
+plus, lettres, chiffres ou tiret. Il s'applique tout de suite au réseau, mais la nouvelle adresse
+`.local` ne répond qu'après un redémarrage. C'est aussi le nom du point d'accès de secours.
 
-### Validation et enregistrement
+**Diffusion uPnP (SSDP)** annonce l'appareil sur le réseau local pour que les autres systèmes le
+trouvent tout seuls. Ce réglage s'applique dès le changement, sans passer par `Enregistrer`.
 
-Sur une carte générique, enregistrer un changement Ethernet ouvre d'abord un récapitulatif en
-lecture seule des broches retenues, pour vous laisser l'occasion de les relire avant que
-l'appareil ne redémarre son interface réseau.
+### Adresse IP { #adresse-ip }
 
-![reseau 6](v3/img/reseau-6){ .on-glb }
+**Adressage** `Automatique` laisse votre box attribuer l'adresse. Pour garder toujours la même
+adresse, réservez-la dans votre box, avec l'**Adresse MAC** du bandeau, plutôt que de la fixer ici.
 
-!!! note "Note"
+`Fixe` ouvre les champs **Adresse IP statique**, **Masque sous-réseau** et **Passerelle**
+(obligatoires), **Nom serveur DNS 1** et **DNS 2** (facultatifs), au format `XXX.XXX.XXX.XXX`. Ils
+ne s'appliquent qu'au prochain redémarrage de l'appareil.
 
-    Sur un boîtier **Édition Ethernet & Wi-Fi**, ce récapitulatif est **sauté** : le
-    matériel étant **natif**, il n'y a rien à relire. L'enregistrement passe
-    directement à la fenêtre finale (nom d'hôte), commune au Wi-Fi.
+!!! warning "Une adresse fixe fausse rend l'appareil injoignable"
 
-## Rejoindre le réseau après enregistrement
+    Une adresse hors de la plage de votre box, déjà prise ou avec une mauvaise passerelle coupe
+    l'appareil du réseau, sans message. Pour en sortir sans rien perdre d'autre, le
+    [firmware de secours](../systeme/firmware-de-secours.md) réinitialise le seul réseau : voir
+    [Réinitialiser](../systeme/firmware-de-secours.md#reinitialiser).
 
-Une fois le réseau choisi (Wi-Fi ou Ethernet) et confirmé, une dernière fenêtre permet de
-revoir — ou changer — le **nom d'hôte**, et affiche les adresses pour retrouver l'interface
-une fois le basculement effectué.
+### Réseau de secours de l'appareil { #point-d-acces }
 
-![reseau 7](v3/img/reseau-7){ .on-glb }
+Si aucun réseau n'est joignable (voir [ce que fait chaque type](#types)), l'appareil ouvre son
+propre point d'accès Wi-Fi, au nom de l'appareil, sur `192.168.4.1` : c'est par là qu'on le
+reconfigure. Voir [Se connecter au point d'accès](../../../aide/point-d-acces.md).
 
-* `http://<nom-d-hôte>.local` (fonctionne nativement sur la plupart des systèmes récents) ;
-* `http://<nom-d-hôte>` directement, si **Diffusion uPnP (SSDP)** est activée (onglet **Accès**
-    de cette page) ;
-* ou l'adresse IP attribuée par votre routeur, visible dans son interface d'administration.
+**Mot de passe du point d'accès** à `Oui` exige un mot de passe pour le rejoindre, de 8 à 63
+caractères (limite du WPA2). À `Non`, le point d'accès est ouvert, c'est le réglage d'usine :
 
-!!! warning "Avertissement"
+| Choix | Avertissement affiché |
+|---|---|
+| `Non` | *Sans mot de passe, ce point d'accès est ouvert : toute personne à portée peut s'y connecter et piloter vos équipements tant qu'il reste actif.* |
+| `Oui` | *Si vous oubliez ce mot de passe et que le Wi-Fi principal échoue un jour, vous ne pourrez plus reconfigurer l'appareil à distance […]* : il faudra passer par le [firmware de secours](../systeme/firmware-de-secours.md), dont le réseau `ESPSomfy-RESCUE` reste ouvert. |
 
-    L'appareil redémarre environ une seconde après l'enregistrement pour appliquer son nouveau
-    réseau. Si vous configuriez ce réseau depuis son propre point d'accès temporaire
-    (`ESPSomfyRTS` ou le nom de votre appareil) — le cas le plus courant, premier démarrage ou
-    reconfiguration après une perte de connexion — ce redémarrage coupe cette liaison : votre
-    ordinateur ou téléphone s'y retrouve déconnecté, et **doit lui-même rejoindre votre réseau
-    habituel** pour retrouver l'appareil à sa nouvelle adresse.
+## Enregistrer
 
-Si l'appareil reste introuvable après quelques minutes, vérifiez le mot de passe Wi-Fi saisi ainsi
-que l'URL, si vous vous connectez par adresse IP. Débranchez l'appareil, puis rebranchez-le.
-En cas d'échec de connexion prolongé, il réactivera de lui-même son point d'accès de
-configuration. Pour un appareil totalement injoignable, voir
-[Firmware de secours](../systeme/firmware-de-secours.md).
+La barre d'enregistrement liste chaque réglage modifié, avec l'ancienne et la nouvelle valeur ;
+`Annuler` remet la page dans l'état enregistré. À l'enregistrement, le nom d'hôte, le mot de passe
+du point d'accès et l'adresse IP partent d'abord, sans redémarrage. La connexion (type, Wi-Fi,
+carte Ethernet) part en dernier, par les fenêtres ci-dessous, parce qu'elle peut couper la page.
 
+### Confirmation critique { #confirmation-critique }
+
+![Fenêtre Confirmation critique](v3/img/reseau-fen-confirmation-ethernet){ .on-glb }
+
+En **Ethernet** ou **Ethernet + Wi-Fi de secours**, un panneau rouge récapitule la carte (type,
+puce PHY, adresse PHY, horloge) et les broches (alimentation, MDC, MDIO) : *Ces valeurs
+correspondent-elles à votre carte ?* `Continuer` passe à l'étape suivante, `Annuler` ne change
+rien. Sur un boîtier officiel Ethernet, au câblage fixe, ce panneau est sauté.
+
+### Enregistrer le réseau { #enregistrer-le-reseau }
+
+![Fenêtre Enregistrer le réseau](v3/img/reseau-fen-enregistrer){ .on-glb }
+
+Le dernier panneau rappelle que la page va perdre la connexion, permet de changer une dernière fois
+le **Nom d'hôte**, et donne les adresses où retrouver l'appareil : `http://<nom>.local`,
+`http://<nom>`, ou l'adresse IP que votre box lui donnera. Depuis le point d'accès de l'appareil,
+il ajoute les étapes pour revenir sur votre Wi-Fi habituel. Rien n'est envoyé avant `Enregistrer`.
+
+Après `Enregistrer`, le panneau affiche *Bascule réseau en cours* et la nouvelle adresse.
+L'appareil redémarre une seconde plus tard quand le type de connexion change, quand le réseau ou
+le mot de passe Wi-Fi changent en mode Wi-Fi, ou pour tout changement Ethernet en mode Ethernet.
+
+!!! tip "L'appareil reste introuvable ?"
+
+    Patientez une minute, vérifiez le mot de passe Wi-Fi, puis cherchez l'appareil dans la liste
+    des appareils connectés de votre box. S'il ne rejoint pas le réseau, il rouvre de lui-même son
+    point d'accès. S'il est injoignable de tout côté, voir le
+    [firmware de secours](../systeme/firmware-de-secours.md).
+
+## Pages liées
+
+* [Assistant de connexion](assistant-de-connexion.md)
+* [Se connecter au point d'accès](../../../aide/point-d-acces.md)
+* [Firmware de secours](../systeme/firmware-de-secours.md)
+* [Paramètres MQTT](../../domotique/mqtt/index.md)

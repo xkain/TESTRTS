@@ -33,7 +33,7 @@ Dès que la connexion principale échoue ou n'existe pas encore :
     au premier démarrage. Tant qu'il n'a pas été changé, le réseau s'appelle **ESPSomfyRTS**.
 
     Le point d'accès peut être **protégé par un mot de passe** : voir
-    [Mot de passe du point d'accès](../v3/appareil/reseau/mot-de-passe-point-d-acces.md). Sans réglage de
+    [Mot de passe du point d'accès](../v3/appareil/reseau/index.md#point-d-acces). Sans réglage de
     votre part, il reste **ouvert**.
 
 === "v2.x"

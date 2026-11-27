@@ -11,8 +11,8 @@ tuiles : le **mode de protection**, puis sa **portée**.
 Le bandeau, à gauche sur ordinateur et en haut de la page sur tablette et téléphone, dit en une
 ligne ce qui est enregistré sur l'appareil, par exemple
 *Protégé : Code Pin · Toute l'interface*, ou *Aucune protection : tout le réseau local peut tout
-faire*. Il reprend aussi les lignes suivantes, affichées directement sur ordinateur et rangées
-derrière le bouton **Détails** sur tablette et téléphone :
+faire*. Il reprend aussi les lignes suivantes, affichées directement sur ordinateur, rangées
+derrière le bouton **Détails** sur tablette et dans le menu ⋮ du bandeau sur téléphone :
 
 | Ligne | Ce qu'elle dit |
 |---|---|

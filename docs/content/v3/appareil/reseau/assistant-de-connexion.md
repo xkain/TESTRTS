@@ -1,101 +1,85 @@
 # Assistant de connexion
 
-Un parcours guidé en deux étapes pour relier l'appareil à votre réseau, sans avoir à
-comprendre la page [Connexion Réseau](index.md) dans son ensemble. C'est lui qui
-s'affiche automatiquement au tout premier démarrage (tant que l'appareil est sur son propre
-point d'accès) ; vous pouvez aussi le relancer à tout moment depuis **Réseau → Connexion**.
+L'assistant relie l'appareil à votre réseau en trois étapes : le type de connexion, ses réglages,
+puis où retrouver l'appareil. Il s'ouvre tout seul au premier démarrage, quand vous êtes connecté
+au [point d'accès](../../../aide/point-d-acces.md) de l'appareil. Il se relance à tout moment depuis
+le bandeau de la page [Réseau](index.md), avec `Relancer l'assistant de première connexion`.
 
-!!! tip "Astuce"
+La colonne de gauche suit les étapes. Sur le point d'accès, elle rappelle aussi que vous êtes
+connecté directement à l'appareil, sur `192.168.4.1`, et qu'il faudra revenir sur votre réseau
+habituel à la fin.
 
-    Sur un [boîtier officiel](../../materiel/boitiers-officiels.md), cette étape est en français, 
+## 1. Connexion { #connexion }
 
-## Étape 1 : comment se connecter ?
+![Assistant de connexion, étape 1](v3/img/assistant-connexion-mode){ .on-glb }
 
-Trois cartes, qui ne déterminent que les réglages présentés à l'étape suivante :
+*Comment l'appareil rejoint-il votre réseau ?* Trois cartes, qui ne décident que des réglages de
+l'étape suivante :
 
-* **Wi-Fi** : rejoindre votre réseau sans fil habituel.
-* **Ethernet** : connexion filaire ou PoE, sans aucun repli sans fil.
-* **Ethernet + secours Wi-Fi** : connexion filaire comme méthode principale, avec un réseau
-    Wi-Fi de secours qui prend le relais si le câble tombe.
+| Carte | Pour |
+|---|---|
+| **Wi-Fi** (*Le plus courant*) | rejoindre votre réseau sans fil habituel |
+| **Ethernet** | une connexion filaire ou PoE, sans repli sans fil |
+| **Ethernet + Wi-Fi de secours** | le câble d'abord, le Wi-Fi si le câble ne répond plus |
 
-![assistant de connexion 1](v3/img/assistant-de-connexion-1){ .on-glb }   
-    
-!!! note "Note"
+Ce que fait l'appareil dans chaque cas, et quand il rouvre son point d'accès, est décrit dans
+[Ce que fait chaque type](index.md#types).
 
-    Sur un [boîtier officiel](../../materiel/boitiers-officiels.md), cette étape est adaptée au matériel :
+*Vous remplacez un ancien appareil ?* `Restaurer une sauvegarde` ouvre la
+[restauration](../systeme/index.md#backup), réglée pour tout reprendre sauf le réseau, que
+l'assistant configure juste après.
 
-    * Sur la variante **Wi-Fi seul**, elle n'existe pas — le boîtier ne porte aucune broche
-        Ethernet, il n'y a donc rien à choisir. L'assistant s'ouvre directement à l'étape 2.
-    * Sur la variante **Ethernet & Wi-Fi**, la carte **Ethernet seul** est masquée : son câblage
-        est fixe et déjà validé en usine, il n'y a donc aucun réglage à présenter derrière ce
-        choix. Restent **Wi-Fi** et **Ethernet + secours Wi-Fi**, qui ont chacun quelque chose à
-        configurer. Le câblage Ethernet lui-même, lui, est actif par défaut et ne demande rien.
+Sur un [boîtier officiel](../../materiel/boitiers-officiels.md), l'étape s'adapte : le boîtier
+Wi-Fi seul la saute, l'assistant ouvre directement les réglages Wi-Fi ; le boîtier Ethernet ne
+propose pas **Ethernet** seul, sa carte n'ayant rien à régler. Cinq clics sur le titre de l'étape
+font réapparaître cette carte, jusqu'à la fermeture de l'assistant.
 
-## Étape 2 : les réglages
+## 2. Réseau { #reseau }
 
-Le contenu dépend du choix fait à l'étape 1 — un seul bloc pour Wi-Fi ou Ethernet seul, les
-deux pour le mode combiné.
+Les réglages du type choisi, en tuiles numérotées dans l'ordre où on les remplit.
 
-### Bloc Wi-Fi
+=== "Wi-Fi"
 
-Deux façons de renseigner un réseau, communes au reste de l'application : **Chercher un
-réseau sans fil** (scan) ou **Ajouter un réseau manuellement** (saisie directe, pour un SSID
-caché) — voir [Connexion Réseau](index.md#connexion-wi-fi) pour le détail de ces deux
-méthodes. Une fois un réseau retenu, il s'affiche en résumé vert sous les deux boutons — rien
-n'est envoyé à l'appareil à ce stade, c'est le bouton **Enregistrer** en bas de carte qui
-conclut, pour les trois modes.
+    ![Assistant de connexion, étape 2 en Wi-Fi](v3/img/assistant-connexion-wifi){ .on-glb }
 
-<div class="rts-row" markdown>
+=== "Ethernet + Wi-Fi de secours"
 
-![assistant de connexion 2](v3/img/assistant-de-connexion-2){ .on-glb }
-![assistant de connexion 3](v3/img/assistant-de-connexion-3){ .on-glb }
-![assistant de connexion 4](v3/img/assistant-de-connexion-4){ .on-glb }
+    ![Assistant de connexion, étape 2 en Ethernet + Wi-Fi de secours](v3/img/assistant-connexion-both){ .on-glb }
 
-</div>
+| Tuile | Ce qu'elle demande |
+|---|---|
+| **Choisissez votre carte Ethernet** | en Ethernet : le **Type de carte**, comme dans l'onglet [Ethernet](index.md#ethernet) de la page Réseau ; en définition manuelle, les broches s'affichent dessous. Sur un boîtier officiel : *Branchez le câble Ethernet*, rien à régler. |
+| **Choisissez votre réseau Wi-Fi** (ou **le Wi-Fi de secours**) | l'assistant cherche les réseaux dès cette étape et les liste du plus fort au plus faible. Toucher un réseau remplit son nom. `+ Mon réseau n'apparaît pas (réseau caché)` permet de le saisir, `Chercher à nouveau` relance la recherche. |
+| **Saisissez son mot de passe** | le **SSID du réseau** et le **Mot de passe**, *celui de votre box, souvent inscrit dessous* |
+| **Nommez l'appareil (facultatif)** | le **Nom d'hôte**, lettres, chiffres ou tiret, 31 caractères au plus. L'adresse `http://<nom>.local` se met à jour en direct. |
 
-<div class="rts-row" markdown>
+Tant qu'il manque quelque chose, le pied de la fenêtre le dit (*Choisissez un réseau et saisissez
+son mot de passe*, un mot de passe de moins de 8 caractères, un nom d'hôte invalide) et
+`Enregistrer et connecter` reste grisé. Un mot de passe vide est permis : réseau ouvert, ou mot de
+passe déjà enregistré et inchangé.
 
-![assistant de connexion 5](v3/img/assistant-de-connexion-5){ .on-glb }
-![assistant de connexion 6](v3/img/assistant-de-connexion-6){ .on-glb }
+`Enregistrer et connecter` envoie le réseau et le nom en une fois. En Ethernet, sur une carte
+générique, la [confirmation critique](index.md#confirmation-critique) des broches passe d'abord.
+`Retour` revient à l'étape 1.
 
-</div>
+## 3. Terminé { #termine }
 
+![Assistant de connexion, étape 3](v3/img/assistant-connexion-done){ .on-glb }
 
-### Bloc Ethernet
+*C'est enregistré : l'appareil rejoint « … »* (votre Wi-Fi, ou *votre réseau par le câble*). Son
+propre réseau Wi-Fi va disparaître : c'est normal. Trois tuiles disent comment le retrouver :
 
-Sur une carte générique : sélection du type de carte, qui pré-remplit automatiquement les
-broches PHY/Clock/GPIO — voir [Connexion Réseau](index.md#connexion-ethernet) pour le
-détail. Sur un boîtier officiel, ce bloc ne montre qu'une phrase expliquant qu'il n'y a rien à
-régler, votre box internet attribuera une adresse automatiquement.
+1. **Revenez sur votre réseau** : reconnectez ce téléphone ou cet ordinateur à votre réseau
+    habituel.
+2. **Ouvrez l'interface à cette adresse** : le lien `http://<nom>.local`, qui ne répond qu'une
+    fois revenu sur votre réseau.
+3. **L'adresse ne répond pas ? Passez par votre box** : cherchez le nom de l'appareil dans la
+    liste des appareils connectés de votre box, et ouvrez l'adresse IP qu'elle lui a donnée.
 
-!!! tip "Astuce"
-
-    Un dépannage caché existe si vous avez besoin, malgré tout, de voir ou modifier la
-    configuration Ethernet complète sur un boîtier : cliquez 5 fois sur le titre de l'étape 1
-    (« Comment souhaitez-vous connecter... »). La carte **Ethernet seul** et le sélecteur de
-    type de carte réapparaissent. Ce déverrouillage ne survit pas à la fermeture de l'assistant.
-
-### Avertissement du mode combiné
-
-En mode **Ethernet + secours Wi-Fi**, un bandeau d'avertissement reste affiché tant qu'aucun
-réseau Wi-Fi n'a été renseigné : sans lui, un câble débranché renverrait l'appareil sur son
-point d'accès de configuration sans aucun moyen de le rejoindre à distance. Si vous cliquez
-quand même sur **Enregistrer** sans Wi-Fi configuré, une confirmation vous demande si vous
-voulez vraiment continuer sans secours — accepter revient alors, techniquement, à enregistrer
-un **Ethernet seul** plutôt qu'un mode combiné sans filet.
-
-## Enregistrement
-
-Un seul bouton **Enregistrer**, pour les trois modes, qui envoie Ethernet et Wi-Fi dans un
-seul message — c'est précisément ce qui rend le mode **Ethernet + secours Wi-Fi** possible
-depuis l'assistant : les deux parties partent ensemble, sans repasser deux fois par l'étape 2.
-La fenêtre de confirmation finale (nom d'hôte, adresses d'accès une fois basculé) est la même
-que depuis la page Connexion — voir
-[Connexion Réseau](index.md#rejoindre-le-réseau-après-enregistrement).
+Ouvert depuis le point d'accès, l'assistant s'arrête là : l'appareil quitte ce réseau. Relancé
+depuis la page Réseau, `Fermer` ramène à l'interface.
 
 ## Ignorer l'assistant
 
-Disponible à tout moment, en haut à droite. L'appareil reste alors sur son propre point
-d'accès, utilisable normalement — vous pourrez toujours configurer le réseau plus tard depuis
-[Connexion Réseau](index.md) ou en relançant cet assistant.
-
+`Ignorer l'assistant` (ou `Ignorer`, en haut de la colonne) ferme l'assistant sans rien enregistrer
+et ne le rouvre plus au démarrage. Le réseau se règle alors depuis la page [Réseau](index.md).
