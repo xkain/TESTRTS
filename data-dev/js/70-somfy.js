@@ -3911,7 +3911,7 @@ class Somfy {
     }
     _openEditRoom(roomId) {
         if (typeof roomId === 'undefined') {
-            if (_rooms.length >= 15) {
+            if (_rooms.length - 1 >= (this.maxRooms ? this.maxRooms - 2 : 30)) {
                 ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_LIMIT_REACHED'));
                 return;
             }
