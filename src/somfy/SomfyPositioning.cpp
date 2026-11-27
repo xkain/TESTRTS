@@ -942,10 +942,7 @@ void SomfyShade::moveToTarget(float pos, float tilt) {
     return;
   }
   if(this->isToggle()) {
-    // Overload this as we cannot seek a position on a garage door or single button device.
-    this->p_target(pos);
-    this->p_currentPos(pos);
-    this->emitState();
+    if(this->isIdle() && (this->currentPos >= 50.0f) != (pos >= 50.0f)) this->sendCommand(somfy_commands::My);
     return;
   }
   if(this->tiltType == tilt_types::tiltonly) {
