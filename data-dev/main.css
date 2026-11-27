@@ -2195,9 +2195,9 @@ label.gen-row {
     height: 56px;
     font-size: 2.4em;
 }
-/* Page Sécurité : tuile Portée inerte quand la protection est désactivée ; note Home Assistant du mode. */
+/* Page Sécurité : tuile Portée inerte quand la protection est désactivée ; note d'accès du mode. */
 #secScopeTile.is-off .gen-row { opacity: 0.55; }
-.sec-ha-note {
+.sec-access-note {
     display: flex;
     gap: 10px;
     align-items: flex-start;
@@ -2206,7 +2206,7 @@ label.gen-row {
     margin-top: auto;
     border-top: 1px solid var(--divider);
 }
-.sec-ha-note svg {
+.sec-access-note svg {
     flex: none;
     width: 22px;
     height: 22px;

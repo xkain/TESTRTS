@@ -1887,7 +1887,7 @@ class General {
         body.innerHTML = `
         <div class="gen-seg dirty-target">${radio(0, 'IS_DISABLED')}${radio(1, 'SECURITY_PIN_CODE')}${radio(2, 'SECURITY_PASSWORD')}</div>
         <p id="secTypeDesc" class="gen-tile-desc"></p>
-        <p id="secHaNote" class="gen-tile-desc is-info sec-ha-note"><svg><use href="#svg-homeAssistant0"></use></svg><span>${tr('SECURITY_HA_NOTE')}</span></p>
+        <p id="secAccessNote" class="gen-tile-desc is-info sec-access-note"><svg><use href="#svg-info"></use></svg><span>${tr('SECURITY_ACCESS_NOTE')}</span></p>
 
         <div id="divPopupPin" class="gen-field">
         <span class="gen-field-label">${tr('SECURITY_ENTER_PIN')}</span>
@@ -1961,7 +1961,7 @@ class General {
             const desc = body.querySelector('#secTypeDesc');
             desc.textContent = tr(SEC_DESC[val]);
             desc.classList.toggle('is-warning', val === 0);
-            body.querySelector('#secHaNote').style.display = val === 0 ? 'none' : '';
+            body.querySelector('#secAccessNote').style.display = val === 0 ? 'none' : '';
         };
         body.querySelectorAll('input[name="secTypeGroup"]').forEach(r => r.addEventListener('change', applyType));
         applyType();
@@ -2000,7 +2000,6 @@ class General {
         set('secFactMode', mode);
         set('secFactScope', scope);
         set('secFactDash', tr(!type || cfgOnly ? 'SECURITY_DASH_FREE' : 'SECURITY_DASH_LOCKED'));
-        set('secFactHa', tr(type ? 'SECURITY_HA_SAME' : 'SECURITY_HA_NONE'));
         set('secHeroSum', type ? `${mode} · ${scope}` : mode);
     }
     saveSecurity() {
