@@ -204,6 +204,12 @@ bool ShadeConfigFile::backupNdjson(SomfyShadeController *s) {
       if(addr != 0) fmt.addElem(addr);
     }
     fmt.endArray();
+    fmt.beginArray("favPos");
+    for(uint8_t j = 0; j < SOMFY_MAX_FAVS; j++) if(shade->favPos[j] <= 100) fmt.addElem(shade->favPos[j]);
+    fmt.endArray();
+    fmt.beginArray("favTilt");
+    for(uint8_t j = 0; j < SOMFY_MAX_FAVS; j++) if(shade->favTilt[j] <= 100) fmt.addElem(shade->favTilt[j]);
+    fmt.endArray();
     ok &= this->writeNdjsonLine(fmt, buff, "shade");
   }
 
@@ -359,6 +365,8 @@ static void ndjsonApplyShade(JsonObject &obj, SomfyShade *shade) {
   }
   jget(obj, "setupSteps", shade->setupSteps);
   if(obj.containsKey("remoteModel")) shade->setRemoteModel(obj["remoteModel"] | "");
+  if(obj.containsKey("favPos")) SomfyShade::setFavorites(shade->favPos, obj["favPos"].as<JsonArray>());
+  if(obj.containsKey("favTilt")) SomfyShade::setFavorites(shade->favTilt, obj["favTilt"].as<JsonArray>());
   if(obj.containsKey("linkedRemotes")) {
     for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) shade->linkedRemotes[j] = SomfyLinkedRemote();
     JsonArray arr = obj["linkedRemotes"];

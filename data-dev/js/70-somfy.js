@@ -4369,7 +4369,8 @@ class Somfy {
             this._cardSheetKey = (e) => { if (e.key === 'Escape') this.closeCardSheet(); };
             document.addEventListener('keydown', this._cardSheetKey);
         }
-        this._cardSheet = { kind: kind, id: parseInt(id, 10), tab: tab || 0, draft: null };
+        coverCtl._my = null;
+        this._cardSheet = { kind: kind, id: parseInt(id, 10), tab: tab || 0 };
         this.renderCardSheet();
     }
     closeCardSheet() {
@@ -4417,17 +4418,6 @@ class Somfy {
     cardSheetRoomName(item) {
         return escHtml((_rooms.find(r => r.roomId === item.roomId) || { name: '' }).name);
     }
-    shadeSheetRowsHtml(shade) {
-        const id = shade.shadeId, edit = (t) => `somfy.closeCardSheet(); somfy.openCardEditor('shade', ${id}, ${t});`;
-        const rows = [];
-        if (this.shadeTypeSupportsMy(this.shadeTypeOf(shade))) rows.push({ icon: 'svg-favori', label: 'SETMYPOS_TITLE', val: escHtml(this.myBadgeText(shade).replace(/^ · My /, '')) || tr('CARD_MY_NONE'), go: 'somfy.cardSheetTab(1);' });
-        rows.push({ icon: 'svg-remote', label: 'SUBTAB_REMOTES', val: String((shade.linkedRemotes || []).length), go: edit(1) });
-        rows.push({ icon: 'svg-edit', label: 'NAME_AND_ROOM', val: this.cardSheetRoomName(shade), go: edit(0) });
-        const missing = typeof shadeSetup !== 'undefined' ? shadeSetup.missingSteps(shade) : 0;
-        rows.push({ icon: 'svg-tabSettings', label: 'SUBTAB_SETTINGS', warn: missing > 0, val: missing > 1 ? shadeSetup.t('SETUP_BADGE_MANY', { n: missing }) : missing ? tr('SETUP_BADGE_ONE') : '', go: edit(2) });
-        rows.push({ icon: 'svg-eyeOn', label: 'OPTION', go: `somfy.cardSheetTab(${rows[0].label === 'SETMYPOS_TITLE' ? 2 : 1});` });
-        return this.cardSheetRowsHtml(rows);
-    }
     groupSheetRowsHtml(group) {
         const id = group.groupId, edit = (t) => `somfy.closeCardSheet(); somfy.openCardEditor('group', ${id}, ${t});`;
         return this.cardSheetRowsHtml([
@@ -4440,7 +4430,7 @@ class Somfy {
         const cs = this._cardSheet;
         const ov = document.querySelector('#divHomePnl > .side-panel-overlay:not([data-closing])');
         if (!cs || !ov) return;
-        if (ov.querySelector('input[type=range]:active, input[type=range][data-dragging="true"]')) return;
+        if (ov.querySelector('input[type=range]:active, [data-dragging="true"]')) return;
         const isShade = cs.kind === 'shade';
         const item = isShade ? (this.shades || []).find(x => x.shadeId === cs.id) : (this.groups || []).find(x => x.groupId === cs.id);
         if (!item) { this.closeCardSheet(); return; }
@@ -4449,14 +4439,8 @@ class Somfy {
         const prev = ov.querySelector('.card-sheet-body');
         const top = prev ? prev.scrollTop : 0;
         const room = (_rooms.find(r => r.roomId === item.roomId) || { name: '' }).name;
-        let icon = '<svg><use href="#svg-group"></use></svg>';
-        if (isShade) {
-            const st = this.shadeTypes.find(x => x.type === item.shadeType) || { ico: 'svg-window-shade' };
-            const p = item.flipPosition ? 100 - item.position : item.position;
-            icon = `<svg class="somfy-shade-icon" data-shadeid="${item.shadeId}" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${item.tiltType ? item.tiltPosition : 0}"><use href="#${st.ico}"></use></svg>`;
-        }
-        ov.innerHTML = `<aside class="side-panel card-sheet" role="dialog" aria-modal="true" ${isShade ? `data-shadeid="${item.shadeId}" data-tilt="${item.tiltType || 0}"` : `data-groupid="${item.groupId}"`}>
-        ${panelHead({ media: icon, obj: isShade ? 'equipement' : 'groupe', title: escHtml(item.name), desc: room ? escHtml(room) : '', close: true,
+        ov.innerHTML = `<aside class="side-panel card-sheet" role="dialog" aria-modal="true" ${isShade ? `data-shadeid="${item.shadeId}" data-tilt="${item.tiltType || 0}" data-direction="${item.direction || 0}"` : `data-groupid="${item.groupId}"`}>
+        ${panelHead({ media: isShade ? false : '<svg><use href="#svg-group"></use></svg>', obj: isShade ? 'equipement' : 'groupe', title: escHtml(item.name), desc: room ? escHtml(room) : '', close: true, tools: isShade && !cs.tab ? this.shadeSheetToolsHtml(item) : '',
             lead: cs.tab ? `<button type="button" class="card-sheet-back" title="${tr('BT_GO_BACK')}" onclick="somfy.cardSheetTab(0);"><svg><use href="#svg-arrowLeft"></use></svg></button>` : '' })}
         <div class="card-sheet-body">${tabs.map((t, i) => `<div class="card-sheet-pane"${i === cs.tab ? '' : ' hidden'}>${t.html}</div>`).join('')}</div>
         </aside>`;
@@ -4467,10 +4451,7 @@ class Somfy {
         if (!this._cardAgoTimer && ov.querySelector('.card-ago')) this._cardAgoTimer = setInterval(() => this.tickCardAgo(), 1000);
     }
     shadeSheetTabs(shade) {
-        const tabs = [{ icon: 'svg-ctl', label: 'RADIO_COMMAND', html: this.shadeSheetControlsHtml(shade), bind: (pane) => this.bindShadeCmdButtons(pane) }];
-        if (this.shadeTypeSupportsMy(this.shadeTypeOf(shade))) tabs.push({ icon: 'svg-favori', label: 'SETMYPOS_TITLE', html: this.shadeSheetMyHtml(shade), bind: (pane) => this.bindShadeSheetMy(pane, shade) });
-        tabs.push({ icon: 'svg-eyeOn', label: 'OPTION', html: this.shadeSheetOptionsHtml(shade), bind: (pane) => this.bindShadeSheetOptions(pane, shade) });
-        return tabs;
+        return [{ icon: 'svg-ctl', label: 'RADIO_COMMAND', html: this.shadeSheetControlsHtml(shade), bind: (pane) => { this.bindShadeCmdButtons(pane); coverCtl.mount(pane); } }];
     }
     groupSheetTabs(group) {
         return [
@@ -4481,181 +4462,19 @@ class Somfy {
     }
     shadeSheetControlsHtml(shade) {
         const id = shade.shadeId;
+        if (!this.dryContactShadeTypes.includes(this.shadeTypeOf(shade))) {
+            return `${coverCtl.html(shade)}${coverCtl.myOn(shade) ? '' : this.shadeSheetLowerHtml(shade)}`;
+        }
         const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { ico: 'svg-window-shade' };
         const p = shade.flipPosition ? 100 - shade.position : shade.position;
-        const hasPosition = !this.noMyShadeTypes.includes(shade.shadeType);
         const btn = (cmd) => `<div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="${cmd}" data-shadeid="${id}"><svg><use href="#svg-${cmd}"></use></svg></div>`;
-        const buttons = this.toggleShadeTypes.includes(shade.shadeType) ? btn('toggle')
-            : `${btn('up')}${btn('my')}${btn('down')}<div class="button-outline cmd-button btn-somfy-svg animScale button-sunflag" data-cmd="sunflag" data-shadeid="${id}" data-on="${(shade.flags & 0x01) ? 'true' : 'false'}" title="${tr('VR_SUN_FLAG')}" style="${shade.sunSensor ? '' : 'display:none'}"><svg><use href="#svg-sun"></use></svg></div>`;
-        const slider = (tilt) => {
-            const v = tilt ? shade.tiltPosition : shade.position;
-            return `<div class="card-sheet-slider"><span>${tr(tilt ? 'OPT_PAGE_TILT' : 'IS_POSITION')}</span>
-            <div class="slider-wrapper${tilt ? ' tilt-slider' : ''}"><div class="slider-progress" style="width:${v}%;"><div class="slider-thumb-line"></div></div>
-            <input type="range" class="md3-range-input carousel-slider-${tilt ? 'tilt' : 'pos'}" data-bubble="true" min="0" max="100" step="1" value="${v}" data-realpos="${v}" oninput="syncSliderProgress(this);" onpointerdown="sliderDragStart(this);" onkeydown="sliderDragStart(this, true);" onkeyup="sliderDragEnd(this);" onchange="somfy.commitSliderTarget(this, ${id}, ${tilt});"></div></div>`;
-        };
-        const tiltType = shade.tiltType || 0;
-        const geo = tiltType !== 3 && typeof shade.myPos === 'number' && shade.myPos >= 0 ? this.myMarkGeometry(st.ico) : null;
-        const markY = geo ? geo[0] + geo[1] * (shade.flipPosition ? 100 - shade.myPos : shade.myPos) : 0;
-        const hero = hasPosition ? `<div class="sheet-my-now-box">
-        <svg class="somfy-shade-icon" data-shadeid="${id}" viewBox="0 0 48 48" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use>${geo ? `<g class="sheet-my-mark" transform="translate(0 ${markY})"><path d="M-4 0H52"></path><text x="-5.5" y="2">my</text></g>` : ''}</svg>
-        <div class="sheet-my-now-vals">
-        ${tiltType !== 3 ? `<div><span>${tr('IS_POSITION')}</span><b class="val-pos-pct">${shade.position} %</b></div>` : ''}
-        ${tiltType ? `<div><span>${tr('OPT_PAGE_TILT')}</span><b class="val-tilt-pct">${shade.tiltPosition || 0} %</b></div>` : ''}
-        </div>
-        </div>` : `<div class="card-sheet-hero">
+        const buttons = this.toggleShadeTypes.includes(shade.shadeType) ? btn('toggle') : `${btn('up')}${btn('my')}${btn('down')}`;
+        return `<div class="card-sheet-hero">
         <svg class="somfy-shade-icon" data-shadeid="${id}" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:0"><use href="#${st.ico}"></use></svg>
         <span class="card-sheet-state"><span class="val-pos">${this.shadeStateText(shade)}</span></span>
-        </div>`;
-        return `${hero}
+        </div>
         <div class="card-sheet-buttons">${buttons}</div>
-        ${hasPosition ? slider(false) : ''}${hasPosition && shade.tiltType > 0 ? slider(true) : ''}
-        ${this.shadeSheetRowsHtml(shade)}
-        ${this.shadeSheetInfoHtml(shade)}`;
-    }
-    shadeSheetMyHtml(shade) {
-        const cs = this._cardSheet;
-        const tiltType = shade.tiltType || 0;
-        const myPos = typeof shade.myPos === 'number' ? shade.myPos : -1;
-        const myTilt = typeof shade.myTiltPos === 'number' ? shade.myTiltPos : -1;
-        if (!cs.draft) cs.draft = { p: myPos >= 0 ? myPos : shade.position, t: myTilt >= 0 ? myTilt : (shade.tiltPosition || 0) };
-        const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { ico: 'svg-window-shade' };
-        const ends = shade.flipPosition ? [tr('IS_CLOSED'), tr('IS_OPEN')] : [tr('IS_OPEN'), tr('IS_CLOSED')];
-        const row = (tilt) => {
-            const v = tilt ? cs.draft.t : cs.draft.p;
-            const now = tilt ? (shade.tiltPosition || 0) : shade.position;
-            const axis = tilt ? 't' : 'p';
-            return `<div class="sheet-my-slider">
-            <div class="sheet-my-slider-head"><span>${tr(tilt ? 'OPT_PAGE_TILT' : 'SETMYPOS_TITLE')}</span><b><span class="sheet-my-num">${v}</span> %</b></div>
-            <div class="sheet-my-slider-row">
-            <button type="button" class="sheet-my-step" data-axis="${axis}" data-step="-5">−</button>
-            <div class="slider-wrapper${tilt ? ' tilt-slider' : ''}"><i class="sheet-my-now" style="left:${now}%"></i><div class="slider-progress" style="width:${v}%;"><div class="slider-thumb-line"></div></div><input class="md3-range-input" type="range" min="0" max="100" step="1" value="${v}" data-axis="${axis}"></div>
-            <button type="button" class="sheet-my-step" data-axis="${axis}" data-step="5">+</button>
-            </div>
-            <div class="sheet-my-ends"><span>${ends[0]}</span><span>${ends[1]}</span></div>
-            </div>`;
-        };
-        const fmt = (p, t) => tiltType === 3 ? `∠ ${t} %` : `${p} %${tiltType ? ` · ∠ ${t} %` : ''}`;
-        const mode = cs.myMode || 'value';
-        const head = `<div class="card-sheet-mycur"><svg><use href="#svg-favori"></use></svg><span>${tr('SETMYPOS_TITLE')}</span><b>${this.myBadgeText(shade).replace(/^ · My /, '') || tr('CARD_MY_NONE')}</b></div>
-        <div class="positioner-seg card-sheet-mymode">${[['value', 'CARD_MY_MODE_VALUE'], ['live', 'CARD_MY_MODE_LIVE']].map(([m, k]) => `<button type="button" data-mymode="${m}" aria-pressed="${mode === m ? 'true' : 'false'}">${tr(k)}</button>`).join('')}</div>`;
-        if (mode === 'live') {
-            const p = shade.flipPosition ? 100 - shade.position : shade.position;
-            const btn = (cmd) => `<div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="${cmd}" data-shadeid="${shade.shadeId}"><svg><use href="#svg-${cmd}"></use></svg></div>`;
-            return `${head}
-            <div class="card-sheet-hero">
-            <svg class="somfy-shade-icon" data-shadeid="${shade.shadeId}" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use></svg>
-            <span class="card-sheet-state"><span class="val-pos">${this.shadeStateText(shade)}</span>${tiltType ? `<span class="val-tilt"> · ∠ <span class="val-tilt-pos">${shade.tiltPosition}%</span></span>` : ''}</span>
-            </div>
-            <div class="card-sheet-buttons">${btn('up')}${btn('my')}${btn('down')}</div>
-            <p class="card-sheet-hint">${tr('CARD_MY_LIVE_HINT')}</p>
-            <div class="popup-actions"><button type="button" pop data-act="store"></button></div>`;
-        }
-        const cur = shade.flipPosition ? 100 - shade.position : shade.position;
-        const target = shade.flipPosition ? 100 - cs.draft.p : cs.draft.p;
-        return `${head}
-        <div class="sheet-my-cmp">
-        <div><svg class="somfy-shade-icon" data-shadeid="${shade.shadeId}" style="--shade-position:${cur}; --fpos:${cur}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use></svg><span>${tr('CARD_MY_CURRENT')}</span><b>${fmt(shade.position, shade.tiltPosition || 0)}</b></div>
-        <em>→</em>
-        <div class="sheet-my-target"><svg class="somfy-shade-icon card-panel-preview" style="--shade-position:${tiltType === 3 ? cur : target}; --fpos:${target}%; --shade-tilt:${tiltType ? cs.draft.t : 0}"><use href="#${st.ico}"></use></svg><span>${tr('SETMYPOS_TITLE')}</span><b class="sheet-my-target-val">${fmt(cs.draft.p, cs.draft.t)}</b></div>
-        </div>
-        <p class="card-sheet-hint">${tr('CARD_MY_VALUE_HINT')}</p>
-        ${tiltType !== 3 ? row(false) : ''}${tiltType > 0 ? row(true) : ''}
-        <div class="popup-actions">
-        <button type="button" pop line data-act="current">${tr('CARD_MY_CURRENT')}</button>
-        <button type="button" pop line data-act="try">${tr('CARD_MY_TRY')}</button>
-        </div>
-        <div class="popup-actions">
-        <button type="button" pop data-act="save"></button>
-        </div>`;
-    }
-    myMarkGeometry(ico) {
-        const my = document.getElementById(ico)?.dataset.my;
-        return my ? my.split(' ').map(Number) : null;
-    }
-    bindShadeSheetMy(pane, shade) {
-        const draft = this._cardSheet.draft;
-        const tiltType = shade.tiltType || 0;
-        const myPos = typeof shade.myPos === 'number' ? shade.myPos : -1;
-        const myTilt = typeof shade.myTiltPos === 'number' ? shade.myTiltPos : -1;
-        pane.querySelectorAll('[data-mymode]').forEach(btn => {
-            btn.onclick = (e) => {
-                e.preventDefault();
-                this._cardSheet.myMode = btn.dataset.mymode;
-                this.renderCardSheet();
-            };
-        });
-        const btnStore = pane.querySelector('[data-act="store"]');
-        if (btnStore) {
-            const tilt = shade.tiltPosition || 0;
-            const same = tiltType === 3 ? tilt === myTilt : (shade.position === myPos && (tiltType === 0 || tilt === myTilt));
-            btnStore.textContent = tr(same ? 'BT_CLEAR_MY_POSITION' : 'CARD_MY_STORE_CURRENT');
-            btnStore.classList.toggle('card-panel-clear', same);
-            btnStore.onclick = (e) => {
-                e.preventDefault();
-                this.sendShadeMyPosition(shade.shadeId, shade.position, tilt);
-            };
-            this.bindShadeCmdButtons(pane);
-            return;
-        }
-        const preview = pane.querySelector('.card-panel-preview');
-        const targetVal = pane.querySelector('.sheet-my-target-val');
-        const btnSave = pane.querySelector('[data-act="save"]');
-        const inputs = pane.querySelectorAll('.md3-range-input[data-axis]');
-        const paint = () => {
-            const p = shade.flipPosition ? 100 - draft.p : draft.p;
-            preview.style.setProperty('--shade-position', tiltType === 3 ? (shade.flipPosition ? 100 - shade.position : shade.position) : p);
-            preview.style.setProperty('--fpos', `${p}%`);
-            preview.style.setProperty('--shade-tilt', tiltType ? draft.t : 0);
-            targetVal.textContent = tiltType === 3 ? `∠ ${draft.t} %` : `${draft.p} %${tiltType ? ` · ∠ ${draft.t} %` : ''}`;
-            const same = tiltType === 3 ? draft.t === myTilt : (draft.p === myPos && (tiltType === 0 || draft.t === myTilt));
-            btnSave.textContent = tr(same ? 'BT_CLEAR_MY_POSITION' : 'BT_SET_MY_POSITION');
-            btnSave.classList.toggle('card-panel-clear', same);
-        };
-        const show = (input) => {
-            syncSliderProgress(input);
-            input.closest('.sheet-my-slider').querySelector('.sheet-my-num').textContent = input.value;
-        };
-        inputs.forEach(input => {
-            input.oninput = () => {
-                show(input);
-                draft[input.dataset.axis] = parseInt(input.value, 10);
-                paint();
-            };
-            show(input);
-        });
-        pane.querySelectorAll('.sheet-my-step').forEach(btn => {
-            btn.onclick = (e) => {
-                e.preventDefault();
-                const axis = btn.dataset.axis;
-                draft[axis] = Math.max(0, Math.min(100, draft[axis] + parseInt(btn.dataset.step, 10)));
-                const input = pane.querySelector(`.md3-range-input[data-axis="${axis}"]`);
-                input.value = draft[axis];
-                show(input);
-                paint();
-            };
-        });
-        btnSave.onclick = (e) => {
-            e.preventDefault();
-            this.sendShadeMyPosition(shade.shadeId, draft.p, draft.t);
-        };
-        pane.querySelector('[data-act="try"]').onclick = (e) => {
-            e.preventDefault();
-            if (tiltType === 3) this.sendTiltCommand(shade.shadeId, draft.t);
-            else this.sendCommand(shade.shadeId, draft.p);
-        };
-        pane.querySelector('[data-act="current"]').onclick = (e) => {
-            e.preventDefault();
-            draft.p = shade.position;
-            draft.t = shade.tiltPosition || 0;
-            inputs.forEach(input => { input.value = draft[input.dataset.axis]; show(input); });
-            paint();
-        };
-        paint();
-    }
-    shadeSheetOptionsHtml(shade) {
-        const id = shade.shadeId;
-        return `${this.cardSheetPrefsHtml('shade', id, '')}
-        ${this.cardSheetActionsHtml('shade', id)}`;
+        ${this.shadeSheetLowerHtml(shade)}`;
     }
     sheetOptRow(label, desc, control) {
         return `<div class="sheet-opt"><div class="sheet-opt-txt"><span>${tr(label)}</span><em>${tr(desc)}</em></div>${control}</div>`;
@@ -4672,9 +4491,6 @@ class Somfy {
         pane.querySelectorAll('[data-cardpref]').forEach(chk => {
             chk.onchange = () => this.setCardUIPrefs(kind, id, { [chk.dataset.cardpref]: chk.checked });
         });
-    }
-    bindShadeSheetOptions(pane, shade) {
-        this.bindCardSheetPrefs(pane, 'shade', shade.shadeId);
     }
     cardSheetActionsHtml(kind, id) {
         return `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_SHORTCUTS')}</span></div>
@@ -4758,39 +4574,46 @@ class Somfy {
         const W = typeof shadeSetup !== 'undefined' ? shadeSetup.words(type) : {};
         return { Up: W.up, Down: W.down }[cmd] || cmd || '';
     }
-    shadeSheetInfoHtml(shade) {
-        const shadeId = shade.shadeId;
-        const type = this.shadeTypeOf(shade);
-        const kv = (k, v) => `<div class="card-kv"><span>${k}</span><b>${v}</b></div>`;
-        const items = [];
+    shadeSheetToolsHtml(shade) {
+        const id = shade.shadeId, edit = (t) => `somfy.closeCardSheet(); somfy.openCardEditor('shade', ${id}, ${t});`;
+        const item = (js, icon, key, extra = '') => `<div class="dropdown-item" role="menuitem" onclick="this.parentElement.classList.remove('show'); ${js}"><svg><use href="#${icon}"></use></svg>${tr(key)}${extra}</div>`;
+        const confirm = this.cardUIPrefs('shade', id).confirm;
+        return `<button type="button" class="genmod-close" aria-label="${escAttr(tr('SUBTAB_SETTINGS'))}" title="${escAttr(tr('SUBTAB_SETTINGS'))}" onclick="${edit(2)}"><svg><use href="#svg-tabSettings"></use></svg></button>
+        <div class="overlayHeader-dropdown-container card-sheet-menu" onclick="event.stopPropagation();"><button type="button" class="genmod-close" aria-label="${escAttr(tr('OPTION'))}" aria-haspopup="menu" onclick="somfy.toggleTileMenu(this);"><svg><use href="#svg-menuVertical"></use></svg></button>
+        <div class="overlayHeader-dropdown-menu" role="menu">
+        ${this.shadeTypeSupportsMy(this.shadeTypeOf(shade)) ? item(`coverCtl.myStart(${id});`, 'svg-favori', 'SETMYPOS_TITLE') : ''}
+        ${item(edit(0), 'svg-edit', 'NAME_AND_ROOM')}${item(edit(1), 'svg-remote', 'SUBTAB_REMOTES')}${item(edit(2), 'svg-tabSettings', 'SUBTAB_SETTINGS')}
+        <div class="dropdown-item" role="menuitemcheckbox" aria-checked="${confirm}" onclick="this.parentElement.classList.remove('show'); somfy.setCardUIPrefs('shade', ${id}, { confirm: ${!confirm} }); somfy.renderCardSheet();"><svg><use href="#svg-check"></use></svg>${tr('CARD_OPT_CONFIRM')}<b>${tr(confirm ? 'BT_YES' : 'BT_NO')}</b></div>
+        </div></div>`;
+    }
+    shadeSheetLowerHtml(shade) {
+        const id = shade.shadeId, type = this.shadeTypeOf(shade);
+        const act = (js, icon, key) => `<button type="button" class="sheet-act-btn" onclick="${js}"><span><svg><use href="#${icon}"></use></svg></span>${tr(key)}</button>`;
+        const row = (label, val, js) => js
+            ? `<button type="button" class="sheet-state-row" onclick="${js}"><span>${label}</span><b>${val}<svg class="sheet-state-chev"><use href="#svg-arrowRight"></use></svg></b></button>`
+            : `<div class="sheet-state-row"><span>${label}</span><b>${val}</b></div>`;
+        const rows = [];
         if (typeof shade.lastSentAgo === 'number') {
-            const cmd = this.sentCommandLabel(shade, shade.lastSentCmd);
             if (typeof shade._sentAt !== 'number') shade._sentAt = shade.lastSentAgo >= 0 ? Date.now() - shade.lastSentAgo * 1000 : 0;
-            items.push(kv(tr('SHADE_ACT_SENT'), shade._sentAt ? `${escHtml(cmd)} · <span class="card-ago" data-at="${shade._sentAt}">${this.cardAgoText(shade._sentAt)}</span>` : tr('SHADE_ACT_NEVER')));
+            rows.push(row(tr('SHADE_ACT_SENT'), shade._sentAt ? `${escHtml(this.sentCommandLabel(shade, shade.lastSentCmd))} · <span class="card-ago" data-at="${shade._sentAt}">${this.cardAgoText(shade._sentAt)}</span>` : tr('SHADE_ACT_NEVER')));
         }
-        if (shade.sunSensor) {
-            const sunny = (shade.flags & 0x20) === 0x20, windy = (shade.flags & 0x10) === 0x10;
-            items.push(kv(tr('CARD_SENSORS'), sunny ? `<span class="card-tag sun">${tr('VR_SUN')}</span>` : windy ? `<span class="card-tag wind">${tr('VR_WIND')}</span>` : tr('CARD_CALM')));
-            items.push(kv(tr('VR_SUN_FLAG'), tr((shade.flags & 0x01) ? 'ENABLED' : 'IS_DISABLED')));
-        }
-        items.push(kv(tr('ROOM'), escHtml((_rooms.find(r => r.roomId === shade.roomId) || { name: tr('HOME') }).name)));
-        const remotes = (shade.linkedRemotes || []).map(r => {
+        if (this.shadeTypeSupportsMy(type)) rows.push(row(tr('SETMYPOS_TITLE'), escHtml(this.myBadgeText(shade).replace(/^ · My /, '')) || tr('CARD_MY_NONE'), `coverCtl.myStart(${id});`));
+        const remotes = (shade.linkedRemotes || []).map((r, i) => {
             let rssi = r.lastRssi;
             if (!(typeof rssi === 'number' && rssi > -128)) rssi = this._getStoredRemoteSignal(r.remoteAddress);
             const has = typeof rssi === 'number' && rssi > -128;
-            return `<div class="card-li"><svg><use href="#svg-remote"></use></svg><span>${r.remoteAddress}</span><em class="sig-${has ? this.rssiLevel(rssi) : 'unknown'}">${has ? `${rssi} dBm` : '—'}</em></div>`;
+            return `<i class="sheet-sig sig-${has ? this.rssiLevel(rssi) : 'unknown'}" title="${r.remoteAddress}${has ? ` · ${rssi} dBm` : ''}">${i + 1}</i>`;
         }).join('');
-        if (this.shadeTypeSupportsMy(type)) {
-            const tiltType = shade.tiltType || 0;
-            const val = (v) => typeof v === 'number' && v >= 0 ? `${v} %` : tr('CARD_MY_NONE');
-            const my = [];
-            if (tiltType !== 3) my.push(kv(tr('IS_POSITION'), val(shade.myPos)));
-            if (tiltType) my.push(kv(tr('OPT_PAGE_TILT'), val(shade.myTiltPos)));
-            items.push(`<div class="sheet-my-pair"><span>${tr('SETMYPOS_TITLE')}</span>${my.join('')}</div>`);
+        rows.push(row(tr('SUBTAB_REMOTES'), remotes || tr('REMOTESLIST_EMPTY'), `somfy.closeCardSheet(); somfy.openCardEditor('shade', ${id}, 1);`));
+        if (shade.sunSensor) {
+            const sunny = (shade.flags & 0x20) === 0x20, windy = (shade.flags & 0x10) === 0x10;
+            rows.push(row(tr('CARD_SENSORS'), sunny ? tr('VR_SUN') : windy ? tr('VR_WIND') : tr('CARD_CALM')));
         }
-        return `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_INFO')}</span></div><div class="card-grid">${items.join('')}</div></div>
-        ${this.cardSchedulesHtml('shade', shadeId)}
-        <div class="card-block"><div class="card-block-head"><span>${tr('REMOTESLIST_TITLE')}</span></div>${remotes ? `<div class="sheet-list">${remotes}</div>` : `<div class="card-empty">${tr('REMOTESLIST_EMPTY')}</div>`}</div>`;
+        const missing = typeof shadeSetup !== 'undefined' ? shadeSetup.missingSteps(shade) : 0;
+        if (missing) rows.push(row(tr('SUBTAB_SETTINGS'), `<em class="sheet-state-warn">${missing > 1 ? shadeSetup.t('SETUP_BADGE_MANY', { n: missing }) : tr('SETUP_BADGE_ONE')}</em>`, `somfy.closeCardSheet(); shadeSetup.resume(${id});`));
+        return `<div class="sheet-acts">${act(`somfy.closeCardSheet(); somfy.openVirtualRemote('shade', ${id});`, 'svg-remote', 'SUBTAB_VIRTUAL_REMOTE_S')}${act(`somfy.closeCardSheet(); somfy.openAddScheduleInline('shade', ${id});`, 'svg-schedule', 'SUBTAB_SCHEDULES')}${act(`somfy.openCardRadioLog(${id});`, 'svg-wave', 'SUBTAB_LOGS')}</div>
+        <div class="card-block"><div class="card-block-head"><span>${tr('CARD_INFO')}</span></div><div class="sheet-state">${rows.join('')}</div></div>
+        ${this.cardSchedulesHtml('shade', id)}`;
     }
     screenShade() {
         // Jamais par-dessus une installation en cours (.inst-overlay porte alors une
@@ -5081,37 +4904,8 @@ class Somfy {
             if (state.tiltType !== 0) d.querySelectorAll('.val-tilt-pct').forEach(el => { el.textContent = `${state.tiltPosition} %`; });
             if (state.tiltType !== 0) d.querySelectorAll('.val-tilt-pos').forEach(tiltEl => { tiltEl.innerText = `${state.tiltPosition}%`; });
             if (d.classList.contains('dcard')) this.syncDashCard(d, cached || state);
-
-            // Slider(s) du carrousel de contrôles : reflète un mouvement déclenché ailleurs (planning,
-            // autre client, ou l'incrémentation en direct du mouvement qu'on vient nous-même de
-            // déclencher via ce slider). On n'écrase jamais un slider que l'utilisateur est en train
-            // de manipuler -- dataset.dragging (posé par sliderDragStart/sliderDragEnd, cf.
-            // 20-shell.js), PAS document.activeElement : un <input type=range> reste l'élément actif
-            // bien après le relâchement (jusqu'au clic/tab suivant), donc s'appuyer sur activeElement
-            // gelait aussi toutes les mises à jour ultérieures, y compris l'animation de position.
-            // dataset.realpos suit TOUJOURS la position réelle, même pendant que l'utilisateur
-            // manipule le slider (l'équipement peut déjà être en mouvement quand il le saisit) : c'est
-            // le point de départ sur lequel commitSliderTarget() replace le curseur au relâchement.
-            // Seule l'affectation VISUELLE (value) est gelée pendant le geste.
-            const posSlider = d.querySelector('.carousel-slider-pos');
-            if (posSlider) {
-                posSlider.dataset.realpos = state.position;
-                if (posSlider.dataset.dragging !== 'true') {
-                    posSlider.value = state.position;
-                    syncSliderProgress(posSlider);
-                }
-            }
-            if (state.tiltType !== 0) {
-                const tiltSlider = d.querySelector('.carousel-slider-tilt');
-                if (tiltSlider) {
-                    tiltSlider.dataset.realpos = state.tiltPosition;
-                    if (tiltSlider.dataset.dragging !== 'true') {
-                        tiltSlider.value = state.tiltPosition;
-                        syncSliderProgress(tiltSlider);
-                    }
-                }
-            }
         });
+        coverCtl.kick();
         if ((parseInt(state.direction, 10) || 0) === 0) this.refreshCardSheet('shade', sId);
         this.syncGroupMovement(sId);
         // Après syncGroupMovement : le récapitulatif lit les data-moving/data-direction que celui-ci
@@ -5647,32 +5441,6 @@ class Somfy {
         });
     }
 
-    // Validation d'un slider du carrousel (position ou inclinaison) : envoie la cible au firmware,
-    // puis REPLACE IMMÉDIATEMENT le curseur sur la dernière position réellement connue de l'équipement.
-    //
-    // Sans ce repositionnement explicite, le curseur restait sur la valeur lâchée par l'utilisateur
-    // (100%) jusqu'à l'arrivée du premier shadeState de mouvement -- or ce délai n'est pas
-    // déterministe : le firmware doit d'abord émettre la trame RF (avec ses répétitions) avant que
-    // checkMovement() ne commence à publier des positions intermédiaires. Selon que ce premier
-    // message arrivait tôt ou tard, l'utilisateur voyait tantôt l'animation repartir de 33%, tantôt
-    // un simple saut à 100% -- deuxième source d'aléatoire, indépendante du drapeau dragging.
-    // En repartant nous-mêmes de la position réelle, l'animation 33% -> 100% est garantie, et les
-    // shadeState successifs ne font plus que la dérouler.
-    commitSliderTarget(el, shadeId, isTilt) {
-        sliderDragEnd(el);
-        const target = parseInt(el.value, 10);
-        this.confirmCardCommand('shade', shadeId, () => {
-            if (isTilt) this.sendTiltCommand(shadeId, target);
-            else this.sendCommand(shadeId, target);
-        });
-        // dataset.realpos est tenu à jour par procShadeState(), y compris pendant que l'utilisateur
-        // manipule le slider (l'équipement peut déjà être en mouvement quand il le saisit).
-        const real = parseInt(el.dataset.realpos, 10);
-        if (!isNaN(real)) {
-            el.value = real;
-            syncSliderProgress(el);
-        }
-    }
     sendCommand(shadeId, command, repeat, cb) {
         let obj = {};
         if (typeof shadeId.shadeId !== 'undefined') {

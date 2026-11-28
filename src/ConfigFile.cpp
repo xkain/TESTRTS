@@ -12,7 +12,7 @@
 // 26 = v2.6.2 (25 + couleur d'accentuation), 27 = v3 : les champs propres à la v3 se gardent à 27.
 #define SHADE_HDR_VER 27
 #define SHADE_HDR_SIZE 76
-#define SHADE_REC_SIZE 499
+#define SHADE_REC_SIZE 524
 #define GROUP_REC_SIZE 239
 #define SCHEDULE_HDR_VER 1
 #define SCHEDULE_REC_SIZE 79   // dayMask..enabled (60) + retries (4) + positionMode (4) + timeRef (4) + sunOffset (7)
@@ -1019,6 +1019,14 @@ bool ShadeConfigFile::readRoomRecord(SomfyRoom *room) {
   return true;
 }
 
+static void cfgFavDecode(SomfyShade *shade, const char *in) {
+  if(strlen(in) < SOMFY_MAX_FAVS * 4) return;
+  for(uint8_t i = 0; i < SOMFY_MAX_FAVS * 2; i++) {
+    char hex[3] = { in[i * 2], in[i * 2 + 1], 0 };
+    uint8_t v = static_cast<uint8_t>(strtoul(hex, nullptr, 16));
+    (i < SOMFY_MAX_FAVS ? shade->favPos : shade->favTilt)[i % SOMFY_MAX_FAVS] = v > 100 ? 255 : v;
+  }
+}
 bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("ShadeCodes");
@@ -1123,6 +1131,11 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
       shade->downMidTime = this->readUInt32(0);
     }
     else shade->upMidTime = shade->downMidTime = 0;
+    if(this->header.shadeRecordSize >= 524) {
+      char favs[25];
+      this->readString(favs, 25);
+      cfgFavDecode(shade, favs);
+    }
   }
   else shade->remoteModel[0] = '\0';
   if(this->file.position() != startPos + this->header.shadeRecordSize) {
@@ -1220,6 +1233,10 @@ bool ShadeConfigFile::writeRoomRecord(SomfyRoom *room) {
   this->writeUInt8(room->sortOrder, CFG_REC_END);
   return true;
 }
+static void cfgFavEncode(const SomfyShade *shade, char *out) {
+  for(uint8_t i = 0; i < SOMFY_MAX_FAVS * 2; i++)
+    snprintf(out + i * 2, 3, "%02X", i < SOMFY_MAX_FAVS ? shade->favPos[i] : shade->favTilt[i - SOMFY_MAX_FAVS]);
+}
 bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   if(shade->tiltType == tilt_types::none || shade->shadeType != shade_types::blind) {
     shade->myTiltPos = -1;
@@ -1285,7 +1302,10 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   }
   this->writeString(shade->remoteModel, sizeof(shade->remoteModel));
   this->writeUInt32(shade->upMidTime);
-  this->writeUInt32(shade->downMidTime, CFG_REC_END);
+  this->writeUInt32(shade->downMidTime);
+  char favs[25];
+  cfgFavEncode(shade, favs);
+  this->writeString(favs, 25, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::exists() {

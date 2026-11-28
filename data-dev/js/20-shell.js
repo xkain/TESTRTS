@@ -1735,11 +1735,11 @@ function genModalShell(o) {
 // description, croix grise. title/desc sont du HTML : échapper ce qui vient de l'utilisateur.
 // o : icon | media, obj, tone ('bad'…), title, desc, id (du titre), close, center (mobile), lead (avant la pastille).
 function panelHead(o) {
-    const media = o.media || `<svg><use href="#${o.icon}"></use></svg>`;
+    const media = o.media === false ? '' : `<span class="hero-media${o.tone ? ' is-' + o.tone : ''}"${o.obj ? ` data-obj="${o.obj}"` : ''}>${o.media || `<svg><use href="#${o.icon}"></use></svg>`}</span>`;
     return `<div class="modalHeader-handle" data-close onclick="handleMobileDismiss(this)"></div>
-    <div class="side-panel-head${o.center ? ' is-center' : ''}">${o.lead || ''}<span class="hero-media${o.tone ? ' is-' + o.tone : ''}"${o.obj ? ` data-obj="${o.obj}"` : ''}>${media}</span>
+    <div class="side-panel-head${o.center ? ' is-center' : ''}">${o.lead || ''}${media}
     <div class="side-panel-texts"><h2${o.id ? ` id="${o.id}"` : ''}>${o.title}</h2>${o.desc ? `<p class="side-panel-desc">${o.desc}</p>` : ''}</div>
-    ${o.close ? `<button type="button" class="genmod-close" close data-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-closeOverlay"></use></svg></button>` : ''}</div>`;
+    ${o.tools || ''}${o.close ? `<button type="button" class="genmod-close" close data-close aria-label="${escAttr(tr('BT_CLOSE'))}"><svg><use href="#svg-closeOverlay"></use></svg></button>` : ''}</div>`;
 }
 // Panneau hébergé par openSidePanel : fermé par la croix ou tout [data-close], un clic sur le
 // fond et Échap. « Détails » d'un hero : copie du bloc replié, ids retirés (la page garde les

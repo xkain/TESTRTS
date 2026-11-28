@@ -339,6 +339,12 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
   json.addElem("target", this->transformPosition(this->target));
   json.addElem("myPos", this->transformPosition(this->myPos));
   json.addElem("myTiltPos", this->transformPosition(this->myTiltPos));
+  json.beginArray("favPos");
+  for(uint8_t i = 0; i < SOMFY_MAX_FAVS; i++) if(this->favPos[i] <= 100) json.addElem(this->favPos[i]);
+  json.endArray();
+  json.beginArray("favTilt");
+  for(uint8_t i = 0; i < SOMFY_MAX_FAVS; i++) if(this->favTilt[i] <= 100) json.addElem(this->favTilt[i]);
+  json.endArray();
   json.addElem("direction", this->direction);
   json.addElem("shadeType", static_cast<uint8_t>(this->shadeType));
   json.addElem("bitLength", this->bitLength);

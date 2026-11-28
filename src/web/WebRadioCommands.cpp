@@ -508,6 +508,40 @@ namespace WebRadioCommands {
       webServer.rejectMethod(request);
   }
 
+  static void handleSetFavorites(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    if(!asyncHasBody(request)) {
+      webServer.sendError(request, 500, "No shade object supplied.");
+      return;
+    }
+    DynamicJsonDocument doc(512);
+    DeserializationError err = deserializeJson(doc, asyncBodyPtr(request), asyncBodyLen(request));
+    if(err) {
+      webServer.handleDeserializationError(request, err);
+      return;
+    }
+    JsonObject obj = doc.as<JsonObject>();
+    uint8_t shadeId = 255;
+    if(!jget(obj, "shadeId", shadeId)) {
+      webServer.sendError(request, 500, "No shade id was supplied.");
+      return;
+    }
+    SomfyShade *shade = somfy.getShadeById(shadeId);
+    if(!shade) {
+      webServer.sendError(request, 500, "Shade with the specified id not found.");
+      return;
+    }
+    if(obj.containsKey("pos")) SomfyShade::setFavorites(shade->favPos, obj["pos"].as<JsonArray>());
+    if(obj.containsKey("tilt")) SomfyShade::setFavorites(shade->favTilt, obj["tilt"].as<JsonArray>());
+    somfy.isDirty = true;
+    JsonAsyncResponse resp;
+    resp.beginResponse(request);
+    resp.beginObject();
+    shade->toJSON(resp);
+    resp.endObject();
+    resp.endResponse();
+  }
   static void handleSetRollingCode(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
@@ -1150,6 +1184,7 @@ namespace WebRadioCommands {
     server.on("/setPositions", AsyncHttp::ANY, handleSetPositions, nullptr, asyncBodyHandler);
     server.on("/setSensor", AsyncHttp::ANY, handleSetSensor, nullptr, asyncBodyHandler);
     server.on("/setMyPosition", AsyncHttp::ANY, handleSetMyPosition, nullptr, asyncBodyHandler);
+    server.on("/setFavorites", AsyncHttp::ANY, handleSetFavorites, nullptr, asyncBodyHandler);
     server.on("/setRollingCode", AsyncHttp::ANY, handleSetRollingCode, nullptr, asyncBodyHandler);
     server.on("/setPaired", AsyncHttp::ANY, handleSetPaired, nullptr, asyncBodyHandler);
     server.on("/unpairShade", AsyncHttp::ANY, handleUnpairShade, nullptr, asyncBodyHandler);

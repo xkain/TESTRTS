@@ -524,6 +524,61 @@ body.modal-open {
     margin: 0;
     accent-color: var(--text);
 }
+.cover-fav-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.cover-fav-input > button {
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--r-3);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: var(--fs-6);
+    text-transform: none;
+}
+.cover-fav-input label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 52px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-3);
+    background: var(--surface);
+}
+.cover-fav-input label:focus-within {
+    border-color: var(--color-accent);
+}
+.cover-fav-input input[type="number"] {
+    width: 3.2ch;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: 1.6em;
+    font-weight: 700;
+    text-align: right;
+    outline: none;
+    -moz-appearance: textfield;
+}
+.cover-fav-input input::-webkit-inner-spin-button,
+.cover-fav-input input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.cover-fav-input span {
+    font-size: var(--fs-6);
+    font-weight: 700;
+    color: var(--text-3);
+}
 .msg-error {
     margin: 8px 22px 0;
     font-size: var(--fs-3);
@@ -1547,11 +1602,15 @@ button[line].fw-sidebar-button:hover {
     --dt-glass1: #ffffff; --dt-glass2: #f2f4f7; --dt-refl: rgba(255, 255, 255, .55); --dt-frame1: color-mix(in srgb, var(--surface-2), #fff 45%); --dt-frame2: var(--surface-2);
     --dt-int1: #555a62; --dt-int2: #33373d; --dt-car: #2b2f35; --dt-rod: #8b929c; --dt-tilt: #8a5cd6;
     --dt-panel: #7a818c; --dt-stile: #6a717b; --dt-filet: #e4e7eb; --dt-wall: #f3f4f6; --dt-wall2: #d9dde2; --dt-ground: #e2e5e9;
+    --cv-slat1: #e8ebef; --cv-slat2: #bfc6cf; --cv-seam: #959eaa; --cv-lift: #fff; --cv-bar: #9ea6b1; --cv-cord: #b4bbc5; --cv-slot: #fff; --cv-fab: #e6e1d8; --cv-fab2: #d6d0c5;
+    --cv-door1: #eef0f3; --cv-door2: #cfd5dc; --cv-cur: #d8d1c4; --cv-cur2: #e9e4da; --cv-aw1: #f1ede6; --cv-aw2: color-mix(in srgb, var(--color-accent) 70%, #fff); --cv-ghost: #9aa3ad; --cv-chev: #3b3d44;
 }
 :root[data-theme="dark"] {
     --dt-glass1: #5a6372; --dt-glass2: #4a5361; --dt-refl: rgba(255, 255, 255, .07); --dt-frame1: color-mix(in srgb, var(--surface-2), #fff 10%); --dt-frame2: var(--surface-2);
     --dt-int1: #24272d; --dt-int2: #14161a; --dt-car: #08090b; --dt-rod: #7a8291; --dt-tilt: #b9a0f2;
     --dt-panel: #535b68; --dt-stile: #454c58; --dt-filet: #9aa3b1; --dt-wall: #2e343e; --dt-wall2: #3d4450; --dt-ground: #1c2027;
+    --cv-slat1: #6b727c; --cv-slat2: #4c525b; --cv-seam: #3a3f47; --cv-lift: #7c838d; --cv-bar: #3a3f47; --cv-cord: #848c97; --cv-slot: #a9b3c2; --cv-fab: #5d5a55; --cv-fab2: #4a4844;
+    --cv-door1: #646b75; --cv-door2: #4b515a; --cv-cur: #5d5a55; --cv-cur2: #6c6963; --cv-aw1: #6a6862; --cv-aw2: color-mix(in srgb, var(--color-accent) 60%, #2a2f38); --cv-ghost: #c3cad3; --cv-chev: #fff;
 }
 .dcard-art { position: relative; height: 124px; overflow: hidden; background: radial-gradient(120% 100% at 50% 100%, var(--dcard-tint), var(--surface-2) 80%); cursor: pointer; transition: background .4s; }
 .dcard-art.is-drape { background: var(--surface); }
@@ -1792,44 +1851,6 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
         width: 76%;
         max-width: 500px !important;
     }
-}
-
-.positioner-seg {
-    display: flex;
-    gap: 4px;
-    width: 100%;
-}
-.positioner-seg button {
-    flex: 1;
-    min-width: 0;
-    width: auto;
-    height: 30px;
-    padding: 0 6px;
-    font-size: 0.8em;
-    font-weight: 500;
-    text-transform: none;
-    color: var(--color-text-main);
-    background: var(--color-control-bg);
-    border: 1px solid transparent;
-    border-radius: var(--radius-btn);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-}
-.positioner-seg button:hover {
-    background: var(--color-bg-surface-3);
-}
-.positioner-seg button[aria-pressed="true"] {
-    background: var(--color-accent);
-    border-color: var(--color-accent);
-    color: var(--color-text-on-accent);
-}
-
-.popup-actions {
-    display:flex;
-    justify-content: flex-end;
-    gap: 8px;
 }
 
 /* =======================================================================

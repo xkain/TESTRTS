@@ -68,7 +68,7 @@
       window.__jsFallbackLoaded = true;
       var files = ['js/00-bootstrap.js', 'js/10-core-utils.js', 'js/20-shell.js', 'js/30-ui-binder.js',
        'js/35-security.js', 'js/40-general.js', 'js/50-wifi.js', 'js/60-onboarding.js',
-       'js/70-somfy.js', 'js/71-schedule.js', 'js/72-setup.js', 'js/73-group-setup.js', 'js/74-dash-scene.js', 'js/76-remotes.js', 'js/90-mqtt.js', 'js/95-firmware.js'];
+       'js/70-somfy.js', 'js/71-schedule.js', 'js/72-setup.js', 'js/73-group-setup.js', 'js/74-dash-scene.js', 'js/75-cover-ctl.js', 'js/76-remotes.js', 'js/90-mqtt.js', 'js/95-firmware.js'];
       var remaining = files.length;
       var onSettled = function(){ if (--remaining === 0) window.__resolveJsReady(); };
       files.forEach(function(f){
@@ -2712,7 +2712,7 @@
         </symbol>
 
         <!-- SOMFY > EQUIPEMENTS -->
-        <symbol id="svg-shutter" viewBox="0 0 48 48" data-my="12 0.275">
+        <symbol id="svg-shutter" viewBox="0 0 48 48">
             <rect x="11" y="11" width="26" height="28.5" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
             <rect x="12.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-sky)"/><rect x="24.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-sky)"/>
             <path d="M12.6 30 23.4 17.5V22L12.6 34.5zM24.6 26l10.8-12.5v2.5L24.6 28.5z" fill="var(--color-shade-refl)"/>
@@ -2729,7 +2729,7 @@
         <symbol id="svg-protocol" viewBox="0 0 24 24">
             <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 6L8 18M20 6l-7 12m-8-4v.015m0-4v.015" />
         </symbol>
-        <symbol id="svg-window-shade" viewBox="0 0 48 48" data-my="11.8 0.275">
+        <symbol id="svg-window-shade" viewBox="0 0 48 48">
             <rect x="11" y="11" width="26" height="28.5" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
             <rect x="12.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-sky)"/><rect x="24.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-sky)"/>
             <path d="M12.6 30 23.4 17.5V22L12.6 34.5zM24.6 26l10.8-12.5v2.5L24.6 28.5z" fill="var(--color-shade-refl)"/>
@@ -2922,7 +2922,7 @@
         <symbol id="svg-indicblind" viewBox="0 0 24 24">
             <path fill="currentColor" d="M2 21v-2h2V3h16v16h2v2zM6 7h8V5H6zm0 4h8V9H6zm0 8h12v-6h-2v1.825q.35.25.55.625t.2.8q0 .725-.513 1.238T15 18t-1.237-.513t-.513-1.237q0-.425.2-.8t.55-.625V13H6zM16 7h2V5h-2zm0 4h2V9h-2z" />
         </symbol>
-        <symbol id="svg-window-blind" viewBox="0 0 48 48" data-my="12.4 0.27">
+        <symbol id="svg-window-blind" viewBox="0 0 48 48">
             <rect x="11" y="11" width="26" height="28.5" fill="url(#shd-pvc)" stroke="var(--color-shade-edge)" stroke-width=".4"/>
             <rect x="12.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-sky)"/><rect x="24.6" y="12.6" width="10.8" height="25.3" fill="url(#shd-sky)"/>
             <path d="M12.6 30 23.4 17.5V22L12.6 34.5zM24.6 26l10.8-12.5v2.5L24.6 28.5z" fill="var(--color-shade-refl)"/>
@@ -2974,7 +2974,7 @@
         <symbol id="svg-indicAwning" viewBox="0 0 24 24">
             <path fill="currentColor" d="M5.06 7c-.43 0-.84.14-1.22.42s-.6.64-.7 1.08l-1.03 4.41c-.25 1.09-.05 2.01.58 2.82c.12.12.24.24.35.34c.59.57 1.24.93 2.18.93s1.69-.41 2.25-.95c.63.62 1.39.95 2.33.95c.84 0 1.64-.37 2.2-.93c.68.63 1.45.93 2.3.93c.87 0 1.61-.33 2.24-.95c.57.57 1.32.95 2.27.95s1.62-.35 2.19-.94c.09-.09.18-.19.28-.29c.66-.82.86-1.77.61-2.86L20.86 8.5c-.13-.44-.36-.8-.73-1.08A1.88 1.88 0 0 0 18.94 7z" />
         </symbol>
-        <symbol id="svg-garage" viewBox="0 0 48 48" data-my="17.5 0.255">
+        <symbol id="svg-garage" viewBox="0 0 48 48">
             <rect x="9" y="17" width="30" height="26" fill="url(#shd-int)"/>
             <path d="M14 31.5q0-2 2-2.4l2.5-2.6h11l2.5 2.6q2 .4 2 2.4V37H14z" fill="rgba(255,255,255,.07)"/>
             <g clip-path="url(#shd-cga)"><g class="lattes-group move-up" style="--travel:25.5">

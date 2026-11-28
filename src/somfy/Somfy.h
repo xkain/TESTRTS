@@ -24,6 +24,7 @@
 static_assert(SOMFY_LEGACY_LINKED_REMOTES + SOMFY_EXTRA_LINKED_REMOTES == SOMFY_MAX_LINKED_REMOTES,
   "places liées");
 #define SOMFY_MAX_GROUPED_SHADES 32
+#define SOMFY_MAX_FAVS 6
 #define SOMFY_MAX_ROOMS 32
 #define SOMFY_MAX_REPEATERS 7
 #define SOMFY_MAX_LISTENERS 14
@@ -267,6 +268,8 @@ class SomfyShade : public SomfyRemote {
     float tiltTarget = 0.0f;
     float myPos = -1.0f;
     float myTiltPos = -1.0f;
+    uint8_t favPos[SOMFY_MAX_FAVS] = {25, 50, 75, 255, 255, 255};
+    uint8_t favTilt[SOMFY_MAX_FAVS] = {25, 50, 75, 255, 255, 255};
     SomfyLinkedRemote linkedRemotes[SOMFY_MAX_LINKED_REMOTES];
     bool paired = false;
     int8_t validateJSON(JsonObject &obj);
@@ -375,6 +378,7 @@ class SomfyShade : public SomfyRemote {
     void emitCommand(somfy_commands cmd, const char *source, uint32_t sourceAddress, const char *evt = "shadeCommand");
     void emitCommand(uint8_t num, somfy_commands cmd, const char *source, uint32_t sourceAddress, const char *evt = "shadeCommand");
     void setMyPosition(int8_t pos, int8_t tilt = -1);
+    static void setFavorites(uint8_t *dst, JsonArray arr);
     bool learnMyPosition(int8_t pos, int8_t tilt = -1);
     void moveToMyPosition();
     void processWaitingFrame();

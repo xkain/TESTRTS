@@ -96,6 +96,19 @@ void SomfyShade::clear() {
   this->gpioUp = this->gpioDown = this->gpioMy = 255;
   this->sortOrder = 255;
 }
+void SomfyShade::setFavorites(uint8_t *dst, JsonArray arr) {
+  uint8_t n = 0;
+  memset(dst, 255, SOMFY_MAX_FAVS);
+  for(JsonVariant v : arr) {
+    if(n >= SOMFY_MAX_FAVS) break;
+    if(!v.is<int>()) continue;
+    int p = v.as<int>();
+    if(p < 0 || p > 100) continue;
+    bool dup = false;
+    for(uint8_t i = 0; i < n; i++) if(dst[i] == p) dup = true;
+    if(!dup) dst[n++] = static_cast<uint8_t>(p);
+  }
+}
 void SomfyShade::applyGpioModes() {
   if(this->proto != radio_proto::GP_Relay && this->proto != radio_proto::GP_Remote) return;
   uint8_t *pins[3] = { &this->gpioUp, &this->gpioDown, &this->gpioMy };
