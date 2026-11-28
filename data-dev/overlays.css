@@ -1273,6 +1273,23 @@ button[line].fw-sidebar-button:hover {
 .dord-room-name { font-size: var(--fs-2); font-weight: 600; color: var(--text-2); }
 
 /* =======================================================================
+ *  LISTE DES PIÈCES DU TABLEAU DE BORD (.room-sheet, openRoomSheet() dans 70-somfy.js)
+ *  Panneau : une ligne par pièce, son état et ses commandes dès deux équipements de fenêtre.
+ *  ======================================================================= */
+.room-sheet .side-panel-body { gap: 0; padding-top: 0; }
+.room-sheet-row { display: flex; align-items: center; gap: 10px; padding: 4px 6px 4px 0; border-radius: var(--r-2); }
+.room-sheet-row + .room-sheet-row { border-top: 1px solid var(--divider); }
+.room-sheet-row.is-active { background: var(--on-fill); }
+.room-sheet-row.is-active .room-sheet-name { color: var(--on-fill-text); }
+.room-sheet-name { display: flex; flex: 1; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; margin: 0; padding: 10px 12px; border: 0; background: transparent; color: var(--text); text-align: left; text-transform: none; letter-spacing: normal; }
+.room-sheet-name:hover { background: transparent; color: inherit; }
+.room-sheet-name b { max-width: 100%; overflow: hidden; font-size: var(--fs-3); text-overflow: ellipsis; white-space: nowrap; }
+.room-sheet-name small { font-size: var(--fs-1); font-weight: 400; opacity: .75; }
+.room-sheet-name small.is-moving { color: var(--accent); font-weight: 700; opacity: 1; }
+.room-sheet-row.is-active .room-sheet-name small.is-moving { color: inherit; }
+.room-sheet .cmd-seg-btn { width: 40px; }
+
+/* =======================================================================
  *  FENÊTRES DE LIAISON D'UNE TÉLÉCOMMANDE (#divLinkListener, #divLinkRepeater, 70-somfy.js)
  *  Coque genmod- cadrée à 16 px ; l'écoute reprend .rw-listen de l'assistant radio.
  *  ======================================================================= */
@@ -1524,48 +1541,74 @@ button[line].fw-sidebar-button:hover {
    Le haut du ciel reprend le fond de la carte : l'en-tête se fond dans la scène sans bande. */
 /* Teintes des pastilles et de la barre, communes aux cartes d'équipement et de groupe. */
 .somfyShadeCtl.dcard, .somfyGroupCtl.gcard { --dcard-pill: var(--color-bg-alt); --dcard-mid: var(--color-bg-alt); --dcard-mid-h: var(--color-bg-input); --dcard-out: var(--color-border); }
-.somfyShadeCtl.dcard {
-    --dsc-sk1: var(--color-bg-card); --dsc-sk2: #e9f0f9; --dsc-gnd: #efece6; --dsc-drive: #e5e1d9; --dsc-bush: #cbd8c4;
-    --dsc-wall: #fbfbfa; --dsc-wall2: #eeece8; --dsc-roof: #56627d; --dsc-trim: #d3d6dc; --dsc-int: #2b3347; --dsc-door: #4a5772;
-    --dsc-line: #6b7488; --dsc-gl1: #bcd6f0; --dsc-gl2: #e9f2fb; --dsc-slat: #a3abb9; --dsc-slat2: #858ea0; --dsc-fab: #bfc5cf;
-    --dsc-lamp: #4a5772; --dsc-canA: #2f6fea; --dsc-canB: #e9eef8; --dsc-cone: 0; --dsc-glow: 0;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px 12px 10px;
-    border-radius: 22px;
-    box-shadow: none;
-    background: var(--color-bg-card);
+.somfyShadeCtl.dcard { --dcard-tint: var(--surface-2); --dcard-tone: var(--text-2); container-type: inline-size; flex-direction: column; gap: 0; padding: 0; border-radius: 20px; box-shadow: none; background: var(--color-bg-card); }
+.dcard[data-open="true"] { --dcard-tint: color-mix(in srgb, var(--color-accent) 14%, var(--surface)); --dcard-tone: var(--color-accent); }
+:root[data-theme="light"] {
+    --dt-glass1: #ffffff; --dt-glass2: #f2f4f7; --dt-refl: rgba(255, 255, 255, .55); --dt-frame1: color-mix(in srgb, var(--surface-2), #fff 45%); --dt-frame2: var(--surface-2);
+    --dt-int1: #555a62; --dt-int2: #33373d; --dt-car: #2b2f35; --dt-rod: #8b929c; --dt-tilt: #8a5cd6;
+    --dt-panel: #7a818c; --dt-stile: #6a717b; --dt-filet: #e4e7eb; --dt-wall: #f3f4f6; --dt-wall2: #d9dde2; --dt-ground: #e2e5e9;
 }
-:root[data-theme="dark"] .somfyShadeCtl.dcard {
-    --dsc-sk2: #25335a; --dsc-gnd: #141b30; --dsc-drive: #1b2440; --dsc-bush: #0e1427; --dsc-wall: #3a4a70; --dsc-wall2: #2f3d5e;
-    --dsc-roof: #5a6b92; --dsc-trim: #7a8db5; --dsc-int: #0a0f1d; --dsc-door: #27324e; --dsc-line: #46567d; --dsc-gl1: #2c4069;
-    --dsc-gl2: #405a8e; --dsc-slat: #8592ad; --dsc-slat2: #6a7896; --dsc-fab: #8e9ab3; --dsc-lamp: #dfe6f6; --dsc-cone: 1; --dsc-glow: .55;
+:root[data-theme="dark"] {
+    --dt-glass1: #5a6372; --dt-glass2: #4a5361; --dt-refl: rgba(255, 255, 255, .07); --dt-frame1: color-mix(in srgb, var(--surface-2), #fff 10%); --dt-frame2: var(--surface-2);
+    --dt-int1: #24272d; --dt-int2: #14161a; --dt-car: #08090b; --dt-rod: #7a8291; --dt-tilt: #b9a0f2;
+    --dt-panel: #535b68; --dt-stile: #454c58; --dt-filet: #9aa3b1; --dt-wall: #2e343e; --dt-wall2: #3d4450; --dt-ground: #1c2027;
 }
-.dcard-head { display: flex; align-items: center; gap: 10px; min-width: 0; overflow: hidden; }
-.dcard-ico { flex: none; width: 30px; height: 30px; display: grid; place-items: center; color: var(--color-text-main); }
-.dcard-ico svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
-/* Les <button> héritent de base.css (pleine largeur, capitales, fond d'accent) : chaque bouton de la carte les annule. */
-.dcard-name, .dcard-name:hover { display: block; flex: 1; width: auto; min-width: 0; overflow: hidden; margin: 0; padding: 0; border: 0; background: none; color: var(--color-text-main); text-align: left; text-transform: none; cursor: pointer; font: inherit; }
-.dcard-name .shadectl-name { display: block; font-size: 1rem; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dcard-art { position: relative; height: 124px; overflow: hidden; background: radial-gradient(120% 100% at 50% 100%, var(--dcard-tint), var(--surface-2) 80%); cursor: pointer; transition: background .4s; }
+.dcard-art.is-drape { background: var(--surface); }
+.dcard-art.is-switch { border-radius: 19px; background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2), var(--surface) 55%), var(--surface-2)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 14%, transparent), 0 2px 4px -1px color-mix(in srgb, var(--text) 18%, transparent); }
+.dcard-art-svg, .dcard-art-back { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.dcard-art-back svg { display: block; width: 100%; height: 100%; }
+.dcard-art-back::after { content: ""; position: absolute; inset: 0 0 -1px; border: 8px solid var(--surface-2); border-bottom: 0; border-radius: 20px 20px 0 0; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 10%, transparent); }
 .dcard-sun-btn, .dcard-sun-btn:hover { flex: none; width: 32px; height: 32px; margin: 0; padding: 0; border: 0; border-radius: 999px; background: var(--dcard-pill); color: var(--color-text-main); display: grid; place-items: center; cursor: pointer; opacity: .75; }
 .dcard-sun-btn svg { width: 17px; height: 17px; fill: currentColor; }
 .dcard-sun-btn[data-on="true"] { background: #f5b301; color: #3a2a00; opacity: 1; }
 .dcard-pill { flex: none; max-width: 46%; height: 32px; padding: 0 12px; box-sizing: border-box; display: flex; align-items: center; gap: 7px; border-radius: 999px; background: var(--dcard-pill); color: var(--color-text-main); font-size: .8em; font-weight: 600; white-space: nowrap; overflow: hidden; font-variant-numeric: tabular-nums; }
-.dcard-pill-txt { overflow: hidden; text-overflow: ellipsis; }
-.dcard-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--color-text-secondary); }
-.dcard[data-open="true"] .dcard-dot { background: #16a34a; }
-:root[data-theme="dark"] .dcard[data-open="true"] .dcard-dot { background: #4ade80; }
-.dcard-arrow { display: none; flex: none; width: 13px; height: 13px; fill: none; stroke: var(--color-accent); stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
-.dcard[data-arrow="down"] .dcard-arrow { display: block; }
-.dcard[data-arrow="up"] .dcard-arrow { display: block; transform: rotate(180deg); }
-.dcard:not([data-arrow=""]) .dcard-dot { background: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 25%, transparent); }
-.dcard-stage { position: relative; height: 136px; margin: 0 -12px; overflow: hidden; background: var(--dsc-sk1); cursor: pointer; }
-.dcard-svg, .dcard-svg svg { display: block; width: 100%; height: 100%; overflow: visible; }
-.dcard-tilt { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 3px; border-radius: 14px; background: color-mix(in srgb, var(--color-bg-card) 88%, transparent); color: var(--color-text-main); box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
-.dcard-tilt-val { padding: 2px 0 1px; font-size: 10.5px; font-weight: 700; opacity: .75; font-variant-numeric: tabular-nums; }
-.dcard-tilt button { flex: none; text-transform: none; width: 34px; height: 30px; margin: 0; padding: 0; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; font-size: 12px; font-weight: 800; display: grid; place-items: center; cursor: pointer; }
-.dcard-tilt button:hover { background: var(--dcard-pill); }
-.dcard-tilt svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.dcard-chip { position: absolute; left: 8px; top: 8px; z-index: 1; display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; box-sizing: border-box; border-radius: 999px; background: var(--surface); color: var(--dcard-tone); font-size: .72em; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; box-shadow: 0 0 0 1px color-mix(in srgb, var(--dcard-tone) 25%, transparent), 0 2px 8px rgba(0, 0, 0, .18); }
+.dcard-chip.is-moving { height: auto; flex-direction: column; align-items: flex-start; gap: 0; padding: 3px 9px 4px; border-radius: 12px; line-height: 1.2; color: var(--color-accent); }
+.dcard-verb { font-size: .86em; font-weight: 700; color: var(--text-2); }
+.dcard-vals { display: inline-flex; align-items: center; gap: 5px; }
+.dcard-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: dcard-pulse 1.2s ease-in-out infinite; }
+@keyframes dcard-pulse { 50% { opacity: .25; transform: scale(.7); } }
+.dcard-num { display: none; }
+.dcard-cs { width: 1px; height: 12px; background: currentColor; opacity: .3; }
+.dcard-cv { color: var(--dt-tilt); }
+.dcard-ind { display: inline-flex; gap: 1px; margin-left: -1px; color: var(--text-3); }
+.dcard-ind svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.dcard-flip, .dcard-fsun { position: absolute; z-index: 1; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: var(--surface); text-transform: none; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, .18), 0 0 0 1px var(--color-border); }
+.dcard-flip::after, .dcard-fsun::after { content: ""; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
+.dcard-flip { right: 8px; bottom: 8px; width: 36px; height: 36px; color: var(--text); }
+.dcard-flip svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.dcard[data-tmode="tilt"] .dcard-flip, .dcard[data-tmode="tilt"] .dcard-flip:hover { background: var(--on-fill); color: var(--on-fill-text); }
+.dcard-fsun { right: 15px; bottom: 15px; width: 22px; height: 22px; color: var(--text-3); }
+.dcard.has-flip .dcard-fsun { bottom: 59px; }
+.dcard-fsun svg { width: 13px; height: 13px; fill: currentColor; }
+.dcard-flip:hover, .dcard-fsun:hover { background: var(--surface-2); color: var(--text); }
+#divHomePnl .dcard-fsun[data-on="true"], #divHomePnl .dcard-fsun[data-on="true"]:hover { background: var(--color-accent); color: var(--color-text-on-accent, #fff); }
+#divHomePnl .dcard-fsun[data-on="true"] svg { color: inherit; }
+.dcard-body { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 8px 10px 10px; min-width: 0; }
+/* Les <button> héritent de base.css (pleine largeur, capitales, fond d'accent) : chaque bouton de la carte les annule. */
+.dcard-name, .dcard-name:hover { display: block; width: auto; min-width: 0; margin: 0; padding: 0; border: 0; background: none; color: var(--color-text-main); text-align: left; text-transform: none; cursor: pointer; font: inherit; }
+.dcard-name .shadectl-name { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em; font-size: .875rem; font-weight: 700; line-height: 1.2; }
+.dcard-trio { display: flex; min-width: 0; border-radius: 999px; background: var(--surface-2); }
+.dcard-kb { position: relative; flex: 1 1 0; width: auto; min-width: 0; height: 44px; margin: 0; padding: 0; border: 0; border-radius: 999px; display: grid; place-items: center; background: transparent; color: var(--text); font: inherit; font-size: .875em; font-weight: 800; letter-spacing: -.02em; text-transform: none; cursor: pointer; }
+.dcard-kb:hover { background: var(--surface); color: var(--text); }
+.dcard-kb + .dcard-kb::before { content: ""; position: absolute; left: 0; top: 13px; bottom: 13px; width: 1px; background: color-mix(in srgb, var(--text) 14%, transparent); }
+.dcard-kb svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.dcard-kb svg:has(use) { fill: currentColor; stroke: none; }
+.dcard-slat { display: none; }
+.dcard[data-tmode="tilt"] .dcard-chev { display: none; }
+.dcard[data-tmode="tilt"] .dcard-slat { display: block; }
+.dcard-kb.no-my .dcard-my { display: none; }
+.dcard-kb.no-my .dcard-sq { display: block; }
+.dcard:is([data-direction="1"], [data-direction="-1"], [data-tiltdirection="1"], [data-tiltdirection="-1"]) .dcard-kb.is-mid { background: var(--color-accent); color: #fff; }
+:root[data-theme="dark"] .dcard:is([data-direction="1"], [data-direction="-1"], [data-tiltdirection="1"], [data-tiltdirection="-1"]) .dcard-kb.is-mid { color: #0b0d10; }
+.dcard:is([data-direction="1"], [data-direction="-1"], [data-tiltdirection="1"], [data-tiltdirection="-1"]) :is(.dcard-kb.is-mid, .dcard-kb.is-mid + .dcard-kb)::before { display: none; }
+#divHomePnl.dash-editing .dcard :is(.dcard-trio, .dcard-flip, .dcard-fsun) { display: none; }
+#divHomePnl.dash-editing .dcard .dash-edit-eye { width: 100%; height: 44px; border-radius: 999px; }
+@container (max-width: 210px) {
+    .dcard-word { display: none; }
+    .dcard-num { display: inline; }
+}
 /* Barre « Contour » : boutons au trait, « my » plein et plus large ; le bleu ne marque que le mouvement (Stop). */
 .dcard-bar { display: flex; gap: 8px; min-width: 0; }
 .dcard-btn { flex: 1 1 0; width: auto; min-width: 0; text-transform: none; letter-spacing: normal; transition: background .2s; height: 42px; margin: 0; padding: 0 6px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px solid var(--dcard-out); border-radius: 999px; background: var(--color-bg-card); color: var(--color-text-main); font: inherit; font-size: .9em; font-weight: 600; white-space: nowrap; cursor: pointer; }
@@ -1578,11 +1621,9 @@ button[line].fw-sidebar-button:hover {
 .dcard-sq { display: none; width: 12px; height: 12px; border-radius: 2px; background: currentColor; }
 .dcard-mid-btn.no-my .dcard-my { display: none; }
 .dcard-mid-btn.no-my .dcard-sq { display: block; }
-.dcard:is([data-direction="1"], [data-direction="-1"]) .dcard-mid-btn { border-color: #2f6fea; background: #2f6fea; color: #fff; box-shadow: 0 6px 16px rgba(47, 111, 234, .45); }
 .dcard:is([data-direction="1"], [data-direction="-1"]) .dcard-my { display: none; }
 .dcard:is([data-direction="1"], [data-direction="-1"]) .dcard-sq { display: block; }
-/* Équipements compacts (dashCompact, bit 1) : en-tête et barre, sans la scène. */
-#divHomePnl.dash-compact-shades .dcard-stage { display: none; }
+#divHomePnl.dash-compact-shades .dcard-art { height: 84px; }
 
 /* --- Carte de groupe (gcard) : la barre des équipements, sans icône ni scène -------- */
 .somfyGroupCtl.gcard { flex-direction: column; gap: 10px; padding: 14px 14px 12px 18px; border-radius: 22px; box-shadow: none; background: var(--color-bg-card); }

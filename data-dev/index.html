@@ -249,6 +249,14 @@
                 <div class="header-left">
                     <button type="button" id="btnMobileBack" class="mobile-menu-btn" onclick="mobileNav.back();" tr="BT_GO_BACK" title=""><svg><use href="#svg-arrowLeft"></use></svg></button>
                     <h1 id="mobileTitle" class="mobile-title"></h1>
+                    <div class="mobile-house">
+                        <div class="cmd-seg is-bar" role="group" tr="DASH_HOUSE_ALL" title="">
+                            <button type="button" class="cmd-seg-btn" onclick="somfy.houseCommand('up');" tr="DASH_OPEN_ALL" title=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                            <button type="button" class="cmd-seg-btn is-stop dash-house-stop" onclick="somfy.houseCommand('stop');" tr="DASH_STOP_ALL" title=""><i></i></button>
+                            <button type="button" class="cmd-seg-btn" onclick="somfy.houseCommand('down');" tr="DASH_CLOSE_ALL" title=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+                        </div>
+                        <span class="dash-house-sum"></span>
+                    </div>
                     <span class="mobile-brand"><svg><use href="#svg-logo"></use></svg>ESPSomfy-RTS</span>
                 </div>
                 <div class="header-right">
@@ -258,7 +266,14 @@
                         <span class="radio-activity-radar-glow" aria-hidden="true"></span>
                         <svg class="radio-activity-radar-icon"><use href="#svg-tabRadio"></use></svg>
                     </span>
-                    <button type="button" id="btnMobileAdd" class="mobile-menu-btn" onclick="mobileNav.addMenu();" tr="BT_ADD" title=""><svg><use href="#svg-add"></use></svg></button>
+                    <div id="btnMobileMore" class="overlayHeader-dropdown-container" onclick="event.stopPropagation();">
+                        <button type="button" class="mobile-menu-btn" aria-haspopup="menu" tr="OPTION" title="" onclick="somfy.toggleTileMenu(this);"><svg><use href="#svg-menuVertical"></use></svg></button>
+                        <div class="overlayHeader-dropdown-menu" role="menu">
+                            <div class="dropdown-item" role="menuitem" onclick="this.parentElement.classList.remove('show'); mobileNav.addMenu();"><svg><use href="#svg-add"></use></svg><span tr="BT_ADD"></span></div>
+                            <div class="dropdown-item" role="menuitem" onclick="this.parentElement.classList.remove('show'); somfy.openDashOrder();"><svg><use href="#svg-sort"></use></svg><span tr="LIST_SORT"></span></div>
+                            <div class="dropdown-item" role="menuitem" onclick="this.parentElement.classList.remove('show'); somfy.startDashEdit();"><svg><use href="#svg-edit"></use></svg><span tr="BT_CUSTOMIZE"></span></div>
+                        </div>
+                    </div>
                     <nav id="mobileNav" class="mobile-nav">
                         <button type="button" class="mobile-menu-btn" data-tab-root="divHomePnl" tr="TAB_DASHBOARD" title=""><svg><use href="#svg-tabHome"></use></svg></button>
                         <button type="button" class="mobile-menu-btn mobile-nav-settings" data-tab-root="divSettingsPnl" tr="MENU_TITLE" title=""><svg><use href="#svg-navMenu"></use></svg></button>
@@ -2261,28 +2276,29 @@
             nombre de groupes réel, une fois this.dataLoaded passé à true (Somfy.loadSomfy()). -->
             <div id="divHomePnl" class="no-groups" style="display: none;">
                 <aside class="dash-rooms">
-                    <div class="dash-rooms-title" tr="DASH_HOUSE_TITLE">Maison</div>
+                    <div class="dash-rooms-head">
+                        <div class="dash-rooms-title" tr="DASH_HOUSE_TITLE">Maison</div>
+                        <button type="button" class="dash-tool-btn" onclick="mobileNav.addMenu();" tr="BT_ADD" title=""><svg><use href="#svg-add"></use></svg></button>
+                        <button type="button" class="dash-tool-btn" onclick="somfy.openDashOrder();" tr="LIST_SORT" title=""><svg><use href="#svg-sort"></use></svg></button>
+                        <button type="button" class="dash-tool-btn" onclick="somfy.startDashEdit();" tr="BT_CUSTOMIZE" title=""><svg><use href="#svg-edit"></use></svg></button>
+                    </div>
+                    <div class="dash-house is-active" onclick="if (!event.target.closest('button')) somfy.selectRoom(0);">
+                        <div class="dash-house-txt"><b tr="DASH_HOUSE_ALL">Toute la maison</b><span class="dash-house-sum"></span></div>
+                        <div class="cmd-seg" role="group" tr="DASH_HOUSE_ALL" title="">
+                            <button type="button" class="cmd-seg-btn" onclick="somfy.houseCommand('up');" tr="DASH_OPEN_ALL" title=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+                            <button type="button" class="cmd-seg-btn is-stop dash-house-stop" onclick="somfy.houseCommand('stop');" tr="DASH_STOP_ALL" title=""><i></i></button>
+                            <button type="button" class="cmd-seg-btn" onclick="somfy.houseCommand('down');" tr="DASH_CLOSE_ALL" title=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+                        </div>
+                    </div>
                     <div class="dash-rooms-label" tr="SUBTAB_ROOMS">Pièces</div>
-                    <div class="room-nav-container">
-                        <div id="divRoomSelector" class="room-selector" data-roomid="0"></div>
+                    <div class="dash-rooms-row">
+                        <div class="room-nav-container">
+                            <div id="divRoomSelector" class="room-selector" data-roomid="0"></div>
+                        </div>
+                        <button type="button" class="dash-rooms-more" onclick="somfy.openRoomSheet();" tr="DASH_ALL_ROOMS" title=""><svg><use href="#svg-menuVertical"></use></svg></button>
                     </div>
                 </aside>
                 <div class="dash-main">
-                <div class="dash-topbar">
-                    <div class="dash-house">
-                        <div class="dash-house-txt"><b tr="DASH_HOUSE_ALL">Toute la maison</b><span class="dash-house-sub"></span></div>
-                        <div class="dcard-bar dash-house-bar" role="group">
-                            <button type="button" class="dcard-btn" onclick="somfy.houseCommand('up');"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg><span class="dcard-lbl" tr="DASH_OPEN_ALL">Tout ouvrir</span></button>
-                            <button type="button" class="dcard-btn dcard-mid-btn dash-house-stop" onclick="somfy.houseCommand('stop');"><i class="dcard-sq"></i></button>
-                            <button type="button" class="dcard-btn" onclick="somfy.houseCommand('down');"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span class="dcard-lbl" tr="DASH_CLOSE_ALL">Tout fermer</span></button>
-                        </div>
-                    </div>
-                    <div class="dash-top-btns">
-                        <button type="button" class="dash-edit-btn dash-add-btn" onclick="mobileNav.addMenu();"><svg><use href="#svg-add"></use></svg><span tr="BT_ADD"></span></button>
-                        <button type="button" class="dash-edit-btn dash-sort-btn" onclick="somfy.openDashOrder();"><svg><use href="#svg-sort"></use></svg><span tr="LIST_SORT"></span></button>
-                        <button type="button" class="dash-edit-btn" onclick="somfy.startDashEdit();"><svg><use href="#svg-edit"></use></svg><span tr="BT_CUSTOMIZE"></span></button>
-                    </div>
-                </div>
                 <div class="dash-edit-bar">
                     <svg class="dash-edit-bar-icon"><use href="#svg-eyeOn"></use></svg>
                     <span class="dash-edit-hint" tr="DASH_EDIT_HINT"></span>

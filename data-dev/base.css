@@ -1588,6 +1588,86 @@ button:disabled:active {
 .lattes-group.move-left { transform:translateX(calc((var(--shade-position, 0) / 100 - 1) * var(--travel) * 1px)); }
 .lattes-group.move-right { transform:translateX(calc((1 - var(--shade-position, 0) / 100) * var(--travel) * 1px)); }
 
+/* --- Bloc de commandes ▲ ■ ▼ en pilule segmentée ------------------------ */
+.cmd-seg {
+    display:flex;
+    flex:none;
+    align-items:center;
+    height:34px;
+    box-sizing:border-box;
+    padding:2px;
+    border:1px solid var(--border);
+    border-radius:var(--r-pill);
+    background:var(--surface);
+    color:var(--text);
+}
+.cmd-seg-btn {
+    position:relative;
+    display:grid;
+    place-items:center;
+    width:36px;
+    height:28px;
+    margin:0;
+    padding:0;
+    border:0;
+    border-radius:var(--r-pill);
+    background:transparent;
+    color:inherit;
+}
+.cmd-seg-btn + .cmd-seg-btn::before {
+    content:"";
+    position:absolute;
+    left:0;
+    top:7px;
+    bottom:7px;
+    width:1px;
+    background:currentColor;
+    opacity:.16;
+}
+.cmd-seg-btn:hover,
+.cmd-seg-btn:active {
+    background:var(--surface-2);
+    color:inherit;
+    transform:none;
+    opacity:1;
+}
+.cmd-seg-btn svg {
+    width:20px;
+    height:20px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:2.4;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    opacity:1;
+}
+.cmd-seg-btn i {
+    width:10px;
+    height:10px;
+    border-radius:2px;
+    background:currentColor;
+}
+.cmd-seg-btn.is-stop:not(.is-moving) {
+    opacity:.3;
+    pointer-events:none;
+}
+.cmd-seg-btn.is-moving,
+.cmd-seg-btn.is-moving:hover {
+    background:var(--color-accent);
+    color:var(--color-text-on-accent);
+}
+.cmd-seg-btn.is-moving::before,
+.cmd-seg-btn.is-moving + .cmd-seg-btn::before {
+    display:none;
+}
+.cmd-seg.is-bar {
+    border-color:color-mix(in srgb, currentColor 22%, transparent);
+    background:color-mix(in srgb, currentColor 7%, transparent);
+}
+.cmd-seg.is-bar .cmd-seg-btn:hover {
+    background:color-mix(in srgb, currentColor 12%, transparent);
+}
+
 /* =========================================================================
  *  RÉSEAUX WI-FI À PROXIMITÉ (class WifiNear, 50-wifi.js)
  *  Même liste dans l'assistant de première connexion et l'onglet Wi-Fi de la

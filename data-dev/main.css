@@ -1156,7 +1156,7 @@ body.is-home-welcome .container {
         min-height: calc(100vh - var(--mobile-header-height));
     }
     body.is-home-welcome .mobile-title,
-    body.is-home-welcome :is(#btnMobileAdd, #mobileNav [data-tab-root="divHomePnl"]) {
+    body.is-home-welcome :is(.mobile-house, #btnMobileMore, #mobileNav [data-tab-root="divHomePnl"]) {
         display: none;
     }
     body.is-home-welcome .mobile-brand {
@@ -1340,9 +1340,13 @@ body.is-home-welcome .container {
 .mobile-tabs {
     display: none;
     position: relative;
-    width: 100%;
-    border-bottom: 1px solid var(--color-border);
-    padding: 0;
+    box-sizing: border-box;
+    width: auto;
+    margin: 0 15px 8px;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    background: var(--surface);
 }
 
 .mobile-tabs .tab-btn {
@@ -1356,39 +1360,44 @@ body.is-home-welcome .container {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 48px;
+    position: relative;
+    z-index: 1;
+    height: 32px;
+    margin: 0;
+    padding: 0 10px;
     background: transparent;
     border: none;
+    border-radius: var(--r-pill);
     outline: none;
     cursor: pointer;
-    font-size: 0.9em;
+    font-size: var(--fs-2);
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--color-text-secondary);
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text-2);
     transition: color 0.2s ease;
 }
 
 .tab-btn:hover {
-    background: #9595950a;
-    color: var(--color-text-main);
-    border-radius: 0;
+    background: transparent;
+    color: var(--text);
 }
 
-.tab-btn.active {
-    color: var(--color-accent);
-    font-weight: 700;
+.tab-btn.active,
+.tab-btn.active:hover {
+    color: var(--on-fill-text);
     transform: none;
 }
 
 .mobile-tabs::after {
     content: "";
     position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 50%;
-    height: 3px;
-    background-color: var(--color-accent);
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    border-radius: var(--r-pill);
+    background-color: var(--on-fill);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
 }
@@ -4750,6 +4759,8 @@ body.fw-update .set-fw-new {
  *  ======================================================================= */
 .mobile-title,
 .mobile-brand,
+.mobile-house,
+#btnMobileMore,
 .mobile-nav,
 .net-banner,
 .gen-hero-help {
@@ -4777,14 +4788,44 @@ body.fw-update .set-fw-new {
         font-size: 20px;
     }
     #appHeader.is-root #btnMobileBack,
-    #appHeader:not(.is-root.is-home) #btnMobileAdd {
+    #appHeader.is-root.is-home #mobileNav [data-tab-root="divHomePnl"] {
         display: none;
+    }
+    #appHeader.is-root.is-home .mobile-title {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+    }
+    #appHeader.is-root.is-home .mobile-house {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+    #appHeader.is-root.is-home #btnMobileMore {
+        display: block;
+    }
+    #btnMobileMore svg {
+        transform: rotate(90deg);
+    }
+    #btnMobileMore .dropdown-item svg {
+        transform: none;
+    }
+    #btnMobileMore .overlayHeader-dropdown-menu {
+        width: 200px;
+        text-align: left;
+    }
+    .mobile-house .dash-house-sum {
+        font-size: 12px;
+        line-height: 1.2;
+        color: var(--text-3);
     }
     #appHeader.is-root .header-left {
         padding-left: 10px;
     }
-    #btnMobileBack svg,
-    #btnMobileAdd svg {
+    #btnMobileBack svg {
         color: var(--accent);
     }
     .mobile-nav {
@@ -5642,17 +5683,29 @@ input.gen-input.mqtt-mono {
 .switch-bottom { fill: #000; opacity: calc(var(--fpos, 0%) * .12); transition: opacity .4s ease; }
 .switch-led { fill: color-mix(in srgb, var(--color-accent) var(--fpos, 0%), #9aa0a6); transition: fill .4s ease; }
 .switch-glow { fill: color-mix(in srgb, var(--color-accent) 45%, transparent); opacity: var(--fpos, 0%); transition: opacity .4s ease; }
-#divHomePnl .dash-topbar { display: flex; align-items: center; gap: 16px; width: 100%; box-sizing: border-box; padding: 18px clamp(16px, 2.6vw, 40px) 8px; }
-#divHomePnl .dash-topbar.is-empty { display: none; }
 /* Haut de page : colonne « Maison » des pièces (ordinateur) ou rangée de puces (tablette, mobile),
-   commandes de toute la maison, message de mouvement. Gabarit de la maquette A2 du tableau de bord. */
-#divHomePnl .dash-rooms { display: flex; flex-direction: column; gap: 10px; min-width: 0; box-sizing: border-box; padding: 16px 15px 4px; }
-#divHomePnl .dash-rooms-title { font-size: 1.6em; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; color: var(--color-text-main); }
+   commandes de toute la maison, message de mouvement. */
+#divHomePnl .dash-rooms { display: flex; flex-direction: column; gap: 10px; min-width: 0; box-sizing: border-box; padding: 12px 15px 8px; }
+#divHomePnl .dash-rooms-head { display: flex; align-items: center; gap: 6px; }
+#divHomePnl .dash-rooms-title { flex: 1; min-width: 0; font-size: 1.6em; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; color: var(--color-text-main); }
+#divHomePnl .dash-tool-btn { display: grid; place-items: center; flex: none; width: 36px; height: 36px; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: var(--r-2); background: var(--surface); color: var(--text); }
+#divHomePnl .dash-tool-btn:hover { background: var(--surface-2); color: var(--text); }
+#divHomePnl .dash-tool-btn svg { width: 18px; height: 18px; }
+#divHomePnl.dash-editing .dash-tool-btn { display: none; }
+#divHomePnl .dash-house { display: flex; align-items: center; gap: 12px; min-width: 0; }
+#divHomePnl .dash-house-txt { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+#divHomePnl .dash-house-txt b { font-size: .95em; font-weight: 800; color: var(--color-text-main); }
+#divHomePnl .dash-house-sum { font-size: .75em; color: var(--color-text-secondary); }
 #divHomePnl .dash-rooms-label { display: none; font-size: .75em; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-secondary); }
-#divHomePnl .dash-rooms .room-nav-container { background: none; }
-#divHomePnl .dash-rooms .room-selector { padding: 0 0 4px; gap: 6px; }
+#divHomePnl .dash-rooms-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+#divHomePnl .dash-rooms-row[hidden] { display: none; }
+#divHomePnl .dash-rooms .room-nav-container { flex: 1; min-width: 0; background: none; }
+#divHomePnl .dash-rooms .room-selector { padding: 0; gap: 4px; }
+#divHomePnl .dash-rooms-more { display: grid; place-items: center; flex: none; width: 34px; height: 34px; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: var(--r-pill); background: var(--surface); color: var(--text); }
+#divHomePnl .dash-rooms-more:hover { background: var(--surface-2); color: var(--text); }
+#divHomePnl .dash-rooms-more svg { width: 18px; height: 18px; }
 /* Puces (tablette, mobile) : blanches, nombre discret, pièce choisie en plein foncé (bouton neutre A2). */
-#divHomePnl .dash-rooms .room-pill { gap: 7px; height: 40px; padding: 0 14px; border-radius: 999px; background: var(--color-bg-card); font-size: .85em; font-weight: 700; box-shadow: none; }
+#divHomePnl .dash-rooms .room-pill { gap: 5px; height: 32px; padding: 0 11px; border-radius: 999px; background: var(--color-bg-card); font-size: .8em; font-weight: 700; box-shadow: none; }
 #divHomePnl .dash-rooms .room-pill:hover { background: var(--color-bg-alt); }
 #divHomePnl .dash-rooms .room-pill.active { background: var(--color-text-main); color: var(--color-bg-card); box-shadow: none; }
 #divHomePnl .dash-rooms .room-count { min-width: 0; height: auto; padding: 0; background: none; font-size: 1em; font-weight: 600; opacity: .6; }
@@ -5661,14 +5714,8 @@ input.gen-input.mqtt-mono {
 #divHomePnl .dash-main { display: flex; flex-direction: column; flex: 1 1 0%; min-width: 0; min-height: 0; }
 /* Pièce vide : le message (affiché par checkEmptyState) remplace les colonnes, titres compris. */
 #divHomePnl #divNoDevice:not([style*="none"]) ~ .dashboard-split-container { display: none; }
-#divHomePnl .dash-house { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; flex-wrap: wrap; }
-#divHomePnl .dash-house-txt { display: flex; flex-direction: column; min-width: 0; }
-#divHomePnl .dash-house-txt b { font-size: 1.1em; font-weight: 800; color: var(--color-text-main); }
-#divHomePnl .dash-house-sub { font-size: .75em; color: var(--color-text-secondary); }
-#divHomePnl .dash-house-bar { flex: 0 1 360px; min-width: 280px; --dcard-pill: var(--color-bg-alt); --dcard-mid: var(--color-bg-alt); --dcard-mid-h: var(--color-bg-input); --dcard-out: var(--color-border); }
-#divHomePnl .dash-house-bar .dcard-btn { height: 44px; }
-#divHomePnl .dash-house-stop .dcard-sq { display: block; }
-#divHomePnl .dash-house-stop.is-moving { border-color: #2f6fea; background: #2f6fea; color: #fff; box-shadow: 0 6px 16px rgba(47, 111, 234, .45); }
+body.dash-house-off #divHomePnl .dash-house,
+body.dash-house-off .mobile-house { display: none !important; }
 #divHomePnl .dash-move-toast { position: fixed; right: 24px; bottom: 24px; z-index: 1400; display: flex; align-items: center; gap: 12px; width: 420px; max-width: calc(100vw - 24px); box-sizing: border-box; padding: 12px 14px 12px 16px; border-radius: 14px; background: #17181c; color: #fff; box-shadow: 0 10px 24px rgba(0, 0, 0, .2); animation: dashToastIn .35s cubic-bezier(.16, 1, .3, 1); }
 #divHomePnl .dash-move-toast[hidden] { display: none; }
 :root[data-theme="dark"] #divHomePnl .dash-move-toast { background: #2e343e; border: 1px solid #3d4551; }
@@ -5685,11 +5732,20 @@ input.gen-input.mqtt-mono {
 @media (min-width: 1001px) {
     #divHomePnl { display: grid; grid-template-columns: minmax(240px, 22%) minmax(0, 1fr); }
     #divHomePnl .dash-rooms { gap: 14px; padding: 28px 22px; overflow-y: auto; background: var(--color-bg-surface-1); }
-    #divHomePnl .dash-rooms-title { font-size: 2.1em; }
+    #divHomePnl .dash-rooms-title { font-size: 1.7em; }
+    #divHomePnl .dash-tool-btn { width: 32px; height: 32px; }
+    #divHomePnl .dash-house { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--r-4); background: var(--surface); cursor: pointer; }
+    #divHomePnl .dash-house.is-active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+    #divHomePnl .dash-house .cmd-seg { align-self: stretch; }
+    #divHomePnl .dash-house .cmd-seg-btn { flex: 1; width: auto; }
     #divHomePnl .dash-rooms-label { display: block; }
+    #divHomePnl .dash-rooms-row { display: block; }
+    #divHomePnl .dash-rooms-more,
+    #divHomePnl .dash-rooms .room-pill[data-roomid="0"] { display: none; }
     #divHomePnl .dash-rooms .room-nav-container { display: flex; -webkit-mask-image: none; mask-image: none; }
     #divHomePnl .dash-rooms .room-selector { flex-direction: column !important; overflow: visible !important; padding: 0; gap: 4px; cursor: default; }
     #divHomePnl .dash-rooms .room-pill { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px 8px; width: 100%; height: auto; box-sizing: border-box; padding: 10px 12px; border-radius: 14px; background: transparent; font-size: 1em; }
+    #divHomePnl .dash-rooms .room-pill.active { background: var(--color-text-main); }
     #divHomePnl .dash-rooms .room-pill-name { font-size: .95em; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #divHomePnl .dash-rooms .room-pill-sum { display: block; grid-column: 1 / -1; font-size: .75em; font-weight: 500; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #divHomePnl .dash-main { overflow-y: auto; }
@@ -5700,19 +5756,12 @@ input.gen-input.mqtt-mono {
 }
 /* Tablette et mobile : puces des pièces, puis « Toute la maison » sur toute la largeur. */
 @media (max-width: 1000px) {
-    #divHomePnl .dash-topbar { position: relative; padding: 10px 15px 8px; }
-    #divHomePnl .dash-house { flex-direction: column; align-items: stretch; gap: 10px; }
-    #divHomePnl .dash-house-txt { padding-right: 217px; }
-    #divHomePnl .dash-house-bar { flex: none; min-width: 0; }
-    #divHomePnl .dash-top-btns { position: absolute; top: 12px; right: 15px; }
-    #divHomePnl .dash-add-btn { order: 1; }
-    #divHomePnl :is(.dash-add-btn, .dash-sort-btn) { width: 34px; padding: 0; justify-content: center; }
-    #divHomePnl :is(.dash-add-btn, .dash-sort-btn) span { display: none; }
     #divHomePnl .dash-move-toast { left: 12px; right: 12px; bottom: 12px; width: auto; max-width: none; }
 }
 #divHomePnl .column-count { font-size: 0.8em; font-weight: 600; color: var(--color-text-secondary); }
 #divHomePnl #divShadeControls,
 #divHomePnl #divGroupControls { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); grid-auto-rows: max-content; align-items: start !important; align-content: start !important; gap: 12px 14px !important; }
+#divHomePnl #divShadeControls { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); align-items: stretch !important; }
 #divHomePnl .dash-room-title { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; margin: 6px 2px -2px; font-size: 0.85em; font-weight: 700; color: var(--color-text-main); }
 #divHomePnl .dash-room-title:first-child { margin-top: 0; }
 #divHomePnl .dash-room-count { font-size: 0.9em; font-weight: 500; color: var(--color-text-secondary); }
@@ -5811,15 +5860,10 @@ input.gen-input.mqtt-mono {
 }
 #divHomePnl :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: none; }
 #divHomePnl.show-hidden-cards :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: flex; opacity: 0.5; }
-#divHomePnl .dash-top-btns { display: flex; align-items: center; gap: 8px; flex: none; }
-#divHomePnl .dash-edit-btn { display: inline-flex; align-items: center; gap: 6px; flex: none; width: auto; min-width: 0; height: 32px; margin: 0; padding: 0 12px; border-radius: var(--radius-btn); border: 1px solid var(--color-control-border); background: var(--color-control-bg); color: var(--color-accent); font-size: 0.8em; font-weight: 600; text-transform: none; letter-spacing: normal; cursor: pointer; }
-#divHomePnl .dash-edit-btn:hover { background: var(--color-control-bg-hover); color: var(--color-accent); }
-#divHomePnl .dash-edit-btn svg { width: 15px; height: 15px; }
-#divHomePnl.dash-editing .dash-edit-btn { display: none; }
-/* Le « + » de l'en-tête mobile le remplace sous 768 px. */
 @media (max-width: 767px) {
-    #divHomePnl .dash-add-btn { display: none; }
-    #divHomePnl .dash-house-txt { padding-right: 172px; }
+    #divHomePnl .dash-rooms { padding-top: 10px; }
+    #divHomePnl .dash-rooms-head,
+    #divHomePnl .dash-house { display: none; }
 }
 #divHomePnl .dash-edit-bar { display: none; align-items: center; gap: 10px 12px; flex-wrap: wrap; margin: 12px 20px 0; padding: 10px 14px; border-radius: var(--radius-lg); border: 1px solid color-mix(in srgb, var(--color-accent), transparent 65%); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg-card)); }
 #divHomePnl.dash-editing .dash-edit-bar { display: flex; }
@@ -6133,13 +6177,15 @@ input.gen-input.mqtt-mono {
 }
 @media (min-width: 1001px) and (max-width: 1360px) {
     #divHomePnl .dashboard-column.column-shades { flex: 1 1 0; }
-    #divHomePnl #divShadeControls { grid-template-columns: minmax(0, 1fr); }
     #divHomePnl .somfyGroupCtl { min-width: 314px; }
 }
 @media (max-width: 1000px) {
     #divHomePnl .dash-edit-bar { margin: 12px 12px 0; }
-    #divHomePnl #divShadeControls,
     #divHomePnl #divGroupControls { grid-template-columns: minmax(0, 1fr); }
+    #divHomePnl #divShadeControls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+    #divHomePnl #divShadeControls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 420px) {
     #divHomePnl .card-grid { grid-template-columns: minmax(0, 1fr); }

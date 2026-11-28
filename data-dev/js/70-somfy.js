@@ -1102,8 +1102,7 @@ class Somfy {
             const r = activeRoom ? _rooms.find(x => x.roomId === activeRoom) : null;
             roomLabel.textContent = r ? `${r.name} :` : '';
         }
-        const topbar = document.querySelector('.dash-topbar');
-        if (topbar) topbar.classList.toggle('is-empty', _rooms.length <= 1 && positioned === 0 && moving === 0 && (this.shades || []).length + (this.groups || []).length < 2);
+        document.body.classList.toggle('dash-house-off', this.houseShades().length === 0);
         document.querySelectorAll('#divShadeControls .dash-room-title').forEach(t => {
             const rid = parseInt(t.dataset.roomid, 10);
             let o = 0, n = 0;
@@ -1137,26 +1136,57 @@ class Somfy {
     houseShades() { return (this.shades || []).filter(sh => [0, 1, 2, 4, 7, 8].includes(sh.shadeType)); }
     // Une commande par équipement, l'une après l'autre : chaque ordre attend la réponse du précédent.
     // Stop n'envoie My qu'aux équipements en mouvement -- à l'arrêt, My les enverrait à leur position favorite.
-    houseCommand(cmd) {
+    houseCommand(cmd, roomId) {
         const moving = (sh) => (parseInt(sh.direction, 10) || 0) !== 0 || (parseInt(sh.tiltDirection, 10) || 0) !== 0;
-        const list = cmd === 'stop' ? (this.shades || []).filter(moving) : this.houseShades();
+        const inRoom = (sh) => roomId === undefined || sh.roomId === roomId;
+        const list = (cmd === 'stop' ? (this.shades || []).filter(moving) : this.houseShades()).filter(inRoom);
         const radioCmd = cmd === 'stop' ? 'my' : cmd;
         const next = (i) => { if (i < list.length) this.sendCommand(list[i].shadeId, radioCmd, undefined, () => next(i + 1)); };
         next(0);
     }
+    cmdSegHtml(roomId, moving) {
+        const btn = (cmd, key, icon) => `<button type="button" class="cmd-seg-btn${cmd === 'stop' ? ' is-stop' + (moving ? ' is-moving' : '') : ''}" onclick="somfy.houseCommand('${cmd}', ${roomId});" aria-label="${escAttr(tr(key))}" title="${escAttr(tr(key))}">${icon}</button>`;
+        return `<div class="cmd-seg" role="group">${btn('up', 'DASH_OPEN_ALL', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>')}${btn('stop', 'DASH_STOP_ALL', '<i></i>')}${btn('down', 'DASH_CLOSE_ALL', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>')}</div>`;
+    }
+    roomSheetRows() {
+        const active = parseInt(document.querySelector('.room-pill.active')?.dataset.roomid || '0', 10);
+        const isMoving = (sh) => (parseInt(sh.direction, 10) || 0) !== 0 || (parseInt(sh.tiltDirection, 10) || 0) !== 0;
+        const row = (id, name) => {
+            const all = (this.shades || []).filter(sh => id === 0 || sh.roomId === id);
+            const positioned = all.filter(sh => !this.dryContactShadeTypes.includes(sh.shadeType));
+            const open = positioned.filter(sh => sh.position !== this.closedPosition(sh.shadeType, sh.flipPosition)).length;
+            const moving = all.filter(isMoving).length;
+            const sum = moving ? `<small class="is-moving">${tr('IS_SUMMARY_MOVING').replace('{n}', moving)}</small>`
+                : `<small>${positioned.length ? tr('IS_SUMMARY_OPEN').replace('{n}', open).replace('{t}', positioned.length) : ''}</small>`;
+            const cmds = id !== 0 && this.houseShades().filter(sh => sh.roomId === id).length > 1 ? this.cmdSegHtml(id, moving > 0) : '';
+            return `<div class="room-sheet-row${id === active ? ' is-active' : ''}"><button type="button" class="room-sheet-name" data-close onclick="somfy.selectRoom(${id});"><b>${escHtml(name)}</b>${sum}</button>${cmds}</div>`;
+        };
+        return row(0, tr('DASH_HOUSE_ALL')) + _rooms.filter(r => r.roomId !== 0).map(r => row(r.roomId, r.name)).join('');
+    }
+    openRoomSheet() {
+        const div = document.createElement('div');
+        div.className = 'side-panel-overlay room-sheet';
+        div.innerHTML = `<aside class="side-panel" role="dialog" aria-modal="true" aria-labelledby="roomSheetTitle">
+        ${panelHead({ icon: 'svg-navRoom', id: 'roomSheetTitle', title: tr('DASH_ALL_ROOMS'), close: true })}
+        <div class="side-panel-body">${this.roomSheetRows()}</div>
+        </aside>`;
+        this._roomSheet = div;
+        openSidePanel(div);
+    }
     // Ligne « Toute la maison » et message de mouvement : relus à chaque récapitulatif.
     syncHouseBar() {
         this.syncRoomSums();
-        const sub = document.querySelector('.dash-house-sub');
-        if (sub) sub.textContent = tr('DASH_HOUSE_SUB').replace('{n}', this.houseShades().length);
+        const house = this.houseShades();
+        const houseOpen = house.filter(sh => sh.position !== this.closedPosition(sh.shadeType, sh.flipPosition)).length;
+        document.querySelectorAll('.dash-house-sum').forEach(el => { el.textContent = tr('IS_SUMMARY_OPEN').replace('{n}', houseOpen).replace('{t}', house.length); });
         // Sous-titre de l'entrée Tableau de bord (barre latérale, Menu mobile) : « n équipement(s) · o/t ouvert(s) ».
         const all = this.shades || [], positioned = all.filter(sh => !this.dryContactShadeTypes.includes(sh.shadeType));
         const open = positioned.filter(sh => sh.position !== this.closedPosition(sh.shadeType, sh.flipPosition)).length;
         const navSub = tr('N_DEVICES').replace('{n}', all.length) + (positioned.length ? ' · ' + tr('IS_SUMMARY_OPEN').replace('{n}', open).replace('{t}', positioned.length) : '');
         document.querySelectorAll('[data-dash-sub]').forEach(el => { el.textContent = navSub; });
         const moving = (this.shades || []).filter(sh => (parseInt(sh.direction, 10) || 0) !== 0 || (parseInt(sh.tiltDirection, 10) || 0) !== 0);
-        const stop = document.querySelector('.dash-house-stop');
-        if (stop) { stop.classList.toggle('is-moving', moving.length > 0); stop.setAttribute('aria-label', tr('DASH_STOP_ALL')); stop.title = tr('DASH_STOP_ALL'); }
+        document.querySelectorAll('.dash-house-stop').forEach(stop => stop.classList.toggle('is-moving', moving.length > 0));
+        if (this._roomSheet && this._roomSheet.isConnected) this._roomSheet.querySelector('.side-panel-body').innerHTML = this.roomSheetRows();
         const toast = document.querySelector('.dash-move-toast');
         if (!toast) return;
         toast.hidden = moving.length === 0;
@@ -3445,6 +3475,7 @@ class Somfy {
         }
     }
     selectRoom(roomId) {
+        document.querySelectorAll('#divHomePnl .dash-house').forEach(h => h.classList.toggle('is-active', roomId === 0));
         document.querySelectorAll('.room-pill').forEach(pill => {
             const pId = parseInt(pill.getAttribute('data-roomid'), 10);
             pill.classList.toggle('active', pId === roomId);
@@ -3747,7 +3778,7 @@ class Somfy {
         const homeName = tr('HOME');
         const slider = get('divRoomSelector');
         // Nom, nombre, puis un résumé que seule la colonne des pièces (ordinateur) affiche.
-        let divPills = `<div class="room-pill active" data-roomid="0" onclick="somfy.selectRoom(0)"><span class="room-pill-name">${tr('DASH_ALL_ROOMS')}</span><span class="room-count">0</span><small class="room-pill-sum">${tr('DASH_SHOW_ALL')}</small></div>`;
+        let divPills = `<div class="room-pill active" data-roomid="0" onclick="somfy.selectRoom(0)"><span class="room-pill-name">${tr('DASH_HOUSE_TITLE')}</span><span class="room-count">0</span><small class="room-pill-sum">${tr('DASH_SHOW_ALL')}</small></div>`;
         let divOpts = `<option value="0">${homeName}</option>`;
         _rooms = [{ roomId: 0, name: homeName }];
 
@@ -3763,6 +3794,8 @@ class Somfy {
 
         const navContainer = document.querySelector('.room-nav-container');
         if(navContainer) navContainer.style.display = rooms.length === 0 ? 'none' : 'flex';
+        const roomsRow = document.querySelector('.dash-rooms-row');
+        if (roomsRow) roomsRow.hidden = rooms.length === 0;
 
         get('selShadeRoom').innerHTML = divOpts;
         get('selGroupRoom').innerHTML = divOpts;
@@ -4161,67 +4194,82 @@ class Somfy {
         this.updateRoomCounts();
         this._syncScheduleIndicators();
     }
-    // Carte d'équipement du tableau de bord : en-tête (pictogramme, nom, soleil, pastille d'état),
-    // scène (masquée en mode compact, cf. .dash-compact-shades) et barre de commande au trait.
-    // Les data-* de .somfyShadeCtl restent ceux que procShadeState() et le mode Personnaliser lisent.
     dashCardHtml(shade, visible) {
-        const id = shade.shadeId, type = shade.shadeType, kind = dashScene.kind(type);
+        const id = shade.shadeId, type = shade.shadeType;
         const toggle = this.toggleShadeTypes.includes(type), dry = this.dryContactShadeTypes.includes(type);
         const hasMy = this.shadeTypeSupportsMy(type) && !dry;
         const p = shade.flipPosition ? 100 - shade.position : shade.position, t = shade.tiltType ? shade.tiltPosition : 0;
-        const chev = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d === 'up' ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'}"/></svg>`;
-        const btn = (cmd, label, icon) => `<button type="button" class="cmd-button dcard-btn" data-cmd="${cmd}" data-shadeid="${id}" aria-label="${label}">${icon || ''}<span class="dcard-lbl">${label}</span></button>`;
-        let bar;
-        if (toggle) bar = `<button type="button" class="cmd-button dcard-btn" data-cmd="toggle" data-shadeid="${id}" aria-label="${tr('VR_TOGGLE')}"><svg><use href="#svg-toggle"></use></svg><span class="dcard-lbl">${tr('VR_TOGGLE')}</span></button>`;
-        else if (dry) bar = btn('up', tr('IS_ON')) + btn('down', tr('IS_OFF'));
+        const tiltOnly = shade.tiltType === 3, flip = shade.tiltType > 0 && !tiltOnly;
+        const ico = (d, slat) => `<svg class="dcard-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="${d === 'up' ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'}"/></svg>`
+            + (slat ? `<svg class="dcard-slat" viewBox="0 0 24 24" aria-hidden="true"><path d="${d === 'up' ? 'M5 10.5 19 6M5 15.5 19 11M5 20.5 19 16' : 'M5 6l14 4.5M5 11l14 4.5M5 16l14 4.5'}"/></svg>` : '');
+        const use = (sym) => `<svg aria-hidden="true"><use href="#${sym}"></use></svg>`;
+        const btn = (cmd, label, icon, cls) => `<button type="button" class="cmd-button dcard-kb${cls || ''}" data-cmd="${cmd}" data-shadeid="${id}" aria-label="${label}">${icon}</button>`;
+        let trio;
+        if (toggle) trio = btn('toggle', tr('VR_TOGGLE'), use('svg-toggle'));
+        else if (dry) trio = btn('up', tr('IS_ON'), use('svg-power')) + btn('down', tr('IS_OFF'), use('svg-powerOff'));
         else {
-            const awn = type === 3;
-            bar = btn('up', tr(awn ? 'SETUP_DO_RETRACT' : 'BT_OPEN'), chev('up'))
-                + `<button type="button" class="cmd-button dcard-btn dcard-mid-btn${hasMy ? '' : ' no-my'}" data-cmd="my" data-shadeid="${id}" aria-label="${hasMy ? 'My' : tr('BT_STOP')}"><span class="dcard-my">my</span><i class="dcard-sq"></i></button>`
-                + btn('down', tr(awn ? 'SETUP_DO_DEPLOY' : 'BT_CLOSE'), chev('down'));
+            const awn = type === 3, slat = shade.tiltType > 0;
+            trio = btn('up', tr(awn ? 'SETUP_DO_RETRACT' : 'BT_OPEN'), ico('up', slat))
+                + btn('my', hasMy ? 'My' : tr('BT_STOP'), '<span class="dcard-my">my</span><i class="dcard-sq"></i>', ` is-mid${hasMy ? '' : ' no-my'}`)
+                + btn('down', tr(awn ? 'SETUP_DO_DEPLOY' : 'BT_CLOSE'), ico('down', slat));
         }
-        const tilt = shade.tiltType > 0 ? `<span class="dcard-tilt" role="group" aria-label="${tr('OPT_PAGE_TILT')}"><span class="dcard-tilt-val">∠ ${shade.tiltPosition}</span><button type="button" aria-label="${tr('OPT_PAGE_TILT')} +" onclick="somfy.dashTilt(${id}, 'up');">${chev('up')}</button><button type="button" aria-label="${tr('OPT_PAGE_TILT')} My" onclick="somfy.dashTilt(${id}, 'my');">my</button><button type="button" aria-label="${tr('OPT_PAGE_TILT')} −" onclick="somfy.dashTilt(${id}, 'down');">${chev('down')}</button></span>` : '';
-        return `<div class="somfyShadeCtl dcard" style="${visible ? '' : 'display:none'}" data-shadeid="${id}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${type}" data-tilt="${shade.tiltType}" data-tiltposition="${shade.tiltPosition}" data-tilttarget="${shade.tiltTarget}" data-tiltdirection="${shade.tiltDirection || 0}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}" data-windy="${(shade.flags & 0x10) === 0x10 ? 'true' : 'false'}" data-sunny="${(shade.flags & 0x20) === 0x20 ? 'true' : 'false'}" data-open="${this.dashIsOpen(shade) ? 'true' : 'false'}" data-arrow="${this.dashArrow(shade)}">
-            <div class="dcard-head">
-            <span class="dcard-ico">${dashScene.lineIcon(kind)}</span>
+        const mode = flip ? `<button type="button" class="dcard-flip" aria-pressed="false" aria-label="${tr('SETUP_T_TILT')}" onclick="somfy.dashTiltMode(${id});"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4"/></svg></button>` : '';
+        return `<div class="somfyShadeCtl dcard${flip ? ' has-flip' : ''}" style="${visible ? '' : 'display:none'}" data-shadeid="${id}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${type}" data-tilt="${shade.tiltType}" data-tiltposition="${shade.tiltPosition}" data-tilttarget="${shade.tiltTarget}" data-tiltdirection="${shade.tiltDirection || 0}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}" data-windy="${(shade.flags & 0x10) === 0x10 ? 'true' : 'false'}" data-sunny="${(shade.flags & 0x20) === 0x20 ? 'true' : 'false'}" data-open="${this.dashIsOpen(shade) ? 'true' : 'false'}" data-tmode="${tiltOnly ? 'tilt' : 'pos'}">
+            <div class="dcard-art${dashScene.tileArtClass(type)}" onclick="if (!event.target.closest('button')) somfy.openCardSheet('shade', ${id});">${dashScene.tileArt(shade, p, t)}${this.dashChipHtml(shade)}
+            <button type="button" class="cmd-button button-sunflag dcard-fsun" data-cmd="sunflag" data-shadeid="${id}" data-on="${(shade.flags & 0x01) ? 'true' : 'false'}" title="${tr('VR_SUN_FLAG')}" aria-label="${tr('VR_SUN_FLAG')}" style="${shade.sunSensor ? '' : 'display:none'}">${use('svg-sun')}</button>${mode}</div>
+            <div class="dcard-body">
             <button type="button" class="dcard-name" onclick="somfy.openCardSheet('shade', ${id});"><span class="shadectl-name">${escHtml(shade.name)}</span></button>
-            <button type="button" class="cmd-button button-sunflag dcard-sun-btn" data-cmd="sunflag" data-shadeid="${id}" data-on="${(shade.flags & 0x01) ? 'true' : 'false'}" title="${tr('VR_SUN_FLAG')}" style="${shade.sunSensor ? '' : 'display:none'}"><svg><use href="#svg-sun"></use></svg></button>
-            <span class="dcard-pill"><i class="dcard-dot"></i><svg class="dcard-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg><span class="dcard-pill-txt">${this.dashPillText(shade)}</span></span>
+            <div class="dcard-trio">${trio}</div>
             <button type="button" class="dash-edit-eye" title="${tr('CARD_OPT_HIDE')}" onclick="somfy.toggleCardHidden('shade', ${id});"><svg class="eye-on"><use href="#svg-eyeOn"></use></svg><svg class="eye-off"><use href="#svg-eyeOff"></use></svg></button>
             </div>
-            <div class="dcard-stage" onclick="if (!event.target.closest('button')) somfy.openCardSheet('shade', ${id});"><span class="dcard-svg">${dashScene.svg(shade, p, t)}</span>${tilt}</div>
-            <div class="dcard-bar">${bar}</div>
             </div>`;
     }
-    // Ouvert = hors de la position de fermeture ; un contact sec est « ouvert » quand il est en marche.
     dashIsOpen(shade) {
         const type = this.shadeTypeOf(shade);
         if (this.dryContactShadeTypes.includes(type)) return (shade.flipPosition ? 100 - shade.position : shade.position) >= 50;
         return shade.position !== this.closedPosition(type, shade.flipPosition);
     }
-    // Sens affiché de la flèche : 'down' quand la position affichée augmente, 'up' sinon, '' à l'arrêt.
     dashArrow(shade) {
         const d = parseInt(shade.direction, 10) || 0;
         if (d === 0) return '';
         return (d > 0) !== !!shade.flipPosition ? 'down' : 'up';
     }
-    // Pastille : la position seule pendant un mouvement et entre les butées, l'état aux butées.
-    dashPillText(shade) {
-        if ((parseInt(shade.direction, 10) || 0) !== 0) return `${shade.position}%`;
-        return this.shadeStateText(shade);
+    dashChipHtml(shade) {
+        const type = this.shadeTypeOf(shade), dry = this.dryContactShadeTypes.includes(type);
+        const dir = parseInt(shade.direction, 10) || 0, mv = dir !== 0 && !dry;
+        const tiltOnly = shade.tiltType === 3, slat = shade.tiltType > 0;
+        const alert = !dry && [5, 6, 11, 12, 13, 14, 15, 16].includes(type) && this.dashIsOpen(shade);
+        const dot = mv || (parseInt(shade.tiltDirection, 10) || 0) !== 0 || alert ? '<i class="dcard-dot"></i>' : '';
+        const num = `${shade.position} %`, word = mv || dry ? '' : this.shadeStateText(shade);
+        let vals = tiltOnly ? '' : dry ? this.shadeStateText(shade) : mv || word === `${shade.position}%` ? num : slat ? `<span class="dcard-word">${word}</span><span class="dcard-num">${num}</span>` : word;
+        const tl = slat ? (vals ? '<i class="dcard-cs"></i>' : '') + `<span class="dcard-cv">${shade.tiltPosition} %</span>` : '';
+        const sunny = (shade.flags & 0x20) === 0x20, windy = (shade.flags & 0x10) === 0x10;
+        const ind = shade.sunSensor && (sunny || windy) ? `<span class="dcard-ind" role="img" aria-label="${[sunny && tr('VR_SUN'), windy && tr('VR_WIND')].filter(Boolean).join(', ')}">${sunny ? '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/></svg>' : ''}${windy ? '<svg viewBox="0 0 24 24"><path d="M3 8h10a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h7"/></svg>' : ''}</span>` : '';
+        if (mv) return `<span class="dcard-chip is-moving"><span class="dcard-verb">${this.shadeStateText(shade)}</span><span class="dcard-vals">${dot}${vals}${tl}${ind}</span></span>`;
+        return `<span class="dcard-chip">${dot}${vals}${tl}${ind}</span>`;
     }
-    // Rafraîchit une carte après un évènement d'état, sans la reconstruire.
     syncDashCard(card, shade) {
         card.dataset.open = this.dashIsOpen(shade) ? 'true' : 'false';
-        card.dataset.arrow = this.dashArrow(shade);
-        const txt = card.querySelector('.dcard-pill-txt');
-        if (txt) txt.textContent = this.dashPillText(shade);
-        const tv = card.querySelector('.dcard-tilt-val');
-        if (tv && shade.tiltType) tv.textContent = `∠ ${shade.tiltPosition}`;
-        const sv = card.querySelector('.dcard-svg');
-        if (sv) sv.innerHTML = dashScene.svg(shade, shade.flipPosition ? 100 - shade.position : shade.position, shade.tiltType ? shade.tiltPosition : 0);
+        const chip = card.querySelector('.dcard-chip');
+        if (chip) chip.outerHTML = this.dashChipHtml(shade);
+        const p = shade.flipPosition ? 100 - shade.position : shade.position, t = shade.tiltType ? shade.tiltPosition : 0;
+        if (dashScene.kind(shade.shadeType) === 'gate') {
+            const art = card.querySelector('.dcard-art-svg');
+            if (art) art.outerHTML = dashScene.gateArt(shade.shadeType, p);
+        }
+        else card.querySelectorAll('.dcard-art-svg').forEach(el => {
+            el.style.setProperty('--shade-position', p);
+            el.style.setProperty('--fpos', p + '%');
+            el.style.setProperty('--shade-tilt', t);
+        });
     }
-    dashTilt(shadeId, cmd) { this.confirmCardCommand('shade', shadeId, () => this.sendTiltCommand(shadeId, cmd)); }
+    dashTiltMode(shadeId) {
+        const card = document.querySelector(`#divShadeControls .dcard[data-shadeid="${shadeId}"]`);
+        if (!card) return;
+        const tilt = card.dataset.tmode !== 'tilt';
+        card.dataset.tmode = tilt ? 'tilt' : 'pos';
+        card.querySelector('.dcard-flip')?.setAttribute('aria-pressed', tilt);
+    }
     // Appui long sur les boutons de commande : maintenir 2s sur up/down déclenche
     // l'inclinaison (équipements avec tilt) -- PLUS sur "my", qui a son propre bouton dédié
     // (icône étoile, onclick direct). Gère aussi le cas où le geste tactile se transforme en
@@ -4243,7 +4291,7 @@ class Somfy {
             let shadeId = parseInt(btnEl.getAttribute('data-shadeid'), 10);
             this.btnDown = new Date().getTime();
             if (cmd === 'sunflag') return;
-            if (cmd !== 'my' && makeBool(elShade.getAttribute('data-tilt'))) {
+            if (cmd !== 'my' && makeBool(elShade.getAttribute('data-tilt')) && elShade.dataset.tmode !== 'tilt') {
                 armTiltTimer(btnEl, () => this.confirmCardCommand('shade', shadeId, () => this.sendTiltCommand(shadeId, cmd)));
             }
         };
@@ -4264,6 +4312,7 @@ class Somfy {
                 else
                     this.sendCommand(shadeId, 'sunflag');
             }
+            else if (btnEl.closest('.dcard')?.dataset.tmode === 'tilt') this.confirmCardCommand('shade', shadeId, () => this.sendTiltCommand(shadeId, cmd));
             else this.confirmCardCommand('shade', shadeId, () => this.sendCommand(shadeId, cmd));
         };
         for (let i = 0; i < btns.length; i++) {

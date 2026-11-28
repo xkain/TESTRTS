@@ -146,7 +146,6 @@
     "DASH_ALL_ROOMS": "All rooms",
     "DASH_SHOW_ALL": "Show everything",
     "DASH_HOUSE_ALL": "Whole house",
-    "DASH_HOUSE_SUB": "{n} device(s) · excluding gates, garage doors and awnings",
     "DASH_OPEN_ALL": "Open all",
     "DASH_STOP_ALL": "Stop all",
     "DASH_CLOSE_ALL": "Close all",

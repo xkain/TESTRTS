@@ -1,8 +1,5 @@
-// Scènes des cartes d'équipement du tableau de bord : la maison et son équipement, dessinés en SVG
-// d'après la position. Couleurs portées par les variables CSS de .dcard (overlays.css), clair et sombre.
+// Illustrations des tuiles du tableau de bord : l'icône du sprite recadrée bord à bord, d'après la position.
 const dashScene = {
-    // Sol à y = 160 ; maison commune (façade 40-280, toit à deux pans jusqu'à y = 18).
-    G: 160,
     kind(type) {
         if (type === 0) return 'roller';
         if (type === 1) return 'blind';
@@ -13,67 +10,64 @@ const dashScene = {
         if (type >= 11 && type <= 16) return 'gate';
         return 'shutter';
     },
-    // Ouverture du portail : 'l' ou 'r' pour un vantail unique, 'c' pour deux.
-    gateSide(type) { return type === 11 || type === 14 ? 'l' : type === 13 || type === 16 ? 'r' : 'c'; },
-    curtainSide(type) { return type === 2 ? 'l' : type === 7 ? 'r' : 'c'; },
-    LINE: {
-        garage: '<path d="M4 14 16 5l12 9v14H4z"/><path d="M9 28V17h14v11M9 21h14M9 25h14"/>',
-        gate: '<path d="M4 28V9M28 28V9M4 13h24M8 13v15M12 13v15M16 13v15M20 13v15M24 13v15M2 28h28"/>',
-        shutter: '<rect x="5" y="4" width="22" height="5" rx="1"/><path d="M7 9v19h18V9M7 13h18M7 17h18M7 21h18"/>',
-        roller: '<rect x="5" y="4" width="22" height="5" rx="2.5"/><path d="M7 9v19h18V9M7 20h18"/>',
-        blind: '<path d="M5 5h22M7 5v23M25 5v23M9 10h14M9 14h14M9 18h14M9 22h14M16 5v20"/>',
-        drapery: '<path d="M4 5h24M7 5c2 8 2 15 0 23M25 5c-2 8-2 15 0 23M11 5c1 8 1 15 0 23M21 5c-1 8-1 15 0 23"/>',
-        awning: '<path d="M4 7h24v4l-3 6H7l-3-6z"/><path d="M10 7v10M16 7v10M22 7v10M7 17v10M25 17v10"/>',
-        switch: '<rect x="8" y="5" width="16" height="22" rx="3"/><circle cx="16" cy="12" r="2.5"/><path d="M12 20h8"/>'
+    ICON: ['svg-window-shade', 'svg-window-blind', 'svg-ldrapery', 'svg-awning', 'svg-shutter', 'svg-garage', 'svg-garage', 'svg-rdrapery', 'svg-cdrapery', 'svg-switch1', 'svg-switch2'],
+    CROP: { shutter: '11.5 11 25 28.5', roller: '11 11 26 28.5', blind: '11.5 11 25 28.5', drapery: '3.8 5.2 40.4 38.4', awning: '4.5 6 39 37', garage: '9 17 30 25.6', switch: '11 11 26 26' },
+    initTiles() {
+        if (document.getElementById('dt-glass')) return;
+        const src = id => { const s = document.getElementById(id); return s ? s.outerHTML : ''; };
+        const swap = h => h.replaceAll('url(#shd-sky)', 'url(#dt-glass)').replaceAll('url(#shd-pvc)', 'url(#dt-frame)').replaceAll('url(#shd-int)', 'url(#dt-int)').replaceAll('var(--color-shade-refl)', 'var(--dt-refl)');
+        const shadow = /<rect x="(?:9|11)" y="(?:17|11\.5)" width="(?:30|26)" height="[0-9.]+" fill="url\(#shd-sh\)"[^>]*>(<\/rect>)?/;
+        const car = '<path d="M20.8 29H27.2Q28.3 29 28.8 30L30.1 32.7Q30.6 32.4 31.1 32.6Q31.8 33 31.4 33.8Q31 34.3 30.7 34.4V40Q30.7 40.8 29.9 40.8H29.2Q28.4 40.8 28.4 40V39.3H19.6V40Q19.6 40.8 18.8 40.8H18.1Q17.3 40.8 17.3 40V34.4Q17 34.3 16.6 33.8Q16.2 33 16.9 32.6Q17.4 32.4 17.9 32.7L19.2 30Q19.7 29 20.8 29Z" fill="var(--dt-car)"/>';
+        let sym = '';
+        ['svg-shutter', 'svg-window-shade', 'svg-window-blind', 'svg-garage'].forEach(id => {
+            const base = swap(src(id)); if (!base) return;
+            const g = (base.match(/<g clip-path="url\(#shd-c(?:win|rol|ga)\)">[\s\S]*?<\/g><\/g>/) || [''])[0];
+            sym += base.replace(g, '').replace(`id="${id}"`, `id="dtw-${id}"`).replace(/<path d="M14 31\.5q[^"]*"[^>]*>(<\/path>)?/, car).replace(shadow, '');
+            sym += `<symbol id="dtl-${id}" viewBox="0 0 48 48">${g.replace(/--travel:[23][0-9.]+/, '--travel:31.5').replace(/<rect x="9" y="42\.6"[^>]*>(<\/rect>)?/, '')}</symbol>`;
+        });
+        const drape = h => h.replace(/<rect x="9" y="39\.8"[^>]*>(<\/rect>)?/, '').replaceAll('url(#shd-brass)', 'var(--dt-rod)')
+            .replace(/<rect x="(4\.5|24)" y="8" width="([0-9.]+)" height="40" fill="url\(#shd-pPleat\)"[^>]*>(<\/rect>)?/g, (m, xs, ws) => {
+                const x = +xs, w = +ws, n = Math.max(1, Math.round(w / 4)), st = w / n;
+                let d = `M${x} 8H${x + w}V41.4`;
+                for (let i = n - 1; i >= 0; i--) d += `Q${(x + i * st + st / 2).toFixed(2)} 43.8 ${(x + i * st).toFixed(2)} 41.4`;
+                return `<path d="${d}Z" fill="url(#shd-pPleat)"/>`;
+            });
+        const plate = h => h.replace(/<rect x="12\.8" y="13\.4"[^>]*>(<\/rect>)?/, '').replace(/<rect x="12" y="12" width="24" height="24"[^>]*>(<\/rect>)?/, '');
+        ['svg-ldrapery', 'svg-rdrapery', 'svg-cdrapery', 'svg-awning', 'svg-switch1', 'svg-switch2'].forEach(id => {
+            let h = src(id); if (!h) return;
+            if (id.includes('drapery')) h = drape(h); else if (id.includes('switch')) h = plate(h);
+            sym += swap(h).replace(`id="${id}"`, `id="dt-${id}"`).replace(shadow, '');
+        });
+        const grad = (id, x2, a, b) => `<linearGradient id="${id}" x1="0" y1="0" x2="${x2}" y2="1"><stop offset="0" style="stop-color:var(${a})"/><stop offset="1" style="stop-color:var(${b})"/></linearGradient>`;
+        document.body.insertAdjacentHTML('beforeend', `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${grad('dt-glass', 1, '--dt-glass1', '--dt-glass2')}${grad('dt-int', 0, '--dt-int1', '--dt-int2')}${grad('dt-frame', 0, '--dt-frame1', '--dt-frame2')}</defs>${sym}</svg>`);
     },
-    lineIcon(kind) { return `<svg viewBox="0 0 32 32" aria-hidden="true">${this.LINE[kind] || this.LINE.shutter}</svg>`; },
-    // p : position affichée (0-100, flipPosition déjà appliqué), t : inclinaison, flags : bits Somfy.
-    svg(shade, p, t) {
-        const G = this.G, k = this.kind(shade.shadeType), u = 'dsc' + shade.shadeId, f = shade.flags || 0;
-        const tr = 'transition:transform .6s ease-in-out';
-        const defs = `<defs><linearGradient id="${u}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--dsc-sk1)"/><stop offset="1" style="stop-color:var(--dsc-sk2)"/></linearGradient><linearGradient id="${u}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--dsc-gl1)"/><stop offset="1" style="stop-color:var(--dsc-gl2)"/></linearGradient><linearGradient id="${u}c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe2a0" stop-opacity=".5"/><stop offset="1" stop-color="#ffe2a0" stop-opacity="0"/></linearGradient><radialGradient id="${u}r"><stop offset="0" stop-color="#ffe2a0" stop-opacity=".75"/><stop offset="1" stop-color="#ffe2a0" stop-opacity="0"/></radialGradient>`;
-        const bg = `<rect x="-800" width="1920" height="${G}" fill="url(#${u}s)"/><rect x="-800" y="${G}" width="1920" height="40" fill="var(--dsc-gnd)"/>`;
-        const bush = `<g fill="var(--dsc-bush)"><ellipse cx="-22" cy="${G}" rx="34" ry="28"/><ellipse cx="20" cy="${G + 2}" rx="26" ry="20"/><ellipse cx="300" cy="${G + 1}" rx="28" ry="22"/><ellipse cx="340" cy="${G}" rx="34" ry="28"/></g>`;
-        const house = `<path d="M40 ${G}V76h240v${G - 76}z" fill="var(--dsc-wall)"/><path d="M40 77 160 26 280 77z" fill="var(--dsc-wall2)"/><path d="M22 80 160 18 298 80 290 87 160 28 30 87z" fill="var(--dsc-roof)"/><circle cx="160" cy="54" r="8" fill="url(#${u}g)"/><circle cx="160" cy="54" r="8" fill="#ffd98a" style="opacity:var(--dsc-glow)"/><circle cx="160" cy="54" r="9" fill="none" stroke="var(--dsc-trim)" stroke-width="2.5"/>`;
-        const lamp = (x, y) => `<path d="M${x - 3} ${y + 10}L${x - 28} ${G}H${x + 28}L${x + 3} ${y + 10}Z" fill="url(#${u}c)" style="opacity:var(--dsc-cone)"/><rect x="${x - 4}" y="${y}" width="8" height="12" rx="2" fill="var(--dsc-lamp)"/><rect x="${x - 2}" y="${y + 7}" width="4" height="4" rx="1" fill="#ffe2a0" style="opacity:var(--dsc-cone)"/>`;
-        let body = '';
-        if (k === 'garage') {
-            const dx = 98, dy = 96, dw = 124, dh = G - dy;
-            body = `<clipPath id="${u}w"><rect x="${dx}" y="${dy}" width="${dw}" height="${dh}"/></clipPath></defs>${bg}${house}<rect x="${dx}" y="${dy}" width="${dw}" height="${dh}" fill="var(--dsc-int)"/><g clip-path="url(#${u}w)"><g style="transform:translateY(${((p / 100 - 1) * dh).toFixed(1)}px);${tr}"><rect x="${dx}" y="${dy}" width="${dw}" height="${dh}" fill="var(--dsc-door)"/><path d="M${dx} ${dy + 15.5}h${dw}M${dx} ${dy + 31.5}h${dw}M${dx} ${dy + 47.5}h${dw}M${dx} ${dy + 63.5}h${dw}" stroke="var(--dsc-line)"/></g></g><path d="M${dx - 2} ${G}V${dy - 2}H${dx + dw + 2}V${G}" fill="none" stroke="var(--dsc-trim)" stroke-width="3"/>${lamp(72, 102)}${lamp(248, 102)}${bush}`;
-        } else if (k === 'gate') {
-            const side = this.gateSide(shade.shadeType), gy = 102, s = (0.08 + 0.92 * p / 100).toFixed(3);
-            const leaf = (x, w, origin) => `<g style="transform-box:fill-box;transform-origin:${origin} center;transform:scaleX(${s});${tr}"><rect x="${x}" y="${gy}" width="${w}" height="${G - gy - 3}" fill="none" stroke="var(--dsc-slat)" stroke-width="4"/><path d="${Array.from({ length: Math.round(w / 9) }, (_, n) => `M${(x + 7 + n * 8.8).toFixed(1)} ${gy + 2}v${G - gy - 6}`).join('')}M${x} ${gy + 25}h${w}" stroke="var(--dsc-slat)" stroke-width="3"/></g>`;
-            const leaves = side === 'l' ? leaf(74, 172, 'left') : side === 'r' ? leaf(74, 172, 'right') : leaf(74, 86, 'left') + leaf(160, 86, 'right');
-            body = `</defs>${bg}<path d="M74 ${G}H246L300 200H20Z" fill="var(--dsc-drive)"/><rect x="-800" y="116" width="856" height="${G - 116}" fill="var(--dsc-wall2)"/><rect x="264" y="116" width="856" height="${G - 116}" fill="var(--dsc-wall2)"/><rect x="-800" y="112" width="856" height="5" fill="var(--dsc-roof)"/><rect x="264" y="112" width="856" height="5" fill="var(--dsc-roof)"/><rect x="56" y="80" width="18" height="${G - 80}" fill="var(--dsc-wall)"/><rect x="52" y="74" width="26" height="8" rx="2" fill="var(--dsc-roof)"/><rect x="246" y="80" width="18" height="${G - 80}" fill="var(--dsc-wall)"/><rect x="242" y="74" width="26" height="8" rx="2" fill="var(--dsc-roof)"/><circle cx="65" cy="64" r="20" fill="url(#${u}r)" style="opacity:var(--dsc-cone)"/><circle cx="255" cy="64" r="20" fill="url(#${u}r)" style="opacity:var(--dsc-cone)"/><circle cx="65" cy="66" r="5.5" fill="var(--dsc-lamp)"/><circle cx="255" cy="66" r="5.5" fill="var(--dsc-lamp)"/>${leaves}${bush}`;
-        } else if (k === 'awning') {
-            const d = p / 100, fy = 90 + 40 * d, fx = 18 * d, w0 = 136 / 9, w1 = (136 + 2 * fx) / 9;
-            const canvas = Array.from({ length: 9 }, (_, n) => { const a = 92 + n * w0, b = 92 - fx + n * w1; return `<path d="M${a.toFixed(1)} 86H${(a + w0).toFixed(1)}L${(b + w1).toFixed(1)} ${fy.toFixed(1)}v5a${(w1 / 2).toFixed(1)} 4 0 0 1-${w1.toFixed(1)} 0Z" fill="var(--dsc-can${n % 2 ? 'B' : 'A'})"/>`; }).join('');
-            body = `</defs>${bg}${house}<rect x="122" y="100" width="76" height="${G - 100}" fill="url(#${u}g)"/><rect x="122" y="100" width="76" height="${G - 100}" fill="#ffd98a" style="opacity:var(--dsc-glow)"/><rect x="159" y="100" width="2" height="${G - 100}" fill="var(--dsc-trim)"/><path d="M120 ${G}V98H200V${G}" fill="none" stroke="var(--dsc-trim)" stroke-width="3"/>${canvas}${d > 0.02 ? `<path d="M96 128L${(98 - fx).toFixed(1)} ${fy.toFixed(1)}M224 128L${(222 + fx).toFixed(1)} ${fy.toFixed(1)}" stroke="var(--dsc-line)" stroke-width="2.5"/>` : ''}<rect x="88" y="80" width="144" height="8" rx="3" fill="var(--dsc-roof)"/>${lamp(60, 100)}${bush}`;
-        } else if (k === 'switch') {
-            // Contact sec : un boîtier et son témoin, sans préjuger de ce que le relais commande.
-            const on = p >= 50;
-            body = `</defs>${bg}${house}<rect x="134" y="98" width="52" height="${G - 98}" rx="2" fill="var(--dsc-door)"/><path d="M131 ${G}V95H189V${G}" fill="none" stroke="var(--dsc-trim)" stroke-width="3"/><circle cx="178" cy="130" r="2.5" fill="var(--dsc-trim)"/><circle cx="226" cy="110" r="${on ? 26 : 0}" fill="url(#${u}r)" style="opacity:${on ? 1 : 0}"/><rect x="212" y="96" width="28" height="30" rx="5" fill="var(--dsc-wall2)" stroke="var(--dsc-trim)" stroke-width="2"/><circle cx="226" cy="106" r="4" fill="${on ? '#4ade80' : 'var(--dsc-line)'}"/><rect x="219" y="114" width="14" height="6" rx="3" fill="var(--dsc-line)"/>${bush}`;
-        } else {
-            // Fenêtre : volet roulant, store enrouleur, store vénitien ou rideaux.
-            const sx = 108, sy = 90, w = 104, h = 56, ty = `transform:translateY(${((p / 100 - 1) * h).toFixed(1)}px);${tr}`;
-            let cover;
-            if (k === 'blind') {
-                const sh = (1.2 + 4.2 * t / 100).toFixed(1);
-                cover = `<g style="${ty}">${Array.from({ length: 9 }, (_, n) => `<rect x="${sx}" y="${sy + 2 + n * 6}" width="${w}" height="${sh}" fill="var(--dsc-slat)"/>`).join('')}<rect x="${sx}" y="${sy + h - 4}" width="${w}" height="4" fill="var(--dsc-line)"/><path d="M${sx + 30} ${sy}V${sy + h}M${sx + 74} ${sy}V${sy + h}" stroke="var(--dsc-line)"/></g>`;
-            } else if (k === 'roller') {
-                cover = `<g style="${ty}"><rect x="${sx}" y="${sy}" width="${w}" height="${h}" fill="var(--dsc-fab)"/><rect x="${sx}" y="${sy + h - 4}" width="${w}" height="4" rx="2" fill="var(--dsc-line)"/></g>`;
-            } else if (k === 'drapery') {
-                const side = this.curtainSide(shade.shadeType), c = p / 100;
-                const panel = (x0, wd) => `<rect x="${x0.toFixed(1)}" y="${sy}" width="${wd.toFixed(1)}" height="${h}" fill="var(--dsc-fab)"/>`;
-                cover = side === 'l' ? panel(sx, Math.max(8, w * c)) : side === 'r' ? panel(sx + w - Math.max(8, w * c), Math.max(8, w * c)) : panel(sx, Math.max(6, w / 2 * c)) + panel(sx + w - Math.max(6, w / 2 * c), Math.max(6, w / 2 * c));
-            } else {
-                cover = `<g style="${ty}"><rect x="${sx}" y="${sy}" width="${w}" height="${h}" fill="var(--dsc-slat)"/><path d="${Array.from({ length: 9 }, (_, n) => `M${sx} ${sy + 5.6 + n * 6}h${w}`).join('')}" stroke="var(--dsc-slat2)" stroke-width="1.2"/><rect x="${sx}" y="${sy + h - 4}" width="${w}" height="4" fill="var(--dsc-line)"/></g>`;
-            }
-            body = `<clipPath id="${u}w"><rect x="${sx}" y="${sy}" width="${w}" height="${h}"/></clipPath></defs>${bg}${house}<rect x="${sx}" y="${sy}" width="${w}" height="${h}" fill="url(#${u}g)"/><rect x="${sx}" y="${sy}" width="${w}" height="${h}" fill="#ffd98a" style="opacity:var(--dsc-glow)"/><path d="M${sx + 14} ${sy + h - 8} ${sx + 38} ${sy + 8}M${sx + 58} ${sy + h - 4} ${sx + 84} ${sy + 10}" stroke="rgba(255,255,255,.25)" stroke-width="6"/><rect x="${sx + w / 2 - 1}" y="${sy}" width="2" height="${h}" fill="var(--dsc-trim)"/><g clip-path="url(#${u}w)">${cover}</g><rect x="${sx - 3}" y="${sy - 1}" width="${w + 6}" height="${h + 2}" fill="none" stroke="var(--dsc-trim)" stroke-width="3"/><rect x="${sx - 7}" y="${sy - 12}" width="${w + 14}" height="12" rx="2" fill="var(--dsc-roof)"/><rect x="${sx - 8}" y="${sy + h + 1}" width="${w + 16}" height="5" rx="1" fill="var(--dsc-trim)"/>${lamp(72, 100)}${lamp(248, 100)}${bush}`;
-        }
-        // Soleil (bit 0x20) et vent (bit 0x10) dans le ciel.
-        const sky = ((f & 0x20) ? `<g fill="#ffc94a" stroke="#ffc94a" stroke-width="2.5" stroke-linecap="round" transform="translate(16 12)"><circle cx="14" cy="28" r="9" stroke="none"/><path d="M14 11v4M14 41v4M-3 28h4M27 28h4M2 16l3 3M23 37l3 3M2 40l3-3M23 19l3-3"/></g>` : '')
-            + ((f & 0x10) ? `<g fill="none" stroke="var(--dsc-line)" stroke-width="2.5" stroke-linecap="round" transform="translate(18 14)"><path d="M-4 22h34a6 6 0 1 0-6-6M-4 34h46a6 6 0 1 1-6 6M-4 28h20"/></g>` : '');
-        return `<svg viewBox="10 16 300 154" preserveAspectRatio="xMidYMax meet" aria-hidden="true">${defs}${body}${sky}</svg>`;
+    tileArtClass(type) {
+        const k = this.kind(type);
+        return k === 'drapery' || k === 'awning' ? ' is-drape' : k === 'switch' ? ' is-switch' : '';
+    },
+    tileArt(shade, p, t) {
+        this.initTiles();
+        const k = this.kind(shade.shadeType);
+        if (k === 'gate') return this.gateArt(shade.shadeType, p);
+        const ic = this.ICON[shade.shadeType] || 'svg-shutter', box = `viewBox="${this.CROP[k]}"`, use = (pre) => `<use href="#${pre}${ic}" width="48" height="48"></use>`;
+        const art = (pre, fit) => `<svg class="dcard-art-svg" ${box} preserveAspectRatio="${fit}" style="--shade-position:${p};--fpos:${p}%;--shade-tilt:${t}" aria-hidden="true">${use(pre)}</svg>`;
+        if (k === 'switch') return art('dt-', 'xMidYMid meet');
+        if (k === 'drapery' || k === 'awning') return art('dt-', 'none');
+        return `<div class="dcard-art-back"><svg ${box} preserveAspectRatio="none" aria-hidden="true">${use('dtw-')}</svg></div>${art('dtl-', 'none')}`;
+    },
+    gateArt(type, pos) {
+        const p = pos / 100, swing = type === 12 || type === 15, right = type === 13 || type === 16;
+        const tr = 'transition:transform .4s ease-in-out', ns = 'vector-effect="non-scaling-stroke"';
+        const leaf = (x, w) => `<rect x="${x}" y="17" width="${w}" height="53" rx="1.2" fill="var(--dt-panel)"/>`
+            + Array.from({ length: 6 }, (_, i) => `<rect x="${x + 3.4}" y="${(26.5 + i * 6.6).toFixed(1)}" width="${w - 6.8}" height=".9" fill="var(--dt-filet)"/>`).join('')
+            + `<rect x="${x}" y="17" width="3.4" height="53" rx="1" fill="var(--dt-stile)"/><rect x="${x + w - 3.4}" y="17" width="3.4" height="53" rx="1" fill="var(--dt-stile)"/><rect x="${x}" y="17" width="${w}" height="3" rx="1" fill="var(--dt-stile)"/>`;
+        const L = 11, W = 78, mid = L + W / 2;
+        const leaves = swing
+            ? `<g style="transform-box:fill-box;transform-origin:left center;transform:scaleX(${p});${tr}">${leaf(L, W / 2 - .6)}</g><g style="transform-box:fill-box;transform-origin:right center;transform:scaleX(${p});${tr}">${leaf(mid + .6, W / 2 - .6)}</g>`
+            : `<g style="transform:translateX(${((right ? 1 : -1) * (1 - p) * (W + 14)).toFixed(1)}px);${tr}">${leaf(L, W)}</g>`;
+        const wall = (x) => `<rect x="${x}" y="11" width="7.6" height="59" fill="var(--dt-wall)"/><rect x="${x}" y="11" width="7.6" height="1.6" fill="var(--dt-wall2)"/>`;
+        return `<svg class="dcard-art-svg" viewBox="0 0 100 76" preserveAspectRatio="none" aria-hidden="true"><rect width="100" height="76" fill="url(#dt-glass)"/><rect y="70" width="100" height="6" fill="var(--dt-ground)"/><path d="M0 72.6H100" stroke="var(--dt-wall2)" stroke-width="1" ${ns}/>`
+            + leaves + wall(0) + wall(92.4)
+            + `<rect x="7.6" y="14" width="3.6" height="58" rx=".8" fill="var(--dt-stile)"/><rect x="88.8" y="14" width="3.6" height="58" rx=".8" fill="var(--dt-stile)"/></svg>`;
     }
 };
