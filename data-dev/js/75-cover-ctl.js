@@ -41,9 +41,9 @@ const coverCtl = {
     },
     clamp(v) { return Math.max(0, Math.min(100, Math.round(v))); },
     tiltRaw(f, H, sh) { const [a, b] = this.gaugeY(sh, H); return (f * H - a) / (b - a) * 100; },
-    gauge(sh, W, H, v) {
-        const gx = W - 20, [y0, y1] = this.gaugeY(sh, H);
-        return `<rect class="cover-gauge" x="${gx - 11}" y="${y0 - 11}" width="22" height="${y1 - y0 + 22}" rx="11"/><circle class="cover-ball" cx="${gx}" cy="${(y0 + (y1 - y0) * v / 100).toFixed(2)}" r="8.5"/>`;
+    gauge(sh, W, H, v, want) {
+        const gx = W - 20, [y0, y1] = this.gaugeY(sh, H), y = u => (y0 + (y1 - y0) * u / 100).toFixed(2);
+        return `<rect class="cover-gauge" x="${gx - 11}" y="${y0 - 11}" width="22" height="${y1 - y0 + 22}" rx="11"/>${want == null ? '' : `<circle class="cover-ball-want" cx="${gx}" cy="${y(want)}" r="8.5"/>`}<circle class="cover-ball" cx="${gx}" cy="${y(v)}" r="8.5"/>`;
     },
 
     html(sh) {
@@ -262,9 +262,9 @@ const coverCtl = {
         return !!a.wv;
     },
 
-    svg(sh, a, W, H, ball) {
+    svg(sh, a, W, H, ball, slats, want) {
         const t = sh.shadeType, k = this.kind(t), q = H / 180, f = n => n.toFixed(2), grips = [];
-        const pos = a.swipe ?? a.dpos, open = sh.tiltType ? 1 - a.dtilt / 100 : 0, tgt = this.target(sh);
+        const pos = a.swipe ?? a.dpos, open = sh.tiltType ? 1 - slats / 100 : 0, tgt = this.target(sh);
         const gh = y => grips.push([W / 2, y, 0]), gv = (x, y) => grips.push([x, y, 1]);
         const slat = (y, th) => {
             const face = Math.max(.4 * q, th * .114);
@@ -283,7 +283,7 @@ const coverCtl = {
         if (this.tiltOnly(sh)) {
             const P = 12 * q, n = Math.ceil(H / P), th = Math.max(1.2 * q, (P - q) * (1 - open));
             for (let i = 0; i < n; i++) body += slat(i * P + (P - th) / 2, th);
-            body += this.gauge(sh, W, H, ball);
+            body += this.gauge(sh, W, H, ball, want);
         }
         else if (k === 'blind') {
             const PITCH = 10 * q, STACK = .6 * q, FLAT = .8 * q, HEAD = 8.8 * q;
@@ -297,7 +297,7 @@ const coverCtl = {
             [.22, .78].forEach(x => { body += `<rect class="cover-cord" x="${f(W * x - .7 * q)}" width="${f(1.4 * q)}" height="${f(c[n - 1] + q)}"/>`; });
             const by = c[n - 1] - th / 2 - q, bh = Math.max(2 * q, th * .6);
             body += bar(by, bh) + `<rect class="cover-slat cover-head" width="${W}" height="${f(HEAD)}"/>`;
-            if (this.mix(sh)) body += this.gauge(sh, W, H, ball);
+            if (this.mix(sh)) body += this.gauge(sh, W, H, ball, want);
             gh(by + bh / 2);
         }
         else if (k === 'drapery') {
@@ -383,8 +383,9 @@ const coverCtl = {
         busy = (this.kind(t) === 'drapery' && this.wave(a, dt)) || busy || this.moving(sh) || draw.dataset.dragging === 'true';
         const W = draw.clientWidth, H = draw.clientHeight;
         if (!W || !H) return busy;
-        const ball = draw._tdrag ?? (tilt ? draw._drag : null) ?? (this.myOn(sh) ? this._my.t : null) ?? ((parseInt(sh.tiltDirection, 10) || 0) !== 0 ? sh.tiltTarget : null) ?? a.dtilt;
-        const r = this.svg(sh, a, W, H, ball);
+        const drag = draw._tdrag ?? (tilt ? draw._drag : null), myt = this.myOn(sh) ? this._my.t : null;
+        const ball = drag ?? myt ?? a.dtilt;
+        const r = this.svg(sh, a, W, H, ball, ball, drag == null && myt == null && (parseInt(sh.tiltDirection, 10) || 0) ? sh.tiltTarget : null);
         draw.querySelector('svg.cover-fx').outerHTML = r.svg;
         const show = this.hasPos(sh) && !tilt;
         let gs = draw.querySelectorAll('.cover-grip');
@@ -464,8 +465,8 @@ const coverCtl = {
         const id = parseInt(el.dataset.shadeid, 10), sh = (somfy.shades || []).find(x => x.shadeId === id);
         if (!sh) return;
         const t = sh.shadeType, rail = el.classList.contains('cover-slider'), r = el.getBoundingClientRect();
-        const onGauge = !rail && this.mix(sh) && ev.clientX - r.left > r.width - 48 && ev.clientY - r.top > this.gaugeY(sh, r.height)[0] - 22;
-        const tilt = this.tiltOnly(sh) || onGauge, dk = onGauge ? '_tdrag' : '_drag';
+        const onGauge = !rail && (this.mix(sh) || this.tiltOnly(sh)) && ev.clientX - r.left > r.width - 48 && ev.clientY - r.top > this.gaugeY(sh, r.height)[0] - 22;
+        const tilt = this.tiltOnly(sh) || onGauge, dk = onGauge && this.mix(sh) ? '_tdrag' : '_drag';
         const hz = rail ? el.classList.contains('is-h') : this.horiz(t) && !tilt;
         const fr = p => hz ? (p.clientX - r.left) / r.width : (p.clientY - r.top) / r.height;
         const side = fr(ev) < .5 ? 'L' : 'R';
@@ -483,7 +484,7 @@ const coverCtl = {
             dragged = true;
             el.dataset.dragging = 'true';
             if (tog) { const p = prog(m); a.swipe = p < 50 ? start + dir * resist(p) : (dir > 0 ? 100 : 0) - dir * resist(100 - p); }
-            else el[dk] = rail ? val(fr(m)) : this.clamp(start + raw(fr(m)) - raw(f0));
+            else el[dk] = rail || onGauge ? val(fr(m)) : this.clamp(start + raw(fr(m)) - raw(f0));
             this.kick();
         };
         const up = u => {
@@ -498,6 +499,7 @@ const coverCtl = {
             }
             const v = dragged ? el[dk] : val(fr(u));
             el[dk] = null;
+            if (tilt && v != null && !this.myOn(sh)) { a.dtilt = v; a.dtiltV = 0; }
             this.kick();
             if (v != null) this.send(sh, tilt, v);
         };

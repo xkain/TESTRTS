@@ -4906,7 +4906,7 @@ class Somfy {
             if (d.classList.contains('dcard')) this.syncDashCard(d, cached || state);
         });
         coverCtl.kick();
-        if ((parseInt(state.direction, 10) || 0) === 0) this.refreshCardSheet('shade', sId);
+        if ((parseInt(state.direction, 10) || 0) === 0 && (parseInt(state.tiltDirection, 10) || 0) === 0) this.refreshCardSheet('shade', sId);
         this.syncGroupMovement(sId);
         // Après syncGroupMovement : le récapitulatif lit les data-moving/data-direction que celui-ci
         // vient de poser sur les cartes groupe.

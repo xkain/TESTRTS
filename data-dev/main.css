@@ -5827,6 +5827,7 @@ body.dash-house-off .mobile-house { display: none !important; }
 #divHomePnl .cover-ghost { fill: var(--cv-ghost); opacity: .28; }
 #divHomePnl .cover-gauge { fill: color-mix(in srgb, var(--dt-tilt) 38%, transparent); stroke: color-mix(in srgb, var(--dt-tilt) 55%, transparent); stroke-width: 1; }
 #divHomePnl .cover-ball { fill: #fff; filter: drop-shadow(0 .5px 1.5px rgba(0, 0, 0, .35)); }
+#divHomePnl .cover-ball-want { fill: none; stroke: #fff; stroke-width: 2; stroke-dasharray: 3 2.5; opacity: .9; }
 #divHomePnl .cover-chip { position: absolute; left: 10px; top: 10px; z-index: 3; max-width: calc(100% - 64px); padding: 5px 10px; border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, transparent); box-shadow: 0 1px 3px rgba(0, 0, 0, .18); font-size: .8125em; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 #divHomePnl .cover-sun-btn { position: absolute; right: 10px; top: 10px; z-index: 3; display: grid; place-items: center; width: 30px; height: 30px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--surface) 92%, transparent); color: var(--text-3); text-transform: none; }
 #divHomePnl .cover-sun-btn::after { content: ""; position: absolute; inset: -7px; }
